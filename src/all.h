@@ -39,7 +39,10 @@
 #include "headers/array.h"
 #include "headers/map.h"
 
+#include "headers/typedefs.h"
 #include "headers/structs.h"
 #include "headers/functions.h"
+
+#include "headers/build.h"
 
 #endif
