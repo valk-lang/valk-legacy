@@ -2,8 +2,7 @@
 #ifndef _H_ALLOC
 #define _H_ALLOC
 
-typedef struct Allocator Allocator;
-typedef struct AllocatorBlock AllocatorBlock;
+#include "typedefs.h"
 
 struct Allocator {
     AllocatorBlock *first_block_private;

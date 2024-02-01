@@ -35,13 +35,13 @@
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 
-#include "headers/alloc.h"
-#include "headers/array.h"
-#include "headers/map.h"
-
 #include "headers/typedefs.h"
 #include "headers/structs.h"
 #include "headers/functions.h"
+
+#include "headers/alloc.h"
+#include "headers/array.h"
+#include "headers/map.h"
 
 #include "headers/build.h"
 

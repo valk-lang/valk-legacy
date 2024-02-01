@@ -2,7 +2,7 @@
 #ifndef H_ARR
 #define H_ARR
 
-#include "alloc.h"
+#include "typedefs.h"
 
 enum ARRFINDTYPE {
     arr_find_adr,
@@ -10,12 +10,12 @@ enum ARRFINDTYPE {
     arr_find_int,
 };
 
-typedef struct Array {
+struct Array {
     Allocator *alc;
     int length;
     int max_length;
     void *data;
-} Array;
+};
 
 Array *array_make(Allocator *alc, int max_length);
 void array_push(Array *, void *);

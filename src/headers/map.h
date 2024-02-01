@@ -2,15 +2,14 @@
 #ifndef H_MAP
 #define H_MAP
 
-#include "alloc.h"
-#include "array.h"
+#include "typedefs.h"
 
-typedef struct Map {
+struct Map {
     Allocator *alc;
     Array *keys;
     Array *values;
     int find_start;
-} Map;
+};
 
 Map *map_make(Allocator *alc);
 bool map_contains(Map *map, char *key);
