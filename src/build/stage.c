@@ -29,7 +29,9 @@ void* stage_get_item(Stage* stage) {
 }
 
 void build_run_stages(Build* b) {
-    Allocator* alc = b->alc;
+    if(b->verbose > 2)
+        printf("# Run build stages\n");
+    Allocator *alc = b->alc;
     Array* stages = array_make(alc, 10);
     array_push(stages, b->stage_1_parse);
     array_push(stages, b->stage_2_alias);

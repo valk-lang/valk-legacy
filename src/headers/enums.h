@@ -18,3 +18,10 @@ enum TOKENS {
     tok_pos,
     tok_cc,
 };
+
+enum ACCESS {
+    act_public,
+    act_private_fc,
+    act_private_nsc,
+    act_private_pkc,
+};

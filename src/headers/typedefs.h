@@ -18,5 +18,8 @@ typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
 typedef struct Chunk Chunk;
 typedef struct Stage Stage;
+// Parse
+typedef struct Func Func;
+typedef struct Scope Scope;
 
 #endif

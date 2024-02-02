@@ -49,7 +49,9 @@ int cmd_build(int argc, char *argv[]) {
     b->pkc_by_dir = map_make(alc);
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
+    b->export_count = 0;
     b->verbose = 3;
+    b->LOC = 0;
 
     build_set_stages(b);
 
@@ -86,11 +88,11 @@ int cmd_build(int argc, char *argv[]) {
 }
 
 void build_err(Build* b, char* msg) {
-    printf("Error: %s\n", msg);
+    printf("# Error: %s\n", msg);
     exit(1);
 }
 void parse_err(Chunk *chunk, char *msg) {
-    printf("Parse error:\n");
+    printf("# Parse error\n");
     build_err(chunk->b, msg);
 }
 

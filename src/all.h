@@ -51,5 +51,11 @@
 #include "headers/str.h"
 // Commands
 #include "headers/build.h"
+// Build
+#include "headers/parse.h"
+#include "headers/tokens.h"
+#include "headers/values.h"
+#include "headers/id.h"
+#include "headers/skip.h"
 
 #endif

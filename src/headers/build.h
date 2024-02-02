@@ -34,6 +34,13 @@ void stage_2_props(Fc* fc);
 void stage_2_types(Fc* fc);
 void stage_3_values(Fc* fc);
 void stage_4_ast(Fc* fc);
+// Read
+char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
+void tok_back(Fc* fc);
+void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline);
+char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool read_only);
+char* chunk_read(Chunk* chunk, int *i_ref);
+bool tok_is(char* tkn, char* comp);
 
 struct Build {
     Allocator* alc;
@@ -52,6 +59,7 @@ struct Build {
     Stage* stage_2_types;
     Stage* stage_3_values;
     Stage* stage_4_ast;
+    int export_count;
     int verbose;
     int LOC;
 };
@@ -64,6 +72,7 @@ struct Fc {
     //
     Chunk* content;
     Chunk* chunk_parse;
+    Chunk* chunk_parse_prev;
     //
     bool is_header;
 };
@@ -71,6 +80,7 @@ struct Nsc {
     char* name;
     char* dir;
     Pkc* pkc;
+    Scope* scope;
 };
 struct Pkc {
     Build* b;
@@ -91,6 +101,8 @@ struct Chunk {
     int i;
     int line;
     int col;
+    int scope_end_i;
+    char token;
 };
 struct Stage {
     Array* items;

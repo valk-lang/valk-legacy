@@ -30,6 +30,7 @@ Fc* fc_make(Nsc* nsc, char* path) {
     chunk_set_content(content, str_to_chars(alc, content_str), content_str->length);
     fc->content = content;
     fc->chunk_parse = content;
+    fc->chunk_parse_prev = chunk_clone(alc, content);
 
     stage_add_item(b->stage_1_parse, fc);
 

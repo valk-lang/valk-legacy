@@ -6,6 +6,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->pkc = pkc;
     nsc->name = name;
     nsc->dir = dir;
+    nsc->scope = scope_make(alc, NULL);
     return nsc;
 }
 
