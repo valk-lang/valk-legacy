@@ -10,5 +10,9 @@ typedef struct Array Array;
 typedef struct Map Map;
 // Build
 typedef struct Build Build;
+typedef struct Fc Fc;
+typedef struct Nsc Nsc;
+typedef struct Pkc Pkc;
+typedef struct Chunk Chunk;
 
 #endif
