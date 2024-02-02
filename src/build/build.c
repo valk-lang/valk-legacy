@@ -29,7 +29,7 @@ int cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!is_dir(arg)) {
-            sprintf(char_buf, "Invalid directory: '%s'", arg);
+            sprintf(char_buf, "Invalid file/directory: '%s'", arg);
             die(char_buf);
         }
         if (main_dir) {
@@ -49,6 +49,9 @@ int cmd_build(int argc, char *argv[]) {
     b->pkc_by_dir = map_make(alc);
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
+    b->verbose = 3;
+
+    build_set_stages(b);
 
     Pkc* pkc_main = pkc_make(alc, b, "main");
     pkc_main->is_main = true;
@@ -59,24 +62,36 @@ int cmd_build(int argc, char *argv[]) {
         nsc = nsc_make(alc, pkc_main, "main", pkc_main->dir);
     }
 
+    // Build
+    usize start = microtime();
+
     for(int i = 0; i < vo_files->length; i++) {
         char* path = array_get_index(vo_files, i);
         fc_make(nsc, path);
     }
 
     // Build stages
+    build_run_stages(b);
 
     // Finish build
+    printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
+    printf("⌚ Parse: %.3fs\n", (double)b->time_parse / 1000000);
+    printf("⌚ Gen IR: %.3fs\n", (double)b->time_ir / 1000000);
+    printf("⌚ LLVM: %.3fs\n", (double)b->time_llvm / 1000000);
+    printf("⌚ Link: %.3fs\n", (double)b->time_link / 1000000);
+    printf("⌚ File IO: %.3fs\n", (double)b->time_io / 1000000);
+    printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
 
     return 0;
 }
 
 void build_err(Build* b, char* msg) {
     printf("Error: %s\n", msg);
+    exit(1);
 }
-void parse_err(Build *b, Chunk *chunk, char *msg) {
+void parse_err(Chunk *chunk, char *msg) {
     printf("Parse error:\n");
-    build_err(b, msg);
+    build_err(chunk->b, msg);
 }
 
 void cmd_build_help() {

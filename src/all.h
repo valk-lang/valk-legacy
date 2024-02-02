@@ -38,6 +38,7 @@
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 
 // Base
+#include "headers/enums.h"
 #include "headers/typedefs.h"
 #include "headers/structs.h"
 #include "headers/functions.h"

@@ -28,4 +28,5 @@ void chunk_set_content(Chunk* chunk, char* content, int length) {
     chunk->content = content;
     chunk->length = length;
     // Lex
+    chunk_lex_start(chunk);
 }

@@ -21,13 +21,17 @@ Fc* fc_make(Nsc* nsc, char* path) {
         build_err(b, b->char_buf);
     }
 
+    usize start = microtime();
     Str* content_str = str_make(alc, 512);
     file_get_contents(content_str, path);
+    b->time_io += microtime() - start;
 
     Chunk* content = chunk_make(alc, b, fc);
     chunk_set_content(content, str_to_chars(alc, content_str), content_str->length);
     fc->content = content;
     fc->chunk_parse = content;
+
+    stage_add_item(b->stage_1_parse, fc);
 
     return fc;
 }
