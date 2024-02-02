@@ -46,6 +46,7 @@ int cmd_build(int argc, char *argv[]) {
     // Build
     Build* b = al(alc, sizeof(Build));
     b->alc = alc;
+    b->alc_ast = alc_make();
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
 
@@ -82,6 +83,9 @@ int cmd_build(int argc, char *argv[]) {
 
     // Build stages
     build_run_stages(b);
+    // Link
+    stage_5_objects(b);
+    stage_6_link(b);
 
     // Finish build
     if(b->verbose > 0) {

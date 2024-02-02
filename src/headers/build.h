@@ -35,6 +35,8 @@ void stage_2_types(Fc* fc);
 void stage_3_values(Fc* fc);
 void stage_4_ast(Fc* fc);
 void stage_4_ir(Fc* fc);
+void stage_5_objects(Build* b);
+void stage_6_link(Build* b);
 // Sub stages
 void stage_types_func(Func* func);
 void read_ast(Fc *fc, Scope *scope, bool single_line);
@@ -42,6 +44,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line);
 
 struct Build {
     Allocator* alc;
+    Allocator* alc_ast;
     //
     char* char_buf;
     usize time_lex;

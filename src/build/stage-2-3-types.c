@@ -43,6 +43,10 @@ void stage_types_func(Func* func) {
             FuncArg* arg = func_arg_make(b->alc, type);
             map_set(func->args, name, arg);
 
+            Decl* decl = decl_make(b->alc, type, true);
+            Idf* idf = idf_make(b->alc, idf_decl, decl);
+            scope_set_idf(func->scope, name, idf, fc);
+
             tkn = tok(fc, true, true, true);
             if(str_is(tkn, "=")) {
                 arg->chunk_value = chunk_clone(b->alc, fc->chunk_parse);

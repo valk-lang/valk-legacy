@@ -7,8 +7,6 @@
 // Scopes
 Scope* scope_make(Allocator* alc, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc);
-// Idf
-Idf* idf_make(Allocator* alc, int type, void* item);
 // Read
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
 void tok_back(Fc* fc);
@@ -25,6 +23,7 @@ FuncArg* func_arg_make(Allocator* alc, Type* type);
 struct Scope {
     Scope* parent;
     Map* identifiers;
+    Array* ast;
 };
 struct Idf {
     int type;
@@ -48,6 +47,12 @@ struct FuncArg {
     Type* type;
     Value* value;
     Chunk* chunk_value;
+};
+struct Decl {
+    Type* type;
+    char *ir_var;
+    bool is_mut;
+    bool is_arg;
 };
 
 #endif
