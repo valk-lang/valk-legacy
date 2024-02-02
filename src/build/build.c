@@ -46,9 +46,15 @@ int cmd_build(int argc, char *argv[]) {
     // Build
     Build* b = al(alc, sizeof(Build));
     b->alc = alc;
-    b->pkc_by_dir = map_make(alc);
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
+
+    b->pkc_by_dir = map_make(alc);
+    b->fc_by_path = map_make(alc);
+    b->nsc_by_path = map_make(alc);
+
+    b->func_main = NULL;
+
     b->export_count = 0;
     b->verbose = 3;
     b->LOC = 0;
@@ -56,20 +62,22 @@ int cmd_build(int argc, char *argv[]) {
     build_set_stages(b);
 
     Pkc* pkc_main = pkc_make(alc, b, "main");
-    pkc_main->is_main = true;
-    // If args contains a dir : pkc_set_dir(pkc_main, dir)
+    b->pkc_main = pkc_main;
+    if (main_dir)
+        pkc_set_dir(pkc_main, main_dir);
 
-    Nsc* nsc = nsc_try_load(pkc_main, "main");
-    if(!nsc) {
-        nsc = nsc_make(alc, pkc_main, "main", pkc_main->dir);
+    Nsc* nsc_main = nsc_try_load(pkc_main, "main");
+    if(!nsc_main) {
+        nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
     }
+    b->nsc_main = nsc_main;
 
     // Build
     usize start = microtime();
 
     for(int i = 0; i < vo_files->length; i++) {
         char* path = array_get_index(vo_files, i);
-        fc_make(nsc, path);
+        fc_make(nsc_main, path);
     }
 
     // Build stages

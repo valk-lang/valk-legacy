@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_parse(Fc *fc);
-void stage_1_func(Fc* fc);
+void stage_1_func(Fc* fc, int act);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -27,8 +27,8 @@ void stage_parse(Fc *fc) {
 
         int act = act_public;
 
-        if(tok_is(tkn, "fn")) {
-            stage_1_func(fc);
+        if(str_is(tkn, "fn")) {
+            stage_1_func(fc, act);
             continue;
         }
 
@@ -37,7 +37,7 @@ void stage_parse(Fc *fc) {
     }
 }
 
-void stage_1_func(Fc* fc) {
+void stage_1_func(Fc* fc, int act) {
     Build* b = fc->b;
 
     char* name = tok(fc, true, false, true);
@@ -47,14 +47,20 @@ void stage_1_func(Fc* fc) {
     }
 
     Func* func = func_make(b->alc, fc, name, NULL);
+    Idf* idf = idf_make(b->alc, idf_func, func);
+    scope_set_idf(fc->nsc->scope, name, idf, fc);
+
+    if (str_is(name, "main")) {
+        b->func_main = func;
+    }
 
     bool newline = false;
     char* tkn = tok(fc, true, false, true);
-    if(tok_is(tkn, "")) {
+    if(str_is(tkn, "")) {
         newline = true;
         tkn = tok(fc, true, true, true);
     }
-    if(tok_is(tkn, "(")) {
+    if(str_is(tkn, "(")) {
         // Has args
         if(newline) {
             parse_err(fc->chunk_parse, "The '(' character must be placed on the same line as the function name");
@@ -65,7 +71,7 @@ void stage_1_func(Fc* fc) {
 
         tkn = tok(fc, true, true, true);
     }
-    if(!tok_is(tkn, "{")) {
+    if(!str_is(tkn, "{")) {
         // Has return type
         tok_back(fc);
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);

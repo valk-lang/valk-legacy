@@ -21,5 +21,6 @@ typedef struct Stage Stage;
 // Parse
 typedef struct Func Func;
 typedef struct Scope Scope;
+typedef struct Idf Idf;
 
 #endif

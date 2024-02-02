@@ -9,7 +9,6 @@ Pkc* pkc_make(Allocator* alc, Build* b, char* name_suggestion) {
     pkc->dir = NULL;
     pkc->namespaces = map_make(alc);
     pkc->pkc_by_name = map_make(alc);
-    pkc->is_main = false;
 
     char* buf = b->char_buf;
     sprintf(buf, "%s", name_suggestion);

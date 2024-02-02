@@ -25,3 +25,7 @@ enum ACCESS {
     act_private_nsc,
     act_private_pkc,
 };
+
+enum IDF {
+    idf_func,
+};

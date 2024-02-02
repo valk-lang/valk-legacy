@@ -34,18 +34,10 @@ void stage_2_props(Fc* fc);
 void stage_2_types(Fc* fc);
 void stage_3_values(Fc* fc);
 void stage_4_ast(Fc* fc);
-// Read
-char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
-void tok_back(Fc* fc);
-void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline);
-char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool read_only);
-char* chunk_read(Chunk* chunk, int *i_ref);
-bool tok_is(char* tkn, char* comp);
 
 struct Build {
     Allocator* alc;
-    Map* pkc_by_dir;
-    Array* used_pkc_names;
+    //
     char* char_buf;
     usize time_lex;
     usize time_parse;
@@ -59,6 +51,16 @@ struct Build {
     Stage* stage_2_types;
     Stage* stage_3_values;
     Stage* stage_4_ast;
+    //
+    Map* pkc_by_dir;
+    Map* fc_by_path;
+    Map* nsc_by_path;
+    Array* used_pkc_names;
+    //
+    Pkc* pkc_main;
+    Nsc* nsc_main;
+    Func* func_main;
+    //
     int export_count;
     int verbose;
     int LOC;
@@ -88,7 +90,6 @@ struct Pkc {
     char* name;
     Map* namespaces;
     Map* pkc_by_name;
-    bool is_main;
 };
 struct Chunk {
     Build* b;

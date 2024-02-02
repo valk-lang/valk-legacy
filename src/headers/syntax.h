@@ -18,5 +18,6 @@ bool is_valid_macro_number(char *str);
 bool ends_with(const char *str, const char *suffix);
 bool starts_with(const char *a, const char *b);
 char backslash_char(char ch);
+bool str_is(char* tkn, char* comp);
 
 #endif

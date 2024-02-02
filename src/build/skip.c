@@ -10,7 +10,7 @@ void skip_type(Fc* fc) {
     Chunk* ch = fc->chunk_parse;
 
     char *tkn = tok(fc, true, true, true);
-    if (tok_is(tkn, "?") || tok_is(tkn, ".")) {
+    if (str_is(tkn, "?") || str_is(tkn, ".")) {
         tkn = tok(fc, false, false, true);
     }
     if(ch->token != tok_id && tkn[0] != ':') {

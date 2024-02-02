@@ -15,7 +15,7 @@ void tok_back(Fc* fc) {
 }
 void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline) {
     char* tkn = tok(fc, allow_space, allow_newline, true);
-    if(!tok_is(tkn, expect)) {
+    if(!str_is(tkn, expect)) {
         sprintf(fc->b->char_buf, "Expected '%s' here", expect);
         parse_err(fc->chunk_parse, fc->b->char_buf);
     }
@@ -72,16 +72,4 @@ char* chunk_read(Chunk* chunk, int *i_ref) {
     }
     chunk->token = t;
     return tchars;
-}
-
-bool tok_is(char* tkn, char* comp) {
-    int i = 0;
-    while(true) {
-        const char ch = tkn[i];
-        if(ch != comp[i++])
-            return false;
-        if(ch == 0)
-            break;
-    }
-    return true;
 }
