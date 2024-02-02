@@ -13,6 +13,7 @@ Fc* fc_make(Nsc* nsc, char* path) {
     fc->path = path;
     fc->alc = alc;
     fc->nsc = nsc;
+    fc->scope = scope_make(alc, nsc->scope);
     fc->is_header = is_header;
 
     fc->funcs = array_make(alc, 8);

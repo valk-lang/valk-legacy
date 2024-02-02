@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void stage_ast(Fc *fc);
+void ast_handle_dif(Fc *fc, Scope *scope, Idf* idf);
 
 void stage_4_ast(Fc* fc) {
     Build* b = fc->b;
@@ -48,22 +49,37 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             return;
 
         char* tkn = tok(fc, true, true, true);
+        int t = chunk->token;
 
         if(tkn[0] == 0) {
             sprintf(b->char_buf, "Unexpected end of file: '%s'", tkn);
             parse_err(chunk, b->char_buf);
         }
 
-        int t = chunk->token;
         if(t == tok_scope_close)
             break;
 
         first = true;
-
         //
+
+        if(t == tok_id) {
+            Idf* idf = read_idf(fc, scope, tkn, true);
+            ast_handle_dif(fc, scope, idf);
+            continue;
+        }
 
         //
         sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
         parse_err(chunk, b->char_buf);
     }
 }
+
+void ast_handle_dif(Fc *fc, Scope *scope, Idf* idf) {
+    Build *b = fc->b;
+    Allocator* alc = fc->alc_ast;
+    Chunk* chunk = fc->chunk_parse;
+
+    sprintf(b->char_buf, "We know what this is, but it cannot be used inside a function. (identifier-type:%d)", idf->type);
+    parse_err(chunk, b->char_buf);
+}
+

@@ -79,6 +79,7 @@ struct Fc {
     Allocator* alc;
     Allocator* alc_ast;
     Nsc* nsc;
+    Scope* scope;
     //
     Chunk* content;
     Chunk* chunk_parse;

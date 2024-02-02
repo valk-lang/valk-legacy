@@ -20,6 +20,10 @@ void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline) {
         parse_err(fc->chunk_parse, fc->b->char_buf);
     }
 }
+char tok_id_next(Fc* fc) {
+    Chunk* ch = fc->chunk_parse;
+    return ch->tokens[ch->i];
+}
 
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool update) {
     int x = chunk->i;

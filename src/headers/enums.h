@@ -29,6 +29,7 @@ enum ACCESS {
 enum IDF {
     idf_func,
     idf_decl,
+    idf_nsc,
 };
 
 enum TYPES {
