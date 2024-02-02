@@ -8,6 +8,7 @@ typedef struct AllocatorBlock AllocatorBlock;
 // Utils
 typedef struct Array Array;
 typedef struct Map Map;
+typedef struct Str Str;
 // Build
 typedef struct Build Build;
 typedef struct Fc Fc;

@@ -31,18 +31,24 @@
 
 #define VOLT_PATH_MAX 4096
 #define VOLT_TOKEN_MAX 256
+#define PATH_SLASH_CHAR '/'
+#define PATH_SLASH "/"
 
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 
+// Base
 #include "headers/typedefs.h"
 #include "headers/structs.h"
 #include "headers/functions.h"
-
+// Utils
 #include "headers/alloc.h"
 #include "headers/array.h"
 #include "headers/map.h"
-
+#include "headers/files.h"
+#include "headers/syntax.h"
+#include "headers/str.h"
+// Commands
 #include "headers/build.h"
 
 #endif

@@ -15,7 +15,11 @@ Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk);
 Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir);
 Nsc* nsc_try_load(Pkc* pkc, char* name);
 
-int fc_make(Allocator* alc, char* path);
+Fc* fc_make(Nsc* nsc, char* path);
+
+Chunk* chunk_make(Allocator* alc, Build* b, Fc* fc);
+Chunk* chunk_clone(Allocator* alc, Chunk* ch);
+void chunk_set_content(Chunk* chunk, char* content, int length);
 
 struct Build {
     Allocator* alc;
@@ -49,7 +53,9 @@ struct Pkc {
     bool is_main;
 };
 struct Chunk {
+    Build* b;
     Fc* fc;
+    Allocator* alc;
     Chunk* parent;
     char* tokens;
     char* content;

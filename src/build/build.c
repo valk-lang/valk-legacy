@@ -6,12 +6,49 @@ void cmd_build_help();
 int cmd_build(int argc, char *argv[]) {
 
     Allocator* alc = alc_make();
+    char* char_buf = al(alc, 10 * 1024);
 
+    // Parse args
+    Map* options = map_make(alc);
+    Array* args = array_make(alc, 20);
+    Array* has_value = array_make(alc, 10);
+    array_push(has_value, "-o");
+    parse_argv(argv, argc, has_value, args, options);
+
+    // Validate args
+    char* main_dir = NULL;
+    Array* vo_files = array_make(alc, 20);
+    for(int i = 2; i < args->length; i++) {
+        char* arg = array_get_index(args, i);
+        if(ends_with(arg, ".vo")) {
+            if(!file_exists(arg)) {
+                sprintf(char_buf, "File not found: '%s'", arg);
+                die(char_buf);
+            }
+            array_push(vo_files, arg);
+            continue;
+        }
+        if (!is_dir(arg)) {
+            sprintf(char_buf, "Invalid directory: '%s'", arg);
+            die(char_buf);
+        }
+        if (main_dir) {
+            sprintf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
+            die(char_buf);
+        }
+        main_dir = arg;
+    }
+    if(!main_dir && vo_files->length == 0) {
+        cmd_build_help();
+        return 1;
+    }
+
+    // Build
     Build* b = al(alc, sizeof(Build));
     b->alc = alc;
     b->pkc_by_dir = map_make(alc);
     b->used_pkc_names = array_make(alc, 20);
-    b->char_buf = al(alc, 10 * 1024);
+    b->char_buf = char_buf;
 
     Pkc* pkc_main = pkc_make(alc, b, "main");
     pkc_main->is_main = true;
@@ -22,8 +59,14 @@ int cmd_build(int argc, char *argv[]) {
         nsc = nsc_make(alc, pkc_main, "main", pkc_main->dir);
     }
 
-    // foreach .vo files
-    // fc_make(b, nsc)
+    for(int i = 0; i < vo_files->length; i++) {
+        char* path = array_get_index(vo_files, i);
+        fc_make(nsc, path);
+    }
+
+    // Build stages
+
+    // Finish build
 
     return 0;
 }
