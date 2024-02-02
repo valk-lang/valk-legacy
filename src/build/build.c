@@ -7,6 +7,7 @@ int cmd_build(int argc, char *argv[]) {
 
     Allocator* alc = alc_make();
     char* char_buf = al(alc, 10 * 1024);
+    Str* str_buf = str_make(alc, 100 * 1024);
 
     // Parse args
     Map* options = map_make(alc);
@@ -36,7 +37,9 @@ int cmd_build(int argc, char *argv[]) {
             sprintf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
             die(char_buf);
         }
-        main_dir = arg;
+        char* dir_buf = al(alc, VOLT_PATH_MAX);
+        get_fullpath(arg, dir_buf);
+        main_dir = dir_buf;
     }
     if(!main_dir && vo_files->length == 0) {
         cmd_build_help();
@@ -49,6 +52,7 @@ int cmd_build(int argc, char *argv[]) {
     b->alc_ast = alc_make();
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
+    b->str_buf = str_buf;
 
     b->pkc_by_dir = map_make(alc);
     b->fc_by_path = map_make(alc);

@@ -43,12 +43,14 @@
 #include "headers/structs.h"
 #include "headers/functions.h"
 // Utils
+#include "headers/cJSON.h"
 #include "headers/alloc.h"
 #include "headers/array.h"
 #include "headers/map.h"
 #include "headers/files.h"
 #include "headers/syntax.h"
 #include "headers/str.h"
+#include "headers/config.h"
 // Commands
 #include "headers/build.h"
 // Build

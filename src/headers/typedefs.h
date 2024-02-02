@@ -16,6 +16,7 @@ typedef struct Build Build;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
+typedef struct PkgConfig PkgConfig;
 typedef struct Chunk Chunk;
 typedef struct Stage Stage;
 // Parse

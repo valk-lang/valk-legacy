@@ -47,6 +47,7 @@ struct Build {
     Allocator* alc_ast;
     //
     char* char_buf;
+    Str* str_buf;
     usize time_lex;
     usize time_parse;
     usize time_io;

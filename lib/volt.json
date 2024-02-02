@@ -1,0 +1,18 @@
+{
+  "namespaces": {
+    "fs": "src/fs",
+    "io": "src/io",
+    "http": "src/http",
+    "mem": "src/mem",
+    "net": "src/net",
+    "os": "src/os",
+    "type": "src/type",
+    "utils": "src/utils"
+  },
+  "headers": {
+    "dirs": ["headers"]
+  },
+  "link": {
+    "dirs": ["libs"]
+  }
+}

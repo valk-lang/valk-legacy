@@ -3,6 +3,7 @@
 
 void stage_parse(Fc *fc);
 void stage_1_func(Fc* fc, int act);
+void stage_1_header(Fc* fc);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -29,6 +30,10 @@ void stage_parse(Fc *fc) {
 
         if(str_is(tkn, "fn")) {
             stage_1_func(fc, act);
+            continue;
+        }
+        if(str_is(tkn, "header")) {
+            stage_1_header(fc);
             continue;
         }
 
@@ -82,4 +87,14 @@ void stage_1_func(Fc* fc, int act) {
 
     func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
     skip_body(fc);
+}
+
+void stage_1_header(Fc* fc){
+    Build* b = fc->b;
+    
+    char* fn = tok(fc, true, false, true);
+    int t = fc->chunk_parse->token;
+    if(t != tok_string) {
+        parse_err(fc->chunk_parse, "Expected a header name here wrapped in double-quotes");
+    }
 }
