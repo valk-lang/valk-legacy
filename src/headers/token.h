@@ -1,6 +1,6 @@
 
-#ifndef H_TOKENS
-#define H_TOKENS
+#ifndef H_TOKEN
+#define H_TOKEN
 
 #include "typedefs.h"
 

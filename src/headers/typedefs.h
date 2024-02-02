@@ -20,7 +20,10 @@ typedef struct Chunk Chunk;
 typedef struct Stage Stage;
 // Parse
 typedef struct Func Func;
+typedef struct FuncArg FuncArg;
 typedef struct Scope Scope;
 typedef struct Idf Idf;
+typedef struct Type Type;
+typedef struct Value Value;
 
 #endif

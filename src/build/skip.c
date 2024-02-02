@@ -25,3 +25,36 @@ void skip_type(Fc* fc) {
     }
 }
 
+void skip_value(Fc *fc) {
+
+    Chunk *chunk = fc->chunk_parse;
+    while (true) {
+
+        char* tkn = tok(fc, true, true, true);
+        char t = chunk->token;
+
+        if (t == tok_string) {
+            continue;
+        }
+        if (t == tok_char_string) {
+            continue;
+        }
+        if (t == tok_scope_open) {
+            skip_body(fc);
+            continue;
+        }
+        if (t == tok_id) {
+            continue;
+        }
+        if (t == tok_number) {
+            continue;
+        }
+
+        if (str_is(tkn, ":") || str_is(tkn, ".") || str_is(tkn, "<=") || str_is(tkn, ">=") || str_is(tkn, "==") || str_is(tkn, "!=") || str_is(tkn, "&&") || str_is(tkn, "||") || str_is(tkn, "+") || str_is(tkn, "-") || str_is(tkn, "/") || str_is(tkn, "*") || str_is(tkn, "%") || str_is(tkn, "&") || str_is(tkn, "|") || str_is(tkn, "^") || str_is(tkn, "++") || str_is(tkn, "--") || str_is(tkn, "->") || str_is(tkn, "??") || str_is(tkn, "?!") || str_is(tkn, "!!") || str_is(tkn, "?")) {
+            continue;
+        }
+
+        tok_back(fc);
+        break;
+    }
+}

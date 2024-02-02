@@ -49,6 +49,7 @@ void stage_1_func(Fc* fc, int act) {
     Func* func = func_make(b->alc, fc, name, NULL);
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
+    array_push(fc->funcs, func);
 
     if (str_is(name, "main")) {
         b->func_main = func;
@@ -75,7 +76,7 @@ void stage_1_func(Fc* fc, int act) {
         // Has return type
         tok_back(fc);
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
-        // Skip type
+        skip_type(fc);
         tok_expect(fc, "{", true, true);
     }
 

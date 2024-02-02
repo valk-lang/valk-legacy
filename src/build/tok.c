@@ -16,7 +16,7 @@ void tok_back(Fc* fc) {
 void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline) {
     char* tkn = tok(fc, allow_space, allow_newline, true);
     if(!str_is(tkn, expect)) {
-        sprintf(fc->b->char_buf, "Expected '%s' here", expect);
+        sprintf(fc->b->char_buf, "Expected '%s' here, instead of '%s'", expect, tkn);
         parse_err(fc->chunk_parse, fc->b->char_buf);
     }
 }

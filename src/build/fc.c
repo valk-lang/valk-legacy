@@ -15,6 +15,10 @@ Fc* fc_make(Nsc* nsc, char* path) {
     fc->nsc = nsc;
     fc->is_header = is_header;
 
+    fc->funcs = array_make(alc, 8);
+    fc->classes = array_make(alc, 4);
+    fc->aliasses = array_make(alc, 8);
+
     // Load content
     if(!file_exists(path)) {
         sprintf(b->char_buf, "File not found: '%s'", path);

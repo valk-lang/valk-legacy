@@ -101,7 +101,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             }
             token[token_i] = '\0';
             token_i = 0;
-            if(strcmp(token, "if") == 0) {
+            if(str_is(token, "if")) {
                 tokens[o++] = tok_cc;
                 strcpy((char*)((intptr_t)tokens + o), token);
                 o += 3;
@@ -109,11 +109,11 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                 i = x;
                 continue;
             }
-            if(strcmp(token, "elif") == 0 || strcmp(token, "else") == 0 || strcmp(token, "end") == 0) {
+            if(str_is(token, "elif") || str_is(token, "else") || str_is(token, "end")) {
                 tokens[o++] = tok_cc;
                 strcpy((char*)((intptr_t)tokens + o), token);
-                o += (strcmp(token, "end") == 0) ? 4 : 5;
-                if (strcmp(token, "end") == 0) {
+                o += (str_is(token, "end")) ? 4 : 5;
+                if (str_is(token, "end")) {
                     cc_depth--;
                     if (cc_depth < 0) {
                         chunk->i = i;

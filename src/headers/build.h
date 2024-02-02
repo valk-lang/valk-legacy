@@ -34,6 +34,11 @@ void stage_2_props(Fc* fc);
 void stage_2_types(Fc* fc);
 void stage_3_values(Fc* fc);
 void stage_4_ast(Fc* fc);
+void stage_4_ir(Fc* fc);
+// Sub stages
+void stage_types_func(Func* func);
+void read_ast(Fc *fc, Scope *scope, bool single_line);
+//
 
 struct Build {
     Allocator* alc;
@@ -75,6 +80,10 @@ struct Fc {
     Chunk* content;
     Chunk* chunk_parse;
     Chunk* chunk_parse_prev;
+    //
+    Array* funcs;
+    Array* classes;
+    Array* aliasses;
     //
     bool is_header;
 };

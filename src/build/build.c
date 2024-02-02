@@ -84,13 +84,16 @@ int cmd_build(int argc, char *argv[]) {
     build_run_stages(b);
 
     // Finish build
-    printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
-    printf("⌚ Parse: %.3fs\n", (double)b->time_parse / 1000000);
-    printf("⌚ Gen IR: %.3fs\n", (double)b->time_ir / 1000000);
-    printf("⌚ LLVM: %.3fs\n", (double)b->time_llvm / 1000000);
-    printf("⌚ Link: %.3fs\n", (double)b->time_link / 1000000);
-    printf("⌚ File IO: %.3fs\n", (double)b->time_io / 1000000);
-    printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+    if(b->verbose > 0) {
+        printf("📃 LOC: %d\n", b->LOC);
+        printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
+        printf("⌚ Parse: %.3fs\n", (double)b->time_parse / 1000000);
+        printf("⌚ Gen IR: %.3fs\n", (double)b->time_ir / 1000000);
+        printf("⌚ LLVM: %.3fs\n", (double)b->time_llvm / 1000000);
+        printf("⌚ Link: %.3fs\n", (double)b->time_link / 1000000);
+        printf("⌚ File IO: %.3fs\n", (double)b->time_io / 1000000);
+        printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+    }
 
     return 0;
 }

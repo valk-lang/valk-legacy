@@ -29,3 +29,7 @@ enum ACCESS {
 enum IDF {
     idf_func,
 };
+
+enum TYPES {
+    type_void,
+};

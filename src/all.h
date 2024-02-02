@@ -53,9 +53,10 @@
 #include "headers/build.h"
 // Build
 #include "headers/parse.h"
-#include "headers/tokens.h"
-#include "headers/values.h"
+#include "headers/token.h"
+#include "headers/value.h"
 #include "headers/id.h"
+#include "headers/type.h"
 #include "headers/skip.h"
 
 #endif
