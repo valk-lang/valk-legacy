@@ -5,6 +5,9 @@ void stage_ast(Fc *fc);
 void ast_handle_dif(Fc *fc, Scope *scope, Idf* idf);
 
 void stage_4_ast(Fc* fc) {
+    if(fc->is_header)
+        return;
+
     Build* b = fc->b;
 
     if (b->verbose > 2)
@@ -18,8 +21,6 @@ void stage_4_ast(Fc* fc) {
 }
 
 void stage_ast(Fc *fc) {
-    if(fc->is_header)
-        return;
 
     usize start = microtime();
 
