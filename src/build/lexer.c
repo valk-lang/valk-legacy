@@ -56,41 +56,41 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             str_increase_memsize(tokens_str, tokens_str->mem_size * 2);
             tokens = tokens_str->data;
         }
-        if(ch == ' ' || ch == '\t') {
-            if (o < 2 || tokens[o - 2] != tok_newline) {
-                tokens[o++] = tok_space;
-                tokens[o++] = 0;
-            }
-            char ch = content[i];
-            while(ch == ' ' || ch == '\t') {
-                ch = content[++i];
-            }
-            continue;
-        }
-        if(ch == '\n') {
-            if (o < 2 || tokens[o - 2] != tok_newline) {
-                tokens[o++] = tok_newline;
-                tokens[o++] = 0;
-            }
-            i_last = i;
-            col = 0;
-            line++;
-            char ch = content[i];
-            while(ch <= 32) {
-                if(ch == 0)
-                    break;
+        // Spaces, newlines & comments
+        if(ch <= 32 || (ch == '/' && content[i] == '/')) {
+            bool has_newline = false;
+            i--;
+            while(true) {
+                char ch = content[i++];
+                if(ch == ' ' || ch == '\t') {
+                    continue;
+                }
                 if(ch == '\n') {
+                    has_newline = true;
                     i_last = i;
                     col = 0;
                     line++;
+                    continue;
                 }
-                ch = content[++i];
+                if(ch == '/' && content[i] == '/') {
+                    ch = content[++i];
+                    while (ch != '\n' && ch != 0) {
+                        ch = content[++i];
+                    }
+                }
+                if (ch == 0)
+                    break;
+                if (ch <= 32)
+                    continue;
+                i--;
+                break;
             }
+
+            tokens[o++] = has_newline ? tok_newline : tok_space;
+            tokens[o++] = 0;
             continue;
         }
-        if(ch == '\r') {
-            continue;
-        }
+
         // Compile conditions
         if(ch == '#' && (o < 2 || tokens[o - 2] == tok_newline)) {
             int x = i;
@@ -158,15 +158,6 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                 ch = content[++i];
             }
             tokens[o++] = '\0';
-            continue;
-        }
-        // Comments
-        if(ch == '/' && content[i] == '/') {
-            i++;
-            char ch = content[i];
-            while (ch != '\n' && ch != 0) {
-                ch = content[++i];
-            }
             continue;
         }
         // Strings

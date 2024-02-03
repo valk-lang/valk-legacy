@@ -60,33 +60,25 @@ void stage_1_func(Fc* fc, int act) {
         b->func_main = func;
     }
 
-    bool newline = false;
-    char* tkn = tok(fc, true, false, true);
-    if(str_is(tkn, "")) {
-        newline = true;
-        tkn = tok(fc, true, true, true);
-    }
-    if(str_is(tkn, "(")) {
-        // Has args
-        if(newline) {
-            parse_err(fc->chunk_parse, "The '(' character must be placed on the same line as the function name");
-        }
+    tok_expect(fc, "(", true, false);
+    func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
+    skip_body(fc);
 
-        func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_body(fc);
+    char *tkn = tok(fc, true, true, true);
+    char* end = fc->is_header ? ";" : "{";
 
-        tkn = tok(fc, true, true, true);
-    }
-    if(!str_is(tkn, "{")) {
+    if(!str_is(tkn, end)) {
         // Has return type
         tok_back(fc);
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
         skip_type(fc);
-        tok_expect(fc, "{", true, true);
+        tok_expect(fc, end, true, true);
     }
 
-    func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
-    skip_body(fc);
+    if(!fc->is_header) {
+        func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
+        skip_body(fc);
+    }
 }
 
 void stage_1_header(Fc* fc){
