@@ -62,6 +62,7 @@ int cmd_build(int argc, char *argv[]) {
 
     b->func_main = NULL;
 
+    b->ptr_size = 8;
     b->export_count = 0;
     b->verbose = 3;
     b->LOC = 0;
@@ -82,6 +83,8 @@ int cmd_build(int argc, char *argv[]) {
     // Load core dependencies
     Pkc* vlt = pkc_load_pkc(pkc_main, "volt", NULL);
     Nsc* io = nsc_load(vlt, "io", true);
+    Nsc* type = nsc_load(vlt, "type", true);
+    b->pkc_volt = vlt;
 
     // Build
     usize start = microtime();

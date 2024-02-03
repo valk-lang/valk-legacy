@@ -52,6 +52,13 @@ Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
     }
 
     Idf* idf = scope_find_idf(scope, name, true);
+    if(!idf && !nsc) {
+        if(str_is(name, "String")) {
+            Nsc* ns = get_volt_nsc(fc->b, "type");
+            idf = scope_find_idf(ns->scope, name, true);
+        }
+    }
+
     if(!idf && must_exist) {
         if(nsc) sprintf(b->char_buf, "Unknown identifier: '%s:%s'", nsc, name);
         else sprintf(b->char_buf, "Unknown identifier: '%s'", name);

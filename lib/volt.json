@@ -1,6 +1,7 @@
 {
   "namespaces": {
-    "io": "src/io"
+    "io": "src/io",
+    "type": "src/type"
   },
   "headers": {
     "dirs": ["headers"]

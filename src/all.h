@@ -60,5 +60,7 @@
 #include "headers/id.h"
 #include "headers/type.h"
 #include "headers/skip.h"
+#include "headers/func.h"
+#include "headers/class.h"
 
 #endif

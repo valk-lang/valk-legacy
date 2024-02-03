@@ -31,8 +31,21 @@ enum IDF {
     idf_decl,
     idf_nsc,
     idf_scope,
+    idf_class,
 };
 
 enum TYPES {
     type_void,
+    type_ptr,
+    type_struct,
+    type_int,
+    type_float,
+};
+
+enum CLASSTYPES {
+    ct_struct,
+    ct_class,
+    ct_ptr,
+    ct_int,
+    ct_float,
 };

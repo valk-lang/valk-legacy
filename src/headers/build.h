@@ -15,6 +15,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk);
 
 Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir);
 Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist);
+Nsc* get_volt_nsc(Build* b, char* name);
 
 Fc* fc_make(Nsc* nsc, char* path);
 
@@ -68,9 +69,11 @@ struct Build {
     Array* used_pkc_names;
     //
     Pkc* pkc_main;
+    Pkc* pkc_volt;
     Nsc* nsc_main;
     Func* func_main;
     //
+    int ptr_size;
     int export_count;
     int verbose;
     int LOC;

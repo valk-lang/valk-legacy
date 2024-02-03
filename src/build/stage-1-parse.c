@@ -4,6 +4,7 @@
 void stage_parse(Fc *fc);
 void stage_1_func(Fc* fc, int act);
 void stage_1_header(Fc* fc);
+void stage_1_class(Fc* fc, int type, int act);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -34,6 +35,26 @@ void stage_parse(Fc *fc) {
         }
         if(str_is(tkn, "header")) {
             stage_1_header(fc);
+            continue;
+        }
+        if(str_is(tkn, "struct")) {
+            stage_1_class(fc, ct_struct, act);
+            continue;
+        }
+        if(str_is(tkn, "class")) {
+            stage_1_class(fc, ct_class, act);
+            continue;
+        }
+        if(str_is(tkn, "pointer")) {
+            stage_1_class(fc, ct_ptr, act);
+            continue;
+        }
+        if(str_is(tkn, "int")) {
+            stage_1_class(fc, ct_int, act);
+            continue;
+        }
+        if(str_is(tkn, "float")) {
+            stage_1_class(fc, ct_float, act);
             continue;
         }
 
@@ -103,4 +124,26 @@ void stage_1_header(Fc* fc){
 
     Idf* idf = idf_make(b->alc, idf_scope, hfc->scope);
     scope_set_idf(fc->scope, name, idf, fc);
+}
+
+void stage_1_class(Fc *fc, int type, int act) {
+    Build* b = fc->b;
+    
+    char* name = tok(fc, true, false, true);
+    if(!is_valid_varname(name)) {
+        sprintf(b->char_buf, "Invalid type name: '%s'", name);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    tok_expect(fc, "{", true, true);
+
+    Class* class = class_make(b->alc);
+    class->name = name;
+    class->body = chunk_clone(b->alc, fc->chunk_parse);
+
+    Idf* idf = idf_make(b->alc, idf_class, class);
+    scope_set_idf(fc->nsc->scope, name, idf, fc);
+    array_push(fc->classes, class);
+
+    skip_body(fc);
 }

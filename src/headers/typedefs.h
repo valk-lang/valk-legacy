@@ -27,5 +27,6 @@ typedef struct Idf Idf;
 typedef struct Type Type;
 typedef struct Value Value;
 typedef struct Decl Decl;
+typedef struct Class Class;
 
 #endif

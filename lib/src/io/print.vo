@@ -1,5 +1,6 @@
 
 header "sys" as sys
 
-fn print(str: void) {
+fn print(str: String) {
+    sys.write(1, str.data(), str.bytes());
 }

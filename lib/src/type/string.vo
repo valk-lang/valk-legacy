@@ -1,0 +1,15 @@
+
+// const:   {string_length:uint}-1-{...string bytes...}
+// dynamic: {string_length:uint}-0-{age 1}-{...string bytes...}
+
+pointer String {
+
+    inline fn is_const() bool {
+		return @ptrv(this @as ptr + sizeof(uxx), u8, 0) == 1#u8;
+	}
+
+    fn data() {
+    }
+    fn bytes() {
+    }
+}

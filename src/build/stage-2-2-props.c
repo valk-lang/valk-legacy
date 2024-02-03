@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void stage_props(Fc *fc);
+void stage_props_class(Class *class);
 
 void stage_2_props(Fc* fc) {
     Build* b = fc->b;
@@ -15,4 +16,12 @@ void stage_2_props(Fc* fc) {
 }
 
 void stage_props(Fc *fc) {
+    Array* classes = fc->classes;
+    for(int i = 0; i < classes->length; i++) {
+        Class* class = array_get_index(classes, i);
+        stage_props_class(class);
+    }
+}
+
+void stage_props_class(Class *class) {
 }

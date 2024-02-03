@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_ast(Fc *fc);
-void ast_handle_dif(Fc *fc, Scope *scope, Idf* idf);
+void ast_handle_idf(Fc *fc, Scope *scope, Idf* idf);
 
 void stage_4_ast(Fc* fc) {
     if(fc->is_header)
@@ -65,7 +65,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if(t == tok_id) {
             Idf* idf = read_idf(fc, scope, tkn, true);
-            ast_handle_dif(fc, scope, idf);
+            ast_handle_idf(fc, scope, idf);
             continue;
         }
 
@@ -75,10 +75,17 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     }
 }
 
-void ast_handle_dif(Fc *fc, Scope *scope, Idf* idf) {
+void ast_handle_idf(Fc *fc, Scope *scope, Idf* idf) {
     Build *b = fc->b;
     Allocator* alc = fc->alc_ast;
     Chunk* chunk = fc->chunk_parse;
+
+    int type = idf->type;
+
+    if(type == idf_scope) {
+        tok_expect(fc, ".", false, false);
+        char* tkn = tok(fc, false, false, true);
+    }
 
     sprintf(b->char_buf, "We know what this is, but it cannot be used inside a function. (identifier-type:%d)", idf->type);
     parse_err(chunk, b->char_buf);

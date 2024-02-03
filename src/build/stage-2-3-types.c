@@ -38,7 +38,7 @@ void stage_types_func(Func* func) {
             }
 
             tok_expect(fc, ":", true, false);
-            Type* type = read_type(fc, false);
+            Type* type = read_type(fc, fc->alc, fc->scope, false);
 
             FuncArg* arg = func_arg_make(b->alc, type);
             map_set(func->args, name, arg);
@@ -66,7 +66,7 @@ void stage_types_func(Func* func) {
     }
     if(func->chunk_rett) {
         *fc->chunk_parse = *func->chunk_rett;
-        Type *type = read_type(fc, false);
+        Type *type = read_type(fc, fc->alc, fc->scope, false);
         func->rett = type;
     }
 }

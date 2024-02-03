@@ -53,6 +53,15 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
             fc_make(nsc, path);
     }
 
+    map_set(pkc->pkc_by_name, name, nsc);
     return nsc;
 }
 
+
+Nsc* get_volt_nsc(Build* b, char* name) {
+    //
+    Pkc* pkc = b->pkc_volt;
+    if(!pkc)
+        return NULL;
+    return nsc_load(pkc, name, true);
+}
