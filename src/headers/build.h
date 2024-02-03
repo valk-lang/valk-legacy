@@ -13,7 +13,7 @@ void pkc_set_dir(Pkc* pkc, char* dir);
 Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk);
 
 Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir);
-Nsc* nsc_try_load(Pkc* pkc, char* name);
+Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist);
 
 Fc* fc_make(Nsc* nsc, char* path);
 
@@ -102,6 +102,7 @@ struct Pkc {
     Build* b;
     char* dir;
     char* name;
+    PkgConfig* config;
     Map* namespaces;
     Map* pkc_by_name;
 };

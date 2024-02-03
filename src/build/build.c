@@ -26,7 +26,9 @@ int cmd_build(int argc, char *argv[]) {
                 sprintf(char_buf, "File not found: '%s'", arg);
                 die(char_buf);
             }
-            array_push(vo_files, arg);
+            char *fullpath = al(alc, VOLT_PATH_MAX);
+            get_fullpath(arg, fullpath);
+            array_push(vo_files, fullpath);
             continue;
         }
         if (!is_dir(arg)) {
@@ -71,11 +73,15 @@ int cmd_build(int argc, char *argv[]) {
     if (main_dir)
         pkc_set_dir(pkc_main, main_dir);
 
-    Nsc* nsc_main = nsc_try_load(pkc_main, "main");
+    Nsc* nsc_main = nsc_load(pkc_main, "main", false);
     if(!nsc_main) {
         nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
     }
     b->nsc_main = nsc_main;
+
+    // Load core dependencies
+    Pkc* vlt = pkc_load_pkc(pkc_main, "volt", NULL);
+    Nsc* io = nsc_load(vlt, "io", true);
 
     // Build
     usize start = microtime();
@@ -116,7 +122,7 @@ void parse_err(Chunk *chunk, char *msg) {
 }
 
 void cmd_build_help() {
-    printf("\n# volt build {.vo-file|dir} [{more .vo-files}] -o {outpath}\n");
+    printf("\n# volt build {.vo-file|config-dir} [{more .vo-files}] -o {outpath}\n");
 
     // printf(" --clean -c          clear cache\n");
     // printf(" --debug -d          generate debug info\n");

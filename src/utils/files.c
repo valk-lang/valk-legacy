@@ -179,9 +179,9 @@ char *get_binary_dir() {
     // Remove executable name
     int i = strlen(buf);
     while (i > 0) {
-        i--;
-        char ch = buf[i];
+        char ch = buf[--i];
         if (ch == '/' || ch == '\\') {
+            i++;
             break;
         }
     }
@@ -221,6 +221,7 @@ char *get_storage_path() {
 
 Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     Array *result = array_make(alc, 2);
+    int dir_len = strlen(dir);
 
 #ifdef WIN32
     char pattern[VOLT_PATH_MAX];
@@ -233,10 +234,11 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
         do {
             bool is_dir = data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
             bool is_file = !is_dir;
-            if (dirs && is_dir) {
-                array_push(result, dups(alc, data.cFileName));
-            } else if (files && is_file) {
-                array_push(result, dups(alc, data.cFileName));
+            if ((dirs && is_dir) || (files && is_file)) {
+                char *path = al(alc, dir_len + strlen(data.cFileName) + 1);
+                strcpy(path, dir);
+                strcat(path, data.cFileName);
+                array_push(result, path);
             }
         } while (FindNextFile(hFind, &data));
         FindClose(hFind);
@@ -252,9 +254,9 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
             if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
                 continue;
             }
-            char *path = malloc(strlen(dir) + strlen(ent->d_name) + 2);
+
+            char *path = al(alc, dir_len + strlen(ent->d_name) + 1);
             strcpy(path, dir);
-            strcat(path, "/");
             strcat(path, ent->d_name);
 
             bool is_dir = false;
@@ -272,12 +274,9 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
                 is_file = (s.st_mode & S_IFREG) ? true : false;
             }
 #endif
-            if (dirs && is_dir) {
-                array_push(result, dups(alc, ent->d_name));
-            } else if (files && is_file) {
-                array_push(result, dups(alc, ent->d_name));
+            if ((dirs && is_dir) || (files && is_file)) {
+                array_push(result, path);
             }
-            free(path);
         }
         closedir(d);
     } else {
