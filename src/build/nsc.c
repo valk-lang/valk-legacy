@@ -49,7 +49,8 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
     Array* files = get_subfiles(b->alc, dir, false, true);
     for(int i = 0; i < files->length; i++) {
         char* path = array_get_index(files, i);
-        fc_make(nsc, path);
+        if(ends_with(path, ".vo"))
+            fc_make(nsc, path);
     }
 
     return nsc;

@@ -11,6 +11,7 @@ void parse_err(Chunk *chunk, char *msg);
 Pkc* pkc_make(Allocator* alc, Build* b, char* name_suggestion);
 void pkc_set_dir(Pkc* pkc, char* dir);
 Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk);
+Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk);
 
 Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir);
 Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist);
@@ -105,6 +106,8 @@ struct Pkc {
     PkgConfig* config;
     Map* namespaces;
     Map* pkc_by_name;
+    Array* header_dirs;
+    Map* headers_by_fn;
 };
 struct Chunk {
     Build* b;

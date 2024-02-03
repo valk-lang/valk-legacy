@@ -30,6 +30,7 @@ enum IDF {
     idf_func,
     idf_decl,
     idf_nsc,
+    idf_scope,
 };
 
 enum TYPES {

@@ -67,14 +67,15 @@ char* cfg_get_nsc_dir(PkgConfig *cfg, char *name, Allocator* alc) {
 }
 
 Array* cfg_get_header_dirs(PkgConfig *cfg, Allocator* alc, char* pkg_dir) {
-    const cJSON *headers = cJSON_GetObjectItemCaseSensitive(cfg->json, "headers");
-    if (!headers)
-        return NULL;
-    cJSON *dirs = cJSON_GetObjectItemCaseSensitive(headers, "dirs");
-    if (!dirs)
-        return NULL;
 
     Array* result = array_make(alc, 10);
+
+    const cJSON *headers = cJSON_GetObjectItemCaseSensitive(cfg->json, "headers");
+    if (!headers)
+        return result;
+    cJSON *dirs = cJSON_GetObjectItemCaseSensitive(headers, "dirs");
+    if (!dirs)
+        return result;
 
     char fullpath[VOLT_PATH_MAX];
     cJSON *cdir = dirs->child;

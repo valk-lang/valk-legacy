@@ -97,4 +97,18 @@ void stage_1_header(Fc* fc){
     if(t != tok_string) {
         parse_err(fc->chunk_parse, "Expected a header name here wrapped in double-quotes");
     }
+
+    Pkc *pkc = fc->nsc->pkc;
+    Fc *hfc = pkc_load_header(pkc, fn, fc->chunk_parse);
+
+    tok_expect(fc, "as", true, false);
+
+    char* name = tok(fc, true, false, true);
+    if(!is_valid_varname(name)) {
+        sprintf(b->char_buf, "Invalid name: '%s'", name);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    Idf* idf = idf_make(b->alc, idf_scope, hfc->scope);
+    scope_set_idf(fc->scope, name, idf, fc);
 }

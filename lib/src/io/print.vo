@@ -1,0 +1,5 @@
+
+header "sys" as sys
+
+fn print(str: void) {
+}
