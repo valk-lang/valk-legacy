@@ -3,7 +3,8 @@
 
 This project is a work in progress 👏
 
-Volt is a programming language aimed to be fast & simple at the same time. You can write both high & low level code. You can choose to use the GC or not or 50/50. But unlike other languages, the volt GC is non-blocking. 
+Volt is a programming language aimed to be fast & simple at the same time. You can write both high & low level code. You can choose to use the GC or not or 50/50. In other words, Volt provides choice. Some want performance, others want safety and fast development time. You choose.
 
-All-in-all, we want a language that can be used for anything and feels fast to work in. For some performance is paramount, others want safety and others want fast development. Volt lets you do your thing.
+That being said, the language defaults towards safety. 😇
 
+Features: Non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, Using c-libraries.
