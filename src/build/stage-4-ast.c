@@ -87,6 +87,6 @@ void ast_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
         char *tkn = tok(fc, false, false, true);
     }
 
-    sprintf(b->char_buf, "We know what this is, but it cannot be used inside a function. (identifier-type:%d)", idf->type);
+    sprintf(b->char_buf, "This cannot be used inside a function. (identifier-type:%d)", idf->type);
     parse_err(chunk, b->char_buf);
 }

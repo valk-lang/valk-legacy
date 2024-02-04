@@ -3,11 +3,11 @@
 
 void chunk_lex_start(Chunk *chunk) {
     unsigned long start = microtime();
-    chunk_lex(chunk, -1, NULL, NULL, NULL);
+    chunk_lex(chunk, -1, NULL, NULL, NULL, NULL);
     chunk->b->time_lex += microtime() - start;
 }
 
-void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col) {
+void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col, int *err_col_end) {
     //
     char *content = chunk->content;
     int length = chunk->length;
@@ -47,6 +47,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             *err_content_i = i;
             *err_line = line;
             *err_col = col;
+            *err_col_end = col + (i + 1 - i_last);
             return;
         }
         if (ch == '\0')

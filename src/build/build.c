@@ -140,20 +140,31 @@ void parse_err(Chunk *chunk, char *msg) {
     char *content = chunk->content;
     int line = chunk->line;
     int col = chunk->col;
+    int col_end = chunk->col;
     int i = 0;
-    chunk_lex(chunk, chunk->i, &i, &line, &col);
+    chunk_lex(chunk, chunk->i, &i, &line, &col, &col_end);
+    int len = col_end > col ? col_end - col : 1;
+    // printf("len:%d\n", len);
+
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);
     printf("# Error: %s\n", msg);
-    int spaces = (col > 10) ? 0 : (10 - col);
-    i -= 10 - spaces;
-    printf("###################\n");
+    int spaces = (col >= 10) ? 0 : (10 - col);
+    i -= len + (10 - spaces) - 1;
+    int x = len + 18;
+    while (x-- > 0)
+        printf("#");
+    printf("\n");
     while (spaces-- > 0)
         printf(" ");
-    int x = 0;
-    while (content[i] != 0 && content[i] != '\n' && x++ < 20)
+    x = 0;
+    while (content[i] != 0 && content[i] != '\n' && x++ < (14 + len))
         printf("%c", content[i++]);
-    printf("\n######## ^ ########\n");
+    printf("\n######## ");
+    x = len;
+    while (x-- > 0)
+        printf("^");
+    printf(" ########\n");
     exit(1);
 }
 
