@@ -9,6 +9,8 @@ Type* type_gen_class(Allocator* alc, Build* b, Class* class);
 
 struct Type {
     Class* class;
+    Array* func_args;
+    Type* func_rett;
     int type;
     int size;
     bool nullable;

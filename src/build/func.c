@@ -3,9 +3,10 @@
 
 Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
     Func* f = al(alc, sizeof(Func));
-    f->fc = fc;
     f->name = name;
     f->export_name = export_name;
+    f->b = fc->b;
+    f->fc = fc;
     f->scope = scope_make(alc, fc->scope);
     f->chunk_args = NULL;
     f->chunk_rett = NULL;

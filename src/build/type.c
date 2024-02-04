@@ -6,6 +6,8 @@ Type* type_make(Allocator* alc, int type) {
     t->type = type;
     t->size = 0;
     t->class = NULL;
+    t->func_args = NULL;
+    t->func_rett = NULL;
     return t;
 }
 
@@ -40,9 +42,16 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
     return NULL;
 }
 
-Type* type_gen_class(Allocator* alc, Build* b, Class* class) {
+Type* type_gen_class(Allocator* alc, Class* class) {
     Type* t = type_make(alc, type_struct);
     t->class = class;
-    t->size = b->ptr_size;
+    t->size = class->b->ptr_size;
+    return t;
+}
+Type* type_gen_func(Allocator* alc, Func* func) {
+    Type* t = type_make(alc, type_func);
+    t->func_rett = func->rett;
+    t->func_args = func->args->values;
+    t->size = func->b->ptr_size;
     return t;
 }

@@ -1,5 +1,5 @@
 
-enum TOKENS {
+enum LEX_TOKENS {
     tok_eof,
     tok_none,
     tok_space,
@@ -40,6 +40,7 @@ enum TYPES {
     type_struct,
     type_int,
     type_float,
+    type_func,
 };
 
 enum CLASSTYPES {
@@ -48,4 +49,16 @@ enum CLASSTYPES {
     ct_ptr,
     ct_int,
     ct_float,
+};
+
+enum VALUES {
+    v_decl,
+    v_class_pa,
+    v_ptrv,
+    v_global,
+    v_func_ptr,
+};
+
+enum TOKENS {
+    t_assign,
 };

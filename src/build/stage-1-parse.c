@@ -137,7 +137,7 @@ void stage_1_class(Fc *fc, int type, int act) {
 
     tok_expect(fc, "{", true, true);
 
-    Class* class = class_make(b->alc);
+    Class* class = class_make(b->alc, b);
     class->name = name;
     class->body = chunk_clone(b->alc, fc->chunk_parse);
 

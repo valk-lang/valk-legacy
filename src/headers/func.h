@@ -8,9 +8,10 @@ Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
 
 struct Func {
-    Fc* fc;
     char* name;
     char* export_name;
+    Build *b;
+    Fc* fc;
     Scope* scope;
     //
     Chunk* chunk_args;

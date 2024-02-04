@@ -24,6 +24,10 @@ char tok_id_next(Fc* fc) {
     Chunk* ch = fc->chunk_parse;
     return ch->tokens[ch->i];
 }
+char tok_read_byte(Fc* fc, int offset) {
+    Chunk* ch = fc->chunk_parse;
+    return ch->tokens[ch->i + offset];
+}
 
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool update) {
     int x = chunk->i;

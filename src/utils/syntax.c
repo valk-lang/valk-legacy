@@ -198,3 +198,9 @@ bool str_is(char* tkn, char* comp) {
     }
     return true;
 }
+
+bool str_in(char* tkn, char* comp) {
+    char buf[256];
+    sprintf(buf, ",%s,", tkn);
+    return strstr(comp, buf);
+}

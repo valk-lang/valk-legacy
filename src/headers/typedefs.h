@@ -25,8 +25,15 @@ typedef struct FuncArg FuncArg;
 typedef struct Scope Scope;
 typedef struct Idf Idf;
 typedef struct Type Type;
-typedef struct Value Value;
 typedef struct Decl Decl;
 typedef struct Class Class;
+typedef struct ClassProp ClassProp;
+// Tokens
+typedef struct Token Token;
+// Values
+typedef struct Value Value;
+typedef struct VPair VPair;
+typedef struct VFuncPtr VFuncPtr;
+
 
 #endif
