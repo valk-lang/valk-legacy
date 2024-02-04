@@ -144,7 +144,8 @@ void parse_err(Chunk *chunk, char *msg) {
     int i = 0;
     chunk_lex(chunk, chunk->i, &i, &line, &col, &col_end);
     int len = col_end > col ? col_end - col : 1;
-    // printf("len:%d\n", len);
+    if (len > 50)
+        len = 50;
 
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);
