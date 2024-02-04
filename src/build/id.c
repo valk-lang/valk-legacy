@@ -57,6 +57,10 @@ Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
             Nsc* ns = get_volt_nsc(fc->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         }
+        if(str_is(name, "print") || str_is(name, "println")) {
+            Nsc* ns = get_volt_nsc(fc->b, "io");
+            idf = scope_find_idf(ns->scope, name, true);
+        }
     }
 
     if(!idf && must_exist) {
