@@ -4,7 +4,7 @@
 
 #include "typedefs.h"
 
-Class* class_make(Allocator* alc, Build* b);
+Class* class_make(Allocator* alc, Build* b, int type);
 
 struct Class {
     char* name;
@@ -12,6 +12,7 @@ struct Class {
     Chunk* body;
     Map* props;
     Map* funcs;
+    int type;
     int size;
 };
 struct ClassProp {

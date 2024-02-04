@@ -18,14 +18,18 @@ void stage_types(Fc *fc) {
     Array* funcs = fc->funcs;
     for(int i = 0; i < funcs->length; i++) {
         Func* func = array_get_index(funcs, i);
-        stage_types_func(func);
+        stage_types_func(fc, func);
     }
 }
 
-void stage_types_func(Func* func) {
+void stage_types_func(Fc* fc, Func* func) {
 
-    Fc *fc = func->fc;
     Build *b = fc->b;
+
+    if(func->class && !func->is_static) {
+        FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
+        map_set(func->args, "this", arg);
+    }
 
     if(func->chunk_args) {
         *fc->chunk_parse = *func->chunk_args;

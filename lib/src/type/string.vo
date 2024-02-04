@@ -8,10 +8,10 @@ pointer String {
 		return @ptrv(this @as ptr + sizeof(uxx), u8, 0) == 1#u8;
 	}
 
-    fn data() {
+    fn data() ptr {
         return this @as ptr + sizeof(uxx) + 2;
     }
-    fn bytes() {
+    fn bytes() uint {
 		return @ptrv(this @as ptr, uint);
     }
 }

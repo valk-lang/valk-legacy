@@ -40,7 +40,8 @@ void stage_4_ir(Fc *fc);
 void stage_5_objects(Build *b);
 void stage_6_link(Build *b);
 // Sub stages
-void stage_types_func(Func *func);
+void stage_types_func(Fc* fc, Func *func);
+void stage_props_class(Fc* fc, Class *class);
 void read_ast(Fc *fc, Scope *scope, bool single_line);
 //
 

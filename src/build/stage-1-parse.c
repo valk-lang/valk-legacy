@@ -57,6 +57,10 @@ void stage_parse(Fc *fc) {
             stage_1_class(fc, ct_float, act);
             continue;
         }
+        if(str_is(tkn, "boolean")) {
+            stage_1_class(fc, ct_bool, act);
+            continue;
+        }
 
         sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
         parse_err(chunk, b->char_buf);
@@ -81,25 +85,7 @@ void stage_1_func(Fc* fc, int act) {
         b->func_main = func;
     }
 
-    tok_expect(fc, "(", true, false);
-    func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
-    skip_body(fc);
-
-    char *tkn = tok(fc, true, true, true);
-    char* end = fc->is_header ? ";" : "{";
-
-    if(!str_is(tkn, end)) {
-        // Has return type
-        tok_back(fc);
-        func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_type(fc);
-        tok_expect(fc, end, true, true);
-    }
-
-    if(!fc->is_header) {
-        func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_body(fc);
-    }
+    parse_handle_func_args(fc, func);
 }
 
 void stage_1_header(Fc* fc){
@@ -137,7 +123,7 @@ void stage_1_class(Fc *fc, int type, int act) {
 
     tok_expect(fc, "{", true, true);
 
-    Class* class = class_make(b->alc, b);
+    Class* class = class_make(b->alc, b, type);
     class->name = name;
     class->body = chunk_clone(b->alc, fc->chunk_parse);
 

@@ -51,10 +51,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         char *tkn = tok(fc, true, true, true);
         int t = chunk->token;
 
-        if (tkn[0] == 0) {
-            sprintf(b->char_buf, "Unexpected end of file: '%s'", tkn);
-            parse_err(chunk, b->char_buf);
-        }
         if (tkn[0] == ';')
             continue;
         if (t == tok_scope_close)

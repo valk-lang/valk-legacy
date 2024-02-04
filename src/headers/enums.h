@@ -24,6 +24,9 @@ enum ACCESS {
     act_private_fc,
     act_private_nsc,
     act_private_pkc,
+    act_readonly_fc,
+    act_readonly_nsc,
+    act_readonly_pkc,
 };
 
 enum IDF {
@@ -49,6 +52,7 @@ enum CLASSTYPES {
     ct_ptr,
     ct_int,
     ct_float,
+    ct_bool,
 };
 
 enum VALUES {

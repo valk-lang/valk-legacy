@@ -155,7 +155,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
         if (ch >= 48 && ch <= 57) {
             tokens[o++] = tok_number;
             tokens[o++] = ch;
-            // a-zA-Z0-9_
+            // 0-9
             char ch = content[i];
             while (ch >= 48 && ch <= 57) {
                 tokens[o++] = ch;

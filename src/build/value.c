@@ -66,7 +66,7 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
                     sprintf(b->char_buf, "Unknown class property/function: '%s'", tkn);
                     parse_err(chunk, b->char_buf);
                 }
-                die("TODO: vgen-class-func");
+                v = vgen_func_ptr(alc, func, v);
             }
             t = tok_id_next(fc);
             continue;
