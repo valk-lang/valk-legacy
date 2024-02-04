@@ -9,10 +9,14 @@ void chunk_lex_start(Chunk *chunk) {
 
 void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col) {
     //
-    char* content = chunk->content;
+    char *content = chunk->content;
     int length = chunk->length;
-    Fc* fc = chunk->fc;
-    Build* b = fc->b;
+    Fc *fc = chunk->fc;
+    Build *b = fc->b;
+
+    if (fc && b->verbose > 2 && err_token_i == -1) {
+        printf("Lex: %s\n", fc->path);
+    }
 
     int i = 0;
     int o = 0;
@@ -34,45 +38,45 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     int col = 0;
     int i_last = 0;
 
-    Str* tokens_str = str_make(chunk->alc, length * 3 + 1024);
-    char* tokens = tokens_str->data;
+    Str *tokens_str = str_make(chunk->alc, length * 3 + 1024);
+    char *tokens = tokens_str->data;
 
-    while(true) {
+    while (true) {
         const char ch = content[i];
-        if(err_token_i > -1 && o >= err_token_i) {
+        if (err_token_i > -1 && o >= err_token_i) {
             *err_content_i = i;
             *err_line = line;
             *err_col = col;
             return;
         }
-        if(ch == '\0') 
+        if (ch == '\0')
             break;
         i++;
         col += i - i_last;
         i_last = i;
         // Make sure we have enough memory
-        if(tokens_str->mem_size - o < 512) {
+        if (tokens_str->mem_size - o < 512) {
             tokens_str->length = o;
             str_increase_memsize(tokens_str, tokens_str->mem_size * 2);
             tokens = tokens_str->data;
         }
         // Spaces, newlines & comments
-        if(ch <= 32 || (ch == '/' && content[i] == '/')) {
+        if (ch <= 32 || (ch == '/' && content[i] == '/')) {
             bool has_newline = false;
             i--;
-            while(true) {
+            while (true) {
                 char ch = content[i++];
-                if(ch == ' ' || ch == '\t') {
+                if (ch == ' ' || ch == '\t') {
                     continue;
                 }
-                if(ch == '\n') {
+                if (ch == '\n') {
                     has_newline = true;
                     i_last = i;
                     col = 0;
                     line++;
                     continue;
                 }
-                if(ch == '/' && content[i] == '/') {
+                if (ch == '/' && content[i] == '/') {
                     ch = content[++i];
                     while (ch != '\n' && ch != 0) {
                         ch = content[++i];
@@ -82,36 +86,35 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                     break;
                 if (ch <= 32)
                     continue;
-                i--;
                 break;
             }
-
+            i--;
             tokens[o++] = has_newline ? tok_newline : tok_space;
             tokens[o++] = 0;
             continue;
         }
 
         // Compile conditions
-        if(ch == '#' && (o < 2 || tokens[o - 2] == tok_newline)) {
+        if (ch == '#' && (o < 2 || tokens[o - 2] == tok_newline)) {
             int x = i;
             char ch = content[x];
-            while(ch >= 97 && ch <= 122) {
+            while (ch >= 97 && ch <= 122) {
                 token[token_i++] = ch;
                 ch = content[++x];
             }
             token[token_i] = '\0';
             token_i = 0;
-            if(str_is(token, "if")) {
+            if (str_is(token, "if")) {
                 tokens[o++] = tok_cc;
-                strcpy((char*)((intptr_t)tokens + o), token);
+                strcpy((char *)((intptr_t)tokens + o), token);
                 o += 3;
                 cc_depth++;
                 i = x;
                 continue;
             }
-            if(str_is(token, "elif") || str_is(token, "else") || str_is(token, "end")) {
+            if (str_is(token, "elif") || str_is(token, "else") || str_is(token, "end")) {
                 tokens[o++] = tok_cc;
-                strcpy((char*)((intptr_t)tokens + o), token);
+                strcpy((char *)((intptr_t)tokens + o), token);
                 o += (str_is(token, "end")) ? 4 : 5;
                 if (str_is(token, "end")) {
                     cc_depth--;
@@ -126,14 +129,14 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             }
         }
         // ID: a-zA-Z_
-        if((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95 || ch == '@') {
-            if(ch == '@') {
+        if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95 || ch == '@') {
+            if (ch == '@') {
                 tokens[o++] = tok_at_word;
             } else {
                 tokens[o++] = tok_pos;
-                *(int*)((intptr_t)tokens + o) = line;
+                *(int *)((intptr_t)tokens + o) = line;
                 o += 4;
-                *(int*)((intptr_t)tokens + o) = col;
+                *(int *)((intptr_t)tokens + o) = col;
                 o += 4;
                 tokens[o++] = tok_id;
             }
@@ -161,16 +164,16 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             continue;
         }
         // Strings
-        if(ch == '"') {
+        if (ch == '"') {
             tokens[o++] = tok_string;
             char ch = content[i];
-            while(ch != '"') {
+            while (ch != '"') {
                 tokens[o++] = ch;
-                if(ch == '\\') {
+                if (ch == '\\') {
                     ch = content[++i];
                     tokens[o++] = ch;
                 }
-                if(ch == 0){
+                if (ch == 0) {
                     chunk->i = i;
                     sprintf(b->char_buf, "Missing string closing tag '\"', compiler reached end of file");
                     parse_err(chunk, b->char_buf);
@@ -187,13 +190,13 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             i++;
             continue;
         }
-        if(ch == '\'') {
+        if (ch == '\'') {
             char ch = content[i++];
-            if(ch == '\\') {
+            if (ch == '\\') {
                 ch = content[i++];
                 ch = backslash_char(ch);
             }
-            if(content[i++] != '\'') {
+            if (content[i++] != '\'') {
                 chunk->i = i;
                 sprintf(b->char_buf, "Missing character closing tag ('), found '%c'", content[i - 1]);
                 parse_err(chunk, b->char_buf);
@@ -204,12 +207,12 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             continue;
         }
         // Scopes
-        if(ch == '(' || ch == '[' || ch == '{' || (ch == '<' && content[i] == '{')) {
+        if (ch == '(' || ch == '[' || ch == '{' || (ch == '<' && content[i] == '{')) {
             tokens[o++] = tok_scope_open;
             int index = o;
             o += sizeof(int);
             tokens[o++] = ch;
-            if(ch == '<') {
+            if (ch == '<') {
                 tokens[o++] = content[i++];
             }
             tokens[o++] = '\0';
@@ -218,14 +221,14 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             depth++;
             continue;
         }
-        if(ch == ')' || ch == ']' || ch == '}') {
+        if (ch == ')' || ch == ']' || ch == '}') {
             depth--;
-            if(depth < 0) {
+            if (depth < 0) {
                 chunk->i = i;
                 sprintf(b->char_buf, "Unexpected closing tag '%c'", ch);
                 parse_err(chunk, b->char_buf);
             }
-            if(closer_chars[depth] != ch) {
+            if (closer_chars[depth] != ch) {
                 chunk->i = i;
                 sprintf(b->char_buf, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
                 parse_err(chunk, b->char_buf);
@@ -234,17 +237,17 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             tokens[o++] = ch;
             tokens[o++] = '\0';
             int offset = closer_indexes[depth];
-            *(int*)(&tokens[offset]) = o;
+            *(int *)(&tokens[offset]) = o;
             continue;
         }
         // Operators
         bool op2 = false;
         if (ch == '=' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '!' || ch == '<' || ch == '>') {
             const char ch2 = content[i];
-            if(ch2 == '=')
+            if (ch2 == '=')
                 op2 = true;
-            else if((ch == '+' && ch2 == '+') || (ch == '-' && ch2 == '-') || (ch == '!' && ch2 == '!') || (ch == '!' && ch2 == '?') || (ch == '>' && ch2 == '>') || (ch == '<' && ch2 == '<')) {
-                if(ch == '-' && content[i + 1] == '-') {
+            else if ((ch == '+' && ch2 == '+') || (ch == '-' && ch2 == '-') || (ch == '!' && ch2 == '!') || (ch == '!' && ch2 == '?') || (ch == '>' && ch2 == '>') || (ch == '<' && ch2 == '<')) {
+                if (ch == '-' && content[i + 1] == '-') {
                     tokens[o++] = tok_op3;
                     tokens[o++] = ch;
                     tokens[o++] = ch;
@@ -255,18 +258,18 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                 }
                 op2 = true;
             }
-        } else if(ch == '?') {
+        } else if (ch == '?') {
             const char ch2 = content[i];
-            if(ch2 == '?')
+            if (ch2 == '?')
                 op2 = true;
-            else if(ch2 == '!')
+            else if (ch2 == '!')
                 op2 = true;
-        } else if(ch == '&' && content[i] == '&') {
+        } else if (ch == '&' && content[i] == '&') {
             op2 = true;
-        } else if(ch == '|' && content[i] == '|') {
+        } else if (ch == '|' && content[i] == '|') {
             op2 = true;
         }
-        if(op2) {
+        if (op2) {
             tokens[o++] = tok_op2;
             tokens[o++] = ch;
             tokens[o++] = content[i];
@@ -288,11 +291,11 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
         }
 
         chunk->i = i;
-        sprintf(b->char_buf, "Unexpected character '%c' (byte:%d)", ch, ch);
+        sprintf(b->char_buf, "Unexpected character '%c' (byte:%d, pos:%d)", ch, ch, i);
         parse_err(chunk, b->char_buf);
     }
 
-    if(depth > 0) {
+    if (depth > 0) {
         chunk->i = i;
         sprintf(b->char_buf, "Missing closing tag '%c'", closer_chars[depth - 1]);
         parse_err(chunk, b->char_buf);

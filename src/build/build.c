@@ -5,24 +5,24 @@ void cmd_build_help();
 
 int cmd_build(int argc, char *argv[]) {
 
-    Allocator* alc = alc_make();
-    char* char_buf = al(alc, 10 * 1024);
-    Str* str_buf = str_make(alc, 100 * 1024);
+    Allocator *alc = alc_make();
+    char *char_buf = al(alc, 10 * 1024);
+    Str *str_buf = str_make(alc, 100 * 1024);
 
     // Parse args
-    Map* options = map_make(alc);
-    Array* args = array_make(alc, 20);
-    Array* has_value = array_make(alc, 10);
+    Map *options = map_make(alc);
+    Array *args = array_make(alc, 20);
+    Array *has_value = array_make(alc, 10);
     array_push(has_value, "-o");
     parse_argv(argv, argc, has_value, args, options);
 
     // Validate args
-    char* main_dir = NULL;
-    Array* vo_files = array_make(alc, 20);
-    for(int i = 2; i < args->length; i++) {
-        char* arg = array_get_index(args, i);
-        if(ends_with(arg, ".vo")) {
-            if(!file_exists(arg)) {
+    char *main_dir = NULL;
+    Array *vo_files = array_make(alc, 20);
+    for (int i = 2; i < args->length; i++) {
+        char *arg = array_get_index(args, i);
+        if (ends_with(arg, ".vo")) {
+            if (!file_exists(arg)) {
                 sprintf(char_buf, "File not found: '%s'", arg);
                 die(char_buf);
             }
@@ -39,17 +39,17 @@ int cmd_build(int argc, char *argv[]) {
             sprintf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
             die(char_buf);
         }
-        char* dir_buf = al(alc, VOLT_PATH_MAX);
+        char *dir_buf = al(alc, VOLT_PATH_MAX);
         get_fullpath(arg, dir_buf);
         main_dir = dir_buf;
     }
-    if(!main_dir && vo_files->length == 0) {
+    if (!main_dir && vo_files->length == 0) {
         cmd_build_help();
         return 1;
     }
 
     // Build
-    Build* b = al(alc, sizeof(Build));
+    Build *b = al(alc, sizeof(Build));
     b->alc = alc;
     b->alc_ast = alc_make();
     b->used_pkc_names = array_make(alc, 20);
@@ -69,28 +69,28 @@ int cmd_build(int argc, char *argv[]) {
 
     build_set_stages(b);
 
-    Pkc* pkc_main = pkc_make(alc, b, "main");
+    Pkc *pkc_main = pkc_make(alc, b, "main");
     b->pkc_main = pkc_main;
     if (main_dir)
         pkc_set_dir(pkc_main, main_dir);
 
-    Nsc* nsc_main = nsc_load(pkc_main, "main", false);
-    if(!nsc_main) {
+    Nsc *nsc_main = nsc_load(pkc_main, "main", false);
+    if (!nsc_main) {
         nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
     }
     b->nsc_main = nsc_main;
 
     // Load core dependencies
-    Pkc* vlt = pkc_load_pkc(pkc_main, "volt", NULL);
-    Nsc* io = nsc_load(vlt, "io", true);
-    Nsc* type = nsc_load(vlt, "type", true);
+    Pkc *vlt = pkc_load_pkc(pkc_main, "volt", NULL);
+    Nsc *io = nsc_load(vlt, "io", true);
+    Nsc *type = nsc_load(vlt, "type", true);
     b->pkc_volt = vlt;
 
     // Build
     usize start = microtime();
 
-    for(int i = 0; i < vo_files->length; i++) {
-        char* path = array_get_index(vo_files, i);
+    for (int i = 0; i < vo_files->length; i++) {
+        char *path = array_get_index(vo_files, i);
         fc_make(nsc_main, path);
     }
 
@@ -101,7 +101,7 @@ int cmd_build(int argc, char *argv[]) {
     stage_6_link(b);
 
     // Finish build
-    if(b->verbose > 0) {
+    if (b->verbose > 0) {
         printf("📃 LOC: %d\n", b->LOC);
         printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
         printf("⌚ Parse: %.3fs\n", (double)b->time_parse / 1000000);
@@ -115,13 +115,46 @@ int cmd_build(int argc, char *argv[]) {
     return 0;
 }
 
-void build_err(Build* b, char* msg) {
+void build_err(Build *b, char *msg) {
     printf("# Error: %s\n", msg);
     exit(1);
 }
 void parse_err(Chunk *chunk, char *msg) {
     printf("# Parse error\n");
-    build_err(chunk->b, msg);
+    Build *b = chunk->b;
+    Array *chunks = array_make(b->alc, 10);
+    Chunk *in = chunk;
+    while (in) {
+        array_push(chunks, in);
+        in = in->parent;
+    }
+    if (chunks->length > 1) {
+        int x = chunks->length;
+        printf("------------------------------\n");
+        while (--x >= 0) {
+            Chunk *ch = array_get_index(chunks, x);
+            printf("=> line: %d | col: %d | file: %s\n", ch->line, ch->col, ch->fc ? ch->fc->path : "(generated code)");
+        }
+        printf("------------------------------\n");
+    }
+    char *content = chunk->content;
+    int line = chunk->line;
+    int col = chunk->col;
+    int i = 0;
+    chunk_lex(chunk, chunk->i, &i, &line, &col);
+    printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
+    printf("# Line: %d | Col: %d\n", line, col);
+    printf("# Error: %s\n", msg);
+    int spaces = (col > 10) ? 0 : (10 - col);
+    i -= 10 - spaces;
+    printf("###################\n");
+    while (spaces-- > 0)
+        printf(" ");
+    int x = 0;
+    while (content[i] != 0 && content[i] != '\n' && x++ < 20)
+        printf("%c", content[i++]);
+    printf("\n######## ^ ########\n");
+    exit(1);
 }
 
 void cmd_build_help() {
