@@ -6,6 +6,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class);
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope);
 Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
+Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
 
 Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio) {
     Build *b = fc->b;
@@ -21,8 +22,13 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             v = value_handle_ptrv(alc,fc, scope);
         }
     } else if (t == tok_id) {
-        if (str_is(tkn, "...")) {
+        if (str_is(tkn, "sizeof")) {
+            tok_expect(fc, "(", false, false);
+            Type *type = read_type(fc, alc, scope, true);
+            tok_expect(fc, ")", true, true);
+            v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else {
+            // Identifiers
             Idf *idf = read_idf(fc, scope, tkn, true);
             v = value_handle_idf(alc, fc, scope, idf);
         }
@@ -92,7 +98,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
     }
 
     ///////////////////////
-    // TRAILING WORDS
+    // TRAILING WORDS & OPS
     ///////////////////////
 
     tkn = tok(fc, true, true, true);
@@ -135,8 +141,33 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
                 op = op_sub;
             else
                 break;
-            Value *right = read_value(alc, fc, scope, true, 10);
+            Value *right = read_value(alc, fc, scope, true, 20);
             v = value_handle_op(alc, fc, scope, v, right, op);
+            tkn = tok(fc, true, true, true);
+        }
+    }
+
+    if (prio == 0 || prio > 30) {
+        while (fc->chunk_parse->token == tok_op1 || fc->chunk_parse->token == tok_op2) {
+            char ch1 = tkn[0];
+            char ch2 = tkn[1];
+            int op;
+            if(ch1 == '=' && ch2 == '=')
+                op = op_eq;
+            else if(ch1 == '!' && ch2 == '=')
+                op = op_ne;
+            else if(ch1 == '<' && ch2 == '=')
+                op = op_lte;
+            else if(ch1 == '>' && ch2 == '=')
+                op = op_gte;
+            else if(ch1 == '<' && ch2 == 0)
+                op = op_lt;
+            else if(ch1 == '>' && ch2 == 0)
+                op = op_gt;
+            else
+                break;
+            Value *right = read_value(alc, fc, scope, true, 30);
+            v = value_handle_compare(alc, fc, scope, v, right, op);
             tkn = tok(fc, true, true, true);
         }
     }
@@ -257,11 +288,11 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
     tok_expect(fc, "(", false, false);
     // On
     Value *on = read_value(alc, fc, scope, true, 0);
+    if (on->rett->type != type_ptr) {
+        parse_err(fc->chunk_parse, "First argument of '@ptrv' must be a value of type 'ptr'");
+    }
     // Type
     tok_expect(fc, ",", true, true);
-    if (on->rett->type != type_ptr) {
-        parse_err(fc->chunk_parse, "You can only use 'ptrv' on values of type 'ptr'");
-    }
     Type *type = read_type(fc, alc, scope, true);
     if (type->type == type_void) {
         parse_err(fc->chunk_parse, "You cannot use 'void' type in @ptrv");
@@ -283,6 +314,11 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
 }
 
 Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
+    // TODO
+    return left;
+}
+
+Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
     // TODO
     return left;
 }

@@ -2,7 +2,7 @@
 #include "../all.h"
 
 Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
-    Value *v = al(alc, sizeof(Token));
+    Value *v = al(alc, sizeof(Value));
     v->type = type;
     v->item = item;
     v->rett = rett;

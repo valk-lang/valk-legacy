@@ -49,6 +49,18 @@ Type* type_gen_class(Allocator* alc, Class* class) {
     Type* t = type_make(alc, type_struct);
     t->class = class;
     t->size = class->b->ptr_size;
+
+    int ct = class->type;
+    if(ct == ct_bool) {
+        t->type = type_bool;
+    } else if (ct == ct_ptr) {
+        t->type = type_ptr;
+    } else if (ct == ct_int) {
+        t->type = type_int;
+    } else if (ct == ct_float) {
+        t->type = type_float;
+    }
+
     return t;
 }
 Type* type_gen_func(Allocator* alc, Func* func) {

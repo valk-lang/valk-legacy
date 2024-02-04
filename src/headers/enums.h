@@ -44,6 +44,7 @@ enum TYPES {
     type_int,
     type_float,
     type_func,
+    type_bool,
 };
 
 enum CLASSTYPES {
@@ -78,4 +79,11 @@ enum OPERATORS {
     op_mul,
     op_div,
     op_mod,
+    // Compare
+    op_eq,
+    op_ne,
+    op_lt,
+    op_gt,
+    op_lte,
+    op_gte,
 };
