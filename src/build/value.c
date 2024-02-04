@@ -18,6 +18,22 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
     if (t == tok_id) {
         Idf *idf = read_idf(fc, scope, tkn, true);
         v = value_handle_idf(fc, scope, idf);
+    } else if (t == tok_number || (t == tok_op1 && tok_read_byte(fc, 1) == '-')) {
+        bool negative = false;
+        if(t == tok_op1) {
+            negative = true;
+            tkn = tok(fc, true, false, true);
+            if(fc->chunk_parse->token != tok_number) {
+                sprintf(b->char_buf, "Invalid number: '%s'", tkn);
+                parse_err(chunk, b->char_buf);
+            }
+        }
+        char* num = tkn;
+        long int iv = 0;
+        iv = atoi(num);
+        if (negative)
+            iv *= -1;
+        v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
     }
 
     if(!v) {
@@ -116,18 +132,27 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
     int offset = arg_i;
 
-    while(arg_i < arg_types->length) {
-        Type* arg_type = array_get_index(arg_types, arg_i++);
-        Value* arg = read_value(fc, scope, true, 0);
-        type_check(fc->chunk_parse, arg_type, arg->rett);
-        array_push(args, arg);
-        char* tkn = tok(fc, true, true, true);
-        if(str_is(tkn, ","))
-            continue;
-        if(str_is(tkn, ")"))
-            break;
-        sprintf(b->char_buf, "Unexpected token in function arguments: '%s'\n", tkn);
-        parse_err(fc->chunk_parse, b->char_buf);
+    tok_skip_whitespace(fc);
+    if (tok_id_next(fc) == tok_scope_close) {
+        char *tkn = tok(fc, true, true, true);
+    } else {
+        // Read argument values
+        while (true) {
+            Value *arg = read_value(fc, scope, true, 0);
+            Type *arg_type = array_get_index(arg_types, arg_i++);
+            if (arg_type) {
+                type_check(fc->chunk_parse, arg_type, arg->rett);
+            }
+            array_push(args, arg);
+
+            char *tkn = tok(fc, true, true, true);
+            if (str_is(tkn, ","))
+                continue;
+            if (str_is(tkn, ")"))
+                break;
+            sprintf(b->char_buf, "Unexpected token in function arguments: '%s'\n", tkn);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
     }
 
     if(args->length > arg_types->length) {

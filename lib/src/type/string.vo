@@ -1,5 +1,5 @@
 
-// const:   {string_length:uint}-1-{...string bytes...}
+// const:   {string_length:uint}-1-{unused 1}{...string bytes...}
 // dynamic: {string_length:uint}-0-{age 1}-{...string bytes...}
 
 pointer String {
@@ -9,7 +9,9 @@ pointer String {
 	}
 
     fn data() {
+        return this @as ptr + sizeof(uxx) + 2;
     }
     fn bytes() {
+		return @ptrv(this @as ptr, uint);
     }
 }

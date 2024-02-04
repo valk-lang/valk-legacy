@@ -39,6 +39,10 @@ void stage_types_func(Func* func) {
 
             tok_expect(fc, ":", true, false);
             Type* type = read_type(fc, fc->alc, fc->scope, false);
+            if(type->type == type_void) {
+                sprintf(b->char_buf, "You cannot use void types for arguments");
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
 
             FuncArg* arg = func_arg_make(b->alc, type);
             map_set(func->args, name, arg);

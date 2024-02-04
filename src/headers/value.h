@@ -10,6 +10,7 @@ bool value_is_assignable(Value *v);
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Value *on, Array *args);
+Value *vgen_int(Allocator *alc, long int value, Type *type);
 
 struct Value {
     int type;
@@ -29,6 +30,9 @@ struct VFuncCall {
     Array *args;
     int line;
     int col;
+};
+struct VInt {
+    long int value;
 };
 
 #endif

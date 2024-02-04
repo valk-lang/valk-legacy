@@ -58,6 +58,14 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     t->size = func->b->ptr_size;
     return t;
 }
+Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
+    Nsc* nsc = get_volt_nsc(b, "type");
+    Idf* idf = scope_find_idf(nsc->scope, name, false);
+    if(idf && idf->type == idf_class) {
+        return type_gen_class(alc, idf->item);
+    }
+    return NULL;
+}
 
 bool type_compat(Type* t1, Type* t2, char* reason) {
     return true;

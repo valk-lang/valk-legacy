@@ -20,13 +20,27 @@ void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline) {
         parse_err(fc->chunk_parse, fc->b->char_buf);
     }
 }
+char tok_read_byte(Fc* fc, int offset) {
+    Chunk* ch = fc->chunk_parse;
+    return ch->tokens[ch->i + offset];
+}
 char tok_id_next(Fc* fc) {
     Chunk* ch = fc->chunk_parse;
     return ch->tokens[ch->i];
 }
-char tok_read_byte(Fc* fc, int offset) {
+char tok_id_next_ignore_spacing(Fc* fc) {
     Chunk* ch = fc->chunk_parse;
-    return ch->tokens[ch->i + offset];
+    int t = ch->tokens[ch->i];
+    if(t == tok_space || t == tok_newline) 
+        return ch->tokens[ch->i + 2];
+    return t;
+}
+void tok_skip_whitespace(Fc* fc) {
+    Chunk* ch = fc->chunk_parse;
+    int t = ch->tokens[ch->i];
+    if(t == tok_space || t == tok_newline) {
+        ch->i += 2;
+    }
 }
 
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool update) {

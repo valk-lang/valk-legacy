@@ -22,3 +22,9 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
     item->args = args;
     return value_make(alc, v_func_call, item, on->rett->func_rett);
 }
+
+Value *vgen_int(Allocator *alc, long int value, Type *type) {
+    VInt *item = al(alc, sizeof(VInt));
+    item->value = value;
+    return value_make(alc, v_int, item, type);
+}

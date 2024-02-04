@@ -49,7 +49,7 @@ void stage_parse(Fc *fc) {
             stage_1_class(fc, ct_ptr, act);
             continue;
         }
-        if(str_is(tkn, "int")) {
+        if(str_is(tkn, "integer")) {
             stage_1_class(fc, ct_int, act);
             continue;
         }
