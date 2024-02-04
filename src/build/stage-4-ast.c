@@ -55,7 +55,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             sprintf(b->char_buf, "Unexpected end of file: '%s'", tkn);
             parse_err(chunk, b->char_buf);
         }
-
+        if (tkn[0] == ';')
+            continue;
         if (t == tok_scope_close)
             break;
 
@@ -69,10 +70,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         Value* left = read_value(fc, scope, true, 0);
 
-        if(value_is_assignable(left)) {
+        t = tok_id_next(fc);
+        if((t == tok_op1 || t == tok_op2)) {
             tkn = tok(fc, true, true, true);
-            t = chunk->token;
-            if((t == tok_op1 || t == tok_op2) && str_in(tkn, ",=,+=,-=,*=,/=,")) {
+            if(str_in(tkn, ",=,+=,-=,*=,/=,")) {
+                if (!value_is_assignable(left)) {
+                    parse_err(chunk, "Cannot assign to left side");
+                }
 
                 Value *right = read_value(fc, scope, true, 0);
 
@@ -85,7 +89,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         }
 
         //
-        sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
-        parse_err(chunk, b->char_buf);
+        array_push(scope->ast, token_make(alc, t_statement, left));
     }
 }

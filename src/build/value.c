@@ -25,9 +25,10 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
         parse_err(chunk, b->char_buf);
     }
 
-    while(tok_id_next(fc) == tok_char) {
+    t = tok_id_next(fc);
+    while(t == tok_char || t == tok_scope_open) {
         Type* rett = v->rett;
-        char ch = tok_read_byte(fc, 1);
+        char ch = tok_read_byte(fc, t == tok_scope_open ? (sizeof(int) + 1) : 1);
         if(ch == '.') {
             tok(fc, false, false, true);
 
@@ -50,11 +51,13 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
                 }
                 die("TODO: vgen-class-func");
             }
+            t = tok_id_next(fc);
             continue;
         }
         if(ch == '(') {
             tok(fc, false, false, true);
             v = value_func_call(alc, fc, scope, v);
+            t = tok_id_next(fc);
             continue;
         }
         break;
@@ -92,6 +95,51 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     if (ont->type != type_func) {
         parse_err(fc->chunk_parse, "Function call on non-function type");
     }
+    
+    Build* b = fc->b;
+    Array* arg_types = ont->func_args;
+    Type *rett = ont->func_rett;
+
+    if (!arg_types || !rett) {
+        sprintf(b->char_buf, "Function pointer value is missing function type information (compiler bug)\n");
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    Array* args = array_make(alc, arg_types->length + 1);
+    int arg_i = 0;
+    if(on->type == v_func_ptr) {
+        VFuncPtr* fptr = on->item;
+        if(fptr->first_arg) {
+            arg_i++;
+            array_push(args, fptr->first_arg);
+        }
+    }
+    int offset = arg_i;
+
+    while(arg_i < arg_types->length) {
+        Type* arg_type = array_get_index(arg_types, arg_i++);
+        Value* arg = read_value(fc, scope, true, 0);
+        type_check(fc->chunk_parse, arg_type, arg->rett);
+        array_push(args, arg);
+        char* tkn = tok(fc, true, true, true);
+        if(str_is(tkn, ","))
+            continue;
+        if(str_is(tkn, ")"))
+            break;
+        sprintf(b->char_buf, "Unexpected token in function arguments: '%s'\n", tkn);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    if(args->length > arg_types->length) {
+        sprintf(b->char_buf, "Too many arguments. Expected: %d, Found: %d\n", arg_types->length - offset, args->length - offset);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+    if(args->length < arg_types->length) {
+        sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", arg_types->length - offset, args->length - offset);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    return vgen_func_call(alc, on, args);
 }
 
 bool value_is_assignable(Value *v) {

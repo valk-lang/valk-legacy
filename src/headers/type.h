@@ -5,8 +5,11 @@
 #include "typedefs.h"
 
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool allow_newline);
+Type* type_gen_void(Allocator* alc);
 Type* type_gen_class(Allocator* alc, Class* class);
 Type* type_gen_func(Allocator* alc, Func* func);
+bool type_compat(Type* t1, Type* t2, char* reason);
+void type_check(Chunk* chunk, Type* t1, Type* t2);
 
 struct Type {
     Class* class;

@@ -59,7 +59,7 @@ void stage_types_func(Func* func) {
                 continue;
             }
             if(!str_is(tkn, ")")) {
-                sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
+                sprintf(b->char_buf, "Unexpected token: '%s', expected ')'", tkn);
                 parse_err(fc->chunk_parse, b->char_buf);
             }
         }
@@ -68,5 +68,7 @@ void stage_types_func(Func* func) {
         *fc->chunk_parse = *func->chunk_rett;
         Type *type = read_type(fc, fc->alc, fc->scope, false);
         func->rett = type;
+    } else {
+        func->rett = type_gen_void(fc->alc);
     }
 }

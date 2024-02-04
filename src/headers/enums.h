@@ -57,8 +57,10 @@ enum VALUES {
     v_ptrv,
     v_global,
     v_func_ptr,
+    v_func_call,
 };
 
 enum TOKENS {
     t_assign,
+    t_statement,
 };
