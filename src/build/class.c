@@ -7,5 +7,7 @@ Class* class_make(Allocator* alc, Build* b) {
     c->name = NULL;
     c->body = NULL;
     c->size = 0;
+    c->props = map_make(alc);
+    c->funcs = map_make(alc);
     return c;
 }

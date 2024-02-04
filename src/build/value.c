@@ -3,6 +3,7 @@
 
 Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf);
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
+Value* value_handle_class(Fc* fc, Scope* scope, Class* class);
 
 
 Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
@@ -57,7 +58,7 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
             ClassProp* prop = map_get(class->props, prop_name);
             if(prop) {
                 // Property
-                die("TODO: vgen-class-pa");
+                v = vgen_class_pa(alc, v, prop);
             } else {
                 // Check functions
                 Func* func = map_get(class->funcs, prop_name);
@@ -89,6 +90,10 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
 
     int type = idf->type;
 
+    if (type == idf_decl) {
+        Decl* decl = idf->item;
+        return value_make(alc, v_decl, decl, decl->type);
+    }
     if (type == idf_scope) {
         Scope* sub = idf->item;
         tok_expect(fc, ".", false, false);
@@ -99,6 +104,10 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
     if (type == idf_func) {
         Func* func = idf->item;
         return vgen_func_ptr(alc, func, NULL);
+    }
+    if (type == idf_class) {
+        Class* class = idf->item;
+        return value_handle_class(fc, scope, class);
     }
 
     sprintf(b->char_buf, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
@@ -165,6 +174,22 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
 
     return vgen_func_call(alc, on, args);
+}
+
+Value* value_handle_class(Fc* fc, Scope* scope, Class* class) {
+    Build* b = fc->b;
+    Chunk* ch = fc->chunk_parse;
+    if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {
+        // Static functions
+        char *tkn = tok(fc, true, true, true);
+        die("TODO: class static functions");
+        return NULL;
+    }
+    // Class init
+    char* tkn = tok(fc, true, true, true);
+    tok_expect(fc, "{", true, true);
+    die("TODO: class initialization");
+    return NULL;
 }
 
 bool value_is_assignable(Value *v) {
