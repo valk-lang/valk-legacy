@@ -32,7 +32,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         Idf *idf = read_idf(fc, scope, tkn, true);
         if(idf->type == idf_class) {
             Class* class = idf->item;
-            return type_gen_class(alc, b, class);
+            return type_gen_class(alc, class);
         }
     }
 

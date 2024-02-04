@@ -59,6 +59,8 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
         }
         break;
     }
+
+    return v;
 }
 
 Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
@@ -73,7 +75,7 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
         tok_expect(fc, ".", false, false);
         char *tkn = tok(fc, false, false, true);
         Idf *idf_sub = read_idf(fc, sub, tkn, true);
-        return ast_handle_idf(fc, scope, idf_sub);
+        return value_handle_idf(fc, scope, idf_sub);
     }
     if (type == idf_func) {
         Func* func = idf->item;
@@ -82,6 +84,7 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
 
     sprintf(b->char_buf, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
     parse_err(chunk, b->char_buf);
+    return NULL;
 }
 
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {

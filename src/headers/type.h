@@ -5,7 +5,8 @@
 #include "typedefs.h"
 
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool allow_newline);
-Type* type_gen_class(Allocator* alc, Build* b, Class* class);
+Type* type_gen_class(Allocator* alc, Class* class);
+Type* type_gen_func(Allocator* alc, Func* func);
 
 struct Type {
     Class* class;
