@@ -29,6 +29,9 @@ void stage_types_func(Fc* fc, Func* func) {
     if(func->class && !func->is_static) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
         map_set(func->args, "this", arg);
+        Decl *decl = decl_make(b->alc, arg->type, true);
+        Idf *idf = idf_make(b->alc, idf_decl, decl);
+        scope_set_idf(func->scope, "this", idf, fc);
     }
 
     if(func->chunk_args) {

@@ -60,11 +60,19 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         //
 
         if (t == tok_id) {
+            if (str_is(tkn, "return")){
+                Value* val = read_value(alc, fc, scope, false, 0);
+
+                // TODO: type check
+
+                array_push(scope->ast, tgen_return(alc, val));
+                continue;
+            }
         }
 
         tok_back(fc);
 
-        Value* left = read_value(fc, scope, true, 0);
+        Value* left = read_value(alc, fc, scope, true, 0);
 
         t = tok_id_next(fc);
         if((t == tok_op1 || t == tok_op2)) {
@@ -74,7 +82,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     parse_err(chunk, "Cannot assign to left side");
                 }
 
-                Value *right = read_value(fc, scope, true, 0);
+                Value *right = read_value(alc, fc, scope, true, 0);
 
                 // TODO type check
 

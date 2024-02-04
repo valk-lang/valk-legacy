@@ -1,13 +1,13 @@
 
 #include "../all.h"
 
-Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf);
+Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf);
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
-Value* value_handle_class(Fc* fc, Scope* scope, Class* class);
+Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class);
+Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope);
+Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
 
-
-Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
-    Allocator *alc = fc->alc_ast;
+Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio) {
     Build *b = fc->b;
     Chunk *chunk = fc->chunk_parse;
 
@@ -16,9 +16,16 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
 
     Value* v = NULL;
 
-    if (t == tok_id) {
-        Idf *idf = read_idf(fc, scope, tkn, true);
-        v = value_handle_idf(fc, scope, idf);
+    if (t == tok_at_word) {
+        if (str_is(tkn, "@ptrv")) {
+            v = value_handle_ptrv(alc,fc, scope);
+        }
+    } else if (t == tok_id) {
+        if (str_is(tkn, "...")) {
+        } else {
+            Idf *idf = read_idf(fc, scope, tkn, true);
+            v = value_handle_idf(alc, fc, scope, idf);
+        }
     } else if (t == tok_number || (t == tok_op1 && tok_read_byte(fc, 1) == '-')) {
         bool negative = false;
         if(t == tok_op1) {
@@ -41,6 +48,10 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
         sprintf(b->char_buf, "Unknown value: '%s'", tkn);
         parse_err(chunk, b->char_buf);
     }
+
+    ///////////////////////
+    // TRAILING CHARS
+    ///////////////////////
 
     t = tok_id_next(fc);
     while(t == tok_char || t == tok_scope_open) {
@@ -80,12 +91,62 @@ Value* read_value(Fc* fc, Scope* scope, bool allow_newline, int prio) {
         break;
     }
 
+    ///////////////////////
+    // TRAILING WORDS
+    ///////////////////////
+
+    tkn = tok(fc, true, true, true);
+    while (str_is(tkn, "@as")) {
+        if (type_is_void(v->rett)) {
+            parse_err(chunk, "Left side of '@as' must return a value");
+        }
+
+        Type *type = read_type(fc, alc, scope, true);
+        v = vgen_cast(alc, v, type);
+
+        tkn = tok(fc, true, true, true);
+    }
+
+    if (prio == 0 || prio > 10) {
+        while (fc->chunk_parse->token == tok_op1) {
+            char sign = tkn[0];
+            int op;
+            if(sign == '*')
+                op = op_mul;
+            else if(sign == '/')
+                op = op_div;
+            else if(sign == '%')
+                op = op_mod;
+            else
+                break;
+            Value *right = read_value(alc, fc, scope, true, 10);
+            v = value_handle_op(alc, fc, scope, v, right, op);
+            tkn = tok(fc, true, true, true);
+        }
+    }
+
+    if (prio == 0 || prio > 20) {
+        while (fc->chunk_parse->token == tok_op1) {
+            char sign = tkn[0];
+            int op;
+            if(sign == '+')
+                op = op_add;
+            else if(sign == '-')
+                op = op_sub;
+            else
+                break;
+            Value *right = read_value(alc, fc, scope, true, 10);
+            v = value_handle_op(alc, fc, scope, v, right, op);
+            tkn = tok(fc, true, true, true);
+        }
+    }
+
+    tok_back(fc);
     return v;
 }
 
-Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
+Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
     Build *b = fc->b;
-    Allocator *alc = fc->alc_ast;
     Chunk *chunk = fc->chunk_parse;
 
     int type = idf->type;
@@ -99,7 +160,7 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
         tok_expect(fc, ".", false, false);
         char *tkn = tok(fc, false, false, true);
         Idf *idf_sub = read_idf(fc, sub, tkn, true);
-        return value_handle_idf(fc, scope, idf_sub);
+        return value_handle_idf(alc, fc, scope, idf_sub);
     }
     if (type == idf_func) {
         Func* func = idf->item;
@@ -107,7 +168,7 @@ Value* value_handle_idf(Fc *fc, Scope *scope, Idf *idf) {
     }
     if (type == idf_class) {
         Class* class = idf->item;
-        return value_handle_class(fc, scope, class);
+        return value_handle_class(alc, fc, scope, class);
     }
 
     sprintf(b->char_buf, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
@@ -147,7 +208,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     } else {
         // Read argument values
         while (true) {
-            Value *arg = read_value(fc, scope, true, 0);
+            Value *arg = read_value(alc, fc, scope, true, 0);
             Type *arg_type = array_get_index(arg_types, arg_i++);
             if (arg_type) {
                 type_check(fc->chunk_parse, arg_type, arg->rett);
@@ -176,7 +237,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     return vgen_func_call(alc, on, args);
 }
 
-Value* value_handle_class(Fc* fc, Scope* scope, Class* class) {
+Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     Build* b = fc->b;
     Chunk* ch = fc->chunk_parse;
     if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {
@@ -190,6 +251,40 @@ Value* value_handle_class(Fc* fc, Scope* scope, Class* class) {
     tok_expect(fc, "{", true, true);
     die("TODO: class initialization");
     return NULL;
+}
+
+Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
+    tok_expect(fc, "(", false, false);
+    // On
+    Value *on = read_value(alc, fc, scope, true, 0);
+    // Type
+    tok_expect(fc, ",", true, true);
+    if (on->rett->type != type_ptr) {
+        parse_err(fc->chunk_parse, "You can only use 'ptrv' on values of type 'ptr'");
+    }
+    Type *type = read_type(fc, alc, scope, true);
+    if (type->type == type_void) {
+        parse_err(fc->chunk_parse, "You cannot use 'void' type in @ptrv");
+    }
+    // Index
+    char* tkn = tok(fc, true, true, true);
+    Value *index = NULL;
+    if(str_is(tkn, ",")) {
+        index = read_value(alc, fc, scope, true, 0);
+        if (index->rett->type != type_int) {
+            parse_err(fc->chunk_parse, "@ptrv index must be of type integer");
+        }
+    } else {
+        tok_back(fc);
+    }
+    tok_expect(fc, ")", true, true);
+
+    return vgen_ptrv(alc, fc->b, on, type, index);
+}
+
+Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
+    // TODO
+    return left;
 }
 
 bool value_is_assignable(Value *v) {

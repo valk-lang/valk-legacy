@@ -63,9 +63,19 @@ enum VALUES {
     v_func_ptr,
     v_func_call,
     v_int,
+    v_cast,
 };
 
 enum TOKENS {
     t_assign,
     t_statement,
+    t_return,
+};
+
+enum OPERATORS {
+    op_add,
+    op_sub,
+    op_mul,
+    op_div,
+    op_mod,
 };

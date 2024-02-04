@@ -78,3 +78,5 @@ void type_check(Chunk* chunk, Type* t1, Type* t2) {
         parse_err(chunk, b->char_buf);
     }
 }
+
+bool type_is_void(Type* type) { return type->type == type_void; }

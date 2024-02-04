@@ -11,6 +11,7 @@ Type* type_gen_func(Allocator* alc, Func* func);
 Type* type_gen_volt(Allocator* alc, Build* b, char* name);
 bool type_compat(Type* t1, Type* t2, char* reason);
 void type_check(Chunk* chunk, Type* t1, Type* t2);
+bool type_is_void(Type* type);
 
 struct Type {
     Class* class;

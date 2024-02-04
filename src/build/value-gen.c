@@ -35,3 +35,18 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     item->prop = prop;
     return value_make(alc, v_class_pa, item, prop->type);
 }
+
+Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) {
+    if(!index) {
+        index = vgen_int(alc, 0, type_gen_volt(alc, b, "int"));
+    }
+    VPtrv *item = al(alc, sizeof(VPtrv));
+    item->on = on;
+    item->type = type;
+    item->index = index;
+    return value_make(alc, v_ptrv, item, type);
+}
+
+Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
+    return value_make(alc, v_cast, val, to_type);
+}
