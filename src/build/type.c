@@ -89,9 +89,27 @@ Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
     exit(1);
 }
 
+Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed) {
+    if(is_float) {
+        if(size == 4)
+            return type_gen_volt(alc, b, "f32");
+        if(size == 8)
+            return type_gen_volt(alc, b, "f64");
+    } else {
+        if(size == 1)
+            return type_gen_volt(alc, b, is_signed ? "i8" : "u8");
+        if(size == 2)
+            return type_gen_volt(alc, b, is_signed ? "i16" : "u16");
+        if(size == 4)
+            return type_gen_volt(alc, b, size == b->ptr_size ? (is_signed ? "int" : "uint") : (is_signed ? "i32" : "u32"));
+        if(size == 8)
+            return type_gen_volt(alc, b, size == b->ptr_size ? (is_signed ? "int" : "uint") : (is_signed ? "i64" : "u64"));
+    }
+    return NULL;
+}
+
 bool type_compat(Type* t1, Type* t2, char** reason) {
     if (t1->type != t2->type) {
-        printf("%d | %d\n", t1->type, t2->type);
         *reason = "different kind of types";
         return false;
     }
@@ -144,3 +162,4 @@ char* type_to_str(Type* t, char* res) {
 
     return res;
 }
+

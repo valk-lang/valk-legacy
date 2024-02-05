@@ -38,6 +38,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         }
         return ir_load(ir, decl->type, var_val);
     }
+    if (v->type == v_op) {
+        VOp *vop = v->item;
+        int op = vop->op;
+        return ir_op(ir, scope, op, vop->left, vop->right, v->rett);
+    }
     if (v->type == v_cast) {
         Value *val = v->item;
         Type *from_type = val->rett;

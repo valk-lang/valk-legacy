@@ -66,6 +66,7 @@ enum VALUES {
     v_int,
     v_cast,
     v_string,
+    v_op,
 };
 
 enum TOKENS {
@@ -87,4 +88,10 @@ enum OPERATORS {
     op_gt,
     op_lte,
     op_gte,
+    // Bit
+    op_bit_and,
+    op_bit_or,
+    op_bit_xor,
+    op_shl,
+    op_shr,
 };

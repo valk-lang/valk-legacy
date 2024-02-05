@@ -47,6 +47,14 @@ Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) 
     return value_make(alc, v_ptrv, item, type);
 }
 
+Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett) {
+    VOp *item = al(alc, sizeof(VOp));
+    item->left = left;
+    item->right = right;
+    item->op = op;
+    return value_make(alc, v_op, item, rett);
+}
+
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     return value_make(alc, v_cast, val, to_type);
 }

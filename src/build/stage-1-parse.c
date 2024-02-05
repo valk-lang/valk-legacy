@@ -137,6 +137,7 @@ void stage_1_class(Fc *fc, int type, int act) {
 
     //
     if(type == ct_int) {
+        class->allow_math = true;
         class->size = b->ptr_size;
         char* tkn = tok(fc, true, true, true);
         if(is_valid_number(tkn)) {
@@ -150,6 +151,15 @@ void stage_1_class(Fc *fc, int type, int act) {
         }
         if(str_is(tkn, "unsigned")) {
             class->is_signed = false;
+            tkn = tok(fc, true, true, true);
+        }
+        tok_back(fc);
+    } else if(type == ct_float) {
+        class->allow_math = true;
+    } else if(type == ct_ptr) {
+        char* tkn = tok(fc, true, true, true);
+        if(str_is(tkn, "math")) {
+            class->allow_math = true;
             tkn = tok(fc, true, true, true);
         }
         tok_back(fc);

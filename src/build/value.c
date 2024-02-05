@@ -321,11 +321,23 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     // Check type
     Build* b = fc->b;
     Type* lt = left->rett;
-    if(lt->type != type_int && lt->type != type_float && lt->type != type_ptr) {
+    Type* rt = right->rett;
+
+    if(!lt->class || !lt->class->allow_math) {
         parse_err(fc->chunk_parse, "You cannot use operators on these values");
     }
+    bool is_ptr = false;;
+    if(lt->type == type_ptr) {
+        is_ptr = true;
+        left = vgen_cast(alc, left, type_gen_volt(alc, b, "int"));
+    }
+    if(rt->type == type_ptr) {
+        is_ptr = true;
+        right = vgen_cast(alc, right, type_gen_volt(alc, b, "int"));
+    }
+
     // Try match types
-    match_value_types(fc->b, &left, &right);
+    match_value_types(alc, fc->b, &left, &right);
 
     Type* t1 = left->rett;
     Type* t2 = right->rett;
@@ -333,11 +345,17 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     if(!type_compat(t1, t2, &reason)){
         char t1b[256];
         char t2b[256];
-        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(t1, t1b), type_to_str(t2, t2b));
+        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    return left;
+    Value* v = vgen_op(alc, op, left, right, t1);
+
+    if(is_ptr) {
+        v = vgen_cast(alc, v, type_gen_volt(alc, b, "ptr"));
+    }
+
+    return v;
 }
 
 Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
@@ -349,10 +367,22 @@ bool value_is_assignable(Value *v) {
     return v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global;
 }
 
-void match_value_types(Build* b, Value** v1_, Value** v2_) {
+void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
     //
     Value* v1 = *v1_;
     Value* v2 = *v2_;
     Type* t1 = v1->rett;
     Type* t2 = v2->rett;
+    bool is_signed = t1->is_signed || t2->is_signed;
+    bool is_float = t1->type == type_float || t2->type == type_float;
+    int size = is_float ? max_num(t1->size, t2->size) : (max_num(t1->is_signed != is_signed ? t1->size * 2 : t1->size, t2->is_signed != is_signed ? t2->size * 2 : t2->size));
+    Type* type = type_gen_number(alc, b, size, is_float, is_signed);
+    if(!type)
+        return;
+    if(t1->type != type->type || t1->is_signed != type->is_signed || t1->size != type->size) {
+        *v1_ = vgen_cast(alc, v1, type);
+    }
+    if(t2->type != type->type || t2->is_signed != type->is_signed || t2->size != type->size) {
+        *v2_ = vgen_cast(alc, v2, type);
+    }
 }

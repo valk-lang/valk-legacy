@@ -17,6 +17,7 @@ struct Class {
     int size;
     bool packed;
     bool is_signed;
+    bool allow_math;
 };
 struct ClassProp {
     Type* type;

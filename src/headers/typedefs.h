@@ -43,6 +43,7 @@ typedef struct VFuncCall VFuncCall;
 typedef struct VInt VInt;
 typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
+typedef struct VOp VOp;
 
 
 #endif
