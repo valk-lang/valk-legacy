@@ -21,6 +21,7 @@ typedef struct Chunk Chunk;
 typedef struct Stage Stage;
 // IR
 typedef struct IR IR;
+typedef struct IRFunc IRFunc;
 // Parse
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;

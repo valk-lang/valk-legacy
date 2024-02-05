@@ -10,15 +10,17 @@ IR* ir_make(Fc* fc) {
     ir->fc = fc;
     ir->b = b;
 
-    ir->code_final = str_make(alc, 10000);
-    // ir->code_struct = str_make(alc, 2000);
-    // ir->code_global = str_make(alc, 2000);
-    // ir->code_extern = str_make(alc, 2000);
-    // ir->code_attr = str_make(alc, 2000);
+    ir->code_final = str_make(alc, 50000);
+    ir->code_struct = str_make(alc, 10000);
+    ir->code_global = str_make(alc, 10000);
+    ir->code_extern = str_make(alc, 10000);
+    ir->code_attr = str_make(alc, 10000);
 
     ir->func = NULL;
-    ir->declared_funcs = array_make(alc, fc->funcs->length + 2);
-    ir->declared_classes = array_make(alc, fc->classes->length + 2);
+    ir->funcs = array_make(alc, 50);
+    ir->attrs = array_make(alc, 50);
+    ir->declared_funcs = array_make(alc, 50);
+    ir->declared_classes = array_make(alc, 50);
     ir->globals = map_make(alc);
 
     ir->di_cu = NULL;

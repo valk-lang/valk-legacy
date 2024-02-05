@@ -14,8 +14,8 @@ void stage_4_ir(Fc* fc) {
     usize start = microtime();
 
     IR* ir = ir_make(fc);
-    // char* ir_code = str_to_chars(alc, ir->code_final);
-    // printf("IR: %s\n", ir_code);
+    char* ir_code = str_to_chars(alc, ir->code_final);
+    printf("IR: %s\n", ir_code);
 
     b->time_ir += microtime() - start;
 

@@ -23,6 +23,8 @@ struct IR {
     Str* code_attr;
     //
     Func* func;
+    Array* funcs;
+    Array* attrs;
     Array* declared_funcs;
     Array* declared_classes;
     Map* globals;
@@ -37,6 +39,9 @@ struct IR {
     //
     bool use_stack_save;
     bool debug;
+};
+struct IRFunc {
+    Str* code;
 };
 
 #endif
