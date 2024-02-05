@@ -1,0 +1,6 @@
+
+header "sys" as sys
+
+fn alloc(size: uxx) ptr {
+	return sys.malloc(size);
+}

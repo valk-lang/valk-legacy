@@ -22,6 +22,7 @@ struct Scope {
     Scope* parent;
     Map* identifiers;
     Array* ast;
+    Type* rett;
     bool did_return;
 };
 struct Idf {

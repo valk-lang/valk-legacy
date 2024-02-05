@@ -119,6 +119,7 @@ int cmd_build(int argc, char *argv[]) {
     // Load core dependencies
     Pkc *vlt = pkc_load_pkc(pkc_main, "volt", NULL);
     Nsc *io = nsc_load(vlt, "io", true);
+    Nsc *mem = nsc_load(vlt, "mem", true);
     Nsc *type = nsc_load(vlt, "type", true);
     b->pkc_volt = vlt;
 

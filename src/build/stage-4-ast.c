@@ -63,10 +63,11 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         if (t == tok_id) {
             if (str_is(tkn, "return")){
-                Value* val = read_value(alc, fc, scope, false, 0);
-
-                // TODO: type check
-
+                Value* val = NULL;
+                if(scope->rett) {
+                    val = read_value(alc, fc, scope, false, 0);
+                    type_check(fc->chunk_parse, scope->rett, val->rett);
+                }
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
                 continue;
