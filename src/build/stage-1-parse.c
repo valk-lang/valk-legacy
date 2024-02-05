@@ -85,6 +85,10 @@ void stage_1_func(Fc* fc, int act) {
 
     if (str_is(name, "main")) {
         b->func_main = func;
+        func->export_name = "main";
+    }
+    if (fc->is_header) {
+        func->export_name = name;
     }
 
     parse_handle_func_args(fc, func);

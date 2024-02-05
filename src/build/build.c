@@ -47,6 +47,11 @@ int cmd_build(int argc, char *argv[]) {
         cmd_build_help();
         return 1;
     }
+    char* path_out = map_get(options, "-o");
+    if (!path_out) {
+        cmd_build_help();
+        return 1;
+    }
 
     // Build
     Build *b = al(alc, sizeof(Build));
@@ -55,6 +60,10 @@ int cmd_build(int argc, char *argv[]) {
     b->used_pkc_names = array_make(alc, 20);
     b->char_buf = char_buf;
     b->str_buf = str_buf;
+    b->path_out = path_out;
+
+    b->os = "linux";
+    b->arch = "x64";
 
     b->pkc_by_dir = map_make(alc);
     b->fc_by_path = map_make(alc);
@@ -103,6 +112,7 @@ int cmd_build(int argc, char *argv[]) {
     Nsc *nsc_main = nsc_load(pkc_main, "main", false);
     if (!nsc_main) {
         nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
+        map_set(pkc_main->namespaces, "main", nsc_main);
     }
     b->nsc_main = nsc_main;
 
@@ -122,9 +132,8 @@ int cmd_build(int argc, char *argv[]) {
 
     // Build stages
     build_run_stages(b);
-    // Link
+    // Object files + Linking
     stage_5_objects(b);
-    stage_6_link(b);
 
     // Finish build
     if (b->verbose > 0) {

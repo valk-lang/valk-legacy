@@ -38,7 +38,7 @@ void stage_3_values(Fc *fc);
 void stage_4_ast(Fc *fc);
 void stage_4_ir(Fc *fc);
 void stage_5_objects(Build *b);
-void stage_6_link(Build *b);
+void stage_6_link(Build* b, Array* o_files);
 // Sub stages
 void stage_types_func(Fc* fc, Func *func);
 void stage_props_class(Fc* fc, Class *class);
@@ -50,6 +50,11 @@ struct Build {
     Allocator *alc_ast;
     //
     char *cache_dir;
+    char *path_out;
+    //
+    char *os;
+    char *arch;
+    //
     char *char_buf;
     Str *str_buf;
     usize time_lex;

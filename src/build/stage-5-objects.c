@@ -39,6 +39,8 @@ void stage_5_objects(Build* b) {
     }
 
     b->time_llvm += microtime() - start;
+
+    stage_6_link(b, o_files);
 }
 
 void stage_5_pkc(Build* b, Pkc* pkc, Array* o_files) {
@@ -51,6 +53,7 @@ void stage_5_pkc(Build* b, Pkc* pkc, Array* o_files) {
         bool changed = false;
 
         stage_5_nsc(b, nsc, ir_files, &changed);
+        array_push(o_files, nsc->path_o);
 
         if(changed) {
             stage_build_o_file(b, nsc, ir_files);
@@ -172,7 +175,7 @@ void stage_set_target(Build* b, CompileData* data) {
     //
     char *triple = NULL;
     char *cpu = "generic";
-    triple = "aarch64-unknown-linux-gnu";
+    triple = "x86_64-unknown-linux-gnu";
     // if (b->target_os == os_linux) {
     //     if (b->target_arch == arch_x64) {
     //         triple = "x86_64-unknown-linux-gnu";
