@@ -20,6 +20,7 @@ struct Type {
     int type;
     int size;
     bool nullable;
+    bool is_pointer;
 };
 
 #endif

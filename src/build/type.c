@@ -8,6 +8,7 @@ Type* type_make(Allocator* alc, int type) {
     t->class = NULL;
     t->func_args = NULL;
     t->func_rett = NULL;
+    t->is_pointer = false;
     return t;
 }
 
@@ -61,6 +62,9 @@ Type* type_gen_class(Allocator* alc, Class* class) {
         t->type = type_float;
     }
 
+    if(ct == ct_class || ct == ct_struct || ct == ct_ptr)
+        t->is_pointer = true;
+
     return t;
 }
 Type* type_gen_func(Allocator* alc, Func* func) {
@@ -68,6 +72,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     t->func_rett = func->rett;
     t->func_args = func->args->values;
     t->size = func->b->ptr_size;
+    t->is_pointer = true;
     return t;
 }
 Type* type_gen_volt(Allocator* alc, Build* b, char* name) {

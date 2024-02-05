@@ -9,6 +9,7 @@ IR* ir_make(Fc* fc) {
     IR* ir = al(alc, sizeof(IR));
     ir->fc = fc;
     ir->b = b;
+    ir->alc = alc;
 
     ir->code_final = str_make(alc, 50000);
     ir->code_struct = str_make(alc, 10000);

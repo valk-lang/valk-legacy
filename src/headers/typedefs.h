@@ -22,6 +22,7 @@ typedef struct Stage Stage;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;
+typedef struct IRBlock IRBlock;
 // Parse
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;

@@ -30,6 +30,7 @@ struct FuncArg {
     Type* type;
     Value* value;
     Chunk* chunk_value;
+    Decl* decl;
 };
 
 #endif
