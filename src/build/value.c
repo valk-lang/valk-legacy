@@ -21,6 +21,10 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         if (str_is(tkn, "@ptrv")) {
             v = value_handle_ptrv(alc,fc, scope);
         }
+    } else if (t == tok_string) {
+        char *body = tkn;
+        body = string_replace_backslash_chars(alc, body);
+        v = value_make(alc, v_string, body, type_gen_volt(alc, b, "string"));
     } else if (t == tok_id) {
         if (str_is(tkn, "sizeof")) {
             tok_expect(fc, "(", false, false);

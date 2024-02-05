@@ -12,7 +12,9 @@ void stage_1_parse(Fc* fc) {
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);
 
+    usize start = microtime();
     stage_parse(fc);
+    b->time_parse += microtime() - start;
 
     stage_add_item(b->stage_2_alias, fc);
 }

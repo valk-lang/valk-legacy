@@ -204,3 +204,26 @@ bool str_in(char* tkn, char* comp) {
     sprintf(buf, ",%s,", tkn);
     return strstr(comp, buf);
 }
+
+char *string_replace_backslash_chars(Allocator *alc, char *body) {
+    int len = strlen(body);
+    if (len == 0)
+        return "";
+    char *result = al(alc, len + 1);
+    int i = 0;
+    int ri = 0;
+    while (true) {
+        const char ch = body[i++];
+        if (ch == 0)
+            break;
+        if (ch == '\\') {
+            char ch = body[i++];
+            ch = backslash_char(ch);
+            result[ri++] = ch;
+            continue;
+        }
+        result[ri++] = ch;
+    }
+    result[ri] = 0;
+    return result;
+}

@@ -41,6 +41,8 @@ void build_run_stages(Build* b) {
     array_push(stages, b->stage_4_ast);
 
     for (int i = 0; i < stages->length; i++) {
+        // if (b->verbose > 2)
+        //     printf("# Run build stage: %d\n", i);
         bool did_work = false;
         Stage *stage = array_get_index(stages, i);
         void *item = stage_get_item(stage);

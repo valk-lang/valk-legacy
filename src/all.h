@@ -62,5 +62,6 @@
 #include "headers/skip.h"
 #include "headers/func.h"
 #include "headers/class.h"
+#include "headers/ir.h"
 
 #endif

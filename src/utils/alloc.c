@@ -54,8 +54,8 @@ void *al(Allocator *alc, size_t size) {
     if (size > block_private_size) {
         return al_private(alc, size)->start_adr;
     }
-
     AllocatorBlock *block = alc->last_block;
+    // printf("space:%ld, left:%ld\n", size, block->space_left);
 
     size_t offset = size > 8 ? 8 : size;
     if ((size + offset) > block->space_left) {

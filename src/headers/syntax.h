@@ -20,5 +20,6 @@ bool starts_with(const char *a, const char *b);
 char backslash_char(char ch);
 bool str_is(char* tkn, char* comp);
 bool str_in(char* tkn, char* comp);
+char *string_replace_backslash_chars(Allocator *alc, char *body);
 
 #endif

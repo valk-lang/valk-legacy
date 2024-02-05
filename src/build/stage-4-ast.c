@@ -12,9 +12,11 @@ void stage_4_ast(Fc *fc) {
     if (b->verbose > 2)
         printf("Stage 4 | Parse AST: %s\n", fc->path);
 
-    fc->alc_ast = b->alc;
+    fc->alc_ast = b->alc_ast;
 
+    usize start = microtime();
     stage_ast(fc);
+    b->time_parse += microtime() - start;
 
     stage_4_ir(fc);
 }

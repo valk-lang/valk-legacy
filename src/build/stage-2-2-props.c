@@ -10,7 +10,9 @@ void stage_2_props(Fc* fc) {
     if (b->verbose > 2)
         printf("Stage 2 | Scan properties: %s\n", fc->path);
 
+    usize start = microtime();
     stage_props(fc);
+    b->time_parse += microtime() - start;
 
     stage_add_item(b->stage_2_types, fc);
 }

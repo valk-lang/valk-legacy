@@ -65,6 +65,7 @@ enum VALUES {
     v_func_call,
     v_int,
     v_cast,
+    v_string,
 };
 
 enum TOKENS {
