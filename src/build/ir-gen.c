@@ -13,6 +13,12 @@ void ir_jump(Str* code, IRBlock* block) {
     str_append_chars(code, "\n");
 }
 
+char *ir_int(IR* ir, long int value) {
+    char *res = al(ir->alc, 20);
+    sprintf(res, "%ld", value);
+    return res;
+}
+
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
     Array *result = array_make(ir->alc, values->length + 1);
     for (int i = 0; i < values->length; i++) {
@@ -129,4 +135,103 @@ char *ir_string(IR *ir, char *body) {
 
     sprintf(ir->char_buf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
     return dups(ir->alc, ir->char_buf);
+}
+
+char* ir_load(IR* ir, Type* type, char* var) {
+    Str *code = ir->block->code;
+    char *var_result = ir_var(ir->func);
+    char *ltype = ir_type(ir, type);
+
+    char bytes[20];
+    int abytes = type->size;
+    if (abytes > ir->b->ptr_size) {
+        abytes = ir->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
+
+    str_append_chars(code, "  ");
+    str_append_chars(code, var_result);
+    str_append_chars(code, " = load ");
+    str_append_chars(code, ltype);
+    str_append_chars(code, ", ptr ");
+    str_append_chars(code, var);
+    str_append_chars(code, ", align ");
+    str_append_chars(code, bytes);
+    str_append_chars(code, "\n");
+
+    return var_result;
+}
+
+char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
+    //
+    Str *code = ir->block->code;
+
+    char *lfrom_type = ir_type(ir, from_type);
+    char *lto_type = ir_type(ir, to_type);
+    char *result_var = lval;
+
+    if (from_type->is_pointer && !to_type->is_pointer) {
+        // Ptr to int
+        char *var = ir_var(ir->func);
+        str_append_chars(code, "  ");
+        str_append_chars(code, var);
+        str_append_chars(code, " = ptrtoint ");
+        str_append_chars(code, lfrom_type);
+        str_append_chars(code, " ");
+        str_append_chars(code, result_var);
+        str_append_chars(code, " to ");
+        str_append_chars(code, lto_type);
+        str_append_chars(code, "\n");
+        result_var = var;
+    } else if (!from_type->is_pointer) {
+        if (from_type->size < to_type->size) {
+            // Ext
+            char *new_type = ir_type_int(ir, to_type->size);
+            char *var = ir_var(ir->func);
+            str_append_chars(code, "  ");
+            str_append_chars(code, var);
+            if (from_type->is_signed) {
+                str_append_chars(code, " = sext ");
+            } else {
+                str_append_chars(code, " = zext ");
+            }
+            str_append_chars(code, lfrom_type);
+            str_append_chars(code, " ");
+            str_append_chars(code, result_var);
+            str_append_chars(code, " to ");
+            str_append_chars(code, new_type);
+            str_append_chars(code, "\n");
+            lfrom_type = new_type;
+            result_var = var;
+        } else if (from_type->size > to_type->size) {
+            // Trunc
+            char *new_type = ir_type_int(ir, to_type->size);
+            char *var = ir_var(ir->func);
+            str_append_chars(code, "  ");
+            str_append_chars(code, var);
+            str_append_chars(code, " = trunc ");
+            str_append_chars(code, lfrom_type);
+            str_append_chars(code, " ");
+            str_append_chars(code, result_var);
+            str_append_chars(code, " to ");
+            str_append_chars(code, new_type);
+            str_append_chars(code, "\n");
+            lfrom_type = new_type;
+            result_var = var;
+        }
+        if (to_type->is_pointer) {
+            // Bitcast to i8*|%struct...*
+            char *var = ir_var(ir->func);
+            str_append_chars(code, "  ");
+            str_append_chars(code, var);
+            str_append_chars(code, " = inttoptr ");
+            str_append_chars(code, lfrom_type);
+            str_append_chars(code, " ");
+            str_append_chars(code, result_var);
+            str_append_chars(code, " to ptr\n");
+            result_var = var;
+        }
+    }
+
+    return result_var;
 }

@@ -9,6 +9,7 @@ Type* type_make(Allocator* alc, int type) {
     t->func_args = NULL;
     t->func_rett = NULL;
     t->is_pointer = false;
+    t->is_signed = false;
     return t;
 }
 

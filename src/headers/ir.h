@@ -11,10 +11,11 @@ void ir_gen_functions(IR* ir);
 void ir_gen_final(IR* ir);
 // Type
 char *ir_type(IR *ir, Type *type);
+char *ir_type_real(IR *ir, Type *type);
 char *ir_type_int(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 // Func
-void ir_func_definition(Str* code, IR* ir, Func *vfunc, IRFunc* func, bool is_extern);
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
 void ir_define_ext_func(IR* ir, Func* func);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
@@ -22,13 +23,17 @@ IRBlock *ir_block_make(IR *ir, IRFunc* func);
 void ir_write_ast(IR* ir, Scope* scope);
 // Value
 char* ir_value(IR* ir, Scope* scope, Value* v);
+char* ir_assign_value(IR* ir, Scope* scope, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
 void ir_jump(Str* code, IRBlock* block);
+char *ir_int(IR* ir, long int value);
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
 char *ir_string(IR *ir, char *body);
+char* ir_load(IR* ir, Type* type, char* var);
+char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 
 // Structs
 struct IR {

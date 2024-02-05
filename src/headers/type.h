@@ -21,6 +21,7 @@ struct Type {
     int size;
     bool nullable;
     bool is_pointer;
+    bool is_signed;
 };
 
 #endif
