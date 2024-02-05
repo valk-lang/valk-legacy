@@ -58,7 +58,24 @@ void stage_props_class(Fc* fc, Class *class) {
                 sprintf(b->char_buf, "Invalid property name: '%s'", name);
                 parse_err(fc->chunk_parse, b->char_buf);
             }
-            die("TODO: Class properties");
+            if(map_contains(class->props, name) || map_contains(class->funcs, name)) {
+                sprintf(b->char_buf, "Property name is already used for another property or function: '%s'", name);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            ClassProp* prop = al(b->alc, sizeof(ClassProp));
+            prop->chunk_type = chunk_clone(b->alc, fc->chunk_parse);
+            prop->chunk_value = NULL;
+            map_set(class->props, name, prop);
+
+            skip_type(fc);
+
+            tkn = tok(fc, true, true, true);
+            if(str_is(tkn, "=")) {
+                prop->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
+                skip_value(fc);
+            } else {
+                tok_back(fc);
+            }
             continue;
         }
 

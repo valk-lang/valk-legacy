@@ -21,6 +21,8 @@ struct Class {
 };
 struct ClassProp {
     Type* type;
+    Chunk* chunk_type;
+    Chunk* chunk_value;
 };
 
 #endif

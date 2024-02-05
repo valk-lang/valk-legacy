@@ -6,8 +6,8 @@ pointer string {
 
     inline fn is_const() bool {
 		// return @ptrv(this @as ptr + sizeof(uint), u8, 0) == 1#u8;
-		return @ptrv(this @as ptr + sizeof(uint), u8, 0) == 1;
-	}
+		  return @ptrv(this @as ptr + sizeof(uint), u8, 0) == 1;
+	  }
 
     fn data() ptr {
         return this @as ptr + sizeof(uint) + 2;

@@ -22,6 +22,11 @@ void stage_types(Fc *fc) {
         Func* func = array_get_index(funcs, i);
         stage_types_func(fc, func);
     }
+    Array* classes = fc->classes;
+    for(int i = 0; i < classes->length; i++) {
+        Class* class = array_get_index(classes, i);
+        stage_types_class(fc, class);
+    }
 }
 
 void stage_types_func(Fc* fc, Func* func) {
@@ -87,5 +92,20 @@ void stage_types_func(Fc* fc, Func* func) {
         func->scope->rett = type;
     } else {
         func->rett = type_gen_void(fc->alc);
+    }
+}
+
+void stage_types_class(Fc* fc, Class* class) {
+
+    Build *b = fc->b;
+
+    Array* props = class->props->values;
+    for(int i = 0; i < props->length; i++) {
+        ClassProp *prop = array_get_index(props, i);
+        if (prop->chunk_type) {
+            *fc->chunk_parse = *prop->chunk_type;
+            Type *type = read_type(fc, fc->alc, fc->scope, false);
+            prop->type = type;
+        }
     }
 }

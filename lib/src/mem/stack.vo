@@ -1,8 +1,8 @@
 
-// struct Stack {
-//     data: ptr
-//     count: int = 0
+struct Stack {
+    data: ptr
+    count: int = 0
 
-//     static fn new() {
-//     }
-// }
+    static fn new() {
+    }
+}
