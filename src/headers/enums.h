@@ -67,6 +67,7 @@ enum VALUES {
     v_cast,
     v_string,
     v_op,
+    v_compare,
 };
 
 enum TOKENS {

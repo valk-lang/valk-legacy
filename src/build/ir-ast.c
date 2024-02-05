@@ -22,9 +22,13 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 irv = ir_value(ir, scope, v);
             Str* code = ir->block->code;
             str_append_chars(code, "  ret ");
-            str_append_chars(code, ir_type(ir, v->rett));
-            str_append_chars(code, " ");
-            str_append_chars(code, irv);
+            if(v) {
+                str_append_chars(code, ir_type(ir, v->rett));
+                str_append_chars(code, " ");
+                str_append_chars(code, irv);
+            } else {
+                str_append_chars(code, "void");
+            }
             str_append_chars(code, "\n");
             continue;
         }

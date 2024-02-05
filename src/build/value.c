@@ -326,7 +326,7 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     if(!lt->class || !lt->class->allow_math) {
         parse_err(fc->chunk_parse, "You cannot use operators on these values");
     }
-    bool is_ptr = false;;
+    bool is_ptr = false;
     if(lt->type == type_ptr) {
         is_ptr = true;
         left = vgen_cast(alc, left, type_gen_volt(alc, b, "int"));
@@ -359,8 +359,35 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
 }
 
 Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
-    // TODO
-    return left;
+    Build* b = fc->b;
+    Type* lt = left->rett;
+    Type* rt = right->rett;
+
+    bool is_ptr = lt->is_pointer || rt->is_pointer;
+    if(is_ptr) {
+        // Pointers
+        if(!lt->is_pointer) {
+            left = vgen_cast(alc, left, type_gen_volt(alc, b, "ptr"));
+        }
+        if(!rt->is_pointer) {
+            right = vgen_cast(alc, right, type_gen_volt(alc, b, "ptr"));
+        }
+    } else {
+        // Numbers
+        match_value_types(alc, fc->b, &left, &right);
+    }
+
+    Type *t1 = left->rett;
+    Type* t2 = right->rett;
+    char* reason = NULL;
+    if(!type_compat(t1, t2, &reason)){
+        char t1b[256];
+        char t2b[256];
+        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    return vgen_comp(alc, op, left, right, type_gen_volt(alc, b, "bool"));
 }
 
 bool value_is_assignable(Value *v) {

@@ -43,6 +43,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         int op = vop->op;
         return ir_op(ir, scope, op, vop->left, vop->right, v->rett);
     }
+    if (v->type == v_compare) {
+        VOp *vop = v->item;
+        int op = vop->op;
+        return ir_compare(ir, scope, op, vop->left, vop->right);
+    }
     if (v->type == v_cast) {
         Value *val = v->item;
         Type *from_type = val->rett;

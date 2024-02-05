@@ -112,6 +112,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
         sprintf(path, "%s%s.vh", dir, fn);
         if(file_exists(path)) {
             Fc* hfc = fc_make(b->nsc_main, dups(b->alc, path));
+            map_set(pkc->headers_by_fn, fn, hfc);
             return hfc;
         }
     }

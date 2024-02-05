@@ -139,7 +139,9 @@ void type_check(Chunk* chunk, Type* t1, Type* t2) {
     char* reason = NULL;
     if(!type_compat(t1, t2, &reason)) {
         Build* b = chunk->b;
-        sprintf(b->char_buf, "Types are not compatible | Reason: %s", reason ? reason : "?");
+        char t1b[256];
+        char t2b[256];
+        sprintf(b->char_buf, "Types are not compatible | %s <-> %s | Reason: %s", type_to_str(t1, t1b), type_to_str(t2, t2b), reason ? reason : "?");
         parse_err(chunk, b->char_buf);
     }
 }

@@ -35,6 +35,7 @@ char *ir_string(IR *ir, char *body);
 char* ir_load(IR* ir, Type* type, char* var);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett);
+char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);
 
 // Structs
 struct IR {

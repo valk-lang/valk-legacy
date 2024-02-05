@@ -277,7 +277,7 @@ char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett)
     } else if (op == op_shr) {
         str_append_chars(code, "lshr ");
     } else {
-        die("Unknown LLVM math operation (compiler bug)");
+        die("Unknown IR math operation (compiler bug)");
     }
     str_append_chars(code, ltype);
     str_append_chars(code, " ");
@@ -287,4 +287,76 @@ char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett)
     str_append_chars(code, "\n");
 
     return var;
+}
+
+char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right) {
+
+    char *lval1 = ir_value(ir, scope, left);
+    char *lval2 = ir_value(ir, scope, right);
+
+    Type *type = left->rett;
+    char *ltype = ir_type(ir, type);
+    bool is_signed = type->is_signed;
+    bool is_float = type->type == type_float;
+
+    char *var_tmp = ir_var(ir->func);
+    char *var_result = ir_var(ir->func);
+
+    char *sign = "eq";
+    if (op == op_ne) {
+        sign = "ne";
+    } else if (op == op_lt) {
+        if (is_float) {
+            sign = "olt";
+        } else if (is_signed) {
+            sign = "slt";
+        } else {
+            sign = "ult";
+        }
+    } else if (op == op_lte) {
+        if (is_float) {
+            sign = "ole";
+        } else if (is_signed) {
+            sign = "sle";
+        } else {
+            sign = "ule";
+        }
+    } else if (op == op_gt) {
+        if (is_float) {
+            sign = "ogt";
+        } else if (is_signed) {
+            sign = "sgt";
+        } else {
+            sign = "ugt";
+        }
+    } else if (op == op_gte) {
+        if (is_float) {
+            sign = "oge";
+        } else if (is_signed) {
+            sign = "sge";
+        } else {
+            sign = "uge";
+        }
+    }
+
+    Str *code = ir->block->code;
+    str_append_chars(code, "  ");
+    str_append_chars(code, var_tmp);
+    str_append_chars(code, " = icmp ");
+    str_append_chars(code, sign);
+    str_append_chars(code, " ");
+    str_append_chars(code, ltype);
+    str_append_chars(code, " ");
+    str_append_chars(code, lval1);
+    str_append_chars(code, ", ");
+    str_append_chars(code, lval2);
+    str_append_chars(code, "\n");
+
+    str_append_chars(code, "  ");
+    str_append_chars(code, var_result);
+    str_append_chars(code, " = zext i1 ");
+    str_append_chars(code, var_tmp);
+    str_append_chars(code, " to i8\n");
+
+    return var_result;
 }

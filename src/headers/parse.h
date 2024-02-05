@@ -23,6 +23,7 @@ struct Scope {
     Map* identifiers;
     Array* ast;
     Type* rett;
+    bool must_return;
     bool did_return;
 };
 struct Idf {
