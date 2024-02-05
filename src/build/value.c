@@ -318,7 +318,25 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
 }
 
 Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
-    // TODO
+    // Check type
+    Build* b = fc->b;
+    Type* lt = left->rett;
+    if(lt->type != type_int && lt->type != type_float && lt->type != type_ptr) {
+        parse_err(fc->chunk_parse, "You cannot use operators on these values");
+    }
+    // Try match types
+    match_value_types(fc->b, &left, &right);
+
+    Type* t1 = left->rett;
+    Type* t2 = right->rett;
+    char* reason = NULL;
+    if(!type_compat(t1, t2, &reason)){
+        char t1b[256];
+        char t2b[256];
+        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(t1, t1b), type_to_str(t2, t2b));
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
     return left;
 }
 
@@ -329,4 +347,12 @@ Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, V
 
 bool value_is_assignable(Value *v) {
     return v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global;
+}
+
+void match_value_types(Build* b, Value** v1_, Value** v2_) {
+    //
+    Value* v1 = *v1_;
+    Value* v2 = *v2_;
+    Type* t1 = v1->rett;
+    Type* t2 = v2->rett;
 }

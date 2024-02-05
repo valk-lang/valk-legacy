@@ -6,6 +6,7 @@
 
 Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio);
 bool value_is_assignable(Value *v);
+void match_value_types(Build* b, Value** v1_, Value** v2_);
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);

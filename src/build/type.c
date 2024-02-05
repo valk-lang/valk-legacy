@@ -10,6 +10,7 @@ Type* type_make(Allocator* alc, int type) {
     t->func_rett = NULL;
     t->is_pointer = false;
     t->is_signed = false;
+    t->nullable = false;
     return t;
 }
 
@@ -126,3 +127,20 @@ void type_check(Chunk* chunk, Type* t1, Type* t2) {
 }
 
 bool type_is_void(Type* type) { return type->type == type_void; }
+
+char* type_to_str(Type* t, char* res) {
+
+    strcpy(res, "");
+    if (t->nullable) {
+        strcat(res, "?");
+    }
+
+    if (t->type == type_void) {
+        strcpy(res, "void");
+    } else if (t->class) {
+        Class *class = t->class;
+        strcat(res, class->name);
+    }
+
+    return res;
+}

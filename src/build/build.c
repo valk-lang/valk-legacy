@@ -178,34 +178,72 @@ void parse_err(Chunk *chunk, char *msg) {
     int col_end = chunk->col;
     int i = 0;
     chunk_lex(chunk, chunk->i, &i, &line, &col, &col_end);
-    int len = col_end > col ? col_end - col : 1;
-    if (len > 50)
-        len = 50;
+    int err_len = col_end > col ? col_end - col : 1;
 
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);
     printf("# Error: %s\n", msg);
-    int spaces = (col >= 10) ? 0 : (10 - col);
-    i -= len + (10 - spaces) - 1;
-    int x = len + 34;
-    while (x-- > 0)
+
+    int chars_before = 0;
+    int chars_after = 0;
+    int x = i;
+    while(x > 0 && content[--x] != '\n') {
+        chars_before++;
+    }
+    x = i;
+    while(content[x] != 0 && content[x++] != '\n') {
+        chars_after++;
+    }
+    int len = chars_before + chars_after;
+    // Start line
+    x = len;
+    while(x-- > 0)
         printf("#");
     printf("\n");
-    x = spaces;
-    while (x-- > 0)
-        printf(" ");
-    x = 0;
-    while (content[i] != 0 && content[i] != '\n' && x++ < (20 + len)) {
-        char ch = content[i++];
-        if(ch == '\t')
-            ch = ' ';
+    // Content
+    int offset = i - chars_before;
+    x = len;
+    while(x-- > 0) {
+        char ch = content[offset++];
+        if(ch == '\t') ch = ' ';
         printf("%c", ch);
     }
-    printf("\n######## ");
-    x = len;
-    while (x-- > 0)
+    printf("\n");
+    // End line
+    if(err_len > chars_after) 
+        err_len = chars_after;
+    x = chars_before;
+    while(x-- > 0)
+        printf("#");
+    x = err_len;
+    while(x-- > 0)
         printf("^");
-    printf(" ########################\n");
+    x = chars_after - err_len;
+    while(x-- > 0)
+        printf("#");
+    printf("\n");
+
+    // int spaces = (col >= 10) ? 0 : (10 - col);
+    // i -= len + (10 - spaces) - 1;
+    // int x = len + 34;
+    // while (x-- > 0)
+    //     printf("#");
+    // printf("\n");
+    // x = spaces;
+    // while (x-- > 0)
+    //     printf(" ");
+    // x = 0;
+    // while (content[i] != 0 && content[i] != '\n' && x++ < (20 + len)) {
+    //     char ch = content[i++];
+    //     if(ch == '\t')
+    //         ch = ' ';
+    //     printf("%c", ch);
+    // }
+    // printf("\n######## ");
+    // x = len;
+    // while (x-- > 0)
+    //     printf("^");
+    // printf(" ########################\n");
     exit(1);
 }
 
