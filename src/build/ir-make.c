@@ -18,6 +18,8 @@ IR* ir_make(Fc* fc) {
     ir->code_attr = str_make(alc, 10000);
 
     ir->func = NULL;
+    ir->block = NULL;
+
     ir->funcs = array_make(alc, 50);
     ir->attrs = array_make(alc, 50);
     ir->declared_funcs = array_make(alc, 50);

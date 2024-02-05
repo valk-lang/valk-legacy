@@ -9,17 +9,24 @@ void ir_gen_final(IR* ir) {
     str_append(code, ir->code_struct);
     str_append_chars(code, "\n");
     str_append(code, ir->code_global);
-    str_append_chars(code, "\n");
+    str_append_chars(code, "\n\n");
 
     // Functions
     for (int i = 0; i < ir->funcs->length; i++) {
         IRFunc *func = array_get_index(ir->funcs, i);
-        for (int o = 0; o < func->blocks->length; o++) {
-            IRBlock* block = array_get_index(func->blocks, o);
-            str_append(code, block->code);
+        ir_func_definition(code, func);
+        // Blocks
+        if(func->block_code->code->length > 0) {
+            for (int o = 0; o < func->blocks->length; o++) {
+                IRBlock *block = array_get_index(func->blocks, o);
+                str_append_chars(block->code, block->name);
+                str_append_chars(block->code, ":\n");
+                str_append(code, block->code);
+            }
         }
+        //
+        str_append_chars(code, "}\n\n");
     }
-    str_append_chars(code, "\n");
 
     // Extern
     str_append(code, ir->code_extern);
