@@ -7,11 +7,17 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->name = name;
     nsc->dir = dir;
     nsc->scope = scope_make(alc, NULL);
+    nsc->fcs = array_make(alc, 20);
+
+    char *path_o = al(alc, VOLT_PATH_MAX);
+    sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+    nsc->path_o = path_o;
+
     return nsc;
 }
 
 Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
-    Nsc* nsc = map_get(pkc->pkc_by_name, name);
+    Nsc* nsc = map_get(pkc->namespaces, name);
     if(nsc)
         return nsc;
 
@@ -53,7 +59,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
             fc_make(nsc, path);
     }
 
-    map_set(pkc->pkc_by_name, name, nsc);
+    map_set(pkc->namespaces, name, nsc);
     return nsc;
 }
 

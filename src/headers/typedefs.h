@@ -19,6 +19,7 @@ typedef struct Pkc Pkc;
 typedef struct PkgConfig PkgConfig;
 typedef struct Chunk Chunk;
 typedef struct Stage Stage;
+typedef struct CompileData CompileData;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;

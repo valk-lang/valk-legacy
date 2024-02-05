@@ -49,6 +49,7 @@ struct Build {
     Allocator *alc;
     Allocator *alc_ast;
     //
+    char *cache_dir;
     char *char_buf;
     Str *str_buf;
     usize time_lex;
@@ -68,6 +69,7 @@ struct Build {
     Map *fc_by_path;
     Map *nsc_by_path;
     Array *used_pkc_names;
+    Array *pkcs;
     //
     Pkc *pkc_main;
     Pkc *pkc_volt;
@@ -82,6 +84,9 @@ struct Build {
 struct Fc {
     Build *b;
     char *path;
+    char *path_ir;
+    char *path_cache;
+    //
     Allocator *alc;
     Allocator *alc_ast;
     Nsc *nsc;
@@ -95,13 +100,18 @@ struct Fc {
     Array *classes;
     Array *aliasses;
     //
+    char *hash;
+    //
     bool is_header;
+    bool ir_changed;
 };
 struct Nsc {
     char *name;
     char *dir;
+    char *path_o;
     Pkc *pkc;
     Scope *scope;
+    Array *fcs;
 };
 struct Pkc {
     Build *b;
@@ -131,6 +141,16 @@ struct Stage {
     Array *items;
     void (*func)(void *);
     int i;
+};
+struct CompileData {
+    Build* b;
+    Array* ir_files;
+    char* path_o;
+    //
+    void* target_machine;
+    void* target_data;
+    char* triple;
+    char* data_layout;
 };
 
 #endif

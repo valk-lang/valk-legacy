@@ -59,6 +59,7 @@ int cmd_build(int argc, char *argv[]) {
     b->pkc_by_dir = map_make(alc);
     b->fc_by_path = map_make(alc);
     b->nsc_by_path = map_make(alc);
+    b->pkcs = array_make(alc, 20);
 
     b->func_main = NULL;
 
@@ -67,6 +68,31 @@ int cmd_build(int argc, char *argv[]) {
     b->verbose = 3;
     b->LOC = 0;
 
+    // Cache dir
+    char *cache_buf = al(alc, 1000);
+    char *cache_hash = al(alc, 64);
+    char *cache_dir = al(alc, VOLT_PATH_MAX);
+    strcpy(cache_buf, main_dir ? main_dir : ".");
+    strcat(cache_buf, "||");
+    // strcat(cache_buf, os);
+    // strcat(cache_buf, arch);
+    // strcat(cache_buf, optimize ? "1" : "0");
+    // strcat(cache_buf, debug ? "1" : "0");
+    // strcat(cache_buf, test ? "1" : "0");
+    ctxhash(cache_buf, cache_hash);
+    strcpy(cache_dir, get_storage_path());
+    strcat(cache_dir, "/cache/");
+    if (!file_exists(cache_dir))
+        makedir(cache_dir, 0700);
+    strcat(cache_dir, cache_hash);
+    strcat(cache_dir, "/");
+    if (!file_exists(cache_dir))
+        makedir(cache_dir, 0700);
+    b->cache_dir = cache_dir;
+    if (b->verbose > 0)
+        printf("📦 Cache directory: %s\n", cache_dir);
+
+    //
     build_set_stages(b);
 
     Pkc *pkc_main = pkc_make(alc, b, "main");

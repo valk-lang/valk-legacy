@@ -79,3 +79,52 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
   return 0;
 }
 #endif
+
+// simple hash has similar speed to crc32 but returns a string instead of a number
+// by: github.com/ctxcode
+void ctxhash(char *content_, char *buf_) {
+
+    unsigned char *content = (unsigned char *)content_;
+    unsigned char *buf = (unsigned char *)buf_;
+
+    const int hash_len = 32;
+
+    memset(buf, '\0', hash_len);
+
+    int res_pos = 0;
+    int str_pos = 0;
+    unsigned char diff = 0;
+
+    bool end = false;
+
+    while (true) {
+        unsigned char str_ch = content[str_pos++];
+        if (str_ch == '\0') {
+            end = true;
+            str_pos = 0;
+            continue;
+        }
+
+        diff += (str_ch + str_pos) * 0b00010101 + res_pos;
+        buf[res_pos++] += str_ch + diff;
+
+        if (res_pos == hash_len) {
+            if (end) {
+                break;
+            }
+            res_pos = 0;
+        }
+    }
+
+    const char *chars = "TMpUivZnQsHw1klS3Ah5d6qr7tjKxJOIEmYP8VgGzcDR0f2uBe4aobWLNCFy9X";
+
+    int i = hash_len;
+    while (i > 0) {
+        i--;
+
+        const unsigned char str_ch = buf[i];
+        diff += (str_ch + i) * 0b0001011 + i;
+        buf[i] = chars[(str_ch + diff) % 62];
+    }
+    buf[hash_len] = '\0';
+}

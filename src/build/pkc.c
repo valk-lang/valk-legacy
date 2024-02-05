@@ -22,6 +22,8 @@ Pkc* pkc_make(Allocator* alc, Build* b, char* name_suggestion) {
 
     pkc->name = dups(alc, buf);
 
+    array_push(b->pkcs, pkc);
+
     return pkc;
 }
 
