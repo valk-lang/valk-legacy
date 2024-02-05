@@ -5,6 +5,7 @@ void stage_parse(Fc *fc);
 void stage_1_func(Fc* fc, int act);
 void stage_1_header(Fc* fc);
 void stage_1_class(Fc* fc, int type, int act);
+void stage_1_use(Fc* fc);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -35,10 +36,6 @@ void stage_parse(Fc *fc) {
             stage_1_func(fc, act);
             continue;
         }
-        if(str_is(tkn, "header")) {
-            stage_1_header(fc);
-            continue;
-        }
         if(str_is(tkn, "struct")) {
             stage_1_class(fc, ct_struct, act);
             continue;
@@ -61,6 +58,14 @@ void stage_parse(Fc *fc) {
         }
         if(str_is(tkn, "boolean")) {
             stage_1_class(fc, ct_bool, act);
+            continue;
+        }
+        if(str_is(tkn, "header")) {
+            stage_1_header(fc);
+            continue;
+        }
+        if(str_is(tkn, "use")) {
+            stage_1_use(fc);
             continue;
         }
 
@@ -170,4 +175,26 @@ void stage_1_class(Fc *fc, int type, int act) {
     class->body = chunk_clone(b->alc, fc->chunk_parse);
 
     skip_body(fc);
+}
+
+void stage_1_use(Fc* fc){
+
+    char* pk = NULL;
+    char* ns = tok(fc, true, false, true);
+    if(tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
+        pk = ns;
+        tok(fc, false, false, true);
+        ns = tok(fc, false, false, true);
+    }
+
+    Pkc* pkc = fc->nsc->pkc;
+    if(pk) {
+        pkc = pkc_load_pkc(pkc, pk, fc->chunk_parse);
+    }
+
+    Nsc* nsc = nsc_load(pkc, ns, true, fc->chunk_parse);
+
+    Build *b = fc->b;
+    Idf* idf = idf_make(b->alc, idf_scope, nsc->scope);
+    scope_set_idf(fc->scope, ns, idf, fc);
 }

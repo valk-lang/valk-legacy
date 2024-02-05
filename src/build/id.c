@@ -31,7 +31,7 @@ Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
     char* name = first_part;
     Build* b = fc->b;
 
-    if(tok_id_next(fc) == ':') {
+    if(tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
         nsc = name;
         tok(fc, false, false, true);
         name = tok(fc, false, false, true);

@@ -109,7 +109,7 @@ int cmd_build(int argc, char *argv[]) {
     if (main_dir)
         pkc_set_dir(pkc_main, main_dir);
 
-    Nsc *nsc_main = nsc_load(pkc_main, "main", false);
+    Nsc *nsc_main = nsc_load(pkc_main, "main", false, NULL);
     if (!nsc_main) {
         nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
         map_set(pkc_main->namespaces, "main", nsc_main);
@@ -118,9 +118,9 @@ int cmd_build(int argc, char *argv[]) {
 
     // Load core dependencies
     Pkc *vlt = pkc_load_pkc(pkc_main, "volt", NULL);
-    Nsc *io = nsc_load(vlt, "io", true);
-    Nsc *mem = nsc_load(vlt, "mem", true);
-    Nsc *type = nsc_load(vlt, "type", true);
+    Nsc *io = nsc_load(vlt, "io", true, NULL);
+    Nsc *mem = nsc_load(vlt, "mem", true, NULL);
+    Nsc *type = nsc_load(vlt, "type", true, NULL);
     b->pkc_volt = vlt;
 
     // Build
@@ -213,13 +213,15 @@ void parse_err(Chunk *chunk, char *msg) {
     // End line
     if(err_len > chars_after) 
         err_len = chars_after;
-    x = chars_before;
+    x = col - 2;
     while(x-- > 0)
         printf("#");
+    printf(" ");
     x = err_len;
     while(x-- > 0)
         printf("^");
-    x = chars_after - err_len;
+    printf(" ");
+    x = len - col - err_len;
     while(x-- > 0)
         printf("#");
     printf("\n");

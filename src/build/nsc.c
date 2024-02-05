@@ -16,7 +16,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     return nsc;
 }
 
-Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
+Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Chunk* chunk) {
     Nsc* nsc = map_get(pkc->namespaces, name);
     if(nsc)
         return nsc;
@@ -27,7 +27,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
         if(!must_exist)
             return NULL;
         sprintf(b->char_buf, "Trying to load namespace '%s' from a package without a config", name);
-        build_err(b, b->char_buf);
+        chunk ? parse_err(chunk, b->char_buf) : build_err(b, b->char_buf);
     }
 
     char* dir = cfg_get_nsc_dir(pkc->config, name, b->alc);
@@ -35,19 +35,19 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist) {
         if(!must_exist)
             return NULL;
         sprintf(b->char_buf, "Namespace '%s' not found in config: '%s'", name, pkc->config->path);
-        build_err(b, b->char_buf);
+        chunk ? parse_err(chunk, b->char_buf) : build_err(b, b->char_buf);
     }
     if(!file_exists(dir)) {
         if(!must_exist)
             return NULL;
         sprintf(b->char_buf, "Namespace directory of '%s' does not exist: '%s'", name, dir);
-        build_err(b, b->char_buf);
+        chunk ? parse_err(chunk, b->char_buf) : build_err(b, b->char_buf);
     }
 
     Nsc* ns2 = map_get(b->nsc_by_path, dir);
     if(ns2) {
         sprintf(b->char_buf, "There are 2 namesapces pointing to the same directory: '%s' | '%s' => '%s' ", ns2->name, name, dir);
-        build_err(b, b->char_buf);
+        chunk ? parse_err(chunk, b->char_buf) : build_err(b, b->char_buf);
     }
 
     nsc = nsc_make(b->alc, pkc, name, dir);
@@ -69,5 +69,5 @@ Nsc* get_volt_nsc(Build* b, char* name) {
     Pkc* pkc = b->pkc_volt;
     if(!pkc)
         return NULL;
-    return nsc_load(pkc, name, true);
+    return nsc_load(pkc, name, true, NULL);
 }
