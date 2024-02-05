@@ -80,8 +80,8 @@ void skip_value(Fc *fc) {
         tok_back(fc);
         break;
     }
-    tkn = tok(fc, true, true, true);
 
+    tkn = tok(fc, true, true, true);
     while(str_is(tkn, "@as")) {
         skip_type(fc);
         tkn = tok(fc, true, true, true);
@@ -91,11 +91,13 @@ void skip_value(Fc *fc) {
         skip_value(fc);
         tok_expect(fc, ":", true, true);
         skip_value(fc);
+        return;
     }
 
     if (str_is(tkn, "<=") || str_is(tkn, ">=") || str_is(tkn, "==") || str_is(tkn, "!=") || str_is(tkn, "&&") || str_is(tkn, "||") || str_is(tkn, "+") || str_is(tkn, "-") || str_is(tkn, "/") || str_is(tkn, "*") || str_is(tkn, "%") || str_is(tkn, "&") || str_is(tkn, "|") || str_is(tkn, "^") || str_is(tkn, "??") || str_is(tkn, "?!")) {
         skip_value(fc);
-    } else {
-        tok_back(fc);
+        return;
     }
+
+    tok_back(fc);
 }
