@@ -84,17 +84,43 @@ Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
     if(idf && idf->type == idf_class) {
         return type_gen_class(alc, idf->item);
     }
-    return NULL;
+    printf("VOLT TYPE NOT FOUND: '%s'", name);
+    exit(1);
 }
 
-bool type_compat(Type* t1, Type* t2, char* reason) {
+bool type_compat(Type* t1, Type* t2, char** reason) {
+    if (t1->type != t2->type) {
+        printf("%d | %d\n", t1->type, t2->type);
+        *reason = "different kind of types";
+        return false;
+    }
+    if (t1->is_signed != t2->is_signed) {
+        *reason = "signed vs unsigned";
+        return false;
+    }
+    if (t1->size != t2->size) {
+        *reason = "types have different sizes";
+        return false;
+    }
+    if (t1->is_pointer != t2->is_pointer) {
+        *reason = "pointer vs no-pointer";
+        return false;
+    }
+    if (t1->type == type_struct && t1->class != t2->class) {
+        *reason = "different classes";
+        return false;
+    }
+    if (t2->nullable && !t1->nullable) {
+        *reason = "non-null vs null-able-type";
+        return false;
+    }
     return true;
 }
 void type_check(Chunk* chunk, Type* t1, Type* t2) {
-    char reason[256];
-    if(!type_compat(t1, t2, reason)) {
+    char* reason = NULL;
+    if(!type_compat(t1, t2, &reason)) {
         Build* b = chunk->b;
-        sprintf(b->char_buf, "Types are not compatible\nReason: %s", reason);
+        sprintf(b->char_buf, "Types are not compatible | Reason: %s", reason ? reason : "?");
         parse_err(chunk, b->char_buf);
     }
 }

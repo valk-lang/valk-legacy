@@ -218,15 +218,15 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
     
     Build* b = fc->b;
-    Array* arg_types = ont->func_args;
+    Array* func_args = ont->func_args;
     Type *rett = ont->func_rett;
 
-    if (!arg_types || !rett) {
+    if (!func_args || !rett) {
         sprintf(b->char_buf, "Function pointer value is missing function type information (compiler bug)\n");
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    Array* args = array_make(alc, arg_types->length + 1);
+    Array* args = array_make(alc, func_args->length + 1);
     int arg_i = 0;
     if(on->type == v_func_ptr) {
         VFuncPtr* fptr = on->item;
@@ -244,9 +244,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         // Read argument values
         while (true) {
             Value *arg = read_value(alc, fc, scope, true, 0);
-            Type *arg_type = array_get_index(arg_types, arg_i++);
-            if (arg_type) {
-                type_check(fc->chunk_parse, arg_type, arg->rett);
+            FuncArg *func_arg = array_get_index(func_args, arg_i++);
+            if (func_arg) {
+                type_check(fc->chunk_parse, func_arg->type, arg->rett);
             }
             array_push(args, arg);
 
@@ -260,12 +260,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    if(args->length > arg_types->length) {
-        sprintf(b->char_buf, "Too many arguments. Expected: %d, Found: %d\n", arg_types->length - offset, args->length - offset);
+    if(args->length > func_args->length) {
+        sprintf(b->char_buf, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
         parse_err(fc->chunk_parse, b->char_buf);
     }
-    if(args->length < arg_types->length) {
-        sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", arg_types->length - offset, args->length - offset);
+    if(args->length < func_args->length) {
+        sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
