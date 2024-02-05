@@ -30,7 +30,6 @@ void stage_props_class(Fc* fc, Class *class) {
     Build *b = fc->b;
     *fc->chunk_parse = *class->body;
 
-    printf("scan:%s\n", class->name);
     while(true) {
         char *tkn = tok(fc, true, true, true);
 

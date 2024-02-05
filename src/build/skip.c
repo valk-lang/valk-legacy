@@ -33,25 +33,27 @@ void skip_value(Fc *fc) {
     char t = chunk->token;
 
     if (t == tok_string) {
-        tkn = tok(fc, true, true, true);
-        t = chunk->token;
     } else if (t == tok_char_string) {
-        tkn = tok(fc, true, true, true);
-        t = chunk->token;
     } else if (t == tok_scope_open && str_is(tkn, "(")) {
         skip_body(fc);
-        tkn = tok(fc, true, true, true);
-        t = chunk->token;
     } else if (t == tok_id) {
-        tkn = tok(fc, true, true, true);
+        // Full identifier
         if (tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
             tkn = tok(fc, false, false, true);
             tkn = tok(fc, false, false, true);
         }
-        t = chunk->token;
-    } else if (t == tok_number) {
+        // Class init
         tkn = tok(fc, true, true, true);
-        t = chunk->token;
+        if(str_is(tkn, "{")) {
+            skip_body(fc);
+        } else {
+            tok_back(fc);
+        }
+    } else if (t == tok_number) {
+        // Number type hints
+        if (tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == '#') {
+            skip_type(fc);
+        }
     } else if (str_is(tkn, "--") || str_is(tkn, "++")) {
         skip_value(fc);
         return;
@@ -66,7 +68,7 @@ void skip_value(Fc *fc) {
             skip_value(fc);
             return;
         }
-        if (str_is(tkn, "(")) {
+        if (str_is(tkn, "(") || str_is(tkn, "[")) {
             skip_body(fc);
             tkn = tok(fc, false, false, true);
             continue;
