@@ -15,7 +15,7 @@ void stage_4_ir(Fc* fc) {
 
     IR* ir = ir_make(fc);
     char* ir_code = str_to_chars(alc, ir->code_final);
-    printf("IR: %s\n", ir_code);
+    // printf("IR: %s\n", ir_code);
 
     char *ir_hash = al(b->alc, 64);
     ctxhash(ir_code, ir_hash);

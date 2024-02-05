@@ -123,16 +123,37 @@ void stage_1_class(Fc *fc, int type, int act) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    tok_expect(fc, "{", true, true);
-
     Class* class = class_make(b->alc, b, type);
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
-    class->body = chunk_clone(b->alc, fc->chunk_parse);
 
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
     array_push(fc->classes, class);
+
+    //
+    if(type == ct_int) {
+        class->size = b->ptr_size;
+        char* tkn = tok(fc, true, true, true);
+        if(is_valid_number(tkn)) {
+            int size = atoi(tkn);
+            if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) {
+                sprintf(b->char_buf, "Invalid integer size: '%d'", size);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            class->size = size;
+            tkn = tok(fc, true, true, true);
+        }
+        if(str_is(tkn, "unsigned")) {
+            class->is_signed = false;
+            tkn = tok(fc, true, true, true);
+        }
+        tok_back(fc);
+    }
+
+    tok_expect(fc, "{", true, true);
+
+    class->body = chunk_clone(b->alc, fc->chunk_parse);
 
     skip_body(fc);
 }

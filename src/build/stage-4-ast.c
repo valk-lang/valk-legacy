@@ -68,6 +68,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 // TODO: type check
 
                 array_push(scope->ast, tgen_return(alc, val));
+                scope->did_return = true;
                 continue;
             }
         }

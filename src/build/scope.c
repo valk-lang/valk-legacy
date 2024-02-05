@@ -6,6 +6,7 @@ Scope* scope_make(Allocator* alc, Scope* parent) {
     sc->parent = parent;
     sc->identifiers = map_make(alc);
     sc->ast = NULL;
+    sc->did_return = false;
     return sc;
 }
 

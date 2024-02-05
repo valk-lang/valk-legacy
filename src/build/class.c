@@ -12,5 +12,6 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->props = map_make(alc);
     c->funcs = map_make(alc);
     c->packed = false;
+    c->is_signed = true;
     return c;
 }

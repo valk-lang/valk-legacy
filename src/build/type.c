@@ -59,6 +59,8 @@ Type* type_gen_class(Allocator* alc, Class* class) {
         t->type = type_ptr;
     } else if (ct == ct_int) {
         t->type = type_int;
+        t->size = class->size;
+        t->is_signed = class->is_signed;
     } else if (ct == ct_float) {
         t->type = type_float;
     }
