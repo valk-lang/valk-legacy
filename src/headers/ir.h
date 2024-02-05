@@ -19,6 +19,8 @@ void ir_func_definition(Str* code, IRFunc *func);
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
+// Value
+char* ir_value(IR* ir, Scope* scope, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
 void ir_jump(Str* code, IRBlock* block);
