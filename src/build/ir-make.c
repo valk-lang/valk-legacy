@@ -10,6 +10,7 @@ IR* ir_make(Fc* fc) {
     ir->fc = fc;
     ir->b = b;
     ir->alc = alc;
+    ir->char_buf = b->char_buf;
 
     ir->code_final = str_make(alc, 50000);
     ir->code_struct = str_make(alc, 10000);
@@ -31,8 +32,8 @@ IR* ir_make(Fc* fc) {
     ir->di_retained_nodes = NULL;
     ir->di_type_ptr = NULL;
 
-    ir->c_string = 0;
-    ir->c_attr = 0;
+    ir->string_count = 0;
+    ir->attr_count = 0;
 
     ir->debug = false;
 

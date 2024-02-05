@@ -14,7 +14,8 @@ char *ir_type(IR *ir, Type *type);
 char *ir_type_int(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 // Func
-void ir_func_definition(Str* code, IRFunc *func);
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, IRFunc* func, bool is_extern);
+void ir_define_ext_func(IR* ir, Func* func);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
 // AST
@@ -24,6 +25,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
 void ir_jump(Str* code, IRBlock* block);
+Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
+char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
+char *ir_func_ptr(IR *ir, Func *func);
+char *ir_string(IR *ir, char *body);
 
 // Structs
 struct IR {
@@ -54,8 +59,8 @@ struct IR {
     char *di_retained_nodes;
     char *di_type_ptr;
     //
-    int c_string;
-    int c_attr;
+    int string_count;
+    int attr_count;
     //
     bool use_stack_save;
     bool debug;

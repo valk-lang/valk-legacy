@@ -46,15 +46,15 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir_jump(func->block_start->code, func->block_code);
 }
 
-void ir_func_definition(Str* code, IRFunc *func) {
-
-    IR* ir = func->ir;
-    Func* vfunc = func->func;
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, IRFunc* func, bool is_extern) {
 
     Array *args = vfunc->args->values;
     int argc = args->length;
 
-    str_append_chars(code, "define dso_local ");
+    if (is_extern)
+        str_append_chars(code, "declare ");
+    else
+        str_append_chars(code, "define dso_local ");
     str_append_chars(code, ir_type(ir, vfunc->rett));
     str_append_chars(code, " @");
     str_append_chars(code, vfunc->export_name);
@@ -66,19 +66,29 @@ void ir_func_definition(Str* code, IRFunc *func) {
         if (i > 0)
             str_append_chars(code, ", ");
         str_append_chars(code, ir_type(ir, arg->type));
-        str_append_chars(code, " noundef ");
+        str_append_chars(code, " noundef");
         if (arg->type->is_pointer && !arg->type->nullable)
-            str_append_chars(code, "nonnull ");
+            str_append_chars(code, " nonnull");
 
-        char *v = ir_var(func);
-        str_append_chars(code, v);
-
-        arg->decl->ir_var = v;
+        if(!is_extern) {
+            char *v = ir_var(func);
+            str_append_chars(code, " ");
+            str_append_chars(code, v);
+            arg->decl->ir_var = v;
+        }
     }
-    str_append_chars(code, ")");
+    if (is_extern) {
+        str_append_chars(code, ")\n");
+    }else {
+        str_append_chars(code, ")");
+        if (vfunc->is_inline)
+            str_append_chars(code, " alwaysinline");
 
-    if(vfunc->is_inline)
-        str_append_chars(code, " alwaysinline");
+        str_append_chars(code, " {\n");
+    }
+}
 
-    str_append_chars(code, " {\n");
+void ir_define_ext_func(IR* ir, Func* func) {
+    Str *code = ir->code_extern;
+    ir_func_definition(code, ir, func, NULL, true);
 }
