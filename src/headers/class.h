@@ -23,6 +23,7 @@ struct ClassProp {
     Type* type;
     Chunk* chunk_type;
     Chunk* chunk_value;
+    int index;
 };
 
 #endif

@@ -14,6 +14,7 @@ char *ir_type(IR *ir, Type *type);
 char *ir_type_real(IR *ir, Type *type);
 char *ir_type_int(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
+char *ir_type_align(IR *ir, Type *type, char* result);
 // Func
 void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
 void ir_define_ext_func(IR* ir, Func* func);
@@ -38,6 +39,7 @@ void ir_store(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett);
 char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);
+char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
 
 // Structs
 struct IR {

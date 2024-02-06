@@ -309,6 +309,10 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         ClassProp* prop = array_get_index(props, i);
         char* name = array_get_index(class->props->keys, i);
         if(!map_contains(values, name)) {
+            if(!prop->chunk_value) {
+                sprintf(b->char_buf, "Missing property value for: '%s'\n", name);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
             Chunk backup;
             backup = *fc->chunk_parse;
             *fc->chunk_parse = *prop->chunk_value;

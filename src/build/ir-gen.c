@@ -166,11 +166,7 @@ void ir_store(IR *ir, Type *type, char *var, char *val) {
     char *ltype = ir_type(ir, type);
 
     char bytes[20];
-    int abytes = type->size;
-    if (abytes > ir->b->ptr_size) {
-        abytes = ir->b->ptr_size;
-    }
-    sprintf(bytes, "%d", abytes);
+    ir_type_align(ir, type, bytes);
 
     str_append_chars(code, "  store ");
     str_append_chars(code, ltype);
@@ -380,4 +376,26 @@ char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right) {
     str_append_chars(code, " to i8\n");
 
     return var_result;
+}
+
+char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
+    char *result = ir_var(ir->func);
+    Str *code = ir->block->code;
+
+    char index[20];
+    sprintf(index, "%d", prop->index);
+
+    ir_define_struct(ir, class);
+
+    str_append_chars(code, "  ");
+    str_append_chars(code, result);
+    str_append_chars(code, " = getelementptr inbounds %struct.");
+    str_append_chars(code, class->ir_name);
+    str_append_chars(code, ", ptr ");
+    str_append_chars(code, on);
+    str_append_chars(code, ", i32 0, i32 ");
+    str_append_chars(code, index);
+    str_append_chars(code, "\n");
+
+    return result;
 }

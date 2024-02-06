@@ -66,3 +66,15 @@ Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett) 
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     return value_make(alc, v_cast, val, to_type);
 }
+
+Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
+    Func *func = get_volt_func(b, "mem", "alloc");
+    Value *fptr = vgen_func_ptr(alc, func, NULL);
+    Array *alloc_values = array_make(alc, func->args->values->length);
+    Value *vint = vgen_int(alc, size, type_gen_volt(alc, b, "uint"));
+    array_push(alloc_values, vint);
+    Value *res = vgen_func_call(alc, fptr, alloc_values);
+    if(cast_as)
+        res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
+    return res;
+}

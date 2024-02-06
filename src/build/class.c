@@ -9,6 +9,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->ir_name = NULL;
     c->body = NULL;
     c->size = 0;
+    c->size = 100; // Temporary
     c->props = map_make(alc);
     c->funcs = map_make(alc);
     c->packed = false;

@@ -8,13 +8,14 @@ void ir_write_ast(IR* ir, Scope* scope) {
     Array *ast = scope->ast;
     for (int i = 0; i < ast->length; i++) {
         Token *t = array_get_index(ast, i);
+        int tt = t->type;
 
-        if (t->type == t_statement) {
+        if (tt == t_statement) {
             Value *v = t->item;
             char *irv = ir_value(ir, scope, v);
             continue;
         }
-        if (t->type == t_declare) {
+        if (tt == t_declare) {
             TDeclare* item = t->item;
             Decl *decl = item->decl;
             Value *val = item->value;
@@ -28,7 +29,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
 
-        if (t->type == t_return) {
+        if (tt == t_return) {
             Value *v = t->item;
             char *irv = "void";
             if(v)

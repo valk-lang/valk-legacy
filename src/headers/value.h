@@ -17,6 +17,7 @@ Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index);
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
+Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
 
 struct Value {
     int type;

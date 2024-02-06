@@ -55,6 +55,24 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *lval = ir_value(ir, scope, val);
         return ir_cast(ir, lval, from_type, to_type);
     }
+    if (v->type == v_class_init) {
+        Map* values = v->item;
+        Class* class = v->rett->class;
+        Value* ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
+        char* obj = ir_value(ir, scope, ob);
+
+        for (int i = 0; i < values->keys->length; i++) {
+            char *prop_name = array_get_index(values->keys, i);
+            Value *val = array_get_index(values->values, i);
+            ClassProp *prop = map_get(class->props, prop_name);
+            Type *type = prop->type;
+            char *lval = ir_value(ir, scope, val);
+            char *pvar = ir_class_pa(ir, class, obj, prop);
+            ir_store(ir, type, pvar, lval);
+        }
+
+        return obj;
+    }
 
     return "???";
 }
@@ -91,5 +109,14 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
 
         return result;
     }
+    // if (v->type == v_class_pa) {
+    //     VClassPA *pa = v->item;
+    //     Value *on = pa->on;
+    //     ClassProp *prop = pa->prop;
+    //     Class *class = on->rett->class;
+    //     Type *type = prop->type;
+    //     char *lon = llvm_value(b, scope, on);
+    //     return ir_class_prop_access(b, class, lon, prop);
+    // }
     return "?-?";
 }

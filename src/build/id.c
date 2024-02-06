@@ -84,3 +84,13 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
     }
     return NULL;
 }
+
+Func *get_volt_func(Build *b, char *namespace, char *name) {
+    Nsc* nsc = get_volt_nsc(b, namespace);
+    Idf* idf = scope_find_idf(nsc->scope, name, false);
+    if(idf && idf->type == idf_func) {
+        return idf->item;
+    }
+    printf("VOLT FUNCTION NOT FOUND: '%s'", name);
+    exit(1);
+}

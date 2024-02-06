@@ -53,3 +53,4 @@ void parse_handle_func_args(Fc* fc, Func* func) {
         skip_body(fc);
     }
 }
+

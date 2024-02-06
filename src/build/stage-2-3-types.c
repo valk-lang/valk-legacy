@@ -68,9 +68,9 @@ void stage_types_func(Fc* fc, Func* func) {
             arg->decl = decl;
 
             tkn = tok(fc, true, true, true);
-            if(str_is(tkn, "=")) {
+            if(str_is(tkn, "(")) {
                 arg->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
-                skip_value(fc);
+                skip_body(fc);
                 tkn = tok(fc, true, true, true);
             }
 

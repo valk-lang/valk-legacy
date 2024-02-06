@@ -67,3 +67,12 @@ char *ir_type_int(IR *ir, int bytes) {
     die("Unsupported integer size (IR Generator)");
 	return "";
 }
+
+char *ir_type_align(IR *ir, Type *type, char* result) {
+    int abytes = type->size;
+    if (abytes > ir->b->ptr_size) {
+        abytes = ir->b->ptr_size;
+    }
+    sprintf(result, "%d", abytes);
+    return result;
+}

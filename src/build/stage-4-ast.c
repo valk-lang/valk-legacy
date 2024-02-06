@@ -87,6 +87,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
 
                 Decl* decl = decl_make(alc, type, false);
+                Idf *idf = idf_make(b->alc, idf_decl, decl);
+                scope_set_idf(scope, name, idf, fc);
+
                 array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                 continue;
             }

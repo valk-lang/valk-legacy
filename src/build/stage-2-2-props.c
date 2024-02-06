@@ -65,14 +65,15 @@ void stage_props_class(Fc* fc, Class *class) {
             ClassProp* prop = al(b->alc, sizeof(ClassProp));
             prop->chunk_type = chunk_clone(b->alc, fc->chunk_parse);
             prop->chunk_value = NULL;
+            prop->index = class->props->values->length;
             map_set(class->props, name, prop);
 
             skip_type(fc);
 
             tkn = tok(fc, true, true, true);
-            if(str_is(tkn, "=")) {
+            if(str_is(tkn, "(")) {
                 prop->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
-                skip_value(fc);
+                skip_body(fc);
             } else {
                 tok_back(fc);
             }
