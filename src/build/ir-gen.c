@@ -447,3 +447,28 @@ void ir_if(IR *ir, Scope *scope, TIf *ift) {
 
     ir->block = after;
 }
+
+void ir_while(IR *ir, Scope *scope, TWhile *item) {
+    //
+    Value *cond = item->cond;
+    Scope *scope_while = item->scope_while;
+
+    IRBlock *block_cond = ir_block_make(ir, ir->func);
+    IRBlock *block_while = ir_block_make(ir, ir->func);
+    IRBlock *after = ir_block_make(ir, ir->func);
+
+    ir_jump(ir, block_cond);
+
+    ir->block = block_cond;
+    char *lcond = ir_value(ir, scope, cond);
+    char *lcond_i1 = ir_i1_cast(ir, lcond);
+    ir_cond_jump(ir, lcond_i1, block_while, after);
+
+    ir->block = block_while;
+    ir_write_ast(ir, scope_while);
+    if (!scope_while->did_return) {
+        ir_jump(ir, block_cond);
+    }
+
+    ir->block = after;
+}

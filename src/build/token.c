@@ -57,3 +57,31 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
 
     array_push(scope->ast, tgen_if(alc, cond, scope_if, scope_else));
 }
+
+void token_while(Allocator* alc, Fc* fc, Scope* scope) {
+    Build* b = fc->b;
+
+    Value *cond = read_value(alc, fc, scope, false, 0);
+    if (!type_is_bool(cond->rett)) {
+        char buf[256];
+        sprintf(b->char_buf, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    char* tkn = tok(fc, true, true, true);
+    bool single = false;
+
+    if (str_is(tkn, "{")) {
+    } else if (str_is(tkn, ":")) {
+        single = true;
+    } else {
+        sprintf(b->char_buf, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    Scope *scope_while = scope_sub_make(alc, sc_default, scope);
+
+    read_ast(fc, scope_while, single);
+
+    array_push(scope->ast, tgen_while(alc, cond, scope_while));
+}

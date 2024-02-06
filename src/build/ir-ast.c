@@ -65,6 +65,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
 
+        if (tt == t_while) {
+            TWhile *item = t->item;
+            ir_while(ir, scope, item);
+            continue;
+        }
+
         die("Unhandled IR token (compiler bug)");
     }
 }

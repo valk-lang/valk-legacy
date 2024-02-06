@@ -97,6 +97,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 token_if(alc, fc, scope);
                 continue;
             }
+            if (str_is(tkn, "while")){
+                token_while(alc, fc, scope);
+                continue;
+            }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
                 if(scope->rett) {

@@ -37,6 +37,7 @@ typedef struct ClassProp ClassProp;
 typedef struct Token Token;
 typedef struct TDeclare TDeclare;
 typedef struct TIf TIf;
+typedef struct TWhile TWhile;
 // Values
 typedef struct Value Value;
 typedef struct VPair VPair;

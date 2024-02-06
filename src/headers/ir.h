@@ -43,6 +43,7 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett);
 char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
 void ir_if(IR *ir, Scope *scope, TIf *ift);
+void ir_while(IR *ir, Scope *scope, TWhile *item);
 
 // Structs
 struct IR {

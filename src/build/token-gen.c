@@ -27,3 +27,10 @@ Token *tgen_if(Allocator *alc, Value* cond, Scope* scope_if, Scope* scope_else) 
     item->scope_else = scope_else;
     return token_make(alc, t_if, item);
 }
+
+Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
+    TWhile *item = al(alc, sizeof(TWhile));
+    item->cond = cond;
+    item->scope_while = scope_while;
+    return token_make(alc, t_while, item);
+}
