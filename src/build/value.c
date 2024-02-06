@@ -24,6 +24,9 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         char *body = tkn;
         body = string_replace_backslash_chars(alc, body);
         v = value_make(alc, v_string, body, type_gen_volt(alc, b, "string"));
+    } else if (t == tok_scope_open && str_is(tkn, "(")) {
+        v = read_value(alc, fc, scope, true, 0);
+        tok_expect(fc, ")", true, true);
     } else if (t == tok_id) {
         if (str_is(tkn, "sizeof")) {
             tok_expect(fc, "(", false, false);

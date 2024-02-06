@@ -14,12 +14,12 @@ struct Stack {
     }
 
     fn add(item: ptr, handler: ptr) {
-        // let adr = this.data + (this.count++ * sizeof(ptr));
-        // @ptrv(adr, ptr) = item;
+        let adr = this.data + (this.count++ * sizeof(ptr));
+        @ptrv(adr, ptr) = item;
     }
 
     fn pop(amount: int) {
-        // this.count = this.count - amount;
+        this.count -= amount;
     }
 }
 
