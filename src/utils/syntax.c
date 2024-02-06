@@ -188,15 +188,10 @@ char backslash_char(char ch) {
 }
 
 bool str_is(char* tkn, char* comp) {
-    int i = 0;
-    while(true) {
-        const char ch = tkn[i];
-        if(ch != comp[i++])
-            return false;
-        if(ch == 0)
-            break;
-    }
-    return true;
+    while (*tkn == *comp++)
+		if (*tkn++ == '\0')
+			return true;
+    return false;
 }
 
 bool str_in(char* tkn, char* comp) {
