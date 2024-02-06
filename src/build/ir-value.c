@@ -41,7 +41,9 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;
-        return ir_op(ir, scope, op, vop->left, vop->right, v->rett);
+        char *left = ir_value(ir, scope, vop->left);
+        char *right = ir_value(ir, scope, vop->right);
+        return ir_op(ir, scope, op, left, right, v->rett);
     }
     if (v->type == v_compare) {
         VOp *vop = v->item;
@@ -72,6 +74,23 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         }
 
         return obj;
+    }
+    if (v->type == v_class_pa) {
+        VClassPA* pa = v->item;
+        Value* on = pa->on;
+        char* ob = ir_value(ir, scope, on);
+        char* ref = ir_class_pa(ir, on->rett->class, ob, pa->prop);
+        return ir_load(ir, pa->prop->type, ref);
+    }
+    if (v->type == v_incr) {
+        VIncr* item = v->item;
+        Value* on = item->on;
+        char *var = ir_assign_value(ir, scope, on);
+        char *left = ir_value(ir, scope, on);
+        char *right = ir_int(ir, 1);
+        char* op = ir_op(ir, scope, item->increment ? op_add : op_sub, left, right, v->rett);
+        ir_store(ir, v->rett, var, op);
+        return item->before ? op : left;
     }
 
     return "???";
@@ -109,14 +128,11 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
 
         return result;
     }
-    // if (v->type == v_class_pa) {
-    //     VClassPA *pa = v->item;
-    //     Value *on = pa->on;
-    //     ClassProp *prop = pa->prop;
-    //     Class *class = on->rett->class;
-    //     Type *type = prop->type;
-    //     char *lon = llvm_value(b, scope, on);
-    //     return ir_class_prop_access(b, class, lon, prop);
-    // }
+    if (v->type == v_class_pa) {
+        VClassPA* pa = v->item;
+        Value* on = pa->on;
+        char* ob = ir_value(ir, scope, on);
+        return ir_class_pa(ir, on->rett->class, ob, pa->prop);
+    }
     return "?-?";
 }

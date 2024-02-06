@@ -2,6 +2,8 @@
 use volt:mem
 
 // shared gc : ?GC = null
+// shared gc_age : char = 0
+// shared gc_busy : uint = 0
 
 struct GC {
     stacks : ptr
@@ -14,9 +16,9 @@ struct GC {
     }
 
     fn add_stack(s: Stack) {
-        // let adr = this.data
-        // adr += sizeof(ptr) * this.stack_count
-        // @ptrv(adr, ptr) = s @as ptr
-        // this.stack_count++
+        let adr = this.stacks
+        adr += sizeof(ptr) * this.stack_count
+        @ptrv(adr, ptr) = s @as ptr
+        this.stack_count++
     }
 }

@@ -119,7 +119,7 @@ void llvm_build_o_file(void* data_) {
         if (msg) {
             Str* code = str_make(b->alc, 1000);
             file_get_contents(code, ir_path);
-            printf("LLVM IR Code:\n%s\n", str_to_chars(b->alc, code));
+            printf("IR Code:\n%s\n", str_to_chars(b->alc, code));
             printf("LLVM IR parse error: %s\n", msg);
             exit(1);
         }
@@ -131,7 +131,7 @@ void llvm_build_o_file(void* data_) {
     char *error = NULL;
     if (LLVMVerifyModule(nsc_mod, LLVMReturnStatusAction, &error) != 0) {
         char *ir_code = LLVMPrintModuleToString(nsc_mod);
-        // printf("LLVM IR Code:\n%s\n", ir_code);
+        // printf("IR Code:\n%s\n", ir_code);
         printf("File: %s\n", path_o);
         printf("LLVM verify error: %s\n", error);
         exit(1);

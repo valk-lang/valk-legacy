@@ -227,3 +227,39 @@ char *string_replace_backslash_chars(Allocator *alc, char *body) {
     result[ri] = 0;
     return result;
 }
+
+char* op_to_str(int op) {
+    if (op == op_add)
+        return "+";
+    if (op == op_sub)
+        return "-";
+    if (op == op_mul)
+        return "*";
+    if (op == op_div)
+        return "/";
+    if (op == op_mod)
+        return "%";
+    if (op == op_eq)
+        return "==";
+    if (op == op_ne)
+        return "!=";
+    if (op == op_lt)
+        return "<";
+    if (op == op_gt)
+        return ">";
+    if (op == op_lte)
+        return "<=";
+    if (op == op_gte)
+        return ">=";
+    if (op == op_bit_and)
+        return "&";
+    if (op == op_bit_or)
+        return "|";
+    if (op == op_bit_xor)
+        return "^";
+    if (op == op_shl)
+        return "<<";
+    if (op == op_shr)
+        return ">>";
+    return "?";
+}

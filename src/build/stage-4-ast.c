@@ -109,6 +109,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         Value* left = read_value(alc, fc, scope, true, 0);
 
+        tok_skip_whitespace(fc);
         t = tok_id_next(fc);
         if((t == tok_op1 || t == tok_op2)) {
             tkn = tok(fc, true, true, true);
@@ -116,10 +117,29 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (!value_is_assignable(left)) {
                     parse_err(chunk, "Cannot assign to left side");
                 }
+                if (left->type == v_decl) {
+                    Decl* decl = left->item;
+                    decl->is_mut = true;
+                }
 
                 Value *right = read_value(alc, fc, scope, true, 0);
 
-                // TODO type check
+                int op = op_eq;
+                if(str_is(tkn, "=")){
+                } else if(str_is(tkn, "+=")){
+                    op = op_add;
+                } else if(str_is(tkn, "-=")){
+                    op = op_sub;
+                } else if(str_is(tkn, "*=")){
+                    op = op_mul;
+                } else if(str_is(tkn, "/=")){
+                    op = op_div;
+                }
+                if(op != op_eq) {
+                    right = value_handle_op(alc, fc, scope, left, right, op);
+                }
+
+                type_check(chunk, left->rett, right->rett);
 
                 array_push(scope->ast, tgen_assign(alc, left, right));
                 continue;

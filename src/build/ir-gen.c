@@ -253,10 +253,7 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
     return result_var;
 }
 
-char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett) {
-
-    char *lval1 = ir_value(ir, scope, left);
-    char *lval2 = ir_value(ir, scope, right);
+char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
 
     char *ltype = ir_type(ir, rett);
     char *var = ir_var(ir->func);
@@ -298,9 +295,9 @@ char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett)
     }
     str_append_chars(code, ltype);
     str_append_chars(code, " ");
-    str_append_chars(code, lval1);
+    str_append_chars(code, left);
     str_append_chars(code, ", ");
-    str_append_chars(code, lval2);
+    str_append_chars(code, right);
     str_append_chars(code, "\n");
 
     return var;

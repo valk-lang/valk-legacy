@@ -5,7 +5,6 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf);
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class);
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope);
-Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
 Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
 
 Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio) {
@@ -52,6 +51,22 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         if (negative)
             iv *= -1;
         v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
+    } else if(t == tok_op2 && (str_is(tkn, "++") || str_is(tkn, "--"))) {
+        bool incr = str_is(tkn, "++");
+        if(tok_next_is_whitespace(fc)) {
+            sprintf(b->char_buf, "Missing value after '%s' (do not use whitespace)", incr ? "++" : "--");
+            parse_err(chunk, b->char_buf);
+        }
+        Value* on = read_value(alc, fc, scope, false, 1);
+        if(on->rett->type != type_int) {
+            sprintf(b->char_buf, "Invalid value after '%s' (not an integer value)", incr ? "++" : "--");
+            parse_err(chunk, b->char_buf);
+        }
+        if(!value_is_assignable(on)) {
+            sprintf(b->char_buf, "Invalid value after '%s' (non-assign-able value)", incr ? "++" : "--");
+            parse_err(chunk, b->char_buf);
+        }
+        v = vgen_incr(alc, b, on, incr, true);
     }
 
     if(!v) {
@@ -64,7 +79,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
     ///////////////////////
 
     t = tok_id_next(fc);
-    while(t == tok_char || t == tok_scope_open) {
+    while(t == tok_char || t == tok_scope_open || t == tok_op2) {
         Type* rett = v->rett;
         char ch = tok_read_byte(fc, t == tok_scope_open ? (sizeof(int) + 1) : 1);
         if(ch == '.') {
@@ -96,6 +111,20 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             tok(fc, false, false, true);
             v = value_func_call(alc, fc, scope, v);
             t = tok_id_next(fc);
+            continue;
+        }
+        if((ch == '+' && tok_read_byte(fc, 2) == '+') || (ch == '-' && tok_read_byte(fc, 2) == '-')) {
+            tkn = tok(fc, false, false, true);
+            bool incr = str_is(tkn, "++");
+            if (v->rett->type != type_int) {
+                sprintf(b->char_buf, "Invalid value before '%s' (not an integer value)", incr ? "++" : "--");
+                parse_err(chunk, b->char_buf);
+            }
+            if (!value_is_assignable(v)) {
+                sprintf(b->char_buf, "Invalid value before '%s' (non-assign-able value)", incr ? "++" : "--");
+                parse_err(chunk, b->char_buf);
+            }
+            v = vgen_incr(alc, b, v, incr, false);
             continue;
         }
         break;
@@ -364,13 +393,19 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
         parse_err(fc->chunk_parse, "You cannot use operators on these values");
     }
     bool is_ptr = false;
+    bool is_signed = lt->is_signed || rt->is_signed;
     if(lt->type == type_ptr) {
         is_ptr = true;
-        left = vgen_cast(alc, left, type_gen_volt(alc, b, "int"));
+        left = vgen_cast(alc, left, type_gen_volt(alc, b, is_signed ? "int" : "uint"));
     }
     if(rt->type == type_ptr) {
         is_ptr = true;
-        right = vgen_cast(alc, right, type_gen_volt(alc, b, "int"));
+        right = vgen_cast(alc, right, type_gen_volt(alc, b, is_signed ? "int" : "uint"));
+    }
+    if(left->type == v_int && right->type != v_int) {
+        left->rett = right->rett;
+    } else if(right->type == v_int && left->type != v_int) {
+        right->rett = left->rett;
     }
 
     // Try match types
@@ -382,7 +417,7 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     if(!type_compat(t1, t2, &reason)){
         char t1b[256];
         char t2b[256];
-        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
+        sprintf(b->char_buf, "Operator values are not compatible: %s %s %s", type_to_str(lt, t1b), op_to_str(op), type_to_str(rt, t2b));
         parse_err(fc->chunk_parse, b->char_buf);
     }
 

@@ -69,6 +69,7 @@ enum VALUES {
     v_op,
     v_compare,
     v_class_init,
+    v_incr,
 };
 
 enum TOKENS {

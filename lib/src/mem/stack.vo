@@ -1,9 +1,6 @@
 
 use volt:mem
 
-// shared gc_age : char = 0
-// shared gc_busy : uint = 0
-
 struct Stack {
     data : ptr
     count : int (0)

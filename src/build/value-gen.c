@@ -78,3 +78,11 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
+
+Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before) {
+    VIncr *item = al(alc, sizeof(VIncr));
+    item->on = on;
+    item->increment = increment;
+    item->before = before;
+    return value_make(alc, v_incr, item, on->rett);
+}

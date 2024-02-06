@@ -16,6 +16,7 @@ char tok_id_next(Fc* fc);
 char tok_id_next_ignore_spacing(Fc* fc);
 char tok_read_byte(Fc* fc, int offset);
 void tok_skip_whitespace(Fc* fc);
+bool tok_next_is_whitespace(Fc* fc);
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool read_only);
 char* chunk_read(Chunk* chunk, int *i_ref);
 

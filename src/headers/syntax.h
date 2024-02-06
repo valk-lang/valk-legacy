@@ -21,5 +21,6 @@ char backslash_char(char ch);
 bool str_is(char* tkn, char* comp);
 bool str_in(char* tkn, char* comp);
 char *string_replace_backslash_chars(Allocator *alc, char *body);
+char* op_to_str(int op);
 
 #endif

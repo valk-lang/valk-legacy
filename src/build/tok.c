@@ -42,6 +42,14 @@ void tok_skip_whitespace(Fc* fc) {
         ch->i += 2;
     }
 }
+bool tok_next_is_whitespace(Fc* fc) {
+    Chunk* ch = fc->chunk_parse;
+    int t = ch->tokens[ch->i];
+    if(t == tok_space || t == tok_newline) {
+        return true;
+    }
+    return false;
+}
 
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool update) {
     int x = chunk->i;
