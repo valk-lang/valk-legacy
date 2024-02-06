@@ -1,15 +1,49 @@
 
 use volt:mem
 
+// shared gc_age : char = 0
+// shared gc_busy : uint = 0
+
 struct Stack {
     data : ptr
     count : int (0)
 
     static fn new() Stack {
-        let s = 1
-        let x = Stack {
+        let s = Stack {
             data: mem:alloc(10000 @as uint)
         }
-        return x;
+        // (gc @as GC).add_stack(s);
+        return s
+    }
+
+    fn add(item: ptr, handler: ptr) {
+        // let adr = this.data + (this.count++ * sizeof(ptr));
+        // @ptrv(adr, ptr) = item;
+    }
+
+    fn pop(amount: int) {
+        // this.count = this.count - amount;
     }
 }
+
+// x.prop = something
+// if(gc == 1 && something.age != gc_age) {
+//   something.update_age_recursive();
+// }
+
+// ---------
+
+// fn update_age_recursive() {
+//    atomic(gc_busy + 1)
+//    this.mark_gc();
+//    atomic(gc_busy - 1)
+// }
+
+// fn mark_gc() {
+//    let age = atomic(this.age + 1);
+//    if age != gc_age { atomic(this.age - 1); return }
+   
+//    // go over each prop
+//    let prop = this.{prop-name}
+//    if prop.age != age { prop.mark_gc(); }
+// }

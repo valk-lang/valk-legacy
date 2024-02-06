@@ -1,0 +1,22 @@
+
+use volt:mem
+
+// shared gc : ?GC = null
+
+struct GC {
+    stacks : ptr
+    stack_count : uint (0)
+
+    static fn start() {
+        let gc = GC {
+            stacks: mem:alloc(10000 @as uint)
+        }
+    }
+
+    fn add_stack(s: Stack) {
+        // let adr = this.data
+        // adr += sizeof(ptr) * this.stack_count
+        // @ptrv(adr, ptr) = s @as ptr
+        // this.stack_count++
+    }
+}
