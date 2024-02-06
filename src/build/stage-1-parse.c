@@ -33,6 +33,9 @@ void stage_parse(Fc *fc) {
 
         int act = act_public;
 
+        if(str_is(tkn, ";")) {
+            continue;
+        }
         if(str_is(tkn, "fn")) {
             stage_1_func(fc, act);
             continue;

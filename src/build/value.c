@@ -315,9 +315,14 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     Chunk* ch = fc->chunk_parse;
     if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {
         // Static functions
-        char *tkn = tok(fc, true, true, true);
-        die("TODO: class static functions");
-        return NULL;
+        tok(fc, false, false, true);
+        char *name = tok(fc, false, false, true);
+        Func* func = map_get(class->funcs, name);
+        if(!func) {
+            sprintf(b->char_buf, "Class '%s' has no function named: '%s'\n", class->name, name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+        return vgen_func_ptr(alc, func, NULL);
     }
     // Class init
     tok_expect(fc, "{", true, true);

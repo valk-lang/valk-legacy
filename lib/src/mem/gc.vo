@@ -13,6 +13,7 @@ struct GC {
         let gc = GC {
             stacks: mem:alloc(10000 @as uint)
         }
+        gc.loop()
     }
 
     fn add_stack(s: Stack) {
@@ -20,5 +21,8 @@ struct GC {
         adr += sizeof(ptr) * this.stack_count
         @ptrv(adr, ptr) = s @as ptr
         this.stack_count++
+    }
+
+    fn loop() {
     }
 }

@@ -9,7 +9,7 @@ struct Stack {
         let s = Stack {
             data: mem:alloc(10000 @as uint)
         }
-        // (gc @as GC).add_stack(s);
+        (gc @as GC).add_stack(s);
         return s
     }
 
