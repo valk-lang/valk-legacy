@@ -213,6 +213,8 @@ void parse_err(Chunk *chunk, char *msg) {
     // End line
     if(err_len > chars_after) 
         err_len = chars_after;
+    if(err_len == 0)
+        err_len = 1;
     x = col - 2;
     while(x-- > 0)
         printf("#");

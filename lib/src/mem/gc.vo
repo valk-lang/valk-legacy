@@ -1,9 +1,9 @@
 
 use volt:mem
 
-// shared gc : ?GC = null
-// shared gc_age : char = 0
-// shared gc_busy : uint = 0
+shared gc : ?GC
+shared gc_age : u8
+shared gc_busy : uint
 
 struct GC {
     stacks : ptr

@@ -24,8 +24,11 @@ void stage_values(Fc *fc) {
         Global* g = array_get_index(globals, i);
 
         if(!g->chunk_value) {
+            if(!g->type->is_pointer)
+                continue;
             if(!g->type->nullable) {
-                sprintf(b->char_buf, "Globals with a non-null type require a default value");
+                char buf[256];
+                sprintf(b->char_buf, "Globals with a non-null type require a default value (type: %s)", type_to_str(g->type, buf));
                 parse_err(fc->chunk_parse, b->char_buf);
             }
             g->value = value_make(b->alc, v_null, NULL, g->type);

@@ -18,6 +18,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
     //
     Build* b = fc->b;
 
+    Type *type = NULL;
     bool nullable = false;;
 
     char* tkn = tok(fc, true, allow_newline, true);
@@ -35,13 +36,24 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         Idf *idf = read_idf(fc, scope, tkn, true);
         if(idf->type == idf_class) {
             Class* class = idf->item;
-            return type_gen_class(alc, class);
+            type = type_gen_class(alc, class);
         }
+    }
+
+    if (type) {
+        if(nullable) {
+            if (!type->is_pointer) {
+                char buf[256];
+                sprintf(b->char_buf, "This type cannot be null: '?%s'", type_to_str(type, buf));
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            type->nullable = true;
+        }
+        return type;
     }
 
     sprintf(b->char_buf, "Invalid type: '%s'", tkn);
     parse_err(fc->chunk_parse, b->char_buf);
-
     return NULL;
 }
 
@@ -53,7 +65,7 @@ Type* type_gen_class(Allocator* alc, Class* class) {
     t->class = class;
     t->size = class->b->ptr_size;
 
-    int ct = class->type;
+    const int ct = class->type;
     if(ct == ct_bool) {
         t->type = type_bool;
     } else if (ct == ct_ptr) {
