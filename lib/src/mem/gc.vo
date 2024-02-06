@@ -14,7 +14,7 @@ struct GC {
         gc = GC {
             stacks: mem:alloc(10000 @as uint)
         }
-        gc.loop()
+        os:Thread.start(GC.loop @as ptr)
     }
 
     fn add_stack(s: Stack) {
@@ -24,6 +24,7 @@ struct GC {
         this.stack_count++
     }
 
-    fn loop() {
+    static fn loop() {
+        print("BOLO\n")
     }
 }
