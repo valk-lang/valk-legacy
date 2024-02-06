@@ -33,7 +33,14 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             return type_make(alc, type_void);
         }
 
-        Idf *idf = read_idf(fc, scope, tkn, true);
+        Id id;
+        read_id(fc, tkn, &id);
+        Idf *idf = idf_by_id(fc, scope, &id, false);
+        if(!idf) {
+            id.ns ? sprintf(b->char_buf, "Unknown type: '%s:%s'", id.ns, id.name)
+            : sprintf(b->char_buf, "Unknown type: '%s'", id.name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
         if(idf->type == idf_class) {
             Class* class = idf->item;
             type = type_gen_class(alc, class);

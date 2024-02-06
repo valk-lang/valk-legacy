@@ -13,11 +13,20 @@ void skip_type(Fc* fc) {
     if (str_is(tkn, "?") || str_is(tkn, ".")) {
         tkn = tok(fc, false, false, true);
     }
-    if(ch->token != tok_id && tkn[0] != ':') {
+    // if(ch->token != tok_id && tkn[0] != ':') {
+    if(ch->token != tok_id) {
         sprintf(fc->b->char_buf, "Invalid type syntax, unexpected: '%s'", tkn);
         parse_err(ch, fc->b->char_buf);
     }
     tkn = tok(fc, false, false, true);
+    if(tkn[0] == ':') {
+        tkn = tok(fc, false, false, true);
+        if (ch->token != tok_id) {
+            sprintf(fc->b->char_buf, "Invalid type syntax, unexpected: '%s'", tkn);
+            parse_err(ch, fc->b->char_buf);
+        }
+        tkn = tok(fc, false, false, true);
+    }
     if(tkn[0] == '[') {
         skip_body(fc);
     } else {

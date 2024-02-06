@@ -24,34 +24,45 @@ char* gen_export_name(Nsc* nsc, char* suffix) {
     return dups(b->alc, name);
 }
 
+Id* read_id(Fc* fc, char* first_part, Id* buf) {
 
-Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
-    //
-    char* nsc = NULL;
+    char* ns = NULL;
     char* name = first_part;
     Build* b = fc->b;
 
     if(tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
-        nsc = name;
+        ns = name;
         tok(fc, false, false, true);
         name = tok(fc, false, false, true);
         if(!is_valid_varname(name)) {
-            sprintf(b->char_buf, "Missing string closing tag '\"', compiler reached end of file");
+            sprintf(b->char_buf, "Invalid name syntax");
             parse_err(fc->chunk_parse, b->char_buf);
         }
     }
 
-    if(nsc) {
-        Idf* idf = scope_find_idf(fc->scope, nsc, false);
+    buf->name = name;
+    buf->ns = ns;
+
+    return buf;
+}
+
+Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
+    //
+    Build* b = fc->b;
+    char* ns = id->ns;
+    char* name = id->name;
+
+    if(ns) {
+        Idf* idf = scope_find_idf(fc->scope, ns, false);
         if(!idf || idf->type != idf_scope) {
-            sprintf(b->char_buf, "Unknown namespace: '%s' (You can import namespaces using the 'use' keyword)", nsc);
+            sprintf(b->char_buf, "Unknown namespace: '%s' (You can import namespaces using the 'use' keyword)", ns);
             parse_err(fc->chunk_parse, b->char_buf);
         }
         scope = idf->item;
     }
 
     Idf* idf = scope_find_idf(scope, name, true);
-    if(!idf && !nsc) {
+    if(!idf && !ns) {
         if(str_is(name, "string") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "int") || str_is(name, "uint") || str_is(name, "i32") || str_is(name, "u8")) {
             Nsc* ns = get_volt_nsc(fc->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
@@ -63,7 +74,7 @@ Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
     }
 
     if(!idf && must_exist) {
-        if(nsc) sprintf(b->char_buf, "Unknown identifier: '%s:%s'", nsc, name);
+        if(ns) sprintf(b->char_buf, "Unknown identifier: '%s:%s'", ns, name);
         else sprintf(b->char_buf, "Unknown identifier: '%s'", name);
         parse_err(fc->chunk_parse, b->char_buf);
     }

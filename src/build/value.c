@@ -35,7 +35,9 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else {
             // Identifiers
-            Idf *idf = read_idf(fc, scope, tkn, true);
+            Id id;
+            read_id(fc, tkn, &id);
+            Idf *idf = idf_by_id(fc, scope, &id, true);
             v = value_handle_idf(alc, fc, scope, idf);
         }
     } else if (t == tok_number || (t == tok_op1 && tok_read_byte(fc, 1) == '-')) {
@@ -232,7 +234,10 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         Scope* sub = idf->item;
         tok_expect(fc, ".", false, false);
         char *tkn = tok(fc, false, false, true);
-        Idf *idf_sub = read_idf(fc, sub, tkn, true);
+
+        Id id;
+        read_id(fc, tkn, &id);
+        Idf *idf_sub = idf_by_id(fc, sub, &id, true);
         return value_handle_idf(alc, fc, scope, idf_sub);
     }
     if (type == idf_func) {

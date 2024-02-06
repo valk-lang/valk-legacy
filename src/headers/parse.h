@@ -31,6 +31,10 @@ struct Scope {
     bool must_return;
     bool did_return;
 };
+struct Id {
+    char* ns;
+    char* name;
+};
 struct Idf {
     int type;
     void* item;

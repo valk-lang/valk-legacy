@@ -29,6 +29,7 @@ typedef struct Func Func;
 typedef struct FuncArg FuncArg;
 typedef struct Scope Scope;
 typedef struct Idf Idf;
+typedef struct Id Id;
 typedef struct Type Type;
 typedef struct Decl Decl;
 typedef struct Global Global;

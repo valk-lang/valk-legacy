@@ -37,8 +37,14 @@ void parse_handle_func_args(Fc* fc, Func* func) {
     func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
     skip_body(fc);
 
+    if(fc->is_header) {
+        func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
+        skip_type(fc);
+        return;
+    }
+
     char *tkn = tok(fc, true, true, true);
-    char *end = fc->is_header ? ";" : "{";
+    char *end = "{";
 
     if (!str_is(tkn, end)) {
         // Has return type
