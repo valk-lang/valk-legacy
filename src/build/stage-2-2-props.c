@@ -70,12 +70,11 @@ void stage_props_class(Fc* fc, Class *class) {
 
             skip_type(fc);
 
-            tkn = tok(fc, true, true, true);
-            if(str_is(tkn, "(")) {
+            tok_skip_whitespace(fc);
+            if(tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {
+                tkn = tok(fc, true, true, true);
                 prop->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
                 skip_body(fc);
-            } else {
-                tok_back(fc);
             }
             continue;
         }

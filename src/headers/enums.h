@@ -35,6 +35,7 @@ enum IDF {
     idf_nsc,
     idf_scope,
     idf_class,
+    idf_global,
 };
 
 enum TYPES {
@@ -45,6 +46,7 @@ enum TYPES {
     type_float,
     type_func,
     type_bool,
+    type_undefined,
 };
 
 enum CLASSTYPES {
@@ -70,6 +72,7 @@ enum VALUES {
     v_compare,
     v_class_init,
     v_incr,
+    v_null,
 };
 
 enum TOKENS {

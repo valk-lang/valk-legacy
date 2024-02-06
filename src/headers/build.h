@@ -105,6 +105,7 @@ struct Fc {
     Array *funcs;
     Array *classes;
     Array *aliasses;
+    Array *globals;
     //
     char *hash;
     //

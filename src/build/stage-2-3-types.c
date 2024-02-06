@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void stage_types(Fc *fc);
+void stage_types_global(Fc* fc, Global* g);
 
 void stage_2_types(Fc* fc) {
     Build* b = fc->b;
@@ -26,6 +27,11 @@ void stage_types(Fc *fc) {
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
         stage_types_class(fc, class);
+    }
+    Array* globals = fc->globals;
+    for(int i = 0; i < globals->length; i++) {
+        Global* g = array_get_index(globals, i);
+        stage_types_global(fc, g);
     }
 }
 
@@ -108,4 +114,13 @@ void stage_types_class(Fc* fc, Class* class) {
             prop->type = type;
         }
     }
+}
+
+void stage_types_global(Fc* fc, Global* g) {
+
+    Build *b = fc->b;
+
+    *fc->chunk_parse = *g->chunk_type;
+    Type *type = read_type(fc, fc->alc, fc->scope, false);
+    g->type = type;
 }

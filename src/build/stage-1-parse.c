@@ -6,6 +6,7 @@ void stage_1_func(Fc* fc, int act);
 void stage_1_header(Fc* fc);
 void stage_1_class(Fc* fc, int type, int act);
 void stage_1_use(Fc* fc);
+void stage_1_global(Fc* fc, bool shared);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -66,6 +67,14 @@ void stage_parse(Fc *fc) {
         }
         if(str_is(tkn, "use")) {
             stage_1_use(fc);
+            continue;
+        }
+        if(str_is(tkn, "shared")) {
+            stage_1_global(fc, true);
+            continue;
+        }
+        if(str_is(tkn, "global")) {
+            stage_1_global(fc, false);
             continue;
         }
 
@@ -197,4 +206,37 @@ void stage_1_use(Fc* fc){
     Build *b = fc->b;
     Idf* idf = idf_make(b->alc, idf_scope, nsc->scope);
     scope_set_idf(fc->scope, ns, idf, fc);
+}
+
+void stage_1_global(Fc* fc, bool shared){
+
+    Build *b = fc->b;
+    char* name = tok(fc, true, false, true);
+
+    Global* g = al(fc->alc, sizeof(Global));
+    g->name = name;
+    g->export_name = gen_export_name(fc->nsc, name);
+    g->type = NULL;
+    g->value = NULL;
+    g->chunk_type = NULL;
+    g->chunk_value = NULL;
+    g->is_shared = shared;
+    g->is_mut = true;
+
+    Idf* idf = idf_make(b->alc, idf_global, g);
+    scope_set_idf(fc->nsc->scope, name, idf, fc);
+
+    tok_expect(fc, ":", true, false);
+
+    g->chunk_type = chunk_clone(fc->alc, fc->chunk_parse);
+    char* tkn = tok(fc, true, true, true);
+
+    skip_type(fc);
+
+    tok_skip_whitespace(fc);
+    if (tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {
+        tkn = tok(fc, true, true, true);
+        g->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
+        skip_body(fc);
+    }
 }

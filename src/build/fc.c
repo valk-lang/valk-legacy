@@ -19,6 +19,7 @@ Fc *fc_make(Nsc *nsc, char *path) {
     fc->funcs = array_make(alc, 8);
     fc->classes = array_make(alc, 4);
     fc->aliasses = array_make(alc, 8);
+    fc->globals = array_make(alc, 8);
 
     fc->hash = NULL;
 

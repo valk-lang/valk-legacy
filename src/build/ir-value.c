@@ -10,6 +10,9 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VInt* item = v->item;
         return ir_int(ir, item->value);
     }
+    if (v->type == v_null) {
+        return "null";
+    }
     if (v->type == v_func_call) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);

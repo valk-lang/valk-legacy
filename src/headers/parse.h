@@ -41,5 +41,15 @@ struct Decl {
     bool is_mut;
     bool is_arg;
 };
+struct Global {
+    char* name;
+    char* export_name;
+    Type* type;
+    Value* value;
+    Chunk *chunk_type;
+    Chunk *chunk_value;
+    bool is_shared;
+    bool is_mut;
+};
 
 #endif

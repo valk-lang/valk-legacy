@@ -31,6 +31,7 @@ typedef struct Scope Scope;
 typedef struct Idf Idf;
 typedef struct Type Type;
 typedef struct Decl Decl;
+typedef struct Global Global;
 typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 // Tokens
