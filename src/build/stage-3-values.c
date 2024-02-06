@@ -33,7 +33,8 @@ void stage_values(Fc *fc) {
         }
 
         *fc->chunk_parse = *g->chunk_value;
-        Type *type = read_type(fc, fc->alc, fc->scope, false);
-        g->type = type;
+        g->value = read_value(b->alc, fc, fc->scope, true, 0);
+
+        type_check(fc->chunk_parse, g->type, g->value->rett);
     }
 }

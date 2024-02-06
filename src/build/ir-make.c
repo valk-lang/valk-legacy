@@ -25,7 +25,7 @@ IR* ir_make(Fc* fc) {
     ir->attrs = array_make(alc, 50);
     ir->declared_funcs = array_make(alc, 50);
     ir->declared_classes = array_make(alc, 50);
-    ir->globals = map_make(alc);
+    ir->declared_globals = array_make(alc, 50);
 
     ir->di_cu = NULL;
     ir->di_file = NULL;

@@ -41,6 +41,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         }
         return ir_load(ir, decl->type, var_val);
     }
+    if (v->type == v_global) {
+        Global* g = v->item;
+        char* var = ir_global(ir, g);
+        return ir_load(ir, g->type, var);
+    }
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;
@@ -103,6 +108,10 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_decl) {
         Decl *decl = v->item;
         return decl->ir_var;
+    }
+    if (v->type == v_global) {
+        Global* g = v->item;
+        return ir_global(ir, g);
     }
     if (v->type == v_ptrv) {
         VPtrv *ptrv = v->item;

@@ -23,6 +23,9 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
+// Global
+void ir_gen_globals(IR* ir);
+void *ir_global(IR *ir, Global *g);
 // Value
 char* ir_value(IR* ir, Scope* scope, Value* v);
 char* ir_assign_value(IR* ir, Scope* scope, Value* v);
@@ -67,7 +70,7 @@ struct IR {
     Array* attrs;
     Array* declared_funcs;
     Array* declared_classes;
-    Map* globals;
+    Array* declared_globals;
     // DI
     char *di_cu;
     char *di_file;

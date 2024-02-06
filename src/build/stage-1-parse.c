@@ -100,6 +100,7 @@ void stage_1_func(Fc* fc, int act) {
     if (str_is(name, "main")) {
         b->func_main = func;
         func->export_name = "main";
+        fc->contains_main_func = true;
     }
     if (fc->is_header) {
         func->export_name = name;
@@ -225,17 +226,17 @@ void stage_1_global(Fc* fc, bool shared){
 
     Idf* idf = idf_make(b->alc, idf_global, g);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
+    array_push(fc->globals, g);
 
     tok_expect(fc, ":", true, false);
 
     g->chunk_type = chunk_clone(fc->alc, fc->chunk_parse);
-    char* tkn = tok(fc, true, true, true);
 
     skip_type(fc);
 
     tok_skip_whitespace(fc);
     if (tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {
-        tkn = tok(fc, true, true, true);
+        char *tkn = tok(fc, true, true, true);
         g->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
         skip_body(fc);
     }

@@ -149,17 +149,12 @@ char *ir_string(IR *ir, char *body) {
 }
 
 char* ir_load(IR* ir, Type* type, char* var) {
-    Str *code = ir->block->code;
     char *var_result = ir_var(ir->func);
     char *ltype = ir_type(ir, type);
 
     char bytes[20];
-    int abytes = type->size;
-    if (abytes > ir->b->ptr_size) {
-        abytes = ir->b->ptr_size;
-    }
-    sprintf(bytes, "%d", abytes);
 
+    Str *code = ir->block->code;
     str_append_chars(code, "  ");
     str_append_chars(code, var_result);
     str_append_chars(code, " = load ");
@@ -167,7 +162,7 @@ char* ir_load(IR* ir, Type* type, char* var) {
     str_append_chars(code, ", ptr ");
     str_append_chars(code, var);
     str_append_chars(code, ", align ");
-    str_append_chars(code, bytes);
+    str_append_chars(code, ir_type_align(ir, type, bytes));
     str_append_chars(code, "\n");
 
     return var_result;

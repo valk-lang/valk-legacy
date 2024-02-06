@@ -111,6 +111,7 @@ struct Fc {
     //
     bool is_header;
     bool ir_changed;
+    bool contains_main_func;
 };
 struct Nsc {
     char *name;

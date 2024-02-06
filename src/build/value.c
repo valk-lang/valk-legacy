@@ -224,6 +224,10 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         Decl* decl = idf->item;
         return value_make(alc, v_decl, decl, decl->type);
     }
+    if (type == idf_global) {
+        Global* g = idf->item;
+        return value_make(alc, v_global, g, g->type);
+    }
     if (type == idf_scope) {
         Scope* sub = idf->item;
         tok_expect(fc, ".", false, false);
