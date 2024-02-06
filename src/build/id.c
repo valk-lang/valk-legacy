@@ -43,12 +43,11 @@ Idf* read_idf(Fc* fc, Scope* scope, char* first_part, bool must_exist) {
 
     if(nsc) {
         Idf* idf = scope_find_idf(fc->scope, nsc, false);
-        if(!idf || idf->type != idf_nsc) {
-            sprintf(b->char_buf, "Unknown namespace name/alias: '%s'", nsc);
+        if(!idf || idf->type != idf_scope) {
+            sprintf(b->char_buf, "Unknown namespace: '%s' (You can import namespaces using the 'use' keyword)", nsc);
             parse_err(fc->chunk_parse, b->char_buf);
         }
-        Nsc* ns = idf->item;
-        scope = ns->scope;
+        scope = idf->item;
     }
 
     Idf* idf = scope_find_idf(scope, name, true);

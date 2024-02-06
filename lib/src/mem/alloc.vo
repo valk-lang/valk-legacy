@@ -2,5 +2,5 @@
 header "sys" as sys
 
 fn alloc(size: uint) ptr {
-	return sys.malloc(size);
+	return sys:malloc(size);
 }

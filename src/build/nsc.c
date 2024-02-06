@@ -6,7 +6,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->pkc = pkc;
     nsc->name = name;
     nsc->dir = dir;
-    nsc->scope = scope_make(alc, NULL);
+    nsc->scope = scope_make(alc, sc_default, NULL);
     nsc->fcs = array_make(alc, 20);
 
     char *path_o = al(alc, VOLT_PATH_MAX);

@@ -1,12 +1,14 @@
 
 #include "../all.h"
 
-Scope* scope_make(Allocator* alc, Scope* parent) {
+Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     Scope* sc = al(alc, sizeof(Scope));
+    sc->type = type;
     sc->parent = parent;
     sc->identifiers = map_make(alc);
     sc->ast = NULL;
     sc->rett = NULL;
+    sc->decls = type == sc_func ? array_make(alc, 20) : NULL;
     sc->must_return = false;
     sc->did_return = false;
     return sc;
@@ -19,4 +21,13 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
     map_set(scope->identifiers, name, idf);
+}
+
+void scope_add_decl(Scope* scope, Decl* decl) {
+    while(scope && scope->type != sc_func) {
+        scope = scope->parent;
+    }
+    if(!scope)
+        return;
+    array_push(scope->decls, decl);
 }

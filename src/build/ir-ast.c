@@ -14,6 +14,19 @@ void ir_write_ast(IR* ir, Scope* scope) {
             char *irv = ir_value(ir, scope, v);
             continue;
         }
+        if (t->type == t_declare) {
+            TDeclare* item = t->item;
+            Decl *decl = item->decl;
+            Value *val = item->value;
+
+            char *lval = ir_value(ir, scope, val);
+            if (decl->is_mut) {
+                ir_store(ir, decl->type, decl->ir_var, lval);
+            } else {
+                decl->ir_var = lval;
+            }
+            continue;
+        }
 
         if (t->type == t_return) {
             Value *v = t->item;

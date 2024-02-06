@@ -68,12 +68,14 @@ enum VALUES {
     v_string,
     v_op,
     v_compare,
+    v_class_init,
 };
 
 enum TOKENS {
     t_assign,
     t_statement,
     t_return,
+    t_declare,
 };
 
 enum OPERATORS {
@@ -95,4 +97,9 @@ enum OPERATORS {
     op_bit_xor,
     op_shl,
     op_shr,
+};
+
+enum SCOPES {
+    sc_default,
+    sc_func,
 };

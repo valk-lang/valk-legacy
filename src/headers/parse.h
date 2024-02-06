@@ -5,8 +5,9 @@
 #include "typedefs.h"
 
 // Scopes
-Scope* scope_make(Allocator* alc, Scope* parent);
+Scope* scope_make(Allocator* alc, int type, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc);
+void scope_add_decl(Scope* scope, Decl* decl);
 // Read
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
 void tok_back(Fc* fc);
@@ -23,6 +24,8 @@ struct Scope {
     Map* identifiers;
     Array* ast;
     Type* rett;
+    Array* decls;
+    int type;
     bool must_return;
     bool did_return;
 };

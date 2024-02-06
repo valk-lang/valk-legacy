@@ -282,10 +282,43 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         return NULL;
     }
     // Class init
-    char* tkn = tok(fc, true, true, true);
     tok_expect(fc, "{", true, true);
-    die("TODO: class initialization");
-    return NULL;
+    int propc = class->props->values->length;
+    Map* values = map_make(alc);
+    // Read values
+    char* name = tok(fc, true, true, true);
+    while(!str_is(name, "}")) {
+        ClassProp* prop = map_get(class->props, name);
+        if(!prop) {
+            sprintf(b->char_buf, "Class '%s' has no property named: '%s'\n", class->name, name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+        if(map_contains(values, name)) {
+            sprintf(b->char_buf, "Setting same property twice: '%s'\n", name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+        tok_expect(fc, ":", true, false);
+        Value* val = read_value(alc, fc, scope, true, 0);
+        type_check(fc->chunk_parse, prop->type, val->rett);
+        map_set(values, name, val);
+        name = tok(fc, true, true, true);
+    }
+    // Default values
+    Array* props = class->props->values;
+    for(int i = 0; i < propc; i++) {
+        ClassProp* prop = array_get_index(props, i);
+        char* name = array_get_index(class->props->keys, i);
+        if(!map_contains(values, name)) {
+            Chunk backup;
+            backup = *fc->chunk_parse;
+            *fc->chunk_parse = *prop->chunk_value;
+            Value* val = read_value(alc, fc, prop->chunk_value->fc->scope, true, 0);
+            *fc->chunk_parse = backup;
+            map_set(values, name, val);
+        }
+    }
+
+    return value_make(alc, v_class_init, values, type_gen_class(alc, class));
 }
 
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {

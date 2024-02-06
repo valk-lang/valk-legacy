@@ -62,6 +62,34 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         //
 
         if (t == tok_id) {
+            if (str_is(tkn, "let")){
+                char* name = tok(fc, true, false, true);
+                if(!is_valid_varname(tkn)) {
+                    sprintf(b->char_buf, "Invalid variable name: '%s'", name);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+                char* tkn = tok(fc, true, true, true);
+                Type* type = NULL;
+                if(str_is(tkn, ":")) {
+                    type = read_type(fc, alc, scope, true);
+                    tkn = tok(fc, true, true, true);
+                }
+                if(!str_is(tkn, "=")) {
+                    sprintf(b->char_buf, "Expected '=' here, found: '%s'", tkn);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+
+                Value* val = read_value(alc, fc, scope, true, 0);
+                if(type) {
+                    type_check(fc->chunk_parse, type, val->rett);
+                } else {
+                    type = val->rett;
+                }
+
+                Decl* decl = decl_make(alc, type, false);
+                array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                continue;
+            }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
                 if(scope->rett) {

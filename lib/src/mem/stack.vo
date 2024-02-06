@@ -6,8 +6,9 @@ struct Stack {
     count: int = 0
 
     static fn new() {
-        // let s = Stack {
-        //     data: mem:alloc(10000)
-        // }
+        let s = 1
+        let s = Stack {
+            data: mem:alloc(10000 @as uint)
+        }
     }
 }

@@ -2,5 +2,5 @@
 header "sys" as sys
 
 fn print(str: string) {
-    sys.write(1, str.data(), str.bytes());
+    sys:write(1, str.data(), str.bytes());
 }

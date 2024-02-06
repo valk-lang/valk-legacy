@@ -161,6 +161,27 @@ char* ir_load(IR* ir, Type* type, char* var) {
 
     return var_result;
 }
+void ir_store(IR *ir, Type *type, char *var, char *val) {
+    Str *code = ir->block->code;
+    char *ltype = ir_type(ir, type);
+
+    char bytes[20];
+    int abytes = type->size;
+    if (abytes > ir->b->ptr_size) {
+        abytes = ir->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
+
+    str_append_chars(code, "  store ");
+    str_append_chars(code, ltype);
+    str_append_chars(code, " ");
+    str_append_chars(code, val);
+    str_append_chars(code, ", ptr ");
+    str_append_chars(code, var);
+    str_append_chars(code, ", align ");
+    str_append_chars(code, bytes);
+    str_append_chars(code, "\n");
+}
 
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
     //

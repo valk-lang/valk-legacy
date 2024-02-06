@@ -17,6 +17,7 @@ void ir_define_struct(IR *ir, Class* class);
 // Func
 void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
 void ir_define_ext_func(IR* ir, Func* func);
+char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
 // AST
@@ -33,6 +34,7 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
 char *ir_func_ptr(IR *ir, Func *func);
 char *ir_string(IR *ir, char *body);
 char* ir_load(IR* ir, Type* type, char* var);
+void ir_store(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char* ir_op(IR* ir, Scope* scope, int op, Value* left, Value* right, Type* rett);
 char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);

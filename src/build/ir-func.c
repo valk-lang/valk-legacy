@@ -42,6 +42,16 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         arg->decl->ir_var = v;
     }
 
+    // Decls
+    Scope* scope = vfunc->scope;
+    Array* decls = scope->decls;
+    for (int i = 0; i < decls->length; i++) {
+        Decl* decl = array_get_index(decls, i);
+        if(decl->is_mut) {
+            decl->ir_var = ir_alloca(ir, func, decl->type);
+        }
+    }
+
     // AST
     ir->func = func;
     ir->block = func->block_code;
@@ -96,4 +106,27 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
 void ir_define_ext_func(IR* ir, Func* func) {
     Str *code = ir->code_extern;
     ir_func_definition(code, ir, func, true);
+}
+
+char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
+    IRBlock *block = func->block_start;
+    Str *code = block->code;
+
+    char bytes[20];
+    int abytes = type->size;
+    if (abytes > ir->b->ptr_size) {
+        abytes = ir->b->ptr_size;
+    }
+    sprintf(bytes, "%d", abytes);
+
+    char *var = ir_var(func);
+    str_append_chars(code, "  ");
+    str_append_chars(code, var);
+    str_append_chars(code, " = alloca ");
+    str_append_chars(code, ir_type(ir, type));
+    str_append_chars(code, ", align ");
+    str_append_chars(code, bytes);
+    str_append_chars(code, "\n");
+
+    return var;
 }
