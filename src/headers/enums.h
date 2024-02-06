@@ -77,6 +77,7 @@ enum TOKENS {
     t_statement,
     t_return,
     t_declare,
+    t_if,
 };
 
 enum OPERATORS {

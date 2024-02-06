@@ -5,6 +5,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
     Allocator *alc = ir->alc;
 
+    if(!scope->ast)
+        return;
+
     Array *ast = scope->ast;
     for (int i = 0; i < ast->length; i++) {
         Token *t = array_get_index(ast, i);
@@ -53,6 +56,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 str_append_chars(code, "void");
             }
             str_append_chars(code, "\n");
+            continue;
+        }
+
+        if (tt == t_if) {
+            TIf *ift = t->item;
+            ir_if(ir, scope, ift);
             continue;
         }
 

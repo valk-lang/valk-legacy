@@ -93,6 +93,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                 continue;
             }
+            if (str_is(tkn, "if")){
+                token_if(alc, fc, scope);
+                continue;
+            }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
                 if(scope->rett) {
@@ -117,10 +121,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if (!value_is_assignable(left)) {
                     parse_err(chunk, "Cannot assign to left side");
                 }
-                if (left->type == v_decl) {
-                    Decl* decl = left->item;
-                    decl->is_mut = true;
-                }
+                value_is_mutable(left);
 
                 Value *right = read_value(alc, fc, scope, true, 0);
 

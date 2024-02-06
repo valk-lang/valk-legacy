@@ -28,7 +28,8 @@ char* ir_value(IR* ir, Scope* scope, Value* v);
 char* ir_assign_value(IR* ir, Scope* scope, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
-void ir_jump(Str* code, IRBlock* block);
+void ir_jump(IR* ir, IRBlock* block);
+void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, long int value);
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
@@ -37,9 +38,11 @@ char *ir_string(IR *ir, char *body);
 char* ir_load(IR* ir, Type* type, char* var);
 void ir_store(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
+char *ir_i1_cast(IR *ir, char *val);
 char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett);
 char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
+void ir_if(IR *ir, Scope *scope, TIf *ift);
 
 // Structs
 struct IR {

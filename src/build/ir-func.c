@@ -55,12 +55,14 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     // AST
     ir->func = func;
     ir->block = func->block_code;
+
     ir_write_ast(ir, vfunc->scope);
+    // Jump from start to code block
+    ir->block = func->block_start;
+    ir_jump(ir, func->block_code);
+
     ir->func = NULL;
     ir->block = NULL;
-
-    // Jump from start to code block
-    ir_jump(func->block_start->code, func->block_code);
 }
 
 void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {

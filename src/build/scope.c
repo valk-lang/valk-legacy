@@ -13,6 +13,10 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->did_return = false;
     return sc;
 }
+Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
+    Scope* sub = scope_make(alc, type, parent);
+    return sub;
+}
 
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc) {
     Build* b = fc->b;

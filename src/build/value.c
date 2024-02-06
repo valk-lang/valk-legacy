@@ -66,6 +66,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             sprintf(b->char_buf, "Invalid value after '%s' (non-assign-able value)", incr ? "++" : "--");
             parse_err(chunk, b->char_buf);
         }
+        value_is_mutable(on);
         v = vgen_incr(alc, b, on, incr, true);
     }
 
@@ -124,6 +125,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
                 sprintf(b->char_buf, "Invalid value before '%s' (non-assign-able value)", incr ? "++" : "--");
                 parse_err(chunk, b->char_buf);
             }
+            value_is_mutable(v);
             v = vgen_incr(alc, b, v, incr, false);
             continue;
         }
@@ -483,5 +485,12 @@ void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
     }
     if(t2->type != type->type || t2->is_signed != type->is_signed || t2->size != type->size) {
         *v2_ = vgen_cast(alc, v2, type);
+    }
+}
+
+void value_is_mutable(Value* v) {
+    if (v->type == v_decl) {
+        Decl *decl = v->item;
+        decl->is_mut = true;
     }
 }

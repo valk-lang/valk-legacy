@@ -7,9 +7,20 @@ char *ir_var(IRFunc* func) {
     return res;
 }
 
-void ir_jump(Str* code, IRBlock* block) {
+void ir_jump(IR* ir, IRBlock* block) {
+    Str* code = ir->block->code;
     str_append_chars(code, "  br label %");
     str_append_chars(code, block->name);
+    str_append_chars(code, "\n");
+}
+void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else) {
+    Str* code = ir->block->code;
+    str_append_chars(code, "  br i1 ");
+    str_append_chars(code, cond);
+    str_append_chars(code, ", label %");
+    str_append_chars(code, block_if->name);
+    str_append_chars(code, ", label %");
+    str_append_chars(code, block_else->name);
     str_append_chars(code, "\n");
 }
 
@@ -253,6 +264,17 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
     return result_var;
 }
 
+char *ir_i1_cast(IR *ir, char *val) {
+    char *var_i1 = ir_var(ir->func);
+    Str* code = ir->block->code;
+    str_append_chars(code, "  ");
+    str_append_chars(code, var_i1);
+    str_append_chars(code, " = trunc i8 ");
+    str_append_chars(code, val);
+    str_append_chars(code, " to i1\n");
+    return var_i1;
+}
+
 char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
 
     char *ltype = ir_type(ir, rett);
@@ -395,4 +417,33 @@ char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
     str_append_chars(code, "\n");
 
     return result;
+}
+
+void ir_if(IR *ir, Scope *scope, TIf *ift) {
+    //
+    Value *cond = ift->cond;
+    Scope *scope_if = ift->scope_if;
+    Scope *scope_else = ift->scope_else;
+
+    IRBlock *block_if = ir_block_make(ir, ir->func);
+    IRBlock *block_else = ir_block_make(ir, ir->func);
+    IRBlock *after = ir_block_make(ir, ir->func);
+
+    char *lcond = ir_value(ir, scope, cond);
+    char *lcond_i1 = ir_i1_cast(ir, lcond);
+    ir_cond_jump(ir, lcond_i1, block_if, block_else);
+
+    ir->block = block_if;
+    ir_write_ast(ir, scope_if);
+    if (!scope_if->did_return) {
+        ir_jump(ir, after);
+    }
+
+    ir->block = block_else;
+    ir_write_ast(ir, scope_else);
+    if (!scope_else->did_return) {
+        ir_jump(ir, after);
+    }
+
+    ir->block = after;
 }
