@@ -64,6 +64,10 @@ Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett) 
 }
 
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
+    if(val->type == v_int) {
+        if(try_convert_int(val, to_type))
+            return val;
+    }
     return value_make(alc, v_cast, val, to_type);
 }
 

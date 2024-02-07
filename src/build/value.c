@@ -39,6 +39,8 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             Type *type = read_type(fc, alc, scope, true);
             tok_expect(fc, ")", true, true);
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
+        } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
+            v = vgen_int(alc, str_is(tkn, "true"), type_gen_volt(alc, b, "bool"));
         } else {
             // Identifiers
             Id id;
@@ -298,6 +300,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             Value *arg = read_value(alc, fc, scope, true, 0);
             FuncArg *func_arg = array_get_index(func_args, arg_i++);
             if (func_arg) {
+                try_convert_int(arg, func_arg->type);
                 type_check(fc->chunk_parse, func_arg->type, arg->rett);
             }
             array_push(args, arg);
@@ -316,6 +319,9 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         sprintf(b->char_buf, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
         parse_err(fc->chunk_parse, b->char_buf);
     }
+
+    // TODO: default values if missing arguments
+
     if(args->length < func_args->length) {
         sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
         parse_err(fc->chunk_parse, b->char_buf);
@@ -431,9 +437,9 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
         right = vgen_cast(alc, right, type_gen_volt(alc, b, is_signed ? "int" : "uint"));
     }
     if(left->type == v_int && right->type != v_int) {
-        left->rett = right->rett;
+        try_convert_int(left, right->rett);
     } else if(right->type == v_int && left->type != v_int) {
-        right->rett = left->rett;
+        try_convert_int(right, left->rett);
     }
 
     // Try match types
@@ -519,4 +525,24 @@ void value_is_mutable(Value* v) {
         Decl *decl = v->item;
         decl->is_mut = true;
     }
+}
+
+bool try_convert_int(Value* val, Type* type) {
+    if(val->type != v_int || type->type != type_int)
+        return false;
+    int bytes = type->size;
+    int bits = bytes * 8;
+    long int max = bytes < 4 ? ipow(2, bits) : INT_MAX;
+    long int min = 0;
+    if (type->is_signed) {
+        min = max * -1;
+    }
+    VInt* vint = val->item;
+    // printf("try:%ld\n", vint->value);
+    if (vint->value >= min && vint->value <= max) {
+        // printf("conv:%ld\n", vint->value);
+        val->rett = type;
+        return true;
+    }
+    return false;
 }

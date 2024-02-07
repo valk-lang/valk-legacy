@@ -2,7 +2,8 @@
 use volt:mem
 use volt:os
 
-shared gc : ?GC
+shared gc_instance : ?GC
+shared gc : bool
 shared gc_age : u8
 shared gc_busy : uint
 
@@ -11,7 +12,7 @@ struct GC {
     stack_count : uint (0)
 
     static fn start() {
-        gc = GC {
+        gc_instance = GC {
             stacks: mem:alloc(10000 @as uint)
         }
         os:Thread.start(GC.loop @as ptr)
@@ -25,6 +26,11 @@ struct GC {
     }
 
     static fn loop() {
-        print("BOLO\n")
+        let g = gc_instance;
+        while 1 == 1 {
+            gc_age++
+            gc = true
+            os:sleep_ms(10);
+        }
     }
 }
