@@ -137,6 +137,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             }
             value_is_mutable(v);
             v = vgen_incr(alc, b, v, incr, false);
+            t = tok_id_next(fc);
             continue;
         }
         break;
