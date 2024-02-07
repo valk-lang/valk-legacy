@@ -24,9 +24,9 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
 }
 
 Value *vgen_int(Allocator *alc, long int value, Type *type) {
-    VInt *item = al(alc, sizeof(VInt));
-    item->value = value;
-    return value_make(alc, v_int, item, type);
+    VNumber *item = al(alc, sizeof(VNumber));
+    item->value_int = value;
+    return value_make(alc, v_number, item, type);
 }
 
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
@@ -64,8 +64,8 @@ Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett) 
 }
 
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
-    if(val->type == v_int) {
-        if(try_convert_int(val, to_type))
+    if(val->type == v_number) {
+        if(try_convert_number(val, to_type))
             return val;
     }
     return value_make(alc, v_cast, val, to_type);

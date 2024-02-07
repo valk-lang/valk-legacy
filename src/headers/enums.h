@@ -65,7 +65,7 @@ enum VALUES {
     v_global,
     v_func_ptr,
     v_func_call,
-    v_int,
+    v_number,
     v_cast,
     v_string,
     v_op,

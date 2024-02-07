@@ -9,7 +9,7 @@ bool value_is_assignable(Value *v);
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_);
 Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
 void value_is_mutable(Value* v);
-bool try_convert_int(Value* val, Type* type);
+bool try_convert_number(Value* val, Type* type);
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
@@ -42,8 +42,9 @@ struct VFuncCall {
     int line;
     int col;
 };
-struct VInt {
-    long int value;
+struct VNumber {
+    long int value_int;
+    double value_float;
 };
 struct VClassPA {
     Value* on;

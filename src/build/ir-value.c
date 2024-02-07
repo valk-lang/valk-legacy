@@ -6,9 +6,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_string) {
         return ir_string(ir, v->item);
     }
-    if (v->type == v_int) {
-        VInt* item = v->item;
-        return ir_int(ir, item->value);
+    if (v->type == v_number) {
+        VNumber* item = v->item;
+        if(v->rett->type == type_int || v->rett->type == type_bool)
+            return ir_int(ir, item->value_int);
+        // TODO: float
     }
     if (v->type == v_null) {
         return "null";

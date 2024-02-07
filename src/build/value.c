@@ -300,7 +300,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             Value *arg = read_value(alc, fc, scope, true, 0);
             FuncArg *func_arg = array_get_index(func_args, arg_i++);
             if (func_arg) {
-                try_convert_int(arg, func_arg->type);
+                try_convert_number(arg, func_arg->type);
                 type_check(fc->chunk_parse, func_arg->type, arg->rett);
             }
             array_push(args, arg);
@@ -436,10 +436,10 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
         is_ptr = true;
         right = vgen_cast(alc, right, type_gen_volt(alc, b, is_signed ? "int" : "uint"));
     }
-    if(left->type == v_int && right->type != v_int) {
-        try_convert_int(left, right->rett);
-    } else if(right->type == v_int && left->type != v_int) {
-        try_convert_int(right, left->rett);
+    if(left->type == v_number && right->type != v_number) {
+        try_convert_number(left, right->rett);
+    } else if(right->type == v_number && left->type != v_number) {
+        try_convert_number(right, left->rett);
     }
 
     // Try match types
@@ -527,22 +527,27 @@ void value_is_mutable(Value* v) {
     }
 }
 
-bool try_convert_int(Value* val, Type* type) {
-    if(val->type != v_int || type->type != type_int)
+bool try_convert_number(Value* val, Type* type) {
+    if(val->type != v_number || (type->type != type_int && type->type != type_float))
         return false;
     int bytes = type->size;
     int bits = bytes * 8;
-    long int max = bytes < 4 ? ipow(2, bits) : INT_MAX;
-    long int min = 0;
-    if (type->is_signed) {
-        min = max * -1;
-    }
-    VInt* vint = val->item;
-    // printf("try:%ld\n", vint->value);
-    if (vint->value >= min && vint->value <= max) {
-        // printf("conv:%ld\n", vint->value);
-        val->rett = type;
-        return true;
+    VNumber *number = val->item;
+    if (type->type == type_int && val->rett->type != type_float) {
+        long int max = bytes < sizeof(intptr_t) ? ipow(2, bits) : INTPTR_MAX;
+        long int min = 0;
+        if (type->is_signed) {
+            min = max * -1;
+        }
+        long int value = number->value_int;
+        // printf("try:%ld\n", value);
+        if (value >= min && value <= max) {
+            // printf("conv:%ld\n", value);
+            val->rett = type;
+            return true;
+        }
+    } else if (type->type == type_float) {
+        // TODO: float
     }
     return false;
 }
