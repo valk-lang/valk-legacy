@@ -28,6 +28,11 @@ Value *vgen_int(Allocator *alc, long int value, Type *type) {
     item->value_int = value;
     return value_make(alc, v_number, item, type);
 }
+Value *vgen_float(Allocator *alc, double value, Type *type) {
+    VNumber *item = al(alc, sizeof(VNumber));
+    item->value_float = value;
+    return value_make(alc, v_number, item, type);
+}
 
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
     VClassPA *item = al(alc, sizeof(VClassPA));

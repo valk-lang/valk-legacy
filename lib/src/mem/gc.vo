@@ -13,7 +13,7 @@ struct GC {
 
     static fn start() {
         gc_instance = GC {
-            stacks: mem:alloc(10000 @as uint)
+            stacks: mem:alloc(10000)
         }
         os:Thread.start(GC.loop @as ptr)
     }

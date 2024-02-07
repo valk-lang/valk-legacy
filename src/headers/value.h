@@ -15,6 +15,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Value *on, Array *args);
 Value *vgen_int(Allocator *alc, long int value, Type *type);
+Value *vgen_float(Allocator *alc, double value, Type *type);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
 Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index);
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);

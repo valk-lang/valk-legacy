@@ -5,10 +5,12 @@ struct Stack {
     data : ptr
     count : int (0)
     delete : bool (false)
+    // olist_first : ObjectList (ObjectList.new())
+    // olist_last : ObjectList (ObjectList.new())
 
     static fn new() Stack {
         let s = Stack {
-            data: mem:alloc(100000 @as uint)
+            data: mem:alloc(100000)
         }
         (gc_instance @as GC).add_stack(s);
         return s
@@ -25,6 +27,17 @@ struct Stack {
 
     fn mark() {
 
+    }
+}
+
+struct ObjectList {
+    index: uint (0)
+    data: ptr
+
+    static fn new() {
+        return ObjectList {
+            data: mem:alloc(100 * sizeof(ptr))
+        }
     }
 }
 

@@ -98,7 +98,7 @@ void stage_types_func(Fc* fc, Func* func) {
         *fc->chunk_parse = *func->chunk_rett;
         Type *type = read_type(fc, fc->alc, fc->scope, false);
         func->rett = type;
-        func->scope->must_return = true;
+        func->scope->must_return = !type_is_void(type);
         func->scope->rett = type;
     } else {
         func->rett = type_gen_void(fc->alc);

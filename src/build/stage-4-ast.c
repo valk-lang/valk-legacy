@@ -104,7 +104,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
-                continue;
+                break;
             }
         }
 
@@ -149,5 +149,10 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
         //
         array_push(scope->ast, token_make(alc, t_statement, left));
+    }
+
+    if(scope->must_return && !scope->did_return) {
+        sprintf(b->char_buf, "Scope must return a value");
+        parse_err(fc->chunk_parse, b->char_buf);
     }
 }

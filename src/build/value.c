@@ -6,6 +6,8 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on);
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class);
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope);
 Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
+Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
+Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 
 Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio) {
     Build *b = fc->b;
@@ -440,6 +442,17 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
         try_convert_number(left, right->rett);
     } else if(right->type == v_number && left->type != v_number) {
         try_convert_number(right, left->rett);
+    } else if(left->type == v_number && right->type == v_number) {
+        // Pre-calculate
+        bool is_float = left->rett->type == type_float || right->rett->type == type_float;
+        Value* combo;
+        if(is_float) {
+            // combo = pre_calc_float(alc, fc->b, left, right, op);
+        } else {
+            combo = pre_calc_int(alc, fc->b, left, right, op);
+        }
+        if(combo)
+            return combo;
     }
 
     // Try match types
@@ -462,6 +475,45 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     }
 
     return v;
+}
+
+Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
+    VNumber* vn1 = n1->item;
+    VNumber* vn2 = n2->item;
+    double v1 = n1->rett->type == type_int ? (double) vn1->value_int : vn1->value_float;
+    double v2 = n2->rett->type == type_int ? (double) vn2->value_int : vn2->value_float;
+    if(op == op_add) {
+        v1 = v1 + v2;
+    } else if(op == op_sub) {
+        v1 = v1 - v2;
+    } else if(op == op_mul) {
+        v1 = v1 * v2;
+    } else if(op == op_div) {
+        v1 = v1 / v2;
+    } else {
+        return NULL;
+    }
+    int size = max_num(n1->rett->size, n2->rett->size);
+    return vgen_float(alc, v1, type_gen_number(alc, b, size, true, true));
+}
+Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
+    VNumber* vn1 = n1->item;
+    VNumber* vn2 = n2->item;
+    int v1 = vn1->value_int;
+    int v2 = vn2->value_int;
+    if(op == op_add) {
+        v1 = v1 + v2;
+    } else if(op == op_sub) {
+        v1 = v1 - v2;
+    } else if(op == op_mul) {
+        v1 = v1 * v2;
+    } else if(op == op_div) {
+        v1 = v1 / v2;
+    } else {
+        return NULL;
+    }
+    int size = max_num(n1->rett->size, n2->rett->size);
+    return vgen_int(alc, v1, type_gen_number(alc, b, size, false, n1->rett->is_signed || n2->rett->is_signed));
 }
 
 Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
