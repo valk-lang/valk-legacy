@@ -13,6 +13,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
 
     char *tkn = tok(fc, true, true, true);
     int t = chunk->token;
+    char *tr = &chunk->token;
 
     Value* v = NULL;
 
@@ -148,7 +149,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
     ///////////////////////
 
     tkn = tok(fc, true, true, true);
-    while (str_is(tkn, "@as")) {
+    while (*tr == tok_at_word && str_is(tkn, "@as")) {
         if (type_is_void(v->rett)) {
             parse_err(chunk, "Left side of '@as' must return a value");
         }
@@ -159,42 +160,44 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         tkn = tok(fc, true, true, true);
     }
 
-    if (prio == 0 || prio > 10) {
-        while (fc->chunk_parse->token == tok_op1) {
-            char sign = tkn[0];
-            int op;
-            if(sign == '*')
-                op = op_mul;
-            else if(sign == '/')
-                op = op_div;
-            else if(sign == '%')
-                op = op_mod;
-            else
-                break;
-            Value *right = read_value(alc, fc, scope, true, 10);
-            v = value_handle_op(alc, fc, scope, v, right, op);
-            tkn = tok(fc, true, true, true);
+    if (*tr == tok_op1) {
+        if (prio == 0 || prio > 10) {
+            while (*tr == tok_op1) {
+                char sign = tkn[0];
+                int op;
+                if (sign == '*')
+                    op = op_mul;
+                else if (sign == '/')
+                    op = op_div;
+                else if (sign == '%')
+                    op = op_mod;
+                else
+                    break;
+                Value *right = read_value(alc, fc, scope, true, 10);
+                v = value_handle_op(alc, fc, scope, v, right, op);
+                tkn = tok(fc, true, true, true);
+            }
         }
-    }
 
-    if (prio == 0 || prio > 20) {
-        while (fc->chunk_parse->token == tok_op1) {
-            char sign = tkn[0];
-            int op;
-            if(sign == '+')
-                op = op_add;
-            else if(sign == '-')
-                op = op_sub;
-            else
-                break;
-            Value *right = read_value(alc, fc, scope, true, 20);
-            v = value_handle_op(alc, fc, scope, v, right, op);
-            tkn = tok(fc, true, true, true);
+        if (prio == 0 || prio > 20) {
+            while (*tr == tok_op1) {
+                char sign = tkn[0];
+                int op;
+                if (sign == '+')
+                    op = op_add;
+                else if (sign == '-')
+                    op = op_sub;
+                else
+                    break;
+                Value *right = read_value(alc, fc, scope, true, 20);
+                v = value_handle_op(alc, fc, scope, v, right, op);
+                tkn = tok(fc, true, true, true);
+            }
         }
     }
 
     if (prio == 0 || prio > 30) {
-        while (fc->chunk_parse->token == tok_op1 || fc->chunk_parse->token == tok_op2) {
+        while (*tr == tok_op1 || *tr == tok_op2) {
             char ch1 = tkn[0];
             char ch2 = tkn[1];
             int op;
