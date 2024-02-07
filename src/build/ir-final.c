@@ -26,10 +26,6 @@ void ir_gen_final(IR* ir) {
             }
         }
         //
-        if(!func->func->scope->did_return) {
-            str_flat(code, "  ret void\n");
-        }
-        //
         str_flat(code, "}\n\n");
     }
 

@@ -9,7 +9,7 @@ shared gc_busy : uint
 
 struct GC {
     stacks : ptr
-    stack_count : uint (0)
+    stack_count : int (0)
 
     static fn start() {
         gc_instance = GC {
@@ -19,17 +19,29 @@ struct GC {
     }
 
     fn add_stack(s: Stack) {
-        let adr = this.stacks
-        adr += sizeof(ptr) * this.stack_count
-        @ptrv(adr, ptr) = s @as ptr
-        this.stack_count++
+        let index = this.stack_count
+        @ptrv(this.stacks, Stack, index) = s
+        // todo atomic increment
+        this.stack_count = index + 1
     }
 
     static fn loop() {
         let g = gc_instance;
         while 1 == 1 {
+            let sc = g.stack_count;
+            let stacks = g.stacks;
+            // Increase age + mark gc as running
             gc_age++
             gc = true
+            // Loop stacks
+            let si = sc;
+            while si-- > 0 {
+                let s = @ptrv(stacks, Stack, si);
+                s.mark();
+            }
+            //
+            gc = false
+            // Wait
             os:sleep_ms(10);
         }
     }

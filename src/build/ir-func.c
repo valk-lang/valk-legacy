@@ -57,6 +57,11 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->block = func->block_code;
 
     ir_write_ast(ir, vfunc->scope);
+    //
+    if (!vfunc->scope->did_return) {
+        str_flat(ir->block->code, "  ret void\n");
+    }
+
     // Jump from start to code block
     ir->block = func->block_start;
     ir_jump(ir, func->block_code);

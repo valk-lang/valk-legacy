@@ -4,6 +4,7 @@ use volt:mem
 struct Stack {
     data : ptr
     count : int (0)
+    delete : bool (false)
 
     static fn new() Stack {
         let s = Stack {
@@ -20,6 +21,10 @@ struct Stack {
 
     fn pop(amount: int) {
         this.count -= amount;
+    }
+
+    fn mark() {
+
     }
 }
 
