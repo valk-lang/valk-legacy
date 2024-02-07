@@ -10,6 +10,7 @@ void ir_define_struct(IR *ir, Class* class) {
         array_push(ir->declared_classes, class);
 
         Str *code = str_make(ir->alc, 800);
+        str_preserve(code, 400);
         str_add(code, name);
         str_flat(code, " = type ");
         str_add(code, class->packed ? "<{ " : "{ ");

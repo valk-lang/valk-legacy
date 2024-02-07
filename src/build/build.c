@@ -141,7 +141,7 @@ int cmd_build(int argc, char *argv[]) {
 
     // Object files + Linking
     alc_delete(b->alc_ast);
-    // stage_5_objects(b);
+    stage_5_objects(b);
 
     size_t mem_llvm = get_mem_usage();
 

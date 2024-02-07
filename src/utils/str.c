@@ -93,7 +93,7 @@ void str_add_x(Str *str, char *add, int len) {
     //     printf("NOT ENOUGH MEM (1) '%s'\n", add);
     // }
     memcpy(str->data + str->length, add, len);
-    str->length = str->length + len;
+    str->length += len;
 }
 void str_add(Str *str, char *add) {
     int len = strlen(add);
@@ -101,7 +101,7 @@ void str_add(Str *str, char *add) {
     //     printf("NOT ENOUGH MEM (2) '%s'\n", add);
     // }
     memcpy(str->data + str->length, add, len);
-    str->length = str->length + len;
+    str->length += len;
 }
 
 char *str_to_chars(Allocator *alc, Str *str) {

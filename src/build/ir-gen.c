@@ -44,8 +44,9 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
         bool nullable = !v->rett->is_pointer || v->rett->nullable;
         //
         strcpy(buf, type);
-        if(nullable) {
-            strcpy(buf + len, " nonnull");
+        buf[len++] = ' ';
+        if(!nullable) {
+            strcpy(buf + len, "nonnull ");
             strcpy(buf + len + 8, val);
         } else {
             strcpy(buf + len, val);

@@ -37,7 +37,7 @@
 
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
-#define str_flat(str, chars) str_add_x(str, chars, sizeof(chars))
+#define str_flat(str, chars) str_add_x(str, chars, sizeof(chars) - 1)
 
 // Base
 #include "headers/enums.h"
