@@ -50,7 +50,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             *err_col_end = col + (i + 1 - i_last);
             return;
         }
-        if (ch == '\0')
+        if (ch == 0)
             break;
         i++;
         col += i - i_last;
@@ -82,6 +82,8 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                     while (ch != '\n' && ch != 0) {
                         ch = content[++i];
                     }
+                    if(ch == 0)
+                        i--;
                 }
                 if (ch == 0)
                     break;

@@ -73,6 +73,7 @@ enum VALUES {
     v_class_init,
     v_incr,
     v_null,
+    v_stack,
 };
 
 enum TOKENS {

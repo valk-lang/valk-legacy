@@ -118,11 +118,6 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
     Str *code = block->code;
 
     char bytes[20];
-    int abytes = type->size;
-    if (abytes > ir->b->ptr_size) {
-        abytes = ir->b->ptr_size;
-    }
-    sprintf(bytes, "%d", abytes);
 
     char *var = ir_var(func);
     str_append_chars(code, "  ");
@@ -130,8 +125,22 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
     str_append_chars(code, " = alloca ");
     str_append_chars(code, ir_type(ir, type));
     str_append_chars(code, ", align ");
-    str_append_chars(code, bytes);
+    str_append_chars(code, ir_type_align(ir, type, bytes));
     str_append_chars(code, "\n");
+
+    return var;
+}
+
+char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size) {
+    IRBlock *block = func->block_start;
+    Str *code = block->code;
+
+    char *var = ir_var(func);
+    str_append_chars(code, "  ");
+    str_append_chars(code, var);
+    str_append_chars(code, " = alloca i8, i32 ");
+    str_append_chars(code, size);
+    str_append_chars(code, ", align 8\n");
 
     return var;
 }
