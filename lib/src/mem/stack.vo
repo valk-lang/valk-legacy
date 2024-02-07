@@ -8,7 +8,7 @@ struct Stack {
 
     static fn new() Stack {
         let s = Stack {
-            data: mem:alloc(10000 @as uint)
+            data: mem:alloc(100000 @as uint)
         }
         (gc_instance @as GC).add_stack(s);
         return s

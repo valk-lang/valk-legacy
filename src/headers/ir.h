@@ -11,7 +11,6 @@ void ir_gen_functions(IR* ir);
 void ir_gen_final(IR* ir);
 // Type
 char *ir_type(IR *ir, Type *type);
-char *ir_type_real(IR *ir, Type *type);
 char *ir_type_int(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 char *ir_type_align(IR *ir, Type *type, char* result);

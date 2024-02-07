@@ -132,7 +132,7 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
         char *lval = ir_value(ir, scope, on);
         char *lindex = ir_value(ir, scope, index);
         char *lindex_type = ir_type(ir, index->rett);
-        char *ltype = ir_type_real(ir, as_type);
+        char *ltype = ir_type(ir, as_type);
 
         char *result = ir_var(ir->func);
         Str *code = ir->block->code;

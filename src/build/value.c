@@ -19,7 +19,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
 
     if (t == tok_at_word) {
         if (str_is(tkn, "@ptrv")) {
-            v = value_handle_ptrv(alc,fc, scope);
+            v = value_handle_ptrv(alc, fc, scope);
         } else if (str_is(tkn, "@stack")) {
             tok_expect(fc, "(", false, false);
             Type* type = read_type(fc, alc, scope, true);

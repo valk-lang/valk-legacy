@@ -483,10 +483,6 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     ir->block = block_cond;
     char *lcond = ir_value(ir, scope, cond);
     char *lcond_i1 = ir_i1_cast(ir, lcond);
-    printf("bcond:%s\n", block_cond->name);
-    printf("bwhile:%s\n", block_while->name);
-    printf("after:%s\n", after->name);
-    printf("cond:%s\n", lcond);
     ir_cond_jump(ir, lcond_i1, block_while, after);
 
     ir->block = block_while;

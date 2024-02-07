@@ -7,6 +7,7 @@ char *ir_type(IR *ir, Type *type) {
         return "ptr";
 
     Class *class = type->class;
+    char name[256];
 
     if (type_is_void(type)) {
 		return "void";
@@ -16,7 +17,6 @@ char *ir_type(IR *ir, Type *type) {
 
         ir_define_struct(ir, class);
 
-        char name[256];
         strcpy(name, "\%struct.");
         strcpy(name + 8, class->ir_name);
 		return dups(ir->alc, name);
@@ -26,34 +26,34 @@ char *ir_type(IR *ir, Type *type) {
         return ir_type_int(ir, bytes);
     }
 
-    printf("Type: %d\n", type->type);
+    printf("Type: %s\n", type_to_str(type, name));
     die("Unknown IR type (compiler bug)");
     return NULL;
 }
 
-char *ir_type_real(IR *ir, Type *type) {
-    Class *class = type->class;
-    if (class && type->type == type_struct) {
-        Str *result = str_make(ir->alc, 256);
-        int depth = 1;
+// char *ir_type_real(IR *ir, Type *type) {
+//     Class *class = type->class;
+//     if (class && type->type == type_struct) {
+//         Str *result = str_make(ir->alc, 256);
+//         int depth = 1;
 
-        ir_define_struct(ir, class);
+//         ir_define_struct(ir, class);
 
-        char name[256];
-        strcpy(name, "\%struct.");
-        strcpy(name + 8, class->ir_name);
-        str_add(result, name);
-        //
-        while (depth > 0) {
-            str_flat(result, "*");
-            depth--;
-        }
-        //
-        return str_to_chars(ir->alc, result);
-    }
+//         char name[256];
+//         strcpy(name, "\%struct.");
+//         strcpy(name + 8, class->ir_name);
+//         str_add(result, name);
+//         //
+//         while (depth > 0) {
+//             str_flat(result, "*");
+//             depth--;
+//         }
+//         //
+//         return str_to_chars(ir->alc, result);
+//     }
 
-    return ir_type(ir, type);
-}
+//     return ir_type(ir, type);
+// }
 
 char *ir_type_int(IR *ir, int bytes) {
     if (bytes == 1) {

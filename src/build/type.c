@@ -19,17 +19,22 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
     Build* b = fc->b;
 
     Type *type = NULL;
-    bool nullable = false;;
+    bool nullable = false;
+    bool is_inline = false;
 
     char* tkn = tok(fc, true, allow_newline, true);
     if(str_is(tkn, "?")) {
         nullable = true;
         tkn = tok(fc, false, false, true);
     }
+    if(str_is(tkn, "struct")) {
+        is_inline = true;
+        tkn = tok(fc, true, false, true);
+    }
 
     int t = fc->chunk_parse->token;
     if(t == tok_id) {
-        if (str_is(tkn, "void")) {
+        if (!is_inline && str_is(tkn, "void")) {
             return type_make(alc, type_void);
         }
 
@@ -44,6 +49,8 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         if(idf->type == idf_class) {
             Class* class = idf->item;
             type = type_gen_class(alc, class);
+            if(is_inline)
+                type->is_pointer = false;
         }
     }
 
