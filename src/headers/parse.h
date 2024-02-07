@@ -8,7 +8,7 @@
 Scope* scope_make(Allocator* alc, int type, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc);
 void scope_add_decl(Scope* scope, Decl* decl);
-Scope* scope_sub_make(Allocator* alc, int type, Scope* parent);
+Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end);
 // Read
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
 void tok_back(Fc* fc);
@@ -29,6 +29,7 @@ struct Scope {
     Type* rett;
     Array* decls;
     int type;
+    Chunk* chunk_end;
     bool must_return;
     bool did_return;
 };

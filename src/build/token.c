@@ -19,8 +19,12 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
     }
 
     char* tkn = tok(fc, true, true, true);
+    int scope_end_i = 0;
     bool single = false;
+    Chunk* chunk_end = NULL;
     if (str_is(tkn, "{")) {
+        chunk_end = chunk_clone(alc, fc->chunk_parse);
+        chunk_end->i = chunk_end->scope_end_i;
     } else if (str_is(tkn, ":")) {
         single = true;
     } else {
@@ -28,8 +32,8 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    Scope *scope_if = scope_sub_make(alc, sc_default, scope);
-    Scope *scope_else = scope_sub_make(alc, sc_default, scope);
+    Scope *scope_if = scope_sub_make(alc, sc_default, scope, chunk_end);
+    Scope *scope_else = scope_sub_make(alc, sc_default, scope, NULL);
 
     read_ast(fc, scope_if, single);
 
@@ -43,6 +47,9 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
             // else
             bool single = false;
             if (str_is(tkn, "{")) {
+                chunk_end = chunk_clone(alc, fc->chunk_parse);
+                chunk_end->i = chunk_end->scope_end_i;
+                scope_else->chunk_end = chunk_end;
             } else if (str_is(tkn, ":")) {
                 single = true;
             } else {
@@ -71,7 +78,10 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
     char* tkn = tok(fc, true, true, true);
     bool single = false;
 
+    Chunk* chunk_end = NULL;
     if (str_is(tkn, "{")) {
+        chunk_end = chunk_clone(alc, fc->chunk_parse);
+        chunk_end->i = chunk_end->scope_end_i;
     } else if (str_is(tkn, ":")) {
         single = true;
     } else {
@@ -79,7 +89,7 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    Scope *scope_while = scope_sub_make(alc, sc_default, scope);
+    Scope *scope_while = scope_sub_make(alc, sc_default, scope, chunk_end);
 
     read_ast(fc, scope_while, single);
 

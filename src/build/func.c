@@ -52,11 +52,13 @@ void parse_handle_func_args(Fc* fc, Func* func) {
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
         skip_type(fc);
         tok_expect(fc, end, true, true);
+
+        Chunk* chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
+        chunk_end->i = chunk_end->scope_end_i;
+        func->scope->chunk_end = chunk_end;
     }
 
-    if (!fc->is_header) {
-        func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_body(fc);
-    }
+    func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
+    skip_body(fc);
 }
 

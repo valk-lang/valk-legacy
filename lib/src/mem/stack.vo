@@ -34,7 +34,7 @@ struct ObjectList {
     index: uint (0)
     data: ptr
 
-    static fn new() {
+    static fn new() ObjectList {
         return ObjectList {
             data: mem:alloc(100 * sizeof(ptr))
         }

@@ -101,9 +101,20 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if(scope->rett) {
                     val = read_value(alc, fc, scope, false, 0);
                     type_check(fc->chunk_parse, scope->rett, val->rett);
+                } else {
+                    char* tkn = tok(fc, true, false, true);
+                    if(tkn[0] != 0) {
+                        sprintf(fc->b->char_buf, "Return statement should not return a value if the function has a 'void' return type");
+                        parse_err(fc->chunk_parse, fc->b->char_buf);
+                    }
                 }
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
+                if(!scope->chunk_end) {
+                    sprintf(fc->b->char_buf, "Missing scope end position (compiler bug)");
+                    parse_err(fc->chunk_parse, fc->b->char_buf);
+                }
+                *fc->chunk_parse = *scope->chunk_end;
                 break;
             }
         }
@@ -152,7 +163,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     }
 
     if(scope->must_return && !scope->did_return) {
-        sprintf(b->char_buf, "Scope must return a value");
+        sprintf(b->char_buf, "Missing return statement");
         parse_err(fc->chunk_parse, b->char_buf);
     }
 }
