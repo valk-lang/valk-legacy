@@ -22,5 +22,5 @@ fn sleep_ns(ns: uint) void {
     ts.tv_sec = nsec / 1000000000
     ts.tv_nsec = (nsec % 1000000000)
     sys:nanosleep(ts, ts)
-// 	#end
 }
+// 	#end

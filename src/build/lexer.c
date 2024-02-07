@@ -78,11 +78,12 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
                     continue;
                 }
                 if (ch == '/' && content[i] == '/') {
-                    ch = content[++i];
+                    i++;
+                    ch = content[i++];
                     while (ch != '\n' && ch != 0) {
-                        ch = content[++i];
+                        ch = content[i++];
                     }
-                    if(ch == 0)
+                    if(ch == '\n')
                         i--;
                 }
                 if (ch == 0)
