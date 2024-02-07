@@ -22,17 +22,12 @@ void stage_4_ast(Fc *fc) {
 }
 
 void stage_ast(Fc *fc) {
-
-    usize start = microtime();
-
     Array *funcs = fc->funcs;
     for (int i = 0; i < funcs->length; i++) {
         Func *func = array_get_index(funcs, i);
         *fc->chunk_parse = *func->chunk_body;
         read_ast(fc, func->scope, false);
     }
-
-    fc->b->time_parse += microtime() - start;
 }
 
 void read_ast(Fc *fc, Scope *scope, bool single_line) {

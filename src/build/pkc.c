@@ -34,10 +34,14 @@ void pkc_set_dir(Pkc* pkc, char* dir) {
         build_err(b, b->char_buf);
     }
     pkc->dir = dir;
-    map_set(b->pkc_by_dir, dir, pkc);
+    map_set_force_new(b->pkc_by_dir, dir, pkc);
     // Load config
+    usize start = microtime();
     PkgConfig* cfg = load_config(b->alc, dir, b->str_buf, true);
     pkc->config = cfg;
+    usize time = microtime() - start;
+    b->time_io += time;
+    if(b->parser_started) b->time_parse -= time;
 }
 
 Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk) {
@@ -65,7 +69,7 @@ Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk) {
         build_err(b, b->char_buf);
     }
     sub = pkc_load_from_dir(pkc->b, dir, name);
-    map_set(pkc->pkc_by_name, name, sub);
+    map_set_force_new(pkc->pkc_by_name, name, sub);
 
     if(b->verbose > 2)
         printf("Package '%s' loaded from '%s'\n", name, dir);
@@ -112,7 +116,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
         sprintf(path, "%s%s.vh", dir, fn);
         if(file_exists(path)) {
             Fc* hfc = fc_make(b->nsc_main, dups(b->alc, path));
-            map_set(pkc->headers_by_fn, fn, hfc);
+            map_set_force_new(pkc->headers_by_fn, fn, hfc);
             return hfc;
         }
     }

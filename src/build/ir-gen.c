@@ -46,7 +46,7 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
     Str *code = ir->block->code;
     char *var_result = "";
     str_append_chars(code, "  ");
-    if (strcmp(lrett, "void") != 0) {
+    if (!str_is(lrett, "void")) {
         var_result = ir_var(ir->func);
         str_append_chars(code, var_result);
         str_append_chars(code, " = ");

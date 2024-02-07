@@ -251,7 +251,7 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     if ((d = opendir(dir)) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir(d)) != NULL) {
-            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+            if (str_is(ent->d_name, ".") || str_is(ent->d_name, "..")) {
                 continue;
             }
 

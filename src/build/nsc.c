@@ -59,7 +59,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Chunk* chunk) {
             fc_make(nsc, path);
     }
 
-    map_set(pkc->namespaces, name, nsc);
+    map_set_force_new(pkc->namespaces, name, nsc);
     return nsc;
 }
 

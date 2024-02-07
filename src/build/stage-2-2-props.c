@@ -66,7 +66,7 @@ void stage_props_class(Fc* fc, Class *class) {
             prop->chunk_type = chunk_clone(b->alc, fc->chunk_parse);
             prop->chunk_value = NULL;
             prop->index = class->props->values->length;
-            map_set(class->props, name, prop);
+            map_set_force_new(class->props, name, prop);
 
             skip_type(fc);
 
@@ -101,13 +101,17 @@ void stage_props_class(Fc* fc, Class *class) {
             sprintf(b->char_buf, "Invalid property name: '%s'", name);
             parse_err(fc->chunk_parse, b->char_buf);
         }
+        if (map_contains(class->props, name) || map_contains(class->funcs, name)) {
+            sprintf(b->char_buf, "Function name is already used for another property or function: '%s'", name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
 
         Func *func = func_make(b->alc, fc, name, NULL);
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;
         array_push(fc->funcs, func);
-        map_set(class->funcs, name, func);
+        map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(fc, func);
     }

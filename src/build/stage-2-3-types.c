@@ -41,7 +41,7 @@ void stage_types_func(Fc* fc, Func* func) {
 
     if(func->class && !func->is_static) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
-        map_set(func->args, "this", arg);
+        map_set_force_new(func->args, "this", arg);
         Decl *decl = decl_make(b->alc, arg->type, true);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, fc);
@@ -57,6 +57,10 @@ void stage_types_func(Fc* fc, Func* func) {
                 sprintf(b->char_buf, "Invalid function argument name: '%s'", name);
                 parse_err(fc->chunk_parse, b->char_buf);
             }
+            if(map_contains(func->args, name)) {
+                sprintf(b->char_buf, "Duplicate argument name: '%s'", name);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
 
             tok_expect(fc, ":", true, false);
             Type* type = read_type(fc, fc->alc, fc->scope, false);
@@ -66,7 +70,7 @@ void stage_types_func(Fc* fc, Func* func) {
             }
 
             FuncArg* arg = func_arg_make(b->alc, type);
-            map_set(func->args, name, arg);
+            map_set_force_new(func->args, name, arg);
 
             Decl* decl = decl_make(b->alc, type, true);
             Idf* idf = idf_make(b->alc, idf_decl, decl);

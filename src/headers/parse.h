@@ -24,6 +24,7 @@ char* chunk_read(Chunk* chunk, int *i_ref);
 struct Scope {
     Scope* parent;
     Map* identifiers;
+    Map* type_identifiers;
     Array* ast;
     Type* rett;
     Array* decls;

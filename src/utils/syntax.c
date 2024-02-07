@@ -163,7 +163,7 @@ bool starts_with(const char *a, const char *b) {
 bool ends_with(const char *str, const char *suffix) {
     int str_len = strlen(str);
     int suffix_len = strlen(suffix);
-    return (str_len >= suffix_len) && (0 == strcmp(str + (str_len - suffix_len), suffix));
+    return (str_len >= suffix_len) && (str_is(str + (str_len - suffix_len), suffix));
 }
 
 char backslash_char(char ch) {
@@ -187,7 +187,7 @@ char backslash_char(char ch) {
     return ch;
 }
 
-bool str_is(char* tkn, char* comp) {
+bool str_is(const char* tkn, const char* comp) {
     while (*tkn == *comp++)
 		if (*tkn++ == '\0')
 			return true;

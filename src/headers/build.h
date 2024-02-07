@@ -89,6 +89,8 @@ struct Build {
     int export_count;
     int verbose;
     int LOC;
+    //
+    bool parser_started;
 };
 struct Fc {
     Build *b;

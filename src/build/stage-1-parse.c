@@ -149,9 +149,13 @@ void stage_1_class(Fc *fc, int type, int act) {
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
 
+    Scope* nsc_scope = fc->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);
-    scope_set_idf(fc->nsc->scope, name, idf, fc);
+    scope_set_idf(nsc_scope, name, idf, fc);
     array_push(fc->classes, class);
+    if(!nsc_scope->type_identifiers)
+        nsc_scope->type_identifiers = map_make(b->alc);
+    map_set_force_new(nsc_scope->type_identifiers, name, idf);
 
     //
     if(type == ct_int) {

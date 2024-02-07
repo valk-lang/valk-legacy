@@ -78,6 +78,7 @@ int cmd_build(int argc, char *argv[]) {
     b->export_count = 0;
     b->verbose = 2;
     b->LOC = 0;
+    b->parser_started = false;
 
     // Cache dir
     char *cache_buf = al(alc, 1000);
@@ -114,7 +115,7 @@ int cmd_build(int argc, char *argv[]) {
     Nsc *nsc_main = nsc_load(pkc_main, "main", false, NULL);
     if (!nsc_main) {
         nsc_main = nsc_make(alc, pkc_main, "main", pkc_main->dir);
-        map_set(pkc_main->namespaces, "main", nsc_main);
+        map_set_force_new(pkc_main->namespaces, "main", nsc_main);
     }
     b->nsc_main = nsc_main;
 

@@ -6,6 +6,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->type = type;
     sc->parent = parent;
     sc->identifiers = map_make(alc);
+    sc->type_identifiers = NULL;
     sc->ast = NULL;
     sc->rett = NULL;
     sc->decls = type == sc_func ? array_make(alc, 20) : NULL;
@@ -24,7 +25,7 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc) {
         sprintf(b->char_buf, "Name already taken: '%s'", name);
         parse_err(fc->chunk_parse, b->char_buf);
     }
-    map_set(scope->identifiers, name, idf);
+    map_set_force_new(scope->identifiers, name, idf);
 }
 
 void scope_add_decl(Scope* scope, Decl* decl) {

@@ -31,6 +31,9 @@ void* stage_get_item(Stage* stage) {
 void build_run_stages(Build* b) {
     if(b->verbose > 2)
         printf("# Run build stages\n");
+
+    b->parser_started = false;
+
     Allocator *alc = b->alc;
     Array* stages = array_make(alc, 10);
     array_push(stages, b->stage_1_parse);

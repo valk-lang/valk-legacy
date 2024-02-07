@@ -363,7 +363,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         tok_expect(fc, ":", true, false);
         Value* val = read_value(alc, fc, scope, true, 0);
         type_check(fc->chunk_parse, prop->type, val->rett);
-        map_set(values, name, val);
+        map_set_force_new(values, name, val);
         name = tok(fc, true, true, true);
     }
     // Default values
@@ -381,7 +381,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             *fc->chunk_parse = *prop->chunk_value;
             Value* val = read_value(alc, fc, prop->chunk_value->fc->scope, true, 0);
             *fc->chunk_parse = backup;
-            map_set(values, name, val);
+            map_set_force_new(values, name, val);
         }
     }
 

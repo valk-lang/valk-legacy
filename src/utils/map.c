@@ -51,6 +51,10 @@ void map_set(Map *map, char *key, void *value) {
         array_set_index(map->values, i, value);
     }
 }
+void map_set_force_new(Map *map, char *key, void *value) {
+    array_push(map->keys, dups(map->alc, key));
+    array_push(map->values, value);
+}
 
 bool map_unset(Map *map, char *key) {
     int i = array_find(map->keys, key, arr_find_str);

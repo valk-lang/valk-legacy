@@ -4,6 +4,7 @@
 /debug
 /packages
 /.vscode
+callgrind.*
 
 # Prerequisites
 *.d

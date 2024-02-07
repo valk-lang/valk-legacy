@@ -15,7 +15,6 @@ void array_push(Array *arr, void *item) {
         int newlen = arr->max_length * 2;
         void *new = al(arr->alc, newlen * sizeof(void *));
         memcpy(new, arr->data, arr->max_length * sizeof(void *));
-        // free(arr->data);
         arr->data = new;
         arr->max_length = newlen;
     }
@@ -121,7 +120,7 @@ int array_find(Array *arr, void *item, int type) {
         } else if (type == arr_find_str) {
             char *a = (char *)*adr;
             char *b = (char *)item;
-            if (strcmp(a, b) == 0)
+            if (str_is(a, b))
                 return x;
         } else if (type == arr_find_int) {
             if ((int)(*adr) == *(int *)item)
@@ -142,7 +141,7 @@ int array_find_x(Array *arr, void *item, int type, int start, int end) {
         } else if (type == arr_find_str) {
             char *a = (char *)*adr;
             char *b = (char *)item;
-            if (strcmp(a, b) == 0)
+            if (str_is(a, b))
                 return x;
         } else if (type == arr_find_int) {
             if ((int)(*adr) == *(int *)item)
