@@ -5,4 +5,5 @@ void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *optio
 unsigned long microtime();
 void ctxhash(char *content_, char *buf_);
 int ipow(int base, int exp);
+size_t get_mem_usage();
 

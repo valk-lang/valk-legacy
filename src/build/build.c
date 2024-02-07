@@ -5,6 +5,8 @@ void cmd_build_help();
 
 int cmd_build(int argc, char *argv[]) {
 
+    size_t mem_start = get_mem_usage();
+
     Allocator *alc = alc_make();
     char *char_buf = al(alc, 10 * 1024);
     Str *str_buf = str_make(alc, 100 * 1024);
@@ -133,8 +135,13 @@ int cmd_build(int argc, char *argv[]) {
 
     // Build stages
     build_run_stages(b);
+
+    size_t mem_parse = get_mem_usage();
+
     // Object files + Linking
     stage_5_objects(b);
+
+    size_t mem_llvm = get_mem_usage();
 
     // Finish build
     if (b->verbose > 0) {
@@ -145,6 +152,13 @@ int cmd_build(int argc, char *argv[]) {
         printf("⌚ LLVM: %.3fs\n", (double)b->time_llvm / 1000000);
         printf("⌚ Link: %.3fs\n", (double)b->time_link / 1000000);
         printf("⌚ File IO: %.3fs\n", (double)b->time_io / 1000000);
+        // printf("💾 Mem base: %.2f MB\n", (double)(mem_start) / (1024 * 1024));
+        // printf("💾 Mem parse: %.2f MB\n", (double)(mem_parse - mem_start) / (1024 * 1024));
+        // printf("💾 Mem peak LLVM: %.2f MB\n", (double)(mem_llvm - mem_start) / (1024 * 1024));
+        if(b->mem_parse > 0) {
+            printf("💾 Mem peak parser: %.2f MB\n", (double)(b->mem_parse) / (1024 * 1024));
+            printf("💾 Mem peak LLVM: %.2f MB\n", (double)(b->mem_objects) / (1024 * 1024));
+        }
         printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
     }
 

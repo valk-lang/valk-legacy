@@ -33,5 +33,8 @@ void stage_4_ir(Fc* fc) {
             printf("> IR changed: %s\n", fc->path_ir);
     }
 
+    size_t mem = get_mem_usage();
+    if (mem > b->mem_parse)
+        b->mem_parse = mem;
     alc_wipe(alc);
 }

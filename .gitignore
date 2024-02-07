@@ -3,6 +3,7 @@
 /volt.json
 /debug
 /packages
+/.vscode
 
 # Prerequisites
 *.d

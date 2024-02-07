@@ -141,3 +141,12 @@ int ipow(int base, int exp) {
     }
     return result;
 }
+
+size_t get_mem_usage() {
+    #ifdef WIN32
+    return 0;
+    #else
+    struct mallinfo2 info = mallinfo2();
+    return info.arena + info.hblkhd;
+    #endif
+}

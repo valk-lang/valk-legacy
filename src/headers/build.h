@@ -82,6 +82,9 @@ struct Build {
     Nsc *nsc_main;
     Func *func_main;
     //
+    size_t mem_parse;
+    size_t mem_objects;
+    //
     int ptr_size;
     int export_count;
     int verbose;

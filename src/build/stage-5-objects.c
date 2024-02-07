@@ -153,6 +153,9 @@ void llvm_build_o_file(void* data_) {
         exit(1);
     }
 
+    size_t mem = get_mem_usage();
+    if (mem > b->mem_objects)
+        b->mem_objects = mem;
     // printf("Object created: %s\n", outpath);
     LLVMDisposeMessage(error);
     LLVMDisposeModule(nsc_mod);
