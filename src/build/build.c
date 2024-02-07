@@ -140,7 +140,8 @@ int cmd_build(int argc, char *argv[]) {
     size_t mem_parse = get_mem_usage();
 
     // Object files + Linking
-    stage_5_objects(b);
+    alc_delete(b->alc_ast);
+    // stage_5_objects(b);
 
     size_t mem_llvm = get_mem_usage();
 

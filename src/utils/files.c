@@ -341,8 +341,12 @@ void file_get_contents(Str *buf, char *path) {
     str_clear(buf);
     char ch;
     FILE *fp = fopen(path, "r");
+    int i = 0;
     while ((ch = fgetc(fp)) != EOF) {
-        str_append_char(buf, ch);
+        if(i % 100 == 0)
+            str_preserve(buf, 100);
+        *(char*)(buf->data + i++) = ch;
+        buf->length++;
     }
     fclose(fp);
 }

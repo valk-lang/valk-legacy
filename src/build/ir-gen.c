@@ -3,30 +3,32 @@
 
 char *ir_var(IRFunc* func) {
     char *res = al(func->ir->alc, 10);
-    sprintf(res, "%%.%d", func->var_count++);
+    res[0] = '%';
+    res[1] = '.';
+    itoa(func->var_count++, res + 2, 10);
     return res;
 }
 
 void ir_jump(IR* ir, IRBlock* block) {
     Str* code = ir->block->code;
-    str_append_chars(code, "  br label %");
-    str_append_chars(code, block->name);
-    str_append_chars(code, "\n");
+    str_flat(code, "  br label %");
+    str_add(code, block->name);
+    str_flat(code, "\n");
 }
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else) {
     Str* code = ir->block->code;
-    str_append_chars(code, "  br i1 ");
-    str_append_chars(code, cond);
-    str_append_chars(code, ", label %");
-    str_append_chars(code, block_if->name);
-    str_append_chars(code, ", label %");
-    str_append_chars(code, block_else->name);
-    str_append_chars(code, "\n");
+    str_flat(code, "  br i1 ");
+    str_add(code, cond);
+    str_flat(code, ", label %");
+    str_add(code, block_if->name);
+    str_flat(code, ", label %");
+    str_add(code, block_else->name);
+    str_flat(code, "\n");
 }
 
 char *ir_int(IR* ir, long int value) {
-    char *res = al(ir->alc, 20);
-    sprintf(res, "%ld", value);
+    char *res = al(ir->alc, 24);
+    itoa(value, res, 10);
     return res;
 }
 
@@ -36,7 +38,18 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
         Value *v = array_get_index(values, i);
         char *val = ir_value(ir, scope, v);
         char *buf = ir->char_buf;
-        sprintf(buf, "%s noundef%s %s", ir_type(ir, v->rett), !v->rett->is_pointer || v->rett->nullable ? "" : " nonnull", val);
+
+        char *type = ir_type(ir, v->rett);
+        int len = strlen(type);
+        bool nullable = !v->rett->is_pointer || v->rett->nullable;
+        //
+        strcpy(buf, type);
+        if(nullable) {
+            strcpy(buf + len, " nonnull");
+            strcpy(buf + len + 8, val);
+        } else {
+            strcpy(buf + len, val);
+        }
         array_push(result, dups(ir->alc, buf));
     }
     return result;
@@ -45,34 +58,34 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col) {
     Str *code = ir->block->code;
     char *var_result = "";
-    str_append_chars(code, "  ");
+    str_flat(code, "  ");
     if (!str_is(lrett, "void")) {
         var_result = ir_var(ir->func);
-        str_append_chars(code, var_result);
-        str_append_chars(code, " = ");
+        str_add(code, var_result);
+        str_flat(code, " = ");
     }
-    str_append_chars(code, "call ");
-    str_append_chars(code, lrett);
-    str_append_chars(code, " ");
-    str_append_chars(code, on);
-    str_append_chars(code, "(");
+    str_flat(code, "call ");
+    str_add(code, lrett);
+    str_flat(code, " ");
+    str_add(code, on);
+    str_flat(code, "(");
     int argc = values->length;
     for (int i = 0; i < values->length; i++) {
         char *lval = array_get_index(values, i);
         if (i > 0) {
-            str_append_chars(code, ", ");
+            str_flat(code, ", ");
         }
-        str_append_chars(code, lval);
+        str_add(code, lval);
     }
-    str_append_chars(code, ")");
+    str_flat(code, ")");
     // if (ir->debug) {
     //     char *loc = ir_attr(b);
-    //     str_append_chars(code, ", !dbg ");
-    //     str_append_chars(code, loc);
+    //     str_flat(code, ", !dbg ");
+    //     str_add(code, loc);
     //     sprintf(b->char_buf, "%s = !DILocation(line: %d, column: %d, scope: %s)", loc, line, col, b->lfunc->di_scope);
     //     array_push(b->attrs, dups(b->alc, b->char_buf));
     // }
-    str_append_chars(code, "\n");
+    str_flat(code, "\n");
     return var_result;
 }
 
@@ -92,57 +105,69 @@ char *ir_string(IR *ir, char *body) {
     //
     Fc *fc = ir->fc;
     Str *code = ir->code_global;
+    str_preserve(code, 100);
 
-    sprintf(ir->char_buf, "@.str.%d", ir->string_count++);
-    char *var = dups(ir->alc, ir->char_buf);
+    char var[64];
+    strcpy(var, "@.str.");
+    itoa(ir->string_count++, (char*)((intptr_t)var + 6), 10);
 
     int ptr_size = ir->b->ptr_size;
     int len = strlen(body);
     int blen = len + ptr_size + 2;
 
-    sprintf(ir->char_buf, "%s = private unnamed_addr constant [%d x i8] c\"", var, blen);
-    str_append_chars(code, ir->char_buf);
+    str_add(code, var);
+    str_flat(code, " = private unnamed_addr constant [");
+    char len_str[32];
+    itoa(blen, len_str, 10);
+    str_add(code, len_str);
+    str_flat(code, " x i8] c\"");
 
     // Bytes
     // Len bytes
     size_t len_buf = len;
     unsigned char *len_ptr = (unsigned char *)&len_buf;
     int c = 0;
-    while (c < ptr_size) {
-        unsigned char ch = *(len_ptr + c);
-        c++;
-        str_append_char(code, '\\');
-        char hex[20];
-        sprintf(hex, "%02X", ch);
-        if (strlen(hex) == 0) {
-            str_append_char(code, '0');
-        }
-        str_append_chars(code, hex);
+    while (c++ < ptr_size) {
+        //
+        unsigned char ch = (c > sizeof(size_t)) ? 0 : *(len_ptr + c - 1);
+        //
+        ((char*)code->data)[code->length] = '\\';
+        code->length++;
+        //
+        unsigned char hex[3];
+        char_to_hex(ch, hex);
+        ((char *)code->data)[code->length] = hex[0];
+        ((char *)code->data)[code->length + 1] = hex[1];
+        code->length += 2;
     }
 
     // Const byte
-    str_append_chars(code, "\\01");
-    str_append_chars(code, "\\00");
+    str_flat(code, "\\01");
+    str_flat(code, "\\00");
 
     // String bytes
     int index = 0;
     while (index < len) {
-        unsigned char ch = body[index];
-        index++;
+        if(index % 100 == 0)
+            str_preserve(code, 100);
+        //
+        unsigned char ch = body[index++];
         if (ch > 34 && ch < 127 && ch != 92) {
-            str_append_char(code, ch);
+            ((char *)code->data)[code->length] = ch;
+            code->length++;
             continue;
         }
-        str_append_char(code, '\\');
-        char hex[20];
-        sprintf(hex, "%02X", ch);
-        if (strlen(hex) == 0) {
-            str_append_char(code, '0');
-        }
-        str_append_chars(code, hex);
+        ((char *)code->data)[code->length] = '\\';
+        code->length++;
+        //
+        unsigned char hex[3];
+        char_to_hex(ch, hex);
+        ((char *)code->data)[code->length] = hex[0];
+        ((char *)code->data)[code->length + 1] = hex[1];
+        code->length += 2;
     }
     //
-    str_append_chars(code, "\", align 8\n");
+    str_flat(code, "\", align 8\n");
 
     sprintf(ir->char_buf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
     return dups(ir->alc, ir->char_buf);
@@ -155,15 +180,15 @@ char* ir_load(IR* ir, Type* type, char* var) {
     char bytes[20];
 
     Str *code = ir->block->code;
-    str_append_chars(code, "  ");
-    str_append_chars(code, var_result);
-    str_append_chars(code, " = load ");
-    str_append_chars(code, ltype);
-    str_append_chars(code, ", ptr ");
-    str_append_chars(code, var);
-    str_append_chars(code, ", align ");
-    str_append_chars(code, ir_type_align(ir, type, bytes));
-    str_append_chars(code, "\n");
+    str_flat(code, "  ");
+    str_add(code, var_result);
+    str_flat(code, " = load ");
+    str_add(code, ltype);
+    str_flat(code, ", ptr ");
+    str_add(code, var);
+    str_flat(code, ", align ");
+    str_add(code, ir_type_align(ir, type, bytes));
+    str_flat(code, "\n");
 
     return var_result;
 }
@@ -174,15 +199,15 @@ void ir_store(IR *ir, Type *type, char *var, char *val) {
     char bytes[20];
     ir_type_align(ir, type, bytes);
 
-    str_append_chars(code, "  store ");
-    str_append_chars(code, ltype);
-    str_append_chars(code, " ");
-    str_append_chars(code, val);
-    str_append_chars(code, ", ptr ");
-    str_append_chars(code, var);
-    str_append_chars(code, ", align ");
-    str_append_chars(code, bytes);
-    str_append_chars(code, "\n");
+    str_flat(code, "  store ");
+    str_add(code, ltype);
+    str_flat(code, " ");
+    str_add(code, val);
+    str_flat(code, ", ptr ");
+    str_add(code, var);
+    str_flat(code, ", align ");
+    str_add(code, bytes);
+    str_flat(code, "\n");
 }
 
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
@@ -196,62 +221,62 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
     if (from_type->is_pointer && !to_type->is_pointer) {
         // Ptr to int
         char *var = ir_var(ir->func);
-        str_append_chars(code, "  ");
-        str_append_chars(code, var);
-        str_append_chars(code, " = ptrtoint ");
-        str_append_chars(code, lfrom_type);
-        str_append_chars(code, " ");
-        str_append_chars(code, result_var);
-        str_append_chars(code, " to ");
-        str_append_chars(code, lto_type);
-        str_append_chars(code, "\n");
+        str_flat(code, "  ");
+        str_add(code, var);
+        str_flat(code, " = ptrtoint ");
+        str_add(code, lfrom_type);
+        str_flat(code, " ");
+        str_add(code, result_var);
+        str_flat(code, " to ");
+        str_add(code, lto_type);
+        str_flat(code, "\n");
         result_var = var;
     } else if (!from_type->is_pointer) {
         if (from_type->size < to_type->size) {
             // Ext
             char *new_type = ir_type_int(ir, to_type->size);
             char *var = ir_var(ir->func);
-            str_append_chars(code, "  ");
-            str_append_chars(code, var);
+            str_flat(code, "  ");
+            str_add(code, var);
             if (from_type->is_signed) {
-                str_append_chars(code, " = sext ");
+                str_flat(code, " = sext ");
             } else {
-                str_append_chars(code, " = zext ");
+                str_flat(code, " = zext ");
             }
-            str_append_chars(code, lfrom_type);
-            str_append_chars(code, " ");
-            str_append_chars(code, result_var);
-            str_append_chars(code, " to ");
-            str_append_chars(code, new_type);
-            str_append_chars(code, "\n");
+            str_add(code, lfrom_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ");
+            str_add(code, new_type);
+            str_flat(code, "\n");
             lfrom_type = new_type;
             result_var = var;
         } else if (from_type->size > to_type->size) {
             // Trunc
             char *new_type = ir_type_int(ir, to_type->size);
             char *var = ir_var(ir->func);
-            str_append_chars(code, "  ");
-            str_append_chars(code, var);
-            str_append_chars(code, " = trunc ");
-            str_append_chars(code, lfrom_type);
-            str_append_chars(code, " ");
-            str_append_chars(code, result_var);
-            str_append_chars(code, " to ");
-            str_append_chars(code, new_type);
-            str_append_chars(code, "\n");
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = trunc ");
+            str_add(code, lfrom_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ");
+            str_add(code, new_type);
+            str_flat(code, "\n");
             lfrom_type = new_type;
             result_var = var;
         }
         if (to_type->is_pointer) {
             // Bitcast to i8*|%struct...*
             char *var = ir_var(ir->func);
-            str_append_chars(code, "  ");
-            str_append_chars(code, var);
-            str_append_chars(code, " = inttoptr ");
-            str_append_chars(code, lfrom_type);
-            str_append_chars(code, " ");
-            str_append_chars(code, result_var);
-            str_append_chars(code, " to ptr\n");
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = inttoptr ");
+            str_add(code, lfrom_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ptr\n");
             result_var = var;
         }
     }
@@ -262,11 +287,11 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
 char *ir_i1_cast(IR *ir, char *val) {
     char *var_i1 = ir_var(ir->func);
     Str* code = ir->block->code;
-    str_append_chars(code, "  ");
-    str_append_chars(code, var_i1);
-    str_append_chars(code, " = trunc i8 ");
-    str_append_chars(code, val);
-    str_append_chars(code, " to i1\n");
+    str_flat(code, "  ");
+    str_add(code, var_i1);
+    str_flat(code, " = trunc i8 ");
+    str_add(code, val);
+    str_flat(code, " to i1\n");
     return var_i1;
 }
 
@@ -276,46 +301,46 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
     char *var = ir_var(ir->func);
 
     Str *code = ir->block->code;
-    str_append_chars(code, "  ");
-    str_append_chars(code, var);
-    str_append_chars(code, " = ");
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = ");
     if (op == op_add) {
-        str_append_chars(code, "add ");
+        str_flat(code, "add ");
     } else if (op == op_sub) {
-        str_append_chars(code, "sub ");
+        str_flat(code, "sub ");
     } else if (op == op_mul) {
-        str_append_chars(code, "mul ");
+        str_flat(code, "mul ");
     } else if (op == op_div) {
         if (rett->is_signed) {
-            str_append_chars(code, "sdiv ");
+            str_flat(code, "sdiv ");
         } else {
-            str_append_chars(code, "udiv ");
+            str_flat(code, "udiv ");
         }
     } else if (op == op_mod) {
         if (rett->is_signed) {
-            str_append_chars(code, "srem ");
+            str_flat(code, "srem ");
         } else {
-            str_append_chars(code, "urem ");
+            str_flat(code, "urem ");
         }
     } else if (op == op_bit_and) {
-        str_append_chars(code, "and ");
+        str_flat(code, "and ");
     } else if (op == op_bit_or) {
-        str_append_chars(code, "or ");
+        str_flat(code, "or ");
     } else if (op == op_bit_xor) {
-        str_append_chars(code, "xor ");
+        str_flat(code, "xor ");
     } else if (op == op_shl) {
-        str_append_chars(code, "shl ");
+        str_flat(code, "shl ");
     } else if (op == op_shr) {
-        str_append_chars(code, "lshr ");
+        str_flat(code, "lshr ");
     } else {
         die("Unknown IR math operation (compiler bug)");
     }
-    str_append_chars(code, ltype);
-    str_append_chars(code, " ");
-    str_append_chars(code, left);
-    str_append_chars(code, ", ");
-    str_append_chars(code, right);
-    str_append_chars(code, "\n");
+    str_add(code, ltype);
+    str_flat(code, " ");
+    str_add(code, left);
+    str_flat(code, ", ");
+    str_add(code, right);
+    str_flat(code, "\n");
 
     return var;
 }
@@ -371,23 +396,23 @@ char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right) {
     }
 
     Str *code = ir->block->code;
-    str_append_chars(code, "  ");
-    str_append_chars(code, var_tmp);
-    str_append_chars(code, " = icmp ");
-    str_append_chars(code, sign);
-    str_append_chars(code, " ");
-    str_append_chars(code, ltype);
-    str_append_chars(code, " ");
-    str_append_chars(code, lval1);
-    str_append_chars(code, ", ");
-    str_append_chars(code, lval2);
-    str_append_chars(code, "\n");
+    str_flat(code, "  ");
+    str_add(code, var_tmp);
+    str_flat(code, " = icmp ");
+    str_add(code, sign);
+    str_flat(code, " ");
+    str_add(code, ltype);
+    str_flat(code, " ");
+    str_add(code, lval1);
+    str_flat(code, ", ");
+    str_add(code, lval2);
+    str_flat(code, "\n");
 
-    str_append_chars(code, "  ");
-    str_append_chars(code, var_result);
-    str_append_chars(code, " = zext i1 ");
-    str_append_chars(code, var_tmp);
-    str_append_chars(code, " to i8\n");
+    str_flat(code, "  ");
+    str_add(code, var_result);
+    str_flat(code, " = zext i1 ");
+    str_add(code, var_tmp);
+    str_flat(code, " to i8\n");
 
     return var_result;
 }
@@ -397,19 +422,19 @@ char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
     Str *code = ir->block->code;
 
     char index[20];
-    sprintf(index, "%d", prop->index);
+    itoa(prop->index, index, 10);
 
     ir_define_struct(ir, class);
 
-    str_append_chars(code, "  ");
-    str_append_chars(code, result);
-    str_append_chars(code, " = getelementptr inbounds %struct.");
-    str_append_chars(code, class->ir_name);
-    str_append_chars(code, ", ptr ");
-    str_append_chars(code, on);
-    str_append_chars(code, ", i32 0, i32 ");
-    str_append_chars(code, index);
-    str_append_chars(code, "\n");
+    str_flat(code, "  ");
+    str_add(code, result);
+    str_flat(code, " = getelementptr inbounds %struct.");
+    str_add(code, class->ir_name);
+    str_flat(code, ", ptr ");
+    str_add(code, on);
+    str_flat(code, ", i32 0, i32 ");
+    str_add(code, index);
+    str_flat(code, "\n");
 
     return result;
 }

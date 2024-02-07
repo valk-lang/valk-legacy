@@ -3,6 +3,8 @@
 
 char* ir_value(IR* ir, Scope* scope, Value* v) {
 
+    str_preserve(ir->block->code, 200);
+
     if (v->type == v_string) {
         return ir_string(ir, v->item);
     }
@@ -134,17 +136,17 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
 
         char *result = ir_var(ir->func);
         Str *code = ir->block->code;
-        str_append_chars(code, "  ");
-        str_append_chars(code, result);
-        str_append_chars(code, " = getelementptr inbounds ");
-        str_append_chars(code, ltype);
-        str_append_chars(code, ", ptr ");
-        str_append_chars(code, lval);
-        str_append_chars(code, ", ");
-        str_append_chars(code, lindex_type);
-        str_append_chars(code, " ");
-        str_append_chars(code, lindex);
-        str_append_chars(code, "\n");
+        str_flat(code, "  ");
+        str_add(code, result);
+        str_flat(code, " = getelementptr inbounds ");
+        str_add(code, ltype);
+        str_flat(code, ", ptr ");
+        str_add(code, lval);
+        str_flat(code, ", ");
+        str_add(code, lindex_type);
+        str_flat(code, " ");
+        str_add(code, lindex);
+        str_flat(code, "\n");
 
         return result;
     }

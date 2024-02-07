@@ -196,7 +196,9 @@ bool str_is(const char* tkn, const char* comp) {
 
 bool str_in(char* tkn, char* comp) {
     char buf[256];
-    sprintf(buf, ",%s,", tkn);
+    strcpy(buf, ",");
+    strcpy(buf + 1, tkn);
+    strcat(buf, ",");
     return strstr(comp, buf);
 }
 
@@ -257,4 +259,28 @@ char* op_to_str(int op) {
     if (op == op_shr)
         return ">>";
     return "?";
+}
+
+void char_to_hex(const unsigned char ch, char* buf) {
+    const char* h = "0123456789ABCDEF";
+    const unsigned char first = ch / 16;
+    const unsigned char second = ch % 16;
+    buf[0] = h[first];
+    buf[1] = h[second];
+    buf[2] = 0;
+}
+
+void itoa(long int val, char* buf, const int base){
+    if(val == 0) {
+        strcpy(buf, "0");
+        return;
+    }
+    int i = 0;
+    char rev[32];
+    for (; val; i++, val /= base)
+        rev[i] = "0123456789ABCDEF"[val % base];
+    buf[i] = 0;
+    int up = 0;
+    while(i-- > 0)
+        buf[i] = rev[up++];
 }

@@ -10,18 +10,18 @@ void ir_gen_globals(IR* ir) {
     bool is_main_fc = fc->contains_main_func;
 
     char bytes[20];
-    sprintf(bytes, "%d", fc->b->ptr_size);
+    itoa(fc->b->ptr_size, bytes, 10);
 
     if (is_main_fc) {
-        str_append_chars(code, "@ki_err_code_buffer = dso_local thread_local(initialexec) global i32 0, align 4\n");
-        str_append_chars(code, "@ki_err_msg_buffer = dso_local thread_local(initialexec) global i8* null, align ");
-        str_append_chars(code, bytes);
-        str_append_chars(code, "\n");
+        str_flat(code, "@ki_err_code_buffer = dso_local thread_local(initialexec) global i32 0, align 4\n");
+        str_flat(code, "@ki_err_msg_buffer = dso_local thread_local(initialexec) global i8* null, align ");
+        str_add(code, bytes);
+        str_flat(code, "\n");
     } else {
-        str_append_chars(code, "@ki_err_code_buffer = external thread_local(initialexec) global i32, align 4\n");
-        str_append_chars(code, "@ki_err_msg_buffer = external thread_local(initialexec) global i8*, align ");
-        str_append_chars(code, bytes);
-        str_append_chars(code, "\n");
+        str_flat(code, "@ki_err_code_buffer = external thread_local(initialexec) global i32, align 4\n");
+        str_flat(code, "@ki_err_msg_buffer = external thread_local(initialexec) global i8*, align ");
+        str_add(code, bytes);
+        str_flat(code, "\n");
     }
 
     for (int i = 0; i < fc->globals->length; i++) {
@@ -31,24 +31,24 @@ void ir_gen_globals(IR* ir) {
         Type *type = g->type;
 
         char *ltype = ir_type(ir, type);
-        str_append_chars(code, "@");
-        str_append_chars(code, name);
-        str_append_chars(code, " = dso_local ");
-        str_append_chars(code, g->is_shared ? "" : "thread_local(initialexec) ");
-        str_append_chars(code, " global ");
-        str_append_chars(code, ltype);
-        str_append_chars(code, " ");
+        str_flat(code, "@");
+        str_add(code, name);
+        str_flat(code, " = dso_local ");
+        str_add(code, g->is_shared ? "" : "thread_local(initialexec) ");
+        str_flat(code, " global ");
+        str_add(code, ltype);
+        str_flat(code, " ");
         if (type->is_pointer) {
-            str_append_chars(code, "null");
+            str_flat(code, "null");
         } else {
-            str_append_chars(code, "0");
+            str_flat(code, "0");
         }
 
         char bytes[20];
 
-        str_append_chars(code, ", align ");
-        str_append_chars(code, ir_type_align(ir, type, bytes));
-        str_append_chars(code, "\n");
+        str_flat(code, ", align ");
+        str_add(code, ir_type_align(ir, type, bytes));
+        str_flat(code, "\n");
 
         char *val = al(ir->alc, strlen(name) + 2);
         strcpy(val, "@");
@@ -68,13 +68,13 @@ void *ir_global(IR *ir, Global *g) {
         char bytes[20];
 
         Str *code = ir->code_global;
-        str_append_chars(code, "@");
-        str_append_chars(code, name);
-        str_append_chars(code, " = external global ");
-        str_append_chars(code, ltype);
-        str_append_chars(code, ", align ");
-        str_append_chars(code, ir_type_align(ir, type, bytes));
-        str_append_chars(code, "\n");
+        str_flat(code, "@");
+        str_add(code, name);
+        str_flat(code, " = external global ");
+        str_add(code, ltype);
+        str_flat(code, ", align ");
+        str_add(code, ir_type_align(ir, type, bytes));
+        str_flat(code, "\n");
     }
 
     char* ir_name = al(ir->alc, strlen(name) + 2);

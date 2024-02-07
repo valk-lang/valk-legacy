@@ -7,6 +7,8 @@ void stage_4_ir(Fc* fc) {
 
     Build* b = fc->b;
 
+    // printf("💾 Before: %.2f MB\n", (double)(get_mem_usage()) / (1024 * 1024));
+
     if (b->verbose > 2)
         printf("Stage 4 | Generate IR: %s\n", fc->path);
 
@@ -37,8 +39,10 @@ void stage_4_ir(Fc* fc) {
         b->time_io += microtime() - start;
     }
 
+    // printf("💾 After: %.2f MB\n", (double)(get_mem_usage()) / (1024 * 1024));
     size_t mem = get_mem_usage();
     if (mem > b->mem_parse)
         b->mem_parse = mem;
+
     alc_wipe(alc);
 }

@@ -71,37 +71,37 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
     int argc = args->length;
 
     if (is_extern)
-        str_append_chars(code, "declare ");
+        str_flat(code, "declare ");
     else
-        str_append_chars(code, "define dso_local ");
-    str_append_chars(code, ir_type(ir, vfunc->rett));
-    str_append_chars(code, " @");
-    str_append_chars(code, vfunc->export_name);
-    str_append_chars(code, "(");
+        str_flat(code, "define dso_local ");
+    str_add(code, ir_type(ir, vfunc->rett));
+    str_flat(code, " @");
+    str_add(code, vfunc->export_name);
+    str_flat(code, "(");
 
     // Args
     for (int i = 0; i < argc; i++) {
         FuncArg *arg = array_get_index(args, i);
         if (i > 0)
-            str_append_chars(code, ", ");
-        str_append_chars(code, ir_type(ir, arg->type));
-        str_append_chars(code, " noundef");
+            str_flat(code, ", ");
+        str_add(code, ir_type(ir, arg->type));
+        str_flat(code, " noundef");
         if (arg->type->is_pointer && !arg->type->nullable)
-            str_append_chars(code, " nonnull");
+            str_flat(code, " nonnull");
 
         if(!is_extern) {
-            str_append_chars(code, " ");
-            str_append_chars(code, arg->decl->ir_var);
+            str_flat(code, " ");
+            str_add(code, arg->decl->ir_var);
         }
     }
     if (is_extern) {
-        str_append_chars(code, ")\n");
+        str_flat(code, ")\n");
     }else {
-        str_append_chars(code, ")");
+        str_flat(code, ")");
         if (vfunc->is_inline)
-            str_append_chars(code, " alwaysinline");
+            str_flat(code, " alwaysinline");
 
-        str_append_chars(code, " {\n");
+        str_flat(code, " {\n");
     }
 }
 
@@ -120,13 +120,13 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
     char bytes[20];
 
     char *var = ir_var(func);
-    str_append_chars(code, "  ");
-    str_append_chars(code, var);
-    str_append_chars(code, " = alloca ");
-    str_append_chars(code, ir_type(ir, type));
-    str_append_chars(code, ", align ");
-    str_append_chars(code, ir_type_align(ir, type, bytes));
-    str_append_chars(code, "\n");
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = alloca ");
+    str_add(code, ir_type(ir, type));
+    str_flat(code, ", align ");
+    str_add(code, ir_type_align(ir, type, bytes));
+    str_flat(code, "\n");
 
     return var;
 }
@@ -136,11 +136,11 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size) {
     Str *code = block->code;
 
     char *var = ir_var(func);
-    str_append_chars(code, "  ");
-    str_append_chars(code, var);
-    str_append_chars(code, " = alloca i8, i32 ");
-    str_append_chars(code, size);
-    str_append_chars(code, ", align 8\n");
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = alloca i8, i32 ");
+    str_add(code, size);
+    str_flat(code, ", align 8\n");
 
     return var;
 }

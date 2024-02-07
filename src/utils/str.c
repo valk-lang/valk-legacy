@@ -53,11 +53,20 @@ void str_append_chars(Str *str, char *add) {
 }
 
 void str_increase_memsize(Str *str, int new_memsize) {
-    //
     void* data = al(str->alc, new_memsize);
     memcpy(data, str->data, str->length);
     str->data = data;
     str->mem_size = new_memsize;
+}
+void str_preserve(Str *str, int size) {
+    int space_left = str->mem_size - str->length;
+    if(space_left < size) {
+        int new_size = str->mem_size * 2;
+        char* data = al(str->alc, new_size);
+        memcpy(data, str->data, str->length);
+        str->data = data;
+        str->mem_size = new_size;
+    }
 }
 
 void str_append_from_ptr(Str *str, void *ptr, int len) {
@@ -77,6 +86,22 @@ void str_append_from_ptr(Str *str, void *ptr, int len) {
     }
     memcpy(str->data + str->length, ptr, len);
     str->length = new_length;
+}
+
+void str_add_x(Str *str, char *add, int len) {
+    // if (str->mem_size < str->length + len) {
+    //     printf("NOT ENOUGH MEM (1) '%s'\n", add);
+    // }
+    memcpy(str->data + str->length, add, len);
+    str->length = str->length + len;
+}
+void str_add(Str *str, char *add) {
+    int len = strlen(add);
+    // if (str->mem_size < str->length + len) {
+    //     printf("NOT ENOUGH MEM (2) '%s'\n", add);
+    // }
+    memcpy(str->data + str->length, add, len);
+    str->length = str->length + len;
 }
 
 char *str_to_chars(Allocator *alc, Str *str) {

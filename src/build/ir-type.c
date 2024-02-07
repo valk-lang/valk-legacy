@@ -17,7 +17,8 @@ char *ir_type(IR *ir, Type *type) {
         ir_define_struct(ir, class);
 
         char name[256];
-        sprintf(name, "%%struct.%s", class->ir_name);
+        strcpy(name, "\%struct.");
+        strcpy(name + 8, class->ir_name);
 		return dups(ir->alc, name);
 
     } else if (type->type == type_int) {
@@ -39,11 +40,12 @@ char *ir_type_real(IR *ir, Type *type) {
         ir_define_struct(ir, class);
 
         char name[256];
-        sprintf(name, "%%struct.%s", class->ir_name);
-        str_append_chars(result, name);
+        strcpy(name, "\%struct.");
+        strcpy(name + 8, class->ir_name);
+        str_add(result, name);
         //
         while (depth > 0) {
-            str_append_chars(result, "*");
+            str_flat(result, "*");
             depth--;
         }
         //
@@ -73,6 +75,6 @@ char *ir_type_align(IR *ir, Type *type, char* result) {
     if (abytes > ir->b->ptr_size) {
         abytes = ir->b->ptr_size;
     }
-    sprintf(result, "%d", abytes);
+    itoa(abytes, result, 10);
     return result;
 }

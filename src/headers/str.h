@@ -16,8 +16,11 @@ void str_append(Str *, Str *);
 void str_append_char(Str *, char);
 void str_append_chars(Str *, char *);
 void str_append_from_ptr(Str *str, void *ptr, int len);
+void str_add_x(Str *str, char *add, int len);
+void str_add(Str *str, char *add);
 char *str_to_chars(Allocator *alc, Str *);
 void str_clear(Str *str);
 void str_increase_memsize(Str *str, int new_memsize);
+void str_preserve(Str *str, int size);
 
 #endif
