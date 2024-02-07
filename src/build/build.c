@@ -153,6 +153,8 @@ int cmd_build(int argc, char *argv[]) {
         printf("⌚ File IO: %.3fs\n", (double)b->time_io / 1000000);
         if(b->mem_parse > 0) {
             printf("💾 Mem peak parser: %.2f MB\n", (double)(b->mem_parse) / (1024 * 1024));
+        }
+        if(b->mem_objects > 0) {
             printf("💾 Mem peak LLVM: %.2f MB\n", (double)(b->mem_objects - mem_after_parse) / (1024 * 1024));
         }
         printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
