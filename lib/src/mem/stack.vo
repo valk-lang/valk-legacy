@@ -85,6 +85,7 @@ struct Stack {
         let swap_isset = false
         let swap_list = list_next
         let swap_index = 0
+        let stop = false
         while 1 == 1 {
             let list = list_next
             let is_last = false
@@ -98,6 +99,10 @@ struct Stack {
             let index = 0;
             while index < last_index {
                 let item = @ptrv(list, ptr, index)
+                if item == 0 @as ptr {
+                    stop = true
+                    break
+                }
                 let handler = @ptrv(list, fn(ptr)(bool), index + 1)
                 let keep = handler(item)
                 if(keep) {
@@ -106,7 +111,7 @@ struct Stack {
                         @ptrv(swap_list, fn(ptr)(bool), swap_index + 1) = handler
                     }
                 }else{
-                    // @ptrv(list, ptr, index) = 0 @as ptr // optional
+                    @ptrv(list, ptr, index) = 0 @as ptr
                     this.object_count--
                     if swap_isset == false {
                         swap_list = list
@@ -117,6 +122,9 @@ struct Stack {
                 index += 2
             }
             if is_last {
+                break
+            }
+            if stop {
                 break
             }
             list_next = @ptrv(list, ptr, 200)
