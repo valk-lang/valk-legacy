@@ -1,5 +1,6 @@
 
 fn malloc(size: uint) ptr
+fn free(adr: ptr) i32
 fn write(fd: i32, data: ptr, length: uint) i32
 
 fn nanosleep(req: libc_timespec, rem: libc_timespec) i32;

@@ -33,16 +33,25 @@ struct GC {
             // Increase age + mark gc as running
             gc_age++
             gc = true
+            os:sleep_ms(1); // Optional
             // Loop stacks
             let si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
                 s.mark();
             }
-            //
             gc = false
+            // Wait for other threads
+            while gc_busy > 0 {
+                os:sleep_ms(1);
+            }
+            // Delete unmarked objects
+            while si-- > 0 {
+                let s = @ptrv(stacks, Stack, si);
+                s.delete_unmarked();
+            }
             // Wait
-            os:sleep_ms(10);
+            os:sleep_ms(150);
         }
     }
 }

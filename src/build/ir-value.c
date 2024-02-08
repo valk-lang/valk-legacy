@@ -104,7 +104,8 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VIncr* item = v->item;
         Value* on = item->on;
         char *var = ir_assign_value(ir, scope, on);
-        char *left = ir_value(ir, scope, on);
+        // char *left = ir_value(ir, scope, on);
+        char *left = ir_load(ir, on->rett, var);
         char *right = ir_int(ir, 1);
         char* op = ir_op(ir, scope, item->increment ? op_add : op_sub, left, right, v->rett);
         ir_store(ir, v->rett, var, op);

@@ -4,3 +4,7 @@ header "sys" as sys
 fn alloc(size: uint) ptr {
 	return sys:malloc(size);
 }
+
+fn free(adr: ptr) {
+	sys:free(adr);
+}
