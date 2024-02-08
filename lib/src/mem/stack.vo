@@ -58,24 +58,26 @@ struct Stack {
     ///////////////////////
     // Allocated items
     ///////////////////////
-    fn add_gc_object(item: ptr) {
-        let list = this.olist_last @as ptr
-        let index = this.olist_index
-        if index == 100 {
+    fn add_gc_object(item: ptr, handler: ptr) {
+        let index_ = this.olist_index;
+        if index_ == 200 {
             let new_list = Stack.new_olist()
-            @ptrv(list, ptr, index) = new_list
-            list = new_list
-            index = 0
+            @ptrv(this.olist_last, ptr, index_) = new_list
+            this.olist_last = new_list
+            this.olist_index = 0
         }
+        let index = this.olist_index
+        let list = this.olist_last
         @ptrv(list, ptr, index) = item
-        this.olist_index = index + 1
+        @ptrv(list, ptr, index + 1) = handler
+        this.olist_index = index + 2
     }
 
     fn delete_unmarked() {
     }
 
     static fn new_olist() ptr {
-        return mem:alloc(101 * sizeof(ptr))
+        return mem:alloc(101 * sizeof(ptr) * 2)
     }
 }
 
