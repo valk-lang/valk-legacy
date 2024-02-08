@@ -532,12 +532,15 @@ Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, V
         }
     } else {
         // Numbers
-        if (left->type == v_number && right->type != v_number) {
-            try_convert_number(left, rt);
-        } else if (right->type == v_number && left->type != v_number) {
-            try_convert_number(right, lt);
+        bool is_bool = lt->type == type_bool || rt->type == type_bool;
+        if (!is_bool) {
+            if (left->type == v_number && right->type != v_number) {
+                try_convert_number(left, rt);
+            } else if (right->type == v_number && left->type != v_number) {
+                try_convert_number(right, lt);
+            }
+            match_value_types(alc, fc->b, &left, &right);
         }
-        match_value_types(alc, fc->b, &left, &right);
     }
 
     Type *t1 = left->rett;

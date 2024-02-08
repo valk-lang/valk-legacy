@@ -6,18 +6,20 @@ global stack : ?Stack;
 struct Stack {
     data : ptr
     count : int (0)
-    delete : bool (false)
-    olist_first : ptr
-    olist_last : ptr
-    olist_index : int (0)
-    delete_index : int (0)
+    delete_me : bool (false)
+    chain_active : ObjectChain
+    chain1 : ObjectChain
+    chain2 : ObjectChain
+    object_count : uint (0)
 
     static fn new() Stack {
-        let list = Stack.new_olist()
+        let c1 = ObjectChain.new()
+        let c2 = ObjectChain.new()
         let s = Stack {
             data: mem:alloc(100000)
-            olist_first: list
-            olist_last: list
+            chain_active: c1
+            chain1: c1
+            chain2: c2
         }
         (gc_instance @as GC).add_stack(s);
         return s
@@ -59,21 +61,81 @@ struct Stack {
     // Allocated items
     ///////////////////////
     fn add_gc_object(item: ptr, handler: ptr) {
-        let index_ = this.olist_index;
+        let chain = this.chain_active;
+        let index_ = chain.index;
         if index_ == 200 {
-            let new_list = Stack.new_olist()
-            @ptrv(this.olist_last, ptr, index_) = new_list
-            this.olist_last = new_list
-            this.olist_index = 0
+            let new_list = ObjectChain.new_olist()
+            @ptrv(chain.olist_last, ptr, 200) = new_list
+            chain.olist_last = new_list
+            chain.index = 0
         }
-        let index = this.olist_index
-        let list = this.olist_last
+        let index = chain.index
+        let list = chain.olist_last
         @ptrv(list, ptr, index) = item
         @ptrv(list, ptr, index + 1) = handler
-        this.olist_index = index + 2
+        chain.index = index + 2
+        this.object_count++
     }
 
     fn delete_unmarked() {
+        let ca = this.get_inactive_chain()
+        let list_next = ca.olist_first;
+        let last = ca.olist_last;
+        let last_index = ca.index;
+        while 1 == 1 {
+            let list = list_next
+            let is_last = false
+            let last_index_ = 200
+            if list == last {
+                let last_index_ = ca.index
+            }
+            let last_index = last_index_
+            //
+            let index = 0;
+            while index < last_index {
+                let item = @ptrv(list, ptr, index)
+                let handler = @ptrv(list, ptr, index + 1)
+                index += 2
+            }
+            if is_last {
+                break
+            }
+            list_next = @ptrv(list, ptr, 200)
+            index = 0
+        }
+    }
+
+    fn get_inactive_chain() ObjectChain {
+        let ca = this.chain_active
+        if this.chain_active == this.chain1 {
+            return this.chain2
+        }
+        return this.chain1
+    }
+
+    fn swap_chains() {
+        let ca = this.chain_active
+        let c1 = this.chain1
+        let c2 = this.chain2
+        if c1 == ca {
+            this.chain_active = c2
+        } else {
+            this.chain_active = c1
+        }
+    }
+}
+
+struct ObjectChain {
+    olist_first : ptr
+    olist_last : ptr
+    index : int (0)
+
+    static fn new() ObjectChain {
+        let list = ObjectChain.new_olist();
+        return ObjectChain {
+            olist_first: list
+            olist_last: list
+        }
     }
 
     static fn new_olist() ptr {

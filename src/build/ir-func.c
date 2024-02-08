@@ -75,10 +75,11 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
     Array *args = vfunc->args->values;
     int argc = args->length;
 
-    if (is_extern)
+    if (is_extern) {
         str_flat(code, "declare ");
-    else
+    } else {
         str_flat(code, "define dso_local ");
+    }
     str_add(code, ir_type(ir, vfunc->rett));
     str_flat(code, " @");
     str_add(code, vfunc->export_name);

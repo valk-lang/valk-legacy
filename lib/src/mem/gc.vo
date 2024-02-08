@@ -38,7 +38,10 @@ struct GC {
             let si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
-                s.mark();
+                if s.delete_me == false {
+                    s.swap_chains()
+                    s.mark();
+                }
             }
             gc = false
             // Wait for other threads
@@ -46,9 +49,15 @@ struct GC {
                 os:sleep_ms(1);
             }
             // Delete unmarked objects
+            si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
-                s.delete_unmarked();
+                // if s.delete_me && s.object_count == 0 {
+                //     // TODO
+                //     print("Delete stack (TODO)\n")
+                // } else {
+                    s.delete_unmarked();
+                // }
             }
             // Wait
             os:sleep_ms(150);

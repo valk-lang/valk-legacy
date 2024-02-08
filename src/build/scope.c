@@ -5,6 +5,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     Scope* sc = al(alc, sizeof(Scope));
     sc->type = type;
     sc->parent = parent;
+    sc->loop_scope = NULL;
     sc->identifiers = map_make(alc);
     sc->type_identifiers = NULL;
     sc->ast = NULL;
@@ -13,11 +14,13 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->must_return = false;
     sc->did_return = false;
     sc->chunk_end = NULL;
+    sc->ir_after_block = NULL;
     return sc;
 }
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end) {
     Scope* sub = scope_make(alc, type, parent);
     sub->rett = parent->rett;
+    sub->loop_scope = parent->loop_scope;
     sub->chunk_end = chunk_end;
     return sub;
 }

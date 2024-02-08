@@ -23,6 +23,7 @@ char* chunk_read(Chunk* chunk, int *i_ref);
 
 struct Scope {
     Scope* parent;
+    Scope* loop_scope;
     Map* identifiers;
     Map* type_identifiers;
     Array* ast;
@@ -30,6 +31,7 @@ struct Scope {
     Array* decls;
     int type;
     Chunk* chunk_end;
+    IRBlock* ir_after_block;
     bool must_return;
     bool did_return;
 };

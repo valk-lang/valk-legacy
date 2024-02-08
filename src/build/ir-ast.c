@@ -70,6 +70,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_while(ir, scope, item);
             continue;
         }
+        if (tt == t_break) {
+            Scope* loop_scope = t->item;
+            IRBlock* after = loop_scope->ir_after_block;
+            ir_jump(ir, after);
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }
