@@ -111,4 +111,5 @@ enum OPERATORS {
 enum SCOPES {
     sc_default,
     sc_func,
+    sc_loop,
 };

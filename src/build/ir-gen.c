@@ -477,7 +477,8 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     IRBlock *block_cond = ir_block_make(ir, ir->func);
     IRBlock *block_while = ir_block_make(ir, ir->func);
     IRBlock *after = ir_block_make(ir, ir->func);
-    scope->ir_after_block = after;
+    scope_while->ir_after_block = after;
+    scope_while->ir_cond_block = block_cond;
 
     ir_jump(ir, block_cond);
 

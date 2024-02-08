@@ -73,7 +73,19 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_break) {
             Scope* loop_scope = t->item;
             IRBlock* after = loop_scope->ir_after_block;
+            if(!after) {
+                die("Missing IR after block for 'break' (compiler bug)");
+            }
             ir_jump(ir, after);
+            continue;
+        }
+        if (tt == t_continue) {
+            Scope* loop_scope = t->item;
+            IRBlock* cond = loop_scope->ir_cond_block;
+            if(!cond) {
+                die("Missing IR condition block for 'break' (compiler bug)");
+            }
+            ir_jump(ir, cond);
             continue;
         }
 

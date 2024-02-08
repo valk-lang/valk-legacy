@@ -15,6 +15,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->did_return = false;
     sc->chunk_end = NULL;
     sc->ir_after_block = NULL;
+    sc->ir_cond_block = NULL;
     return sc;
 }
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end) {

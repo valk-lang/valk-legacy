@@ -89,7 +89,7 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    Scope *scope_while = scope_sub_make(alc, sc_default, scope, chunk_end);
+    Scope *scope_while = scope_sub_make(alc, sc_loop, scope, chunk_end);
     scope_while->loop_scope = scope_while;
 
     read_ast(fc, scope_while, single);

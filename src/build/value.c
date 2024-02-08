@@ -300,10 +300,10 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         // Read argument values
         while (true) {
             Value *arg = read_value(alc, fc, scope, true, 0);
-            FuncArg *func_arg = array_get_index(func_args, arg_i++);
-            if (func_arg) {
-                try_convert_number(arg, func_arg->type);
-                type_check(fc->chunk_parse, func_arg->type, arg->rett);
+            Type *arg_type = array_get_index(func_args, arg_i++);
+            if (arg_type) {
+                try_convert_number(arg, arg_type);
+                type_check(fc->chunk_parse, arg_type, arg->rett);
             }
             array_push(args, arg);
 

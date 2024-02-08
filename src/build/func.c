@@ -12,6 +12,7 @@ Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
     f->args = map_make(alc);
+    f->arg_types = array_make(alc, 4);
     f->class = NULL;
     f->is_inline = false;
     f->is_static = false;
@@ -52,11 +53,11 @@ void parse_handle_func_args(Fc* fc, Func* func) {
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
         skip_type(fc);
         tok_expect(fc, end, true, true);
-
-        Chunk* chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
-        chunk_end->i = chunk_end->scope_end_i;
-        func->scope->chunk_end = chunk_end;
     }
+
+    Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
+    chunk_end->i = chunk_end->scope_end_i;
+    func->scope->chunk_end = chunk_end;
 
     func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
     skip_body(fc);

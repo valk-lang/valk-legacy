@@ -27,30 +27,66 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         nullable = true;
         tkn = tok(fc, false, false, true);
     }
-    if(str_is(tkn, "struct")) {
-        is_inline = true;
-        tkn = tok(fc, true, false, true);
-    }
 
     int t = fc->chunk_parse->token;
     if(t == tok_id) {
         if (!is_inline && str_is(tkn, "void")) {
             return type_make(alc, type_void);
         }
-
-        Id id;
-        read_id(fc, tkn, &id);
-        Idf *idf = idf_by_id(fc, scope, &id, false);
-        if(!idf) {
-            id.ns ? sprintf(b->char_buf, "Unknown type: '%s:%s'", id.ns, id.name)
-            : sprintf(b->char_buf, "Unknown type: '%s'", id.name);
-            parse_err(fc->chunk_parse, b->char_buf);
+        if (str_is(tkn, "fn")) {
+            tok_expect(fc, "(", false, false);
+            Array* args = array_make(alc, 4);
+            tok_skip_space(fc);
+            while (tok_id_next(fc) != tok_scope_close) {
+                Type* type = read_type(fc, alc, scope, false);
+                array_push(args, type);
+                tok_skip_space(fc);
+                if (tok_id_next(fc) != tok_scope_close) {
+                    tok_expect(fc, ",", true, false);
+                    tok_skip_space(fc);
+                }
+            }
+            tok_expect(fc, ")", false, false);
+            tok_expect(fc, "(", false, false);
+            tok_skip_space(fc);
+            Type* rett;
+            if (tok_id_next(fc) != tok_scope_close) {
+                rett = read_type(fc, alc, scope, false);
+            } else {
+                rett = type_gen_void(alc);
+            }
+            tok_expect(fc, ")", false, false);
+            //
+            Type *t = type_make(alc, type_func);
+            t->func_rett = rett;
+            t->func_args = args;
+            t->size = b->ptr_size;
+            t->is_pointer = true;
+            return t;
         }
-        if(idf->type == idf_class) {
-            Class* class = idf->item;
-            type = type_gen_class(alc, class);
-            if(is_inline)
-                type->is_pointer = false;
+
+        if (str_is(tkn, "struct")) {
+            is_inline = true;
+            tkn = tok(fc, true, false, true);
+            t = fc->chunk_parse->token;
+        }
+
+        if (t == tok_id) {
+            // Identifier
+            Id id;
+            read_id(fc, tkn, &id);
+            Idf *idf = idf_by_id(fc, scope, &id, false);
+            if (!idf) {
+                id.ns ? sprintf(b->char_buf, "Unknown type: '%s:%s'", id.ns, id.name)
+                      : sprintf(b->char_buf, "Unknown type: '%s'", id.name);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            if (idf->type == idf_class) {
+                Class *class = idf->item;
+                type = type_gen_class(alc, class);
+                if (is_inline)
+                    type->is_pointer = false;
+            }
         }
     }
 
@@ -100,7 +136,7 @@ Type* type_gen_class(Allocator* alc, Class* class) {
 Type* type_gen_func(Allocator* alc, Func* func) {
     Type* t = type_make(alc, type_func);
     t->func_rett = func->rett;
-    t->func_args = func->args->values;
+    t->func_args = func->arg_types;
     t->size = func->b->ptr_size;
     t->is_pointer = true;
     return t;

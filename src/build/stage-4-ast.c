@@ -96,12 +96,12 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 token_while(alc, fc, scope);
                 continue;
             }
-            if (str_is(tkn, "break")){
+            if (str_is(tkn, "break") || str_is(tkn, "continue")){
                 if(!scope->loop_scope) {
                     sprintf(fc->b->char_buf, "Using 'break' without being inside a loop");
                     parse_err(fc->chunk_parse, fc->b->char_buf);
                 }
-                array_push(scope->ast, token_make(alc, t_break, scope->loop_scope));
+                array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, scope->loop_scope));
                 scope->did_return = true;
                 if(!scope->chunk_end) {
                     sprintf(fc->b->char_buf, "Missing scope end position (compiler bug)");

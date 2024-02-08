@@ -17,6 +17,7 @@ char tok_id_next(Fc* fc);
 char tok_id_next_ignore_spacing(Fc* fc);
 char tok_read_byte(Fc* fc, int offset);
 void tok_skip_whitespace(Fc* fc);
+void tok_skip_space(Fc* fc);
 bool tok_next_is_whitespace(Fc* fc);
 char* chunk_tok(Chunk* chunk, bool allow_space, bool allow_newline, bool read_only);
 char* chunk_read(Chunk* chunk, int *i_ref);
@@ -32,6 +33,7 @@ struct Scope {
     int type;
     Chunk* chunk_end;
     IRBlock* ir_after_block;
+    IRBlock* ir_cond_block;
     bool must_return;
     bool did_return;
 };

@@ -79,22 +79,41 @@ struct Stack {
 
     fn delete_unmarked() {
         let ca = this.get_inactive_chain()
-        let list_next = ca.olist_first;
-        let last = ca.olist_last;
-        let last_index = ca.index;
+        let list_next = ca.olist_first
+        let last = ca.olist_last
+        let last_index = ca.index
+        let swap_isset = false
+        let swap_list = list_next
+        let swap_index = 0
         while 1 == 1 {
             let list = list_next
             let is_last = false
             let last_index_ = 200
             if list == last {
-                let last_index_ = ca.index
+                is_last = true;
+                last_index_ = ca.index
             }
             let last_index = last_index_
             //
             let index = 0;
             while index < last_index {
                 let item = @ptrv(list, ptr, index)
-                let handler = @ptrv(list, ptr, index + 1)
+                let handler = @ptrv(list, fn(ptr)(bool), index + 1)
+                let keep = handler(item)
+                if(keep) {
+                    if swap_isset {
+                        @ptrv(swap_list, ptr, swap_index) = item
+                        @ptrv(swap_list, fn(ptr)(bool), swap_index + 1) = handler
+                    }
+                }else{
+                    // @ptrv(list, ptr, index) = 0 @as ptr // optional
+                    this.object_count--
+                    if swap_isset == false {
+                        swap_list = list
+                        swap_index = index
+                    }
+                }
+                //
                 index += 2
             }
             if is_last {

@@ -46,7 +46,7 @@ struct GC {
             gc = false
             // Wait for other threads
             while gc_busy > 0 {
-                os:sleep_ms(1);
+                os:sleep_ms(10);
             }
             // Delete unmarked objects
             si = sc;

@@ -20,6 +20,7 @@ struct Func {
     Chunk* chunk_body;
     //
     Map* args;
+    Array* arg_types;
     Type* rett;
     Class* class;
     //
