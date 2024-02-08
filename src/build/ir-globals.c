@@ -73,7 +73,6 @@ void *ir_global(IR *ir, Global *g) {
         str_flat(code, " = external ");
         str_add(code, g->is_shared ? "" : "thread_local(initialexec) ");
         str_flat(code, "global ");
-        // str_flat(code, " = external global ");
         str_add(code, ltype);
         str_flat(code, ", align ");
         str_add(code, ir_type_align(ir, type, bytes));

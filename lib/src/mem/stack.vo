@@ -41,7 +41,7 @@ struct Stack {
             @ptrv(adr, ptr, --x) = 0 @as ptr;
             @ptrv(adr, ptr, --x) = 0 @as ptr;
         }
-        this.count += count
+        this.count += amount
         return adr
     }
     fn pop(amount: int) {
@@ -52,8 +52,9 @@ struct Stack {
         let data = this.data
         let x = this.count * 2
         while x > 0 {
+            let handler = @ptrv(data, fn(ptr)(), --x);
             let item = @ptrv(data, ptr, --x);
-            let handler = @ptrv(data, ptr, --x);
+            handler(item)
         }
     }
 
@@ -61,19 +62,23 @@ struct Stack {
     // Allocated items
     ///////////////////////
     fn add_gc_object(item: ptr, handler: fn(ptr)(bool)) {
+        print("0\n");
         let chain = this.chain_active;
         let index_ = chain.index;
+        print("1\n");
         if index_ == 200 {
             let new_list = ObjectChain.new_olist()
             @ptrv(chain.olist_last, ptr, 200) = new_list
             chain.olist_last = new_list
             chain.index = 0
         }
+        print("2\n");
         let index = chain.index
         let list = chain.olist_last
         @ptrv(list, ptr, index) = item
         @ptrv(list, fn(ptr)(bool), index + 1) = handler
         chain.index = index + 2
+        print("3\n");
         this.object_count++
     }
 
