@@ -6,6 +6,7 @@ shared gc_instance : ?GC
 shared gc : bool
 shared gc_age : u8
 shared gc_busy : uint
+shared gc_object_count : uint
 
 struct GC {
     stacks : ptr
@@ -30,10 +31,8 @@ struct GC {
         while 1 == 1 {
             let sc = g.stack_count;
             let stacks = g.stacks;
-            // Increase age + mark gc as running
-            gc_age++
+            // GC is running
             gc = true
-            os:sleep_ms(1); // Optional
             // Loop stacks
             let si = sc;
             while si-- > 0 {
@@ -46,7 +45,7 @@ struct GC {
             gc = false
             // Wait for other threads
             while gc_busy > 0 {
-                os:sleep_ms(10);
+                os:sleep_ms(1);
             }
             // Delete unmarked objects
             si = sc;
@@ -59,8 +58,18 @@ struct GC {
                     s.delete_unmarked();
                 // }
             }
-            // Wait
-            os:sleep_ms(150);
+            // Increase age
+            gc_age++
+            // Wait but make sure memory doesnt increase too much
+            let count = gc_object_count
+            let comp = 100 + count + count / 90
+            let x = 1000 // Max 1 second
+            while x-- > 0 {
+                os:sleep_ms(1);
+                if gc_object_count > comp {
+                    break
+                }
+            }
         }
     }
 }

@@ -54,71 +54,78 @@ struct Stack {
         while x > 0 {
             let handler = @ptrv(data, fn(ptr)(), --x);
             let item = @ptrv(data, ptr, --x);
-            handler(item)
+            if handler @as ptr != 0 @as ptr {
+                if item != 0 @as ptr {
+                    handler(item)
+                }
+            }
         }
     }
 
     ///////////////////////
     // Allocated items
     ///////////////////////
+    // Ran by the thread itself, uses active chain
     fn add_gc_object(item: ptr, handler: fn(ptr)(bool)) {
-        print("0\n");
         let chain = this.chain_active;
         let index_ = chain.index;
-        print("1\n");
         if index_ == 200 {
-            let new_list = ObjectChain.new_olist()
-            @ptrv(chain.olist_last, ptr, 200) = new_list
-            chain.olist_last = new_list
+            let next = @ptrv(chain.olist_last, ptr, 200)
+            if next == 0 @as ptr {
+                next = ObjectChain.new_olist()
+                @ptrv(chain.olist_last, ptr, 200) = next
+            }
+            chain.olist_last = next
             chain.index = 0
         }
-        print("2\n");
         let index = chain.index
         let list = chain.olist_last
         @ptrv(list, ptr, index) = item
         @ptrv(list, fn(ptr)(bool), index + 1) = handler
         chain.index = index + 2
-        print("3\n");
-        this.object_count++
+        atomic(gc_object_count + 1)
     }
 
+    // Ran by the GC, uses inactive chain
     fn delete_unmarked() {
-        let ca = this.get_inactive_chain()
-        let list_next = ca.olist_first
-        let last = ca.olist_last
-        let last_index = ca.index
+        let inactive = this.get_inactive_chain()
+        let list_next = inactive.olist_first
+        let last = inactive.olist_last
+
         let swap_isset = false
-        let swap_list = list_next
-        let swap_index = 0
-        let stop = false
+        let swap_list = last
+        let swap_index = inactive.index
+
         while 1 == 1 {
             let list = list_next
             let is_last = false
             let last_index_ = 200
             if list == last {
                 is_last = true;
-                last_index_ = ca.index
+                last_index_ = inactive.index
             }
             let last_index = last_index_
             //
             let index = 0;
             while index < last_index {
                 let item = @ptrv(list, ptr, index)
-                if item == 0 @as ptr {
-                    stop = true
-                    break
-                }
                 let handler = @ptrv(list, fn(ptr)(bool), index + 1)
                 let keep = handler(item)
                 if(keep) {
                     if swap_isset {
+                        if swap_index == 200 {
+                            swap_list = @ptrv(swap_list, ptr, 200)
+                            swap_index = 0
+                        }
                         @ptrv(swap_list, ptr, swap_index) = item
                         @ptrv(swap_list, fn(ptr)(bool), swap_index + 1) = handler
+                        swap_index += 2
                     }
                 }else{
-                    @ptrv(list, ptr, index) = 0 @as ptr
-                    this.object_count--
+                    // @ptrv(list, ptr, index) = 0 @as ptr
+                    atomic(gc_object_count - 1)
                     if swap_isset == false {
+                        swap_isset = true
                         swap_list = list
                         swap_index = index
                     }
@@ -129,12 +136,11 @@ struct Stack {
             if is_last {
                 break
             }
-            if stop {
-                break
-            }
             list_next = @ptrv(list, ptr, 200)
-            index = 0
         }
+
+        inactive.olist_last = swap_list
+        inactive.index = swap_index
     }
 
     fn get_inactive_chain() ObjectChain {
@@ -171,7 +177,9 @@ struct ObjectChain {
     }
 
     static fn new_olist() ptr {
-        return mem:alloc(101 * sizeof(ptr) * 2)
+        let list = mem:alloc(101 * sizeof(ptr) * 2)
+        @ptrv(list, ptr, 200) = 0 @as ptr
+        return list
     }
 }
 
