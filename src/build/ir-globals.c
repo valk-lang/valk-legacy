@@ -35,7 +35,7 @@ void ir_gen_globals(IR* ir) {
         str_add(code, name);
         str_flat(code, " = dso_local ");
         str_add(code, g->is_shared ? "" : "thread_local(initialexec) ");
-        str_flat(code, " global ");
+        str_flat(code, "global ");
         str_add(code, ltype);
         str_flat(code, " ");
         if (type->is_pointer) {
@@ -70,11 +70,16 @@ void *ir_global(IR *ir, Global *g) {
         Str *code = ir->code_global;
         str_flat(code, "@");
         str_add(code, name);
-        str_flat(code, " = external global ");
+        str_flat(code, " = external ");
+        str_add(code, g->is_shared ? "" : "thread_local(initialexec) ");
+        str_flat(code, "global ");
+        // str_flat(code, " = external global ");
         str_add(code, ltype);
         str_flat(code, ", align ");
         str_add(code, ir_type_align(ir, type, bytes));
         str_flat(code, "\n");
+
+        array_push(ir->declared_globals, g);
     }
 
     char* ir_name = al(ir->alc, strlen(name) + 2);

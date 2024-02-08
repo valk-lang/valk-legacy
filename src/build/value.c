@@ -43,6 +43,27 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_int(alc, str_is(tkn, "true"), type_gen_volt(alc, b, "bool"));
+        } else if (str_is(tkn, "atomic")) {
+            tok_expect(fc, "(", false, false);
+            Value* val = read_value(alc, fc, scope, true, 0);
+            tok_expect(fc, ")", true, true);
+            if(val->type != v_op) {
+                sprintf(b->char_buf, "Value is not a math operation. e.g. (my_var + 2)");
+                parse_err(chunk, b->char_buf);
+            }
+            VOp* vop = val->item;
+            Value* left = vop->left;
+            Value* right = vop->right;
+            int op = vop->op;
+            if(op != op_add && op != op_sub && op != op_mul && op != op_div){
+                sprintf(b->char_buf, "Atomic only allows: + - * /");
+                parse_err(chunk, b->char_buf);
+            }
+            if(!value_is_assignable(left)) {
+                sprintf(b->char_buf, "Left value must be an assignable value. e.g. a variable");
+                parse_err(chunk, b->char_buf);
+            }
+            v = value_make(alc, v_atomic, vop, val->rett);
         } else {
             // Identifiers
             Id id;
@@ -347,7 +368,11 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         return vgen_func_ptr(alc, func, NULL);
     }
     // Class init
-    tok_expect(fc, "{", true, true);
+    char* tkn = tok(fc, true, true, true);
+    if(!str_is(tkn, "{")) {
+        tok_back(fc);
+        return NULL;
+    }
     int propc = class->props->values->length;
     Map* values = map_make(alc);
     // Read values

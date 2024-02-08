@@ -111,6 +111,47 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir_store(ir, v->rett, var, op);
         return item->before ? op : left;
     }
+    if (v->type == v_atomic) {
+        VOp *vop = v->item;
+
+        int op = vop->op;
+        char *lval1 = ir_assign_value(ir, scope, vop->left);
+        char *lval2 = ir_value(ir, scope, vop->right);
+        char *ltype = ir_type(ir, v->rett);
+        char *var = ir_var(ir->func);
+
+        Str *code = ir->block->code;
+        str_flat(code, "  ");
+        str_add(code, var);
+        str_flat(code, " = atomicrmw ");
+        if (op == op_add) {
+            str_flat(code, "add ");
+        } else if (op == op_sub) {
+            str_flat(code, "sub ");
+        } else if (op == op_bit_and) {
+            str_flat(code, "and ");
+        } else if (op == op_bit_or) {
+            str_flat(code, "or ");
+        } else if (op == op_bit_xor) {
+            str_flat(code, "xor ");
+        } else {
+            die("Unknown LLVM atomic operation (compiler bug)");
+        }
+
+        char bytes[10];
+        str_add(code, ltype);
+        str_flat(code, "* ");
+        str_add(code, lval1);
+        str_flat(code, ", ");
+        str_add(code, ltype);
+        str_flat(code, " ");
+        str_add(code, lval2);
+        str_flat(code, " seq_cst, align ");
+        str_add(code, ir_type_align(ir, v->rett, bytes));
+        str_flat(code, "\n");
+
+        return var;
+    }
 
     return "???";
 }

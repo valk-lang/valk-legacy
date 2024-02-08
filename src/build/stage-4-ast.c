@@ -117,7 +117,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     type_check(fc->chunk_parse, scope->rett, val->rett);
                 } else {
                     char* tkn = tok(fc, true, false, true);
-                    if(tkn[0] != 0) {
+                    if(tkn[0] != 0 && !str_is(tkn, "}")) {
                         sprintf(fc->b->char_buf, "Return statement should not return a value if the function has a 'void' return type");
                         parse_err(fc->chunk_parse, fc->b->char_buf);
                     }

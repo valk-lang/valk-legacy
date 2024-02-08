@@ -60,7 +60,7 @@ struct Stack {
     ///////////////////////
     // Allocated items
     ///////////////////////
-    fn add_gc_object(item: ptr, handler: ptr) {
+    fn add_gc_object(item: ptr, handler: fn(ptr)(bool)) {
         let chain = this.chain_active;
         let index_ = chain.index;
         if index_ == 200 {
@@ -72,7 +72,7 @@ struct Stack {
         let index = chain.index
         let list = chain.olist_last
         @ptrv(list, ptr, index) = item
-        @ptrv(list, ptr, index + 1) = handler
+        @ptrv(list, fn(ptr)(bool), index + 1) = handler
         chain.index = index + 2
         this.object_count++
     }
