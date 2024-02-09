@@ -16,9 +16,9 @@ struct Stack {
         let active = ObjectChain.new(1)
 
         let chainc = 10
-        let chains = mem:alloc(sizeof(ptr) * 10)
+        let chains = mem:alloc(sizeof(ptr) * chainc @as uint)
         let i = 0
-        while i < 10 {
+        while i < chainc {
             let chain = ObjectChain.new(i * 2 + 1)
             @ptrv(chains, ObjectChain, i++) = chain
         }
@@ -117,11 +117,12 @@ struct Stack {
     // Ran by the GC, loop chains & delete unmarked
     fn delete_unmarked() {
         let chains = this.chains
+        let chainc = this.chainc
         let i = 0
-        while i < 10 {
+        while i < chainc {
             let chain = @ptrv(chains, ObjectChain, i++) 
             let next = chain
-            if i < 10 {
+            if i < chainc {
                 next = @ptrv(chains, ObjectChain, i) 
             }
             chain.trigger_count--
@@ -141,6 +142,12 @@ struct Stack {
         let swap_list = next.olist_last
         let swap_index = next.index
         let a = gc_age
+
+        if chain != next {
+            swap_isset = true
+            chain.olist_last = list_next
+            chain.index = 0
+        }
 
         while 1 == 1 {
             let list = list_next
@@ -162,9 +169,8 @@ struct Stack {
                         if swap_index == 100 {
                             let next = @ptrv(swap_list, ptr, 100)
                             if next == 0 @as ptr {
-                                let new = ObjectChain.new_olist()
-                                @ptrv(next, ptr, 100) = new
-                                next = new
+                                next = ObjectChain.new_olist()
+                                @ptrv(swap_list, ptr, 100) = next
                             }
                             swap_list = next
                             swap_index = 0
