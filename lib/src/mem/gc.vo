@@ -6,7 +6,7 @@ shared gc_instance : ?GC
 shared gc : bool
 shared gc_age : u8
 shared gc_busy : uint
-shared gc_object_count : uint
+shared gc_object_count : int
 
 struct GC {
     stacks : ptr
@@ -69,13 +69,16 @@ struct GC {
                 comp = 100 + count + count / 90
             }
             // Wait but make sure memory doesnt increase too much
-            let x = 500 // Max 500 ms
+            let x = 200 // Timeout after
             while x-- > 0 {
                 os:sleep_ms(1);
                 if gc_object_count > comp {
                     gc_age++
                     break
                 }
+            }
+            if x == 0 {
+                gc_age++
             }
         }
     }

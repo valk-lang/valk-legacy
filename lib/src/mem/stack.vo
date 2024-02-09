@@ -15,11 +15,13 @@ struct Stack {
     static fn new() Stack {
         let active = ObjectChain.new(1)
 
-        let chainc = 10
+        let chainc = 7
         let chains = mem:alloc(sizeof(ptr) * chainc @as uint)
         let i = 0
+        let add = 1
         while i < chainc {
-            let chain = ObjectChain.new(i * 2 + 1)
+            let chain = ObjectChain.new(add)
+            add = add * 2
             @ptrv(chains, ObjectChain, i++) = chain
         }
 
@@ -47,13 +49,15 @@ struct Stack {
         let x = amount
         while x > 0 {
             @ptrv(adr, ptr, --x) = 0 @as ptr;
-            // @ptrv(adr, ptr, --x) = 0 @as ptr;
         }
         this.count += amount
         return adr
     }
     fn pop(amount: int) {
         this.count -= amount;
+        if this.count == 0 {
+            print("end");
+        }
     }
 
     fn mark() {
@@ -143,18 +147,22 @@ struct Stack {
         let swap_index = next.index
         let a = gc_age
 
+        let show = false
         if chain != next {
             swap_isset = true
             chain.olist_last = list_next
             chain.index = 0
+            print("-")
+        } else {
+            show = true
+            print("+")
         }
 
         while 1 == 1 {
             let list = list_next
-            let is_last = false
+            let is_last = list == last
             let max = 100
-            if list == last {
-                is_last = true;
+            if is_last {
                 max = last_index
             }
             let max_ = max
@@ -179,14 +187,15 @@ struct Stack {
                         swap_index++
                     }
                 }else{
+                    if show {
+                        print("*")
+                    }
                     mem:free(item);
                     atomic(gc_object_count - 1)
                     if swap_isset == false {
                         chain.olist_last = list
                         chain.index = index
                         swap_isset = true
-                        swap_list = next.olist_last
-                        swap_index = next.index
                     }
                 }
                 //
