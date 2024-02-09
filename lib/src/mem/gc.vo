@@ -28,6 +28,10 @@ struct GC {
 
     static fn loop() {
         let g = gc_instance;
+        let cycles = 0
+        let count = gc_object_count
+        let comp = 100 + count + count / 90
+        let last_age = gc_age
         while 1 == 1 {
             let sc = g.stack_count;
             let stacks = g.stacks;
@@ -59,14 +63,17 @@ struct GC {
                 // }
             }
             // Increase age
-            gc_age++
+            if last_age != gc_age {
+                last_age = gc_age
+                count = gc_object_count
+                comp = 100 + count + count / 90
+            }
             // Wait but make sure memory doesnt increase too much
-            let count = gc_object_count
-            let comp = 100 + count + count / 90
-            let x = 1000 // Max 1 second
+            let x = 500 // Max 500 ms
             while x-- > 0 {
                 os:sleep_ms(1);
                 if gc_object_count > comp {
+                    gc_age++
                     break
                 }
             }
