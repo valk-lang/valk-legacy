@@ -318,78 +318,6 @@ struct Stack {
         }
     }
 
-    // static fn delete_from_chain(chain: ObjectChain, next: ObjectChain) {
-    //     let list_iter = chain.olist_first
-    //     let list_last = chain.olist_last
-    //     let list_last_index = chain.index
-
-    //     let swap_list = next.olist_last
-    //     let swap_index = next.index
-    //     let a = gc_age
-
-    //     chain.olist_last = chain.olist_first
-    //     chain.index = 0
-    //     let itemc = chain.itemc @as uint;
-    //     let count = 0 @as uint
-    //     let listc = 0 @as uint
-    //     let listc_expect = chain.listc
-
-    //     while 1 == 1 {
-    //         let is_last = list_iter == list_last
-    //         let max = 100
-    //         listc++
-    //         if is_last {
-    //             max = list_last_index
-    //         }
-    //         //
-    //         let index = 0;
-    //         while index < max {
-    //             count++
-    //             let item = @ptrv(list_iter, ptr, index)
-    //             let age = @ptrv(item, u8, 0)
-    //             if age != 2 {
-    //                 if swap_index == 100 {
-    //                     let new = @ptrv(swap_list, ptr, 100)
-    //                     if new == (0 @as ptr) {
-    //                         new = ObjectChain.new_olist()
-    //                         @ptrv(swap_list, ptr, 100) = new
-    //                         next.listc++
-    //                     }
-    //                     swap_list = new
-    //                     swap_index = 0
-    //                 }
-    //                 @ptrv(swap_list, ptr, swap_index) = item
-    //                 swap_index++
-    //                 next.itemc++
-    //                 chain.itemc--
-    //                 if age != 0 {
-    //                     @ptrv(item, u8, 0) = 2 @as u8
-    //                 }
-    //             }else{
-    //                 mem:free(item);
-    //                 atomic(gc_object_count - 1)
-    //                 chain.itemc--
-    //             }
-    //             //
-    //             index++
-    //         }
-    //         if is_last {
-    //             break
-    //         }
-    //         list_iter = @ptrv(list_iter, ptr, 100)
-    //     }
-
-    //     next.olist_last = swap_list
-    //     next.index = swap_index
-    // }
-
-    // fn swap_chains() {
-    //     let chains = this.chains
-    //     let active = this.chain_active
-    //     let first = @ptrv(chains, ObjectChain, 0)
-    //     @ptrv(chains, ObjectChain, 0) = active
-    //     this.chain_active = first
-    // }
 }
 
 struct ObjectChain {
@@ -438,24 +366,3 @@ struct ObjectChain {
     }
 }
 
-// x.prop = something
-// if(gc == 1 && something.age != gc_age) {
-//   something.update_age_recursive();
-// }
-
-// ---------
-
-// fn update_age_recursive() {
-//    atomic(gc_busy + 1)
-//    this.mark_gc();
-//    atomic(gc_busy - 1)
-// }
-
-// fn mark_gc() {
-//    let age = atomic(this.age + 1);
-//    if age != gc_age { atomic(this.age - 1); return }
-   
-//    // go over each prop
-//    let prop = this.{prop-name}
-//    if prop.age != age { prop.mark_gc(); }
-// }
