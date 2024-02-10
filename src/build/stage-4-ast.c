@@ -148,6 +148,9 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 value_is_mutable(left);
 
                 Value *right = read_value(alc, fc, scope, true, 0);
+                if(type_is_void(right->rett)) {
+                    parse_err(chunk, "Trying to assign a void value");
+                }
 
                 int op = op_eq;
                 if(str_is(tkn, "=")){

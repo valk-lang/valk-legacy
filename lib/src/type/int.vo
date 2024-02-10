@@ -3,6 +3,14 @@ use volt:mem
 
 integer int {
 
+    fn to_str() string {
+        if this < 0 {
+            return "negative"
+        }
+        let x = this @as uint
+        return x.to_str()
+    }
+
     // fn str_base(base: u8) string {
 
 	// 	let negative = false;

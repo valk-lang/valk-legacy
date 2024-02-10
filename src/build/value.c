@@ -136,7 +136,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
                 // Check functions
                 Func* func = map_get(class->funcs, prop_name);
                 if (!func) {
-                    sprintf(b->char_buf, "Unknown class property/function: '%s'", tkn);
+                    sprintf(b->char_buf, "Unknown class property/function: '%s'", prop_name);
                     parse_err(chunk, b->char_buf);
                 }
                 v = vgen_func_ptr(alc, func, v);

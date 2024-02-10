@@ -3,10 +3,14 @@ use volt:mem
 use volt:os
 
 shared gc_instance : ?GC
-shared gc : bool
 shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
+
+// item :
+// state(u8)    0 new 1 unknown 2 solid
+// in_list(u8)  0 new 1 unknown 2 none 3 transfer
+// fields(u8)
 
 struct GC {
     stacks : ptr
@@ -22,8 +26,7 @@ struct GC {
     fn add_stack(s: Stack) {
         let index = this.stack_count
         @ptrv(this.stacks, Stack, index) = s
-        // todo atomic increment
-        this.stack_count = index + 1
+        atomic(this.stack_count + 1)
     }
 
     static fn loop() {
@@ -35,51 +38,15 @@ struct GC {
         while 1 == 1 {
             let sc = g.stack_count;
             let stacks = g.stacks;
-            // GC is running
-            gc = true
             // Loop stacks
             let si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
-                if s.delete_me == false {
-                    s.swap_chains()
-                    s.mark();
-                }
+                s.lowest = s.lowest_next 
+                s.lowest_next = 99999999 @as uint
+                s.allow_gc = true
             }
-            gc = false
-            // Wait for other threads
-            while gc_busy > 0 {
-                os:sleep_ms(1);
-            }
-            // Delete unmarked objects
-            si = sc;
-            while si-- > 0 {
-                let s = @ptrv(stacks, Stack, si);
-                // if s.delete_me && s.object_count == 0 {
-                //     // TODO
-                //     print("Delete stack (TODO)\n")
-                // } else {
-                    s.delete_unmarked();
-                // }
-            }
-            // Increase age
-            if last_age != gc_age {
-                last_age = gc_age
-                count = gc_object_count
-                comp = 100 + count + count / 90
-            }
-            // Wait but make sure memory doesnt increase too much
-            let x = 200 // Timeout after
-            while x-- > 0 {
-                os:sleep_ms(1);
-                if gc_object_count > comp {
-                    gc_age++
-                    break
-                }
-            }
-            if x == 0 {
-                gc_age++
-            }
+            os:sleep_ms(150)
         }
     }
 }

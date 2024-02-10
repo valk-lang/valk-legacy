@@ -3,7 +3,7 @@
 
 char* ir_value(IR* ir, Scope* scope, Value* v) {
 
-    str_preserve(ir->block->code, 256);
+    str_preserve(ir->block->code, 512);
 
     if (v->type == v_string) {
         return ir_string(ir, v->item);

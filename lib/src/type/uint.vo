@@ -1,3 +1,50 @@
 
+use volt:mem;
+
+global str_buf : ?ptr
+global str_rev : ?ptr
+
 integer uint unsigned {
+    fn to_str() string {
+        let chars = "0123456789"
+        let offset = 10 @as uint // start of string bytes
+
+        if str_buf == 0 @as ptr {
+            str_buf = mem:alloc(24)
+            str_rev = mem:alloc(24)
+        }
+        let buf = str_buf @as string
+        let rev = str_rev
+
+        if(this == 0) {
+            @ptrv(buf @as ptr, uint, 0) = 1 @as uint
+            @ptrv(buf @as ptr, u8, offset) = 48 @as u8
+            return buf;
+        }
+
+        let val = this
+        let i = 0 @as uint;
+        let x = offset
+        while val > 0 {
+            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % 10) + offset)
+            i++
+            val = val / 10
+        }
+        // Set len
+        @ptrv(buf, uint, 0) = i @as uint
+        // Reverse
+        let up = 0
+        while i-- > 0 {
+            @ptrv(buf, u8, offset + i) = @ptrv(rev, u8, up++)
+        }
+
+        return buf
+        // char rev[32];
+        // for (; val; i++, val /= base)
+        //     rev[i] = "0123456789ABCDEF"[val % base];
+        // buf[i] = 0;
+        // int up = 0;
+        // while(i-- > 0)
+        // buf[i] = rev[up++];
+    }
 }

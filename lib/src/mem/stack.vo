@@ -1,35 +1,30 @@
 
 use volt:mem
+use volt:os
 
 global stack : ?Stack;
 
 struct Stack {
     data : ptr
-    count : int (0)
+    count : uint (0)
     object_count : uint (0)
-    delete_me : bool (false)
-    chain_active : ObjectChain
-    chains : ptr
-    chainc : int
+    lowest: uint (0)
+    lowest_next : uint (0)
+    unknown : ObjectChain
+    transfer : ObjectChain
+    newbs : ObjectChain
+    allow_gc : bool (false)
 
     static fn new() Stack {
-        let active = ObjectChain.new(1)
-
-        let chainc = 7
-        let chains = mem:alloc(sizeof(ptr) * chainc @as uint)
-        let i = 0
-        let add = 1
-        while i < chainc {
-            let chain = ObjectChain.new(add)
-            add = add * 2
-            @ptrv(chains, ObjectChain, i++) = chain
-        }
+        let unknown = ObjectChain.new(1)
+        let transfer = ObjectChain.new(1)
+        let newbs = ObjectChain.new(1)
 
         let s = Stack {
             data: mem:alloc(100000)
-            chain_active: active
-            chains: chains
-            chainc: chainc
+            unknown: unknown
+            transfer: transfer
+            newbs: newbs
         }
         (gc_instance @as GC).add_stack(s);
         return s
@@ -43,181 +38,336 @@ struct Stack {
     ///////////////////////
     // Stack items
     ///////////////////////
-    fn reserve(amount: int) ptr {
+    fn reserve(amount: uint) ptr {
         let count = this.count
-        let adr = this.data + (count * sizeof(ptr));
-        let x = amount
-        while x > 0 {
-            @ptrv(adr, ptr, --x) = 0 @as ptr;
-        }
-        this.count += amount
+        let adr = this.data + (count * sizeof(ptr) * 2);
+        this.count = count + amount
         return adr
     }
-    fn pop(amount: int) {
-        this.count -= amount;
-        if this.count == 0 {
-            print("end");
+    fn pop(amount: uint) {
+        let data = this.data;
+        let count = this.count
+        let new_count = count - amount
+        if new_count < this.lowest_next {
+            this.lowest_next = new_count
         }
-    }
-
-    fn mark() {
-        let data = this.data
-        let x = this.count
-        let a = gc_age
-        while x > 0 {
-            let item = @ptrv(data, ptr, --x);
-            if item == 0 @as ptr {
-                continue
-            }
-            // Update age recursive
-            let age = @ptrv(item, u8, 0)
-            if age != a {
-                @ptrv(item, u8, 0) = a
-                Stack.update_age(item)
-            }
-        }
-    }
-
-    static fn update_age(item: ptr) {
-        let fields = @ptrv(item, u8, 1)
-        let a = gc_age
-        while fields > 0 {
-            let sub = @ptrv(item, ptr, fields--)
-            if sub == 0 @as ptr {
-                continue
-            }
-            // print("-")
-            let age = @ptrv(sub, u8, 0)
-            if age != a {
-                @ptrv(sub, u8, 0) = a
-                Stack.update_age(sub)
-            }
+        this.count = new_count;
+        if new_count == 0 {
+            print("stack_empty\n");
         }
     }
 
     ///////////////////////
-    // Allocated items
+    // Allocate items
     ///////////////////////
-    // Ran by the thread itself, uses active chain
-    fn add_gc_object(item: ptr, handler: fn(ptr)(bool)) {
-        let chain = this.chain_active;
-        let index_ = chain.index;
-        if index_ == 100 {
-            let next = @ptrv(chain.olist_last, ptr, 100)
-            if next == 0 @as ptr {
-                next = ObjectChain.new_olist()
-                @ptrv(chain.olist_last, ptr, 100) = next
-            }
-            chain.olist_last = next
-            chain.index = 0
-        }
-        let index = chain.index
-        let list = chain.olist_last
-        @ptrv(list, ptr, index) = item
-        chain.index = index + 1
+    fn add_gc_object(item: ptr) {
+        this.newbs.add_item(item)
         atomic(gc_object_count + 1)
     }
 
-    // Ran by the GC, loop chains & delete unmarked
-    fn delete_unmarked() {
-        let chains = this.chains
-        let chainc = this.chainc
-        let i = 0
-        while i < chainc {
-            let chain = @ptrv(chains, ObjectChain, i++) 
-            let next = chain
-            if i < chainc {
-                next = @ptrv(chains, ObjectChain, i) 
-            }
-            chain.trigger_count--
-            if chain.trigger_count == 0 {
-                chain.trigger_count = chain.trigger_reset
-                Stack.delete_from_chain(chain, next)
+    ///////////////////////
+    // Runtime functions
+    ///////////////////////
+    static fn gc_check() {
+        let s = stack
+        if s.allow_gc == false {
+            return
+        }
+        if s.count < s.lowest {
+            s.gc()
+            s.allow_gc = false
+        }
+    }
+    // static fn link(on: ptr, to: ptr) ptr {
+    //     let on_state = @ptrv(on, u8, 0)
+    //     if on_state == 0 {
+    //         // New state, do nothing
+    //         return
+    //     }
+    //     @ptrv(to, u8, 1) = on_state
+    //     return to
+    // }
+
+    ///////////////////////
+    // Gc
+    ///////////////////////
+    fn gc() {
+        let do_full_clear = false
+        this.mark_difference_down()
+        // Fast clear
+        if do_full_clear == false {
+            this.handle_transfer_list()
+            this.clean_new_list()
+            return
+        }
+        // Full clear
+    }
+
+    fn mark_difference_down() {
+        let data = this.data
+        let x = this.count
+        while x > 0 {
+            x--
+            let index = x * 2
+            let item = @ptrv(data, ptr, index);
+            let item_prev = @ptrv(data, ptr, index + 1);
+            if item != item_prev {
+                // Stack position changed
+                // Mark prev as unknown
+                if item_prev != 0 @as ptr {
+                    this.mark_unknown(item_prev)
+                }
+                // Mark new as solid recursive
+                @ptrv(item, u8, 0) = 2 @as u8
+                if @ptrv(item, u8, 1) == 0 {
+                    let transfer = this.transfer
+                    transfer.add_item(item)
+                    @ptrv(item, u8, 1) = 3 @as u8
+                }
+                // Overwrite prev
+                @ptrv(data, ptr, index + 1) = item
             }
         }
     }
 
-    static fn delete_from_chain(chain: ObjectChain, next: ObjectChain) {
-        let list_next = chain.olist_first
-        let last = chain.olist_last
-        let last_index = chain.index
-
-        let swap_isset = false
-        let swap_list = next.olist_last
-        let swap_index = next.index
-        let a = gc_age
-
-        let show = false
-        if chain != next {
-            swap_isset = true
-            chain.olist_last = list_next
-            chain.index = 0
-            print("-")
-        } else {
-            show = true
-            print("+")
+    fn mark_unknown(item: ptr) {
+        @ptrv(item, u8, 0) = 1 @as u8
+        let in_list = @ptrv(item, u8, 1)
+        if in_list == 2 {
+            let unknown = this.unknown
+            unknown.add_item(item)
+            @ptrv(item, u8, 1) = 1 @as u8
         }
+    }
 
-        while 1 == 1 {
-            let list = list_next
-            let is_last = list == last
-            let max = 100
+    fn handle_transfer_list() {
+        let chain = this.transfer
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let first_list = chain.olist_first
+        let next_list = first_list
+
+        // Mark solid
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
             if is_last {
-                max = last_index
+                until_ = last_index
             }
-            let max_ = max
-            //
-            let index = 0;
-            while index < max_ {
+            let until = until_
+            while index < until {
                 let item = @ptrv(list, ptr, index)
-                let age = @ptrv(item, u8, 0)
-                let keep = age == a
-                if(keep) {
-                    if swap_isset {
-                        if swap_index == 100 {
-                            let next = @ptrv(swap_list, ptr, 100)
-                            if next == 0 @as ptr {
-                                next = ObjectChain.new_olist()
-                                @ptrv(swap_list, ptr, 100) = next
-                            }
-                            swap_list = next
-                            swap_index = 0
-                        }
-                        @ptrv(swap_list, ptr, swap_index) = item
-                        swap_index++
-                    }
-                }else{
-                    if show {
-                        print("*")
-                    }
-                    mem:free(item);
-                    atomic(gc_object_count - 1)
-                    if swap_isset == false {
-                        chain.olist_last = list
-                        chain.index = index
-                        swap_isset = true
-                    }
-                }
-                //
                 index++
+                // Item logic
+                if @ptrv(item, u8, 1) != 3 {
+                    // Not in transfer list anymore
+                    continue
+                }
+                let state = @ptrv(item, u8, 0)
+                if state == 2 {
+                    Stack.transfer_to_solid_rec(item)
+                    continue
+                }
             }
             if is_last {
                 break
             }
-            list_next = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, 100)
+            if next_list == 0 @as void {
+                break
+            }
         }
 
-        next.olist_last = swap_list
-        next.index = swap_index
+        // Mark unknown
+        next_list = first_list
+        let unknown = this.unknown
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
+            }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                // Item logic
+                if @ptrv(item, u8, 1) != 3 {
+                    // Not in transfer list anymore
+                    continue
+                }
+                let state = @ptrv(item, u8, 0)
+                if state == 1 {
+                    Stack.transfer_to_unknown_rec(item, unknown)
+                    continue
+                }
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
+            if next_list == 0 @as void {
+                break
+            }
+        }
+
+        chain.olist_last = first_list
+        chain.index = 0
     }
 
-    fn swap_chains() {
-        let chains = this.chains
-        let active = this.chain_active
-        let first = @ptrv(chains, ObjectChain, 0)
-        @ptrv(chains, ObjectChain, 0) = active
-        this.chain_active = first
+    fn clean_new_list() {
+        let chain = this.newbs
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let next_list = chain.olist_first
+
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
+            }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                // Item logic
+                let state = @ptrv(item, u8, 0)
+                if state == 0 {
+                    mem:free(item)
+                    continue
+                }
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
+        }
+
+        chain.olist_last = chain.olist_first
+        chain.index = 0
     }
+
+    fn clean_unknown_list() {
+    }
+
+    static fn transfer_to_solid_rec(item: ptr) {
+        // 
+        @ptrv(item, u8, 1) = 2 @as u8 // set list = none
+        let fields = @ptrv(item, u8, 2)
+        while fields > 0 {
+            let field = fields
+            fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != 0 @as ptr {
+                @ptrv(sub, u8, 0) = 2 @as u8 // set sub state = solid
+                let in_list = @ptrv(sub, u8, 1)
+                if in_list == 0 {
+                    Stack.transfer_to_solid_rec(sub)
+                }
+                if in_list == 3 {
+                    Stack.transfer_to_solid_rec(sub)
+                }
+            }
+        }
+    }
+    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) {
+        // 
+        @ptrv(item, u8, 1) = 1 @as u8 // set list = unknown
+        unknown.add_item(item)
+        let fields = @ptrv(item, u8, 2)
+        while fields > 0 {
+            let field = fields
+            fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != 0 @as ptr {
+                let in_list = @ptrv(sub, u8, 1)
+                if in_list == 0 {
+                    @ptrv(sub, u8, 0) = 1 @as u8 // set sub state = unknown
+                    Stack.transfer_to_unknown_rec(sub, unknown)
+                }
+            }
+        }
+    }
+
+    // static fn delete_from_chain(chain: ObjectChain, next: ObjectChain) {
+    //     let list_iter = chain.olist_first
+    //     let list_last = chain.olist_last
+    //     let list_last_index = chain.index
+
+    //     let swap_list = next.olist_last
+    //     let swap_index = next.index
+    //     let a = gc_age
+
+    //     chain.olist_last = chain.olist_first
+    //     chain.index = 0
+    //     let itemc = chain.itemc @as uint;
+    //     let count = 0 @as uint
+    //     let listc = 0 @as uint
+    //     let listc_expect = chain.listc
+
+    //     while 1 == 1 {
+    //         let is_last = list_iter == list_last
+    //         let max = 100
+    //         listc++
+    //         if is_last {
+    //             max = list_last_index
+    //         }
+    //         //
+    //         let index = 0;
+    //         while index < max {
+    //             count++
+    //             let item = @ptrv(list_iter, ptr, index)
+    //             let age = @ptrv(item, u8, 0)
+    //             if age != 2 {
+    //                 if swap_index == 100 {
+    //                     let new = @ptrv(swap_list, ptr, 100)
+    //                     if new == (0 @as ptr) {
+    //                         new = ObjectChain.new_olist()
+    //                         @ptrv(swap_list, ptr, 100) = new
+    //                         next.listc++
+    //                     }
+    //                     swap_list = new
+    //                     swap_index = 0
+    //                 }
+    //                 @ptrv(swap_list, ptr, swap_index) = item
+    //                 swap_index++
+    //                 next.itemc++
+    //                 chain.itemc--
+    //                 if age != 0 {
+    //                     @ptrv(item, u8, 0) = 2 @as u8
+    //                 }
+    //             }else{
+    //                 mem:free(item);
+    //                 atomic(gc_object_count - 1)
+    //                 chain.itemc--
+    //             }
+    //             //
+    //             index++
+    //         }
+    //         if is_last {
+    //             break
+    //         }
+    //         list_iter = @ptrv(list_iter, ptr, 100)
+    //     }
+
+    //     next.olist_last = swap_list
+    //     next.index = swap_index
+    // }
+
+    // fn swap_chains() {
+    //     let chains = this.chains
+    //     let active = this.chain_active
+    //     let first = @ptrv(chains, ObjectChain, 0)
+    //     @ptrv(chains, ObjectChain, 0) = active
+    //     this.chain_active = first
+    // }
 }
 
 struct ObjectChain {
@@ -226,6 +376,8 @@ struct ObjectChain {
     index : int (0)
     trigger_count : int (0)
     trigger_reset : int (0)
+    itemc: int (0)
+    listc: int (0)
 
     static fn new(trigger_count: int) ObjectChain {
         let list = ObjectChain.new_olist();
@@ -238,9 +390,29 @@ struct ObjectChain {
     }
 
     static fn new_olist() ptr {
-        let list = mem:alloc(101 * sizeof(ptr))
+        let list = mem:alloc(102 * sizeof(ptr))
         @ptrv(list, ptr, 100) = 0 @as ptr
         return list
+    }
+
+    fn add_item(item: ptr) {
+        let index_ = this.index;
+        if index_ == 100 {
+            let last_list = this.olist_last
+            let next = @ptrv(last_list, ptr, 100)
+            if next == (0 @as ptr) {
+                next = ObjectChain.new_olist()
+                @ptrv(last_list, ptr, 100) = next
+                this.listc++
+            }
+            this.olist_last = next
+            this.index = 0
+        }
+        let list = this.olist_last
+        let index = this.index
+        @ptrv(list, ptr, index) = item
+        this.index = index + 1
+        this.itemc++
     }
 }
 
