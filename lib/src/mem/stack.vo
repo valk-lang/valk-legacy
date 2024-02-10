@@ -8,6 +8,7 @@ struct Stack {
     data : ptr
     count : uint (0)
     object_count : uint (0)
+    object_count_last : uint (0)
     lowest: uint (0)
     lowest_next : uint (0)
     unknown : ObjectChain
@@ -63,6 +64,7 @@ struct Stack {
     fn add_gc_object(item: ptr) {
         this.newbs.add_item(item)
         atomic(gc_object_count + 1)
+        this.object_count++
     }
 
     ///////////////////////
@@ -71,12 +73,16 @@ struct Stack {
     static fn gc_check() {
         let s = stack
         if s.allow_gc == false {
-            return
+            if s.object_count < s.object_count_last * 2 {
+                if s.count > s.lowest {
+                    return
+                }
+            }
         }
-        if s.count < s.lowest {
-            s.gc()
-            s.allow_gc = false
-        }
+        // print("gc\n")
+        s.gc()
+        s.allow_gc = false
+        s.object_count_last = s.object_count
     }
     // static fn link(on: ptr, to: ptr) ptr {
     //     let on_state = @ptrv(on, u8, 0)
@@ -175,7 +181,7 @@ struct Stack {
                 break
             }
             next_list = @ptrv(list, ptr, 100)
-            if next_list == 0 @as void {
+            if next_list == 0 @as ptr {
                 break
             }
         }
@@ -210,7 +216,7 @@ struct Stack {
                 break
             }
             next_list = @ptrv(list, ptr, 100)
-            if next_list == 0 @as void {
+            if next_list == 0 @as ptr {
                 break
             }
         }
@@ -241,6 +247,8 @@ struct Stack {
                 let state = @ptrv(item, u8, 0)
                 if state == 0 {
                     mem:free(item)
+                    atomic(gc_object_count - 1)
+                    this.object_count--
                     continue
                 }
             }
