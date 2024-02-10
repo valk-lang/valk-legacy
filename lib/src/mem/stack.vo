@@ -14,18 +14,24 @@ struct Stack {
     unknown : ObjectChain
     transfer : ObjectChain
     newbs : ObjectChain
+    move_checks : ObjectChain
     allow_gc : bool (false)
+    bump: Bump
 
     static fn new() Stack {
         let unknown = ObjectChain.new(1)
         let transfer = ObjectChain.new(1)
         let newbs = ObjectChain.new(1)
+        let move_checks = ObjectChain.new(1)
+        let bump = Bump.new()
 
         let s = Stack {
             data: mem:alloc(100000)
             unknown: unknown
             transfer: transfer
             newbs: newbs
+            move_checks: move_checks
+            bump: bump
         }
         (gc_instance @as GC).add_stack(s);
         return s
@@ -53,9 +59,9 @@ struct Stack {
             this.lowest_next = new_count
         }
         this.count = new_count;
-        if new_count == 0 {
-            print("stack_empty\n");
-        }
+        // if new_count == 0 {
+            // print("stack_empty\n");
+        // }
     }
 
     ///////////////////////
@@ -84,15 +90,11 @@ struct Stack {
         s.allow_gc = false
         s.object_count_last = s.object_count
     }
-    // static fn link(on: ptr, to: ptr) ptr {
-    //     let on_state = @ptrv(on, u8, 0)
-    //     if on_state == 0 {
-    //         // New state, do nothing
-    //         return
-    //     }
-    //     @ptrv(to, u8, 1) = on_state
-    //     return to
-    // }
+    static fn link(on: ptr, to: ptr) ptr {
+        return to
+    }
+    static fn unlink(from: ptr, item: ptr) {
+    }
 
     ///////////////////////
     // Gc
@@ -246,7 +248,8 @@ struct Stack {
                 // Item logic
                 let state = @ptrv(item, u8, 0)
                 if state == 0 {
-                    mem:free(item)
+                    // print("-")
+                    // mem:free(item)
                     atomic(gc_object_count - 1)
                     this.object_count--
                     continue
@@ -260,6 +263,7 @@ struct Stack {
 
         chain.olist_last = chain.olist_first
         chain.index = 0
+        this.bump.wipe()
     }
 
     fn clean_unknown_list() {

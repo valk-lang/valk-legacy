@@ -7,6 +7,7 @@ void stage_1_header(Fc* fc);
 void stage_1_class(Fc* fc, int type, int act);
 void stage_1_use(Fc* fc);
 void stage_1_global(Fc* fc, bool shared);
+void stage_1_value_alias(Fc* fc);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -80,6 +81,10 @@ void stage_parse(Fc *fc) {
             stage_1_global(fc, false);
             continue;
         }
+        if(str_is(tkn, "value")) {
+            stage_1_value_alias(fc);
+            continue;
+        }
 
         sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
         parse_err(chunk, b->char_buf);
@@ -149,7 +154,7 @@ void stage_1_class(Fc *fc, int type, int act) {
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
     if(str_is(name, "Node")) {
-        class->size = 32;
+        class->size = 24;
     }
 
     Scope* nsc_scope = fc->nsc->scope;
@@ -250,4 +255,21 @@ void stage_1_global(Fc* fc, bool shared){
         g->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
         skip_body(fc);
     }
+}
+
+void stage_1_value_alias(Fc* fc) {
+    Build *b = fc->b;
+    char* name = tok(fc, true, false, true);
+
+    tok_expect(fc, "(", true, false);
+
+    Chunk *chunk = chunk_clone(fc->alc, fc->chunk_parse);
+    ValueAlias *va = al(fc->alc, sizeof(ValueAlias));
+    va->chunk = chunk;
+    va->fc = fc;
+
+    skip_body(fc);
+
+    Idf* idf = idf_make(b->alc, idf_value_alias, va);
+    scope_set_idf(fc->nsc->scope, name, idf, fc);
 }

@@ -36,6 +36,7 @@ enum IDF {
     idf_scope,
     idf_class,
     idf_global,
+    idf_value_alias,
 };
 
 enum TYPES {

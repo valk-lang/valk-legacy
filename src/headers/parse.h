@@ -61,5 +61,9 @@ struct Global {
     bool is_shared;
     bool is_mut;
 };
+struct ValueAlias {
+    Chunk* chunk;
+    Fc* fc;
+};
 
 #endif

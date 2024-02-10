@@ -23,6 +23,7 @@ void stage_5_nsc(Build* b, Nsc* nsc, Array* ir_files, bool* changed);
 void stage_build_o_file(Build* b, Nsc* nsc, Array* ir_files);
 void stage_set_target(Build* b, CompileData* data);
 void llvm_build_o_file(void* data);
+void stage_5_optimize(LLVMModuleRef mod);
 
 void stage_5_objects(Build* b) {
 
@@ -143,7 +144,7 @@ void llvm_build_o_file(void* data_) {
     LLVMSetDataLayout(nsc_mod, data->data_layout);
 
     // if (b->optimize) {
-        // stage_5_optimize(nsc_mod);
+    stage_5_optimize(nsc_mod);
     // }
 
     if (LLVMTargetMachineEmitToFile(data->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
@@ -224,4 +225,42 @@ void stage_set_target(Build* b, CompileData* data) {
     // printf("triple: %s\n", LLVMGetDefaultTargetTriple());
     // printf("features: %s\n", LLVMGetHostCPUFeatures());
     // printf("datalayout: %s\n", datalayout_str);
+}
+
+void stage_5_optimize(LLVMModuleRef mod) {
+
+    LLVMPassManagerBuilderRef passBuilder = LLVMPassManagerBuilderCreate();
+
+    // Note: O3 can produce slower code than O2 sometimes
+    LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
+    LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
+    LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 50);
+
+    LLVMPassManagerRef func_passes = LLVMCreateFunctionPassManagerForModule(mod);
+    LLVMPassManagerRef mod_passes = LLVMCreatePassManager();
+
+    LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder, func_passes);
+    LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, mod_passes);
+
+    // Other optimizations
+
+    LLVMAddLoopDeletionPass(func_passes);
+    LLVMAddLoopIdiomPass(func_passes);
+    LLVMAddLoopRotatePass(func_passes);
+    LLVMAddLoopRerollPass(func_passes);
+    LLVMAddLoopUnrollPass(func_passes);
+    LLVMAddLoopUnrollAndJamPass(func_passes);
+
+    LLVMPassManagerBuilderDispose(passBuilder);
+    LLVMInitializeFunctionPassManager(func_passes);
+
+    for (LLVMValueRef func = LLVMGetFirstFunction(mod); func; func = LLVMGetNextFunction(func)) {
+        LLVMRunFunctionPassManager(func_passes, func);
+    }
+
+    LLVMFinalizeFunctionPassManager(func_passes);
+    LLVMRunPassManager(mod_passes, mod);
+
+    LLVMDisposePassManager(func_passes);
+    LLVMDisposePassManager(mod_passes);
 }

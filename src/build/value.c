@@ -297,6 +297,14 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         Class* class = idf->item;
         return value_handle_class(alc, fc, scope, class);
     }
+    if (type == idf_value_alias) {
+        ValueAlias* va = idf->item;
+        Chunk ch;
+        ch = *fc->chunk_parse;
+        Value* val = read_value(alc, fc, va->fc->scope, true, 0);
+        *fc->chunk_parse = ch;
+        return val;
+    }
 
     sprintf(b->char_buf, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
     parse_err(chunk, b->char_buf);

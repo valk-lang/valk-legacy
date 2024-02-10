@@ -1,0 +1,51 @@
+
+struct Bump {
+    space_left: uint (0)
+    start: ptr (0 @as ptr)
+    current: ptr (0 @as ptr)
+    adr: ptr (0 @as ptr)
+
+    static fn new() Bump {
+        let b = Bump {}
+        b.create_block()
+        b.start = b.current
+        return b
+    }
+    fn create_block() {
+        this.space_left = (100000 - 8) @as uint
+        let current = this.current
+        if current != 0 @as ptr {
+            let next = @ptrv(current, ptr, 0)
+            if next != 0 @as ptr {
+                this.current = next
+                this.adr = next + 8
+                return
+            }
+        }
+        let adr = alloc(100000)
+        if current != 0 @as ptr {
+            @ptrv(current, ptr, 0) = adr
+        }
+        @ptrv(adr, ptr, 0) = 0 @as ptr
+        this.current = adr
+        this.adr = adr + 8
+    }
+    fn alloc(size: uint) ptr {
+        let fsize = size + (size % 8)
+        let left = this.space_left;
+        if left < fsize {
+            this.create_block()
+        }
+        let adr = this.adr;
+        this.space_left -= fsize
+        this.adr = adr + fsize
+        return adr + fsize
+    }
+
+    fn wipe() {
+        this.space_left = (100000 - 8) @as uint
+        let start = this.start
+        this.current = start
+        this.adr = start + 8
+    }
+}

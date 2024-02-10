@@ -35,18 +35,26 @@ struct GC {
         let count = gc_object_count
         let comp = 100 + count + count / 90
         let last_age = gc_age
-        while 1 == 1 {
+        let x = 0;
+        while true {
+            x++
             let sc = g.stack_count;
             let stacks = g.stacks;
             // Loop stacks
             let si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
-                s.lowest = s.lowest_next 
-                s.lowest_next = 99999999 @as uint
+                if x < 10 {
+                    s.lowest = s.lowest_next 
+                    s.lowest_next = 99999999 @as uint
+                }
+                if x % 10 == 0 {
+                    s.lowest = s.lowest_next 
+                    s.lowest_next = 99999999 @as uint
+                }
                 s.allow_gc = true
             }
-            os:sleep_ms(150)
+            os:sleep_ms(100)
         }
     }
 }

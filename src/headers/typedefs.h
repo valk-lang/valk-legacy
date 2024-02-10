@@ -35,6 +35,7 @@ typedef struct Decl Decl;
 typedef struct Global Global;
 typedef struct Class Class;
 typedef struct ClassProp ClassProp;
+typedef struct ValueAlias ValueAlias;
 // Tokens
 typedef struct Token Token;
 typedef struct TDeclare TDeclare;
