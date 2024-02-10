@@ -301,6 +301,7 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         ValueAlias* va = idf->item;
         Chunk ch;
         ch = *fc->chunk_parse;
+        *fc->chunk_parse = *va->chunk;
         Value* val = read_value(alc, fc, va->fc->scope, true, 0);
         *fc->chunk_parse = ch;
         return val;

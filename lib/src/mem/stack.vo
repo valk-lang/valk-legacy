@@ -4,6 +4,16 @@ use volt:os
 
 global stack : ?Stack;
 
+value state_new (0)
+value state_unknown (1)
+value state_solid (2)
+value inl_new (0)
+value inl_unknown (1)
+value inl_none (2)
+value inl_transfer (3)
+// state(u8)    0 new 1 unknown 2 solid
+// in_list(u8)  0 new 1 unknown 2 none 3 transfer
+
 struct Stack {
     data : ptr
     count : uint (0)
@@ -126,11 +136,11 @@ struct Stack {
                     this.mark_unknown(item_prev)
                 }
                 // Mark new as solid recursive
-                @ptrv(item, u8, 0) = 2 @as u8
-                if @ptrv(item, u8, 1) == 0 {
+                @ptrv(item, u8, 0) = state_solid @as u8
+                if @ptrv(item, u8, 1) == inl_new {
                     let transfer = this.transfer
                     transfer.add_item(item)
-                    @ptrv(item, u8, 1) = 3 @as u8
+                    @ptrv(item, u8, 1) = inl_transfer @as u8
                 }
                 // Overwrite prev
                 @ptrv(data, ptr, index + 1) = item
@@ -139,12 +149,12 @@ struct Stack {
     }
 
     fn mark_unknown(item: ptr) {
-        @ptrv(item, u8, 0) = 1 @as u8
+        @ptrv(item, u8, 0) = state_unknown @as u8
         let in_list = @ptrv(item, u8, 1)
-        if in_list == 2 {
+        if in_list == inl_none {
             let unknown = this.unknown
             unknown.add_item(item)
-            @ptrv(item, u8, 1) = 1 @as u8
+            @ptrv(item, u8, 1) = inl_unknown @as u8
         }
     }
 
@@ -169,12 +179,12 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 1) != 3 {
+                if @ptrv(item, u8, 1) != inl_none {
                     // Not in transfer list anymore
                     continue
                 }
                 let state = @ptrv(item, u8, 0)
-                if state == 2 {
+                if state == state_solid {
                     Stack.transfer_to_solid_rec(item)
                     continue
                 }
@@ -204,12 +214,12 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 1) != 3 {
+                if @ptrv(item, u8, 1) != inl_transfer {
                     // Not in transfer list anymore
                     continue
                 }
                 let state = @ptrv(item, u8, 0)
-                if state == 1 {
+                if state == state_unknown {
                     Stack.transfer_to_unknown_rec(item, unknown)
                     continue
                 }
@@ -271,19 +281,19 @@ struct Stack {
 
     static fn transfer_to_solid_rec(item: ptr) {
         // 
-        @ptrv(item, u8, 1) = 2 @as u8 // set list = none
+        @ptrv(item, u8, 1) = inl_none @as u8 // set list = none
         let fields = @ptrv(item, u8, 2)
         while fields > 0 {
             let field = fields
             fields--
             let sub = @ptrv(item, ptr, field)
             if sub != 0 @as ptr {
-                @ptrv(sub, u8, 0) = 2 @as u8 // set sub state = solid
+                @ptrv(sub, u8, 0) = state_solid @as u8 // set sub state = solid
                 let in_list = @ptrv(sub, u8, 1)
-                if in_list == 0 {
+                if in_list == inl_new {
                     Stack.transfer_to_solid_rec(sub)
                 }
-                if in_list == 3 {
+                if in_list == inl_transfer {
                     Stack.transfer_to_solid_rec(sub)
                 }
             }
@@ -291,7 +301,7 @@ struct Stack {
     }
     static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) {
         // 
-        @ptrv(item, u8, 1) = 1 @as u8 // set list = unknown
+        @ptrv(item, u8, 1) = inl_unknown @as u8 // set list = unknown
         unknown.add_item(item)
         let fields = @ptrv(item, u8, 2)
         while fields > 0 {
@@ -301,7 +311,7 @@ struct Stack {
             if sub != 0 @as ptr {
                 let in_list = @ptrv(sub, u8, 1)
                 if in_list == 0 {
-                    @ptrv(sub, u8, 0) = 1 @as u8 // set sub state = unknown
+                    @ptrv(sub, u8, 0) = state_unknown @as u8 // set sub state = unknown
                     Stack.transfer_to_unknown_rec(sub, unknown)
                 }
             }
