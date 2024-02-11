@@ -115,7 +115,7 @@ struct Stack {
         return to
     }
     static fn unlink(item: ptr) {
-        if item == 0 @as ptr {
+        if item == (0 @as ptr) {
             return
         }
         let item_state = @ptrv(item, u8, 0)

@@ -92,7 +92,10 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
             str_flat(code, ", ");
         str_add(code, ir_type(ir, arg->type));
         str_flat(code, " noundef");
-        if (arg->type->is_pointer && !arg->type->nullable)
+
+        Type *type = arg->type;
+        bool notnull = type->type == type_struct && type->is_pointer && type->nullable == false;
+        if (notnull)
             str_flat(code, " nonnull");
 
         if(!is_extern) {

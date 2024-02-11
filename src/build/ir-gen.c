@@ -39,13 +39,14 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
         char *val = ir_value(ir, scope, v);
         char *buf = ir->char_buf;
 
-        char *type = ir_type(ir, v->rett);
-        int len = strlen(type);
-        bool nullable = !v->rett->is_pointer || v->rett->nullable;
+        Type *type = v->rett;
+        char *ltype = ir_type(ir, type);
+        int len = strlen(ltype);
+        bool notnull = type->type == type_struct && type->is_pointer && type->nullable == false;
         //
-        strcpy(buf, type);
+        strcpy(buf, ltype);
         buf[len++] = ' ';
-        if(!nullable) {
+        if(notnull) {
             strcpy(buf + len, "nonnull ");
             strcpy(buf + len + 8, val);
         } else {

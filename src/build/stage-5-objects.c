@@ -144,7 +144,7 @@ void llvm_build_o_file(void* data_) {
     LLVMSetDataLayout(nsc_mod, data->data_layout);
 
     // if (b->optimize) {
-    // stage_5_optimize(nsc_mod);
+    stage_5_optimize(nsc_mod);
     // }
 
     if (LLVMTargetMachineEmitToFile(data->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
@@ -243,7 +243,6 @@ void stage_5_optimize(LLVMModuleRef mod) {
     LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, mod_passes);
 
     // Other optimizations
-
     LLVMAddLoopDeletionPass(func_passes);
     LLVMAddLoopIdiomPass(func_passes);
     LLVMAddLoopRotatePass(func_passes);
