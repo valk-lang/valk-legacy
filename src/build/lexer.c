@@ -281,13 +281,13 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             i++;
             continue;
         }
-        if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '<' || ch == '>' || ch == '%' || ch == '^' || ch == '|' || ch == '=') {
+        if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '<' || ch == '>' || ch == '%' || ch == '^' || ch == '|' || ch == '=' || ch == '&') {
             tokens[o++] = tok_op1;
             tokens[o++] = ch;
             tokens[o++] = '\0';
             continue;
         }
-        if (ch == '!' || ch == '&' || ch == ':' || ch == '?' || ch == '.' || ch == '~' || ch == '#' || ch == ';' || ch == ',') {
+        if (ch == '!' || ch == ':' || ch == '?' || ch == '.' || ch == '~' || ch == '#' || ch == ';' || ch == ',') {
             tokens[o++] = tok_char;
             tokens[o++] = ch;
             tokens[o++] = '\0';

@@ -5,10 +5,12 @@ use volt:os
 global stack : ?Stack;
 
 value state_new (0)
-value state_transfer (1)
-value state_solid (2)
-value state_unknown (3)
+value state_transfer (2)
+value state_solid (4)
+value state_unknown (8)
 value stack_size (1000000)
+
+value byte_moved (0)
 
 struct Stack {
     data : ptr
@@ -148,7 +150,7 @@ struct Stack {
         if allow_gc {
             s.gc()
             s.allow_gc = false
-            s.object_count_last = (s.object_count + 100) * 2
+            s.object_count_last = (s.object_count + 100) * 12 / 10
         }
     }
     fn gc() {
@@ -178,7 +180,7 @@ struct Stack {
                 // Stack position changed
                 if item_prev != null {
                     // Mark prev as unknown
-                    let is_moved = @ptrv(item_prev, u8, 7) == 1
+                    let is_moved = (@ptrv(item_prev, u8, byte_moved) & 1) == 1
                     if is_moved == false {
                         if @ptrv(item_prev, u8, 0) == state_solid {
                             unknown.add_item(item_prev)
@@ -222,7 +224,7 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 7) == 1 {
+                if (@ptrv(item, u8, byte_moved) & 1) == 1 {
                     continue
                 }
                 if @ptrv(item, u8, 0) != state_transfer {
@@ -258,7 +260,7 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 7) == 1 {
+                if (@ptrv(item, u8, byte_moved) & 1) == 1 {
                     continue
                 }
                 if @ptrv(item, u8, 0) != state_transfer {
@@ -346,7 +348,7 @@ struct Stack {
                     let field = fields--
                     let sub = @ptrv(item, ptr, field)
                     if sub != null {
-                        let is_moved = @ptrv(sub, u8, 7) == 1
+                        let is_moved = (@ptrv(sub, u8, byte_moved) & 1) == 1
                         if is_moved {
                             // Adjust field
                             @ptrv(item, ptr, field) = @ptrv(sub, ptr, 0) - 1
@@ -363,23 +365,38 @@ struct Stack {
 
         chain.olist_last = chain.olist_first
         chain.index = 0
+
+        // Check stack objects that have been moved
+        let data = this.data
+        let x = this.count
+        while x > 0 {
+            x--
+            let index = x * 2
+            let item = @ptrv(data, ptr, index);
+            if (@ptrv(item, u8, byte_moved) & 1) == 1 {
+                // Object was moved
+                let new_item = @ptrv(item, ptr, 0) - 1
+
+                @ptrv(data, ptr, index) = new_item
+                @ptrv(data, ptr, index + 1) = new_item
+            }
+        }
     }
 
     static fn transfer_to_solid_rec(item: ptr) ptr {
         // 
         let size = @ptrv(item, i32, 1) @as uint
         let new_item = alloc(size)
-        @ptrv(item, u8, 0) = state_solid @as u8
         copy(item, new_item, size)
-        @ptrv(item, ptr, 0) = new_item
-        @ptrv(item, u8, 7) = 1
+        @ptrv(item, ptr, 0) = new_item | 1
+        @ptrv(new_item, u8, 0) = state_solid @as u8
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
             let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
-                if @ptrv(sub, u8, 7) == 1 {
+                if (@ptrv(sub, u8, byte_moved) & 1) == 1 {
                     // Already moved
                     @ptrv(new_item, ptr, field) = @ptrv(sub, ptr, 0) - 1
                     continue
@@ -397,10 +414,9 @@ struct Stack {
         // 
         let size = @ptrv(item, i32, 1) @as uint
         let new_item = alloc(size)
-        @ptrv(item, u8, 0) = state_unknown @as u8
         copy(item, new_item, size)
-        @ptrv(item, ptr, 0) = new_item
-        @ptrv(item, u8, 7) = 1
+        @ptrv(item, ptr, 0) = new_item | 1
+        @ptrv(new_item, u8, 0) = state_unknown @as u8
         unknown.add_item(new_item)
 
         let fields = @ptrv(new_item, u8, 2)
@@ -408,7 +424,7 @@ struct Stack {
             let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
-                if @ptrv(sub, u8, 7) == 1 {
+                if (@ptrv(sub, u8, byte_moved) & 1) == 1 {
                     // Already moved
                     @ptrv(new_item, ptr, field) = @ptrv(sub, ptr, 0) - 1
                     continue

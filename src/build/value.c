@@ -263,6 +263,22 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         }
     }
 
+    if (prio == 0 || prio > 35) {
+        while (*tr == tok_op1) {
+            char ch1 = tkn[0];
+            int op;
+            if(ch1 == '&')
+                op = op_bit_and;
+            else if(ch1 == '|')
+                op = op_bit_or;
+            else
+                break;
+            Value *right = read_value(alc, fc, scope, true, 35);
+            v = value_handle_op(alc, fc, scope, v, right, op);
+            tkn = tok(fc, true, true, true);
+        }
+    }
+
     tok_back(fc);
     return v;
 }
