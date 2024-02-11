@@ -1,4 +1,5 @@
 
+fn exit(code: i32) void
 fn malloc(size: uint) ptr
 fn free(adr: ptr) i32
 fn write(fd: i32, data: ptr, length: uint) i32

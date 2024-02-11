@@ -8,3 +8,17 @@ fn alloc(size: uint) ptr {
 fn free(adr: ptr) {
 	sys:free(adr);
 }
+
+fn copy(from: ptr, to: ptr, length: uint) {
+	let i = 0 @as uint;
+	let chunks = length / sizeof(uint);
+	while i < chunks {
+		@ptrv(to, uint, i) = @ptrv(from, uint, i);
+		i++;
+	}
+	i = i * sizeof(uint);
+	while i < length {
+		@ptrv(to, u8, i) = @ptrv(from, u8, i);
+		i++;
+	}
+}

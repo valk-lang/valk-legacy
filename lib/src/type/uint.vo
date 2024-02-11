@@ -5,8 +5,16 @@ global str_buf : ?ptr
 global str_rev : ?ptr
 
 integer uint unsigned {
+    fn to_hex() string {
+        let base = 16 @as uint
+        return this.to_base(base)
+    }
     fn to_str() string {
-        let chars = "0123456789"
+        let base = 10 @as uint
+        return this.to_base(base)
+    }
+    fn to_base(base: uint) string {
+        let chars = "0123456789ABCDEF"
         let offset = 10 @as uint // start of string bytes
 
         if str_buf == null {
@@ -26,9 +34,9 @@ integer uint unsigned {
         let i = 0 @as uint;
         let x = offset
         while val > 0 {
-            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % 10) + offset)
+            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base) + offset)
             i++
-            val = val / 10
+            val = val / base
         }
         // Set len
         @ptrv(buf, uint, 0) = i @as uint

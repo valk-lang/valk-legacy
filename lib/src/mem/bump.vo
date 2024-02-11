@@ -1,9 +1,13 @@
 
+value block_size (100000)
+
 struct Bump {
     space_left: uint (0)
     start: ptr (null)
     current: ptr (null)
     adr: ptr (null)
+    min: ptr (null)
+    max: ptr (null)
 
     static fn new() Bump {
         let b = Bump {}
@@ -12,7 +16,7 @@ struct Bump {
         return b
     }
     fn create_block() {
-        this.space_left = 100000 - 8
+        this.space_left = block_size - 8
         let current = this.current
         if current != null {
             let next = @ptrv(current, ptr, 0)
@@ -22,7 +26,17 @@ struct Bump {
                 return
             }
         }
-        let adr = alloc(100000)
+        let adr = alloc(block_size)
+        if this.min == null {
+            this.min = adr
+        } else if adr < this.min {
+            this.min = adr
+        }
+        if adr + block_size > this.max {
+            this.max = adr + block_size
+        }
+        // print((adr @as uint).to_str())
+        // print("<\n")
         if current != null {
             @ptrv(current, ptr, 0) = adr
         }
@@ -43,9 +57,10 @@ struct Bump {
     }
 
     fn wipe() {
-        this.space_left = 100000 - 8
+        this.space_left = block_size - 8
         let start = this.start
         this.current = start
         this.adr = start + 8
+        // print(".")
     }
 }

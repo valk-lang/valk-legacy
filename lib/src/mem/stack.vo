@@ -8,6 +8,7 @@ value state_new (0)
 value state_transfer (1)
 value state_solid (2)
 value state_unknown (3)
+value stack_size (1000000)
 
 struct Stack {
     data : ptr
@@ -30,14 +31,23 @@ struct Stack {
         let move_checks = ObjectChain.new()
         let bump = Bump.new()
 
+        let data = mem:alloc(stack_size)
+        let stackc = stack_size / 8
+        while stackc > 0 {
+            stackc--
+            @ptrv(data, ptr, stackc) = null
+        }
+
         let s = Stack {
-            data: mem:alloc(100000)
+            data: data
             unknown: unknown
             transfer: transfer
             newbs: newbs
             move_checks: move_checks
             bump: bump
         }
+
+
         (gc_instance @as GC).add_stack(s);
         return s
     }
@@ -81,20 +91,6 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    static fn gc_check() {
-        let s = stack
-        if s.allow_gc == false {
-            if s.object_count < s.object_count_last * 2 {
-                if s.count > s.lowest {
-                    return
-                }
-            }
-        }
-        // print("gc\n")
-        s.gc()
-        s.allow_gc = false
-        s.object_count_last = s.object_count
-    }
     static fn link(on: ptr, to: ptr) ptr {
         if to == null {
             return to
@@ -110,6 +106,14 @@ struct Stack {
             } else if on_state == state_solid {
                 // Update transfer state (if solid)
                 @ptrv(to, u8, 1) = state_solid @as u8
+            }
+            if to_state < state_solid {
+                // Add to move check list
+                let in_list = @ptrv(on, u8, 4)
+                if in_list == 0 {
+                    stack.move_checks.add_item(on)
+                    @ptrv(on, u8, 4) = 1
+                }
             }
         }
         return to
@@ -131,6 +135,22 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
+    static fn gc_check() {
+        let s = stack
+        let allow_gc = s.count <= s.lowest
+        if s.allow_gc {
+            allow_gc = true
+        }
+        if s.object_count > s.object_count_last {
+            allow_gc = true
+        }
+        // print("gc\n")
+        if allow_gc {
+            s.gc()
+            s.allow_gc = false
+            s.object_count_last = (s.object_count + 100) * 2
+        }
+    }
     fn gc() {
         let do_full_clear = false
         this.mark_difference_down()
@@ -138,6 +158,7 @@ struct Stack {
         if do_full_clear == false {
             this.handle_transfer_list()
             this.clean_new_list()
+            this.check_moves()
             return
         }
         // Full clear
@@ -157,9 +178,12 @@ struct Stack {
                 // Stack position changed
                 if item_prev != null {
                     // Mark prev as unknown
-                    if @ptrv(item, u8, 0) == state_solid {
-                        unknown.add_item(item)
-                        @ptrv(item, u8, 0) = state_unknown @as u8
+                    let is_moved = @ptrv(item_prev, u8, 7) == 1
+                    if is_moved == false {
+                        if @ptrv(item_prev, u8, 0) == state_solid {
+                            unknown.add_item(item_prev)
+                            @ptrv(item_prev, u8, 0) = state_unknown @as u8
+                        }
                     }
                 }
                 if item != null {
@@ -198,6 +222,9 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
+                if @ptrv(item, u8, 7) == 1 {
+                    continue
+                }
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
@@ -231,6 +258,9 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
+                if @ptrv(item, u8, 7) == 1 {
+                    continue
+                }
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
@@ -273,8 +303,6 @@ struct Stack {
                 // Item logic
                 let state = @ptrv(item, u8, 0)
                 if state == state_new {
-                    // print("-")
-                    // mem:free(item)
                     // atomic(gc_object_count - 1)
                     this.object_count--
                     continue
@@ -294,38 +322,104 @@ struct Stack {
     fn clean_unknown_list() {
     }
 
-    static fn transfer_to_solid_rec(item: ptr) {
-        // 
-        @ptrv(item, u8, 0) = state_solid @as u8
-        let fields = @ptrv(item, u8, 2)
-        while fields > 0 {
-            let field = fields
-            fields--
-            let sub = @ptrv(item, ptr, field)
-            if sub != null {
-                let substate = @ptrv(sub, u8, 0)
-                if substate < state_solid {
-                    Stack.transfer_to_solid_rec(sub)
-                }
+    fn check_moves() {
+        let chain = this.move_checks
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let next_list = chain.olist_first
+
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
             }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                // Item logic
+                let fields = @ptrv(item, u8, 2)
+                while fields > 0 {
+                    let field = fields--
+                    let sub = @ptrv(item, ptr, field)
+                    if sub != null {
+                        let is_moved = @ptrv(sub, u8, 7) == 1
+                        if is_moved {
+                            // Adjust field
+                            @ptrv(item, ptr, field) = @ptrv(sub, ptr, 0) - 1
+                        }
+                    }
+                }
+
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
         }
+
+        chain.olist_last = chain.olist_first
+        chain.index = 0
     }
-    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) {
+
+    static fn transfer_to_solid_rec(item: ptr) ptr {
         // 
-        @ptrv(item, u8, 0) = state_unknown @as u8
-        unknown.add_item(item)
-        let fields = @ptrv(item, u8, 2)
+        let size = @ptrv(item, i32, 1) @as uint
+        let new_item = alloc(size)
+        @ptrv(item, u8, 0) = state_solid @as u8
+        copy(item, new_item, size)
+        @ptrv(item, ptr, 0) = new_item
+        @ptrv(item, u8, 7) = 1
+
+        let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
-            let field = fields
-            fields--
+            let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
+                if @ptrv(sub, u8, 7) == 1 {
+                    // Already moved
+                    @ptrv(new_item, ptr, field) = @ptrv(sub, ptr, 0) - 1
+                    continue
+                }
                 let substate = @ptrv(sub, u8, 0)
                 if substate < state_solid {
-                    Stack.transfer_to_unknown_rec(sub, unknown)
+                    // transfer or new
+                    @ptrv(new_item, ptr, field) = Stack.transfer_to_solid_rec(sub)
                 }
             }
         }
+        return new_item
+    }
+    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) ptr {
+        // 
+        let size = @ptrv(item, i32, 1) @as uint
+        let new_item = alloc(size)
+        @ptrv(item, u8, 0) = state_unknown @as u8
+        copy(item, new_item, size)
+        @ptrv(item, ptr, 0) = new_item
+        @ptrv(item, u8, 7) = 1
+        unknown.add_item(new_item)
+
+        let fields = @ptrv(new_item, u8, 2)
+        while fields > 0 {
+            let field = fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != null {
+                if @ptrv(sub, u8, 7) == 1 {
+                    // Already moved
+                    @ptrv(new_item, ptr, field) = @ptrv(sub, ptr, 0) - 1
+                    continue
+                }
+                let substate = @ptrv(sub, u8, 0)
+                if substate < state_solid {
+                    @ptrv(new_item, ptr, field) = Stack.transfer_to_unknown_rec(sub, unknown)
+                }
+            }
+        }
+        return new_item
     }
 }
 

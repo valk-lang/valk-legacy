@@ -110,9 +110,10 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
 Type* type_gen_void(Allocator* alc) {
     return type_make(alc, type_void);
 }
-Type* type_gen_null(Allocator* alc) {
+Type* type_gen_null(Allocator* alc, Build* b) {
     Type* t = type_make(alc, type_null);
     t->is_pointer = true;
+    t->size = b->ptr_size;
     return t;
 }
 Type* type_gen_class(Allocator* alc, Class* class) {

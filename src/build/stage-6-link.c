@@ -34,7 +34,7 @@ void stage_6_link(Build* b, Array* o_files) {
     char linker_buf[VOLT_PATH_MAX];
     if (host_system_is_target) {
         if (is_linux) {
-            linker = "ld";
+            linker = "gcc";
         } else if (is_macos) {
             linker = "ld";
         } else if (is_win) {
@@ -67,7 +67,7 @@ void stage_6_link(Build* b, Array* o_files) {
     if (is_win) {
         str_append_chars(cmd, "/out:\"");
     } else {
-        str_append_chars(cmd, "-pie ");
+        str_append_chars(cmd, "-pie -g ");
         str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
@@ -87,38 +87,38 @@ void stage_6_link(Build* b, Array* o_files) {
     str_append_chars(cmd, "\" ");
 
     // Link dirs
-    Array *link_dirs = get_link_dirs(b);
-    for (int i = 0; i < link_dirs->length; i++) {
-        char *path = array_get_index(link_dirs, i);
-        str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
-        str_append_chars(cmd, path);
-        str_append_chars(cmd, b->os);
-        str_append_chars(cmd, "-");
-        str_append_chars(cmd, b->arch);
-        str_append_chars(cmd, "\" ");
-    }
+    // Array *link_dirs = get_link_dirs(b);
+    // for (int i = 0; i < link_dirs->length; i++) {
+    //     char *path = array_get_index(link_dirs, i);
+    //     str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
+    //     str_append_chars(cmd, path);
+    //     str_append_chars(cmd, b->os);
+    //     str_append_chars(cmd, "-");
+    //     str_append_chars(cmd, b->arch);
+    //     str_append_chars(cmd, "\" ");
+    // }
 
     // Details
     if (is_linux) {
-        str_append_chars(cmd, "--sysroot=");
-        str_append_chars(cmd, volt_lib_dir);
-        str_append_chars(cmd, "root ");
+        // str_append_chars(cmd, "--sysroot=");
+        // str_append_chars(cmd, volt_lib_dir);
+        // str_append_chars(cmd, "root ");
 
-        if (is_x64) {
-            str_append_chars(cmd, "-m elf_x86_64 ");
-            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
-        } else if (is_arm64) {
-            str_append_chars(cmd, "-m aarch64linux ");
-            str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
-        }
-
-        // if (b->type == build_t_exe) {
-            str_append_chars(cmd, "-l:Scrt1.o ");
-            str_append_chars(cmd, "-l:crti.o ");
-            str_append_chars(cmd, "-l:crtbeginS.o ");
-        // } else if (b->type == build_t_shared_lib) {
-        //     str_append_chars(cmd, "--shared ");
+        // if (is_x64) {
+        //     str_append_chars(cmd, "-m elf_x86_64 ");
+        //     str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+        // } else if (is_arm64) {
+        //     str_append_chars(cmd, "-m aarch64linux ");
+        //     str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
         // }
+
+        // // if (b->type == build_t_exe) {
+        //     str_append_chars(cmd, "-l:Scrt1.o ");
+        //     str_append_chars(cmd, "-l:crti.o ");
+        //     str_append_chars(cmd, "-l:crtbeginS.o ");
+        // // } else if (b->type == build_t_shared_lib) {
+        // //     str_append_chars(cmd, "--shared ");
+        // // }
 
     } else if (is_macos) {
         str_append_chars(cmd, "-syslibroot ");
@@ -159,12 +159,13 @@ void stage_6_link(Build* b, Array* o_files) {
 
     // Link libs
     // stage_link_libs_all(cmd, b);
-    str_append_chars(cmd, "-lpthread -lc -l:libc_nonshared.a -l:ld-linux-x86-64.so.2 ");
+    // str_append_chars(cmd, "-lpthread -lc -l:libc_nonshared.a -l:ld-linux-x86-64.so.2 ");
+    str_append_chars(cmd, "-lpthread -lc -lm -ldl ");
 
     // End
     if (is_linux) {
-        str_append_chars(cmd, "-l:crtendS.o ");
-        str_append_chars(cmd, "-l:crtn.o ");
+        // str_append_chars(cmd, "-l:crtendS.o ");
+        // str_append_chars(cmd, "-l:crtn.o ");
     }
 
     // Run command
