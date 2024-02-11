@@ -5,14 +5,9 @@ use volt:os
 global stack : ?Stack;
 
 value state_new (0)
-value state_unknown (1)
+value state_transfer (1)
 value state_solid (2)
-value inl_new (0)
-value inl_unknown (1)
-value inl_none (2)
-value inl_transfer (3)
-// state(u8)    0 new 1 unknown 2 solid
-// in_list(u8)  0 new 1 unknown 2 none 3 transfer
+value state_unknown (3)
 
 struct Stack {
     data : ptr
@@ -124,6 +119,8 @@ struct Stack {
     fn mark_difference_down() {
         let data = this.data
         let x = this.count
+        let transfer = this.transfer
+        let unknown = this.unknown
         while x > 0 {
             x--
             let index = x * 2
@@ -131,30 +128,25 @@ struct Stack {
             let item_prev = @ptrv(data, ptr, index + 1);
             if item != item_prev {
                 // Stack position changed
-                // Mark prev as unknown
                 if item_prev != 0 @as ptr {
-                    this.mark_unknown(item_prev)
+                    // Mark prev as unknown
+                    if @ptrv(item, u8, 0) == state_solid {
+                        unknown.add_item(item)
+                        @ptrv(item, u8, 0) = state_unknown @as u8
+                    }
                 }
-                // Mark new as solid recursive
-                @ptrv(item, u8, 0) = state_solid @as u8
-                if @ptrv(item, u8, 1) == inl_new {
-                    let transfer = this.transfer
-                    transfer.add_item(item)
-                    @ptrv(item, u8, 1) = inl_transfer @as u8
+                if item != 0 @as ptr {
+                    // Substate = solid
+                    @ptrv(item, u8, 1) = state_solid @as u8
+                    // Check if transfer needed
+                    if @ptrv(item, u8, 0) == state_new {
+                        transfer.add_item(item)
+                        @ptrv(item, u8, 0) = state_transfer @as u8
+                    } 
                 }
                 // Overwrite prev
                 @ptrv(data, ptr, index + 1) = item
             }
-        }
-    }
-
-    fn mark_unknown(item: ptr) {
-        @ptrv(item, u8, 0) = state_unknown @as u8
-        let in_list = @ptrv(item, u8, 1)
-        if in_list == inl_none {
-            let unknown = this.unknown
-            unknown.add_item(item)
-            @ptrv(item, u8, 1) = inl_unknown @as u8
         }
     }
 
@@ -179,15 +171,13 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 1) != inl_none {
-                    // Not in transfer list anymore
+                if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
-                let state = @ptrv(item, u8, 0)
-                if state == state_solid {
-                    Stack.transfer_to_solid_rec(item)
+                if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
+                Stack.transfer_to_solid_rec(item)
             }
             if is_last {
                 break
@@ -214,15 +204,13 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 1) != inl_transfer {
-                    // Not in transfer list anymore
+                if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
-                let state = @ptrv(item, u8, 0)
-                if state == state_unknown {
-                    Stack.transfer_to_unknown_rec(item, unknown)
+                if @ptrv(item, u8, 1) != state_unknown {
                     continue
                 }
+                Stack.transfer_to_unknown_rec(item, unknown)
             }
             if is_last {
                 break
@@ -257,7 +245,7 @@ struct Stack {
                 index++
                 // Item logic
                 let state = @ptrv(item, u8, 0)
-                if state == 0 {
+                if state == state_new {
                     // print("-")
                     // mem:free(item)
                     atomic(gc_object_count - 1)
@@ -281,19 +269,15 @@ struct Stack {
 
     static fn transfer_to_solid_rec(item: ptr) {
         // 
-        @ptrv(item, u8, 1) = inl_none @as u8 // set list = none
+        @ptrv(item, u8, 0) = state_solid @as u8
         let fields = @ptrv(item, u8, 2)
         while fields > 0 {
             let field = fields
             fields--
             let sub = @ptrv(item, ptr, field)
             if sub != 0 @as ptr {
-                @ptrv(sub, u8, 0) = state_solid @as u8 // set sub state = solid
-                let in_list = @ptrv(sub, u8, 1)
-                if in_list == inl_new {
-                    Stack.transfer_to_solid_rec(sub)
-                }
-                if in_list == inl_transfer {
+                let substate = @ptrv(sub, u8, 0)
+                if substate < state_solid {
                     Stack.transfer_to_solid_rec(sub)
                 }
             }
@@ -301,7 +285,7 @@ struct Stack {
     }
     static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) {
         // 
-        @ptrv(item, u8, 1) = inl_unknown @as u8 // set list = unknown
+        @ptrv(item, u8, 0) = state_unknown @as u8
         unknown.add_item(item)
         let fields = @ptrv(item, u8, 2)
         while fields > 0 {
@@ -309,60 +293,13 @@ struct Stack {
             fields--
             let sub = @ptrv(item, ptr, field)
             if sub != 0 @as ptr {
-                let in_list = @ptrv(sub, u8, 1)
-                if in_list == 0 {
-                    @ptrv(sub, u8, 0) = state_unknown @as u8 // set sub state = unknown
+                let substate = @ptrv(sub, u8, 0)
+                if substate < state_solid {
                     Stack.transfer_to_unknown_rec(sub, unknown)
                 }
             }
         }
     }
 
-}
-
-struct ObjectChain {
-    olist_first : ptr
-    olist_last : ptr
-    index : int (0)
-    trigger_count : int (0)
-    trigger_reset : int (0)
-    itemc: int (0)
-    listc: int (0)
-
-    static fn new(trigger_count: int) ObjectChain {
-        let list = ObjectChain.new_olist();
-        return ObjectChain {
-            olist_first: list
-            olist_last: list
-            trigger_count: trigger_count
-            trigger_reset: trigger_count
-        }
-    }
-
-    static fn new_olist() ptr {
-        let list = mem:alloc(102 * sizeof(ptr))
-        @ptrv(list, ptr, 100) = 0 @as ptr
-        return list
-    }
-
-    fn add_item(item: ptr) {
-        let index_ = this.index;
-        if index_ == 100 {
-            let last_list = this.olist_last
-            let next = @ptrv(last_list, ptr, 100)
-            if next == (0 @as ptr) {
-                next = ObjectChain.new_olist()
-                @ptrv(last_list, ptr, 100) = next
-                this.listc++
-            }
-            this.olist_last = next
-            this.index = 0
-        }
-        let list = this.olist_last
-        let index = this.index
-        @ptrv(list, ptr, index) = item
-        this.index = index + 1
-        this.itemc++
-    }
 }
 

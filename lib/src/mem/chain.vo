@@ -1,0 +1,46 @@
+
+struct ObjectChain {
+    olist_first : ptr
+    olist_last : ptr
+    index : int (0)
+    trigger_count : int (0)
+    trigger_reset : int (0)
+    itemc: int (0)
+    listc: int (0)
+
+    static fn new(trigger_count: int) ObjectChain {
+        let list = ObjectChain.new_olist();
+        return ObjectChain {
+            olist_first: list
+            olist_last: list
+            trigger_count: trigger_count
+            trigger_reset: trigger_count
+        }
+    }
+
+    static fn new_olist() ptr {
+        let list = alloc(101 * sizeof(ptr))
+        @ptrv(list, ptr, 100) = 0 @as ptr
+        return list
+    }
+
+    fn add_item(item: ptr) {
+        let index_ = this.index;
+        if index_ == 100 {
+            let last_list = this.olist_last
+            let next = @ptrv(last_list, ptr, 100)
+            if next == (0 @as ptr) {
+                next = ObjectChain.new_olist()
+                @ptrv(last_list, ptr, 100) = next
+                this.listc++
+            }
+            this.olist_last = next
+            this.index = 0
+        }
+        let list = this.olist_last
+        let index = this.index
+        @ptrv(list, ptr, index) = item
+        this.index = index + 1
+        this.itemc++
+    }
+}
