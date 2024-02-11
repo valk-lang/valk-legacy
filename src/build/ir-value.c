@@ -32,6 +32,9 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *val = ir_assign_value(ir, scope, v);
         return ir_load(ir, v->rett, val);
     }
+    if (v->type == v_ptr_of) {
+        return ir_assign_value(ir, scope, v->item);
+    }
     if (v->type == v_stack) {
         Type* type = v->rett;
         Class* class = type->class;

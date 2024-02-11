@@ -77,6 +77,7 @@ enum VALUES {
     v_null,
     v_stack,
     v_atomic,
+    v_ptr_of,
 };
 
 enum TOKENS {

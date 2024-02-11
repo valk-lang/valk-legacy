@@ -22,6 +22,23 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
     if (t == tok_at_word) {
         if (str_is(tkn, "@ptrv")) {
             v = value_handle_ptrv(alc, fc, scope);
+        } else if (str_is(tkn, "@ptr_of")) {
+            //
+            tok_expect(fc, "(", false, false);
+            Value *from = read_value(alc, fc, scope, true, 0);
+            if (!value_is_assignable(from)) {
+                sprintf(b->char_buf, "Value in @ptr_of must be an assign-able value. e.g. a variable");
+                parse_err(chunk, b->char_buf);
+            }
+            tok_expect(fc, ")", true, true);
+            if (from->type == v_decl) {
+                Decl *decl = from->item;
+                if (!decl->is_mut) {
+                    decl->is_mut = true;
+                }
+            }
+            v = value_make(alc, v_ptr_of, from, type_gen_volt(alc, b, "ptr"));
+
         } else if (str_is(tkn, "@stack")) {
             tok_expect(fc, "(", false, false);
             Type* type = read_type(fc, alc, scope, true);

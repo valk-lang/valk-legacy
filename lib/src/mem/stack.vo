@@ -22,6 +22,8 @@ struct Stack {
     count_last : uint (0)
     object_count : uint (0)
     object_count_last : uint (0)
+    object_count_transfer : uint (0)
+    object_count_trigger : uint (100)
     lowest: uint (0)
     lowest_next : uint (0)
     unknown : ObjectChain
@@ -86,9 +88,6 @@ struct Stack {
             this.lowest_next = new_count
         }
         this.count = new_count;
-        // if new_count == 0 {
-            // print("stack_empty\n");
-        // }
     }
 
     ///////////////////////
@@ -115,7 +114,8 @@ struct Stack {
         if on_state > state_transfer {
             if to_state == state_new {
                 // Transfer
-                stack.transfer.add_item(to)
+                let s = stack;
+                s.transfer.add_item(to)
                 @ptrv(to, u8, 0) = state_transfer @as u8
                 @ptrv(to, u8, 1) = on_state @as u8
             } else if on_state == state_solid {
@@ -155,15 +155,22 @@ struct Stack {
         if s.run_gc {
             run_gc = true
         }
-        if s.object_count > s.object_count_last {
+        let ob_count = s.object_count;
+        if ob_count > s.object_count_trigger {
             run_gc = true
         }
-        // print("gc\n")
         if run_gc {
             s.gc()
             s.run_gc = false
             s.run_gc_full = false
-            s.object_count_last = (s.object_count + 100) * 12 / 10
+
+            let new_ob_count = s.object_count_last + s.object_count_transfer
+            s.object_count = new_ob_count
+            s.object_count_last = new_ob_count
+            // print(new_ob_count.to_str())
+            // print("\n")
+            s.object_count_trigger = (new_ob_count + 100) * 12 / 10
+            s.object_count_transfer = 0
             s.count_last = s.count
         }
     }
@@ -244,6 +251,9 @@ struct Stack {
         let first_list = chain.olist_first
         let next_list = first_list
 
+        let count : uint = 0 @as uint
+        let counter = @ptr_of(count)
+
         // Mark solid
         while true {
             let list = next_list
@@ -267,7 +277,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                Stack.transfer_to_solid_rec(item)
+                Stack.transfer_to_solid_rec(item, counter)
             }
             if is_last {
                 break
@@ -303,7 +313,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_unknown {
                     continue
                 }
-                Stack.transfer_to_unknown_rec(item, unknown)
+                Stack.transfer_to_unknown_rec(item, unknown, counter)
             }
             if is_last {
                 break
@@ -316,6 +326,8 @@ struct Stack {
 
         chain.olist_last = first_list
         chain.index = 0
+
+        this.object_count_transfer = count
     }
 
     fn clean_new_list() {
@@ -547,13 +559,15 @@ struct Stack {
         }
     }
 
-    static fn transfer_to_solid_rec(item: ptr) ptr {
+    static fn transfer_to_solid_rec(item: ptr, counter: ptr) ptr {
         // 
         let size = @ptrv(item, i32, 1) @as uint
         let new_item = alloc(size)
         copy(item, new_item, size)
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_solid @as u8
+
+        @ptrv(counter, uint)++
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
@@ -567,13 +581,13 @@ struct Stack {
                 }
                 if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
-                    @ptrv(new_item, ptr, field) = Stack.transfer_to_solid_rec(sub)
+                    @ptrv(new_item, ptr, field) = Stack.transfer_to_solid_rec(sub, counter)
                 }
             }
         }
         return new_item
     }
-    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) ptr {
+    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain, counter: ptr) ptr {
         // 
         let size = @ptrv(item, i32, 1) @as uint
         let new_item = alloc(size)
@@ -582,6 +596,8 @@ struct Stack {
         @ptrv(new_item, u8, 0) = state_unknown @as u8
         @ptrv(new_item, u8, 1) = 0
         unknown.add_item(new_item)
+
+        @ptrv(counter, uint)++
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
@@ -596,7 +612,7 @@ struct Stack {
                 let substate = @ptrv(sub, u8, 0)
                 if substate < state_solid {
                     // transfer or new
-                    @ptrv(new_item, ptr, field) = Stack.transfer_to_unknown_rec(sub, unknown)
+                    @ptrv(new_item, ptr, field) = Stack.transfer_to_unknown_rec(sub, unknown, counter)
                 }
             }
         }
