@@ -42,7 +42,7 @@ struct Stack {
         let to_be_free = ObjectChain.new()
         let bump = Bump.new()
 
-        let data = mem:alloc(stack_size)
+        let data = alloc(stack_size)
         let stackc = stack_size / 8
         while stackc > 0 {
             stackc--
@@ -84,13 +84,16 @@ struct Stack {
         if new_count < this.lowest_next {
             this.lowest_next = new_count
         }
+        if new_count < this.lowest {
+            this.lowest = new_count
+        }
         this.count = new_count;
     }
 
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    static fn link(on: ptr, to: ptr) ptr {
+    fn link(on: ptr, to: ptr) ptr {
         if to == null {
             return to
         }
@@ -102,8 +105,7 @@ struct Stack {
         if on_state > state_transfer {
             if to_state == state_new {
                 // Transfer
-                let s = stack;
-                s.transfer.add_item(to)
+                this.transfer.add_item(to)
                 @ptrv(to, u8, 0) = state_transfer @as u8
                 @ptrv(to, u8, 1) = on_state @as u8
             } else if on_state == state_solid {
@@ -113,7 +115,7 @@ struct Stack {
             // Add to move check list
             let in_list = @ptrv(on, u8, 3)
             if in_list == 0 {
-                stack.move_checks.add_item(on)
+                this.move_checks.add_item(on)
                 @ptrv(on, u8, 3) = 1
             }
         }
@@ -137,29 +139,28 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
-    static fn gc_check() {
-        let s = stack
-        let run_gc = s.count <= s.lowest
-        if s.run_gc {
+    fn gc_check() {
+        let run_gc = this.count <= this.lowest
+        if this.run_gc {
             run_gc = true
         }
-        let ob_count = s.object_count;
-        if ob_count > s.object_count_trigger {
+        let ob_count = this.object_count;
+        if ob_count > this.object_count_trigger {
             run_gc = true
         }
         if run_gc {
-            s.gc()
-            s.run_gc = false
-            s.run_gc_full = false
+            this.gc()
+            this.run_gc = false
+            this.run_gc_full = false
 
-            let new_ob_count = s.object_count_last + s.object_count_transfer
-            s.object_count = new_ob_count
-            s.object_count_last = new_ob_count
+            let new_ob_count = this.object_count_last + this.object_count_transfer
+            this.object_count = new_ob_count
+            this.object_count_last = new_ob_count
             // print(new_ob_count.to_str())
             // print("\n")
-            s.object_count_trigger = (new_ob_count + 100) * 12 / 10
-            s.object_count_transfer = 0
-            s.count_last = s.count
+            this.object_count_trigger = (new_ob_count + 100) * 15 / 10
+            this.object_count_transfer = 0
+            this.count_last = this.count
         }
     }
     fn gc() {

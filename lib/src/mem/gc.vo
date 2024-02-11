@@ -56,7 +56,7 @@ struct GC {
                 }
                 s.run_gc = true
             }
-            os:sleep_ms(100)
+            os:sleep_ms(50)
         }
     }
 }
