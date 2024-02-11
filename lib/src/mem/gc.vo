@@ -43,6 +43,10 @@ struct GC {
             while si > 0 {
                 si--
                 let s = @ptrv(stacks, Stack, si);
+                if x < 10 {
+                    s.lowest = s.lowest_next 
+                    s.lowest_next = 99999999 @as uint
+                }
                 if x % 10 == 0 {
                     s.lowest = s.lowest_next 
                     s.lowest_next = 99999999 @as uint
