@@ -28,7 +28,6 @@ struct Stack {
     lowest_next : uint (0)
     unknown : ObjectChain
     transfer : ObjectChain
-    newbs : ObjectChain
     move_checks : ObjectChain
     to_be_free : ObjectChain
     bump: Bump
@@ -39,7 +38,6 @@ struct Stack {
     static fn new() Stack {
         let unknown = ObjectChain.new()
         let transfer = ObjectChain.new()
-        let newbs = ObjectChain.new()
         let move_checks = ObjectChain.new()
         let to_be_free = ObjectChain.new()
         let bump = Bump.new()
@@ -55,7 +53,6 @@ struct Stack {
             data: data
             unknown: unknown
             transfer: transfer
-            newbs: newbs
             move_checks: move_checks
             to_be_free: to_be_free
             bump: bump
@@ -88,15 +85,6 @@ struct Stack {
             this.lowest_next = new_count
         }
         this.count = new_count;
-    }
-
-    ///////////////////////
-    // Allocate items
-    ///////////////////////
-    fn add_gc_object(item: ptr) {
-        this.newbs.add_item(item)
-        // atomic(gc_object_count + 1)
-        this.object_count++
     }
 
     ///////////////////////
@@ -177,8 +165,9 @@ struct Stack {
     fn gc() {
         this.mark_difference_down()
         this.handle_transfer_list()
-        this.clean_new_list()
         this.check_moves()
+        this.bump.wipe()
+
         if this.run_gc_full == false {
             return
         }
@@ -328,43 +317,6 @@ struct Stack {
         chain.index = 0
 
         this.object_count_transfer = count
-    }
-
-    fn clean_new_list() {
-        let chain = this.newbs
-        let last_list = chain.olist_last
-        let last_index = chain.index
-        let next_list = chain.olist_first
-
-        while true {
-            let list = next_list
-            let index = 0
-            let is_last = list == last_list
-            let until_ = 100
-            if is_last {
-                until_ = last_index
-            }
-            let until = until_
-            while index < until {
-                let item = @ptrv(list, ptr, index)
-                index++
-                // Item logic
-                let state = @ptrv(item, u8, 0)
-                if state == state_new {
-                    // atomic(gc_object_count - 1)
-                    this.object_count--
-                    continue
-                }
-            }
-            if is_last {
-                break
-            }
-            next_list = @ptrv(list, ptr, 100)
-        }
-
-        chain.olist_last = chain.olist_first
-        chain.index = 0
-        this.bump.wipe()
     }
 
     fn clean_unknown_list() {
