@@ -43,20 +43,22 @@ struct GC {
             while si > 0 {
                 si--
                 let s = @ptrv(stacks, Stack, si);
-                if x < 5 {
+                if x % 10 == 0 {
                     s.lowest = s.lowest_next 
                     s.lowest_next = 99999999 @as uint
                 }
-                if x % 5 == 0 {
-                    s.lowest = s.lowest_next 
-                    s.lowest_next = 99999999 @as uint
+                //
+                let full_tm = s.run_gc_full_timeout
+                if full_tm > 0 {
+                    s.run_gc_full_timeout--
+                    if full_tm == 1 {
+                        s.run_gc_timeout = 0
+                    } else {
+                        s.run_gc_timeout--
+                    }
                 }
-                if x % 3 == 0 {
-                    s.run_gc_full = true
-                }
-                s.run_gc = true
             }
-            os:sleep_ms(50)
+            os:sleep_ms(20)
         }
     }
 }

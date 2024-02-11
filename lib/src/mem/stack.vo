@@ -31,9 +31,9 @@ struct Stack {
     move_checks : ObjectChain
     to_be_free : ObjectChain
     bump: Bump
+    run_gc_timeout : i32 (0)
+    run_gc_full_timeout : i32 (0)
     age: u8 (32)
-    run_gc : bool (false)
-    run_gc_full : bool (false)
 
     static fn new() Stack {
         let unknown = ObjectChain.new()
@@ -73,6 +73,13 @@ struct Stack {
     ///////////////////////
     fn reserve(amount: uint) ptr {
         let count = this.count
+        if this.run_gc_timeout == 0 {
+            this.gc()
+        } else if (count <= this.lowest) {
+            this.gc()
+        } else if (this.object_count > this.object_count_trigger) {
+            this.gc()
+        }
         let adr = this.data + (count * sizeof(ptr) * 2);
         this.count = count + amount
         return adr
@@ -139,43 +146,26 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
-    fn gc_check() {
-        let run_gc = this.count <= this.lowest
-        if this.run_gc {
-            run_gc = true
-        }
-        let ob_count = this.object_count;
-        if ob_count > this.object_count_trigger {
-            run_gc = true
-        }
-        if run_gc {
-            this.gc()
-            this.run_gc = false
-            this.run_gc_full = false
-
-            let new_ob_count = this.object_count_last + this.object_count_transfer
-            this.object_count = new_ob_count
-            this.object_count_last = new_ob_count
-            // print(new_ob_count.to_str())
-            // print("\n")
-            this.object_count_trigger = (new_ob_count + 100) * 15 / 10
-            this.object_count_transfer = 0
-            this.count_last = this.count
-        }
-    }
     fn gc() {
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
         this.bump.wipe()
+        this.run_gc_timeout = 5 @as i32
 
-        if this.run_gc_full == false {
-            return
+        if this.run_gc_full_timeout == 0 {
+            // Full clear
+            this.clean_unknown_list()
+            this.run_gc_full_timeout = 20 @as i32
         }
-        // Full clear
-        print("6.\n")
-        this.clean_unknown_list()
-        print("7.\n")
+
+        // Update counters
+        let new_ob_count = this.object_count_last + this.object_count_transfer
+        this.object_count = new_ob_count
+        this.object_count_last = new_ob_count
+        this.object_count_trigger = (new_ob_count + 100) * 15 / 10
+        this.object_count_transfer = 0
+        this.count_last = this.count
     }
 
     fn mark_difference_down() {
