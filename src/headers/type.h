@@ -6,6 +6,7 @@
 
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool allow_newline);
 Type* type_gen_void(Allocator* alc);
+Type* type_gen_null(Allocator* alc);
 Type* type_gen_class(Allocator* alc, Class* class);
 Type* type_gen_func(Allocator* alc, Func* func);
 Type* type_gen_volt(Allocator* alc, Build* b, char* name);

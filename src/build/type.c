@@ -110,6 +110,11 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
 Type* type_gen_void(Allocator* alc) {
     return type_make(alc, type_void);
 }
+Type* type_gen_null(Allocator* alc) {
+    Type* t = type_make(alc, type_null);
+    t->is_pointer = true;
+    return t;
+}
 Type* type_gen_class(Allocator* alc, Class* class) {
     Type* t = type_make(alc, type_struct);
     t->class = class;
@@ -171,6 +176,9 @@ Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
+    if (t2->type == type_null && (t1->type == type_ptr || (t1->type == type_struct && t1->nullable))) {
+        return true;
+    }
     if (t1->type != t2->type) {
         *reason = "different kind of types";
         return false;
@@ -220,6 +228,8 @@ char* type_to_str(Type* t, char* res) {
 
     if (t->type == type_void) {
         strcpy(res, "void");
+    } else if (t->type == type_null) {
+        strcpy(res, "null");
     } else if (t->class) {
         Class *class = t->class;
         strcat(res, class->name);

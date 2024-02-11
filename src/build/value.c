@@ -43,6 +43,8 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_int(alc, str_is(tkn, "true"), type_gen_volt(alc, b, "bool"));
+        } else if (str_is(tkn, "null")) {
+            v = value_make(alc, v_null, NULL, type_gen_null(alc));
         } else if (str_is(tkn, "atomic")) {
             tok_expect(fc, "(", false, false);
             Value* val = read_value(alc, fc, scope, true, 0);
@@ -431,6 +433,11 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             backup = *fc->chunk_parse;
             *fc->chunk_parse = *prop->chunk_value;
             Value* val = read_value(alc, fc, prop->chunk_value->fc->scope, true, 0);
+
+            if (val->type == v_number) {
+                try_convert_number(val, prop->type);
+            }
+            type_check(fc->chunk_parse, prop->type, val->rett);
             *fc->chunk_parse = backup;
             map_set_force_new(values, name, val);
         }

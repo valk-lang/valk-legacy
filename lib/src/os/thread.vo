@@ -13,7 +13,7 @@ class Thread {
 	static fn start(start_func: ptr) void {
 
     	let thr = mem:alloc(24 @as uint) @as pt:pthread_t;
-    	let err = pt:pthread_create(thr, 0 @as ptr, start_func, 0 @as ptr);
+    	let err = pt:pthread_create(thr, null, start_func, null);
     	// if err != 0 {
 		// 	throw fail;
     	// }

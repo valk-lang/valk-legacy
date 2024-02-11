@@ -9,7 +9,7 @@ integer uint unsigned {
         let chars = "0123456789"
         let offset = 10 @as uint // start of string bytes
 
-        if str_buf == 0 @as ptr {
+        if str_buf == null {
             str_buf = mem:alloc(24)
             str_rev = mem:alloc(24)
         }

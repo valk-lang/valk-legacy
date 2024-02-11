@@ -48,6 +48,7 @@ enum TYPES {
     type_func,
     type_bool,
     type_undefined,
+    type_null,
 };
 
 enum CLASSTYPES {

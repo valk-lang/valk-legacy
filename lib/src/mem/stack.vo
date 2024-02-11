@@ -96,7 +96,7 @@ struct Stack {
         s.object_count_last = s.object_count
     }
     static fn link(on: ptr, to: ptr) ptr {
-        if to == 0 @as ptr {
+        if to == null {
             return to
         }
         let on_state = @ptrv(on, u8, 0)
@@ -115,7 +115,7 @@ struct Stack {
         return to
     }
     static fn unlink(item: ptr) {
-        if item == (0 @as ptr) {
+        if item == (null) {
             return
         }
         let item_state = @ptrv(item, u8, 0)
@@ -155,14 +155,14 @@ struct Stack {
             let item_prev = @ptrv(data, ptr, index + 1);
             if item != item_prev {
                 // Stack position changed
-                if item_prev != 0 @as ptr {
+                if item_prev != null {
                     // Mark prev as unknown
                     if @ptrv(item, u8, 0) == state_solid {
                         unknown.add_item(item)
                         @ptrv(item, u8, 0) = state_unknown @as u8
                     }
                 }
-                if item != 0 @as ptr {
+                if item != null {
                     // Substate = solid
                     @ptrv(item, u8, 1) = state_solid @as u8
                     // Check if transfer needed
@@ -210,7 +210,7 @@ struct Stack {
                 break
             }
             next_list = @ptrv(list, ptr, 100)
-            if next_list == 0 @as ptr {
+            if next_list == null {
                 break
             }
         }
@@ -243,7 +243,7 @@ struct Stack {
                 break
             }
             next_list = @ptrv(list, ptr, 100)
-            if next_list == 0 @as ptr {
+            if next_list == null {
                 break
             }
         }
@@ -302,7 +302,7 @@ struct Stack {
             let field = fields
             fields--
             let sub = @ptrv(item, ptr, field)
-            if sub != 0 @as ptr {
+            if sub != null {
                 let substate = @ptrv(sub, u8, 0)
                 if substate < state_solid {
                     Stack.transfer_to_solid_rec(sub)
@@ -319,7 +319,7 @@ struct Stack {
             let field = fields
             fields--
             let sub = @ptrv(item, ptr, field)
-            if sub != 0 @as ptr {
+            if sub != null {
                 let substate = @ptrv(sub, u8, 0)
                 if substate < state_solid {
                     Stack.transfer_to_unknown_rec(sub, unknown)
