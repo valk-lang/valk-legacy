@@ -8,6 +8,7 @@ value state_new (0)
 value state_transfer (2)
 value state_solid (4)
 value state_unknown (8)
+value state_freed (16)
 value stack_size (1000000)
 
 value sub_state_unknown (16)
@@ -27,6 +28,7 @@ struct Stack {
     transfer : ObjectChain
     newbs : ObjectChain
     move_checks : ObjectChain
+    to_be_free : ObjectChain
     bump: Bump
     age: u8 (32)
     run_gc : bool (false)
@@ -37,6 +39,7 @@ struct Stack {
         let transfer = ObjectChain.new()
         let newbs = ObjectChain.new()
         let move_checks = ObjectChain.new()
+        let to_be_free = ObjectChain.new()
         let bump = Bump.new()
 
         let data = mem:alloc(stack_size)
@@ -52,6 +55,7 @@ struct Stack {
             transfer: transfer
             newbs: newbs
             move_checks: move_checks
+            to_be_free: to_be_free
             bump: bump
         }
 
@@ -366,6 +370,7 @@ struct Stack {
         let last_list = chain.olist_last
         let last_index = chain.index
         let next_list = chain.olist_first
+        let free_list = this.to_be_free
 
         while true {
             let list = next_list
@@ -381,20 +386,60 @@ struct Stack {
                 index++
                 // Item logic
                 if @ptrv(item, u8, 1) != age {
-                    // Free item
-                    print("f")
-                    free(item)
-                    // Add fields to unknown
-                    // let fields = @ptrv(item, u8, 2)
-                    // while fields > 0 {
-                    //     let field = fields--
-                    //     let sub = @ptrv(item, ptr, field)
-                    //     if sub != null {
-                    //         stack.unknown.add_item(sub)
-                    //         @ptrv(sub, u8, 0) = state_unknown @as u8
-                    //     }
-                    // }
+                    // Free item + all sub items with incorrect age and have solid state
+                    Stack.free_rec(item, age, free_list)
                 }
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
+        }
+
+        chain.olist_last = chain.olist_first
+        chain.index = 0
+
+        Stack.free_items(free_list)
+    }
+
+    static fn free_rec(item: ptr, age: u8, free_list: ObjectChain) {
+        free_list.add_item(item)
+        @ptrv(item, u8, 0) = state_freed
+
+        let fields = @ptrv(item, u8, 2)
+        while fields > 0 {
+            let field = fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != null {
+                let sub_state = @ptrv(sub, u8, 0)
+                if sub_state == state_solid {
+                    if @ptrv(sub, u8, 1) != age {
+                        Stack.free_rec(sub, age, free_list)
+                    }
+                }
+            }
+        }
+    }
+
+    static fn free_items(free_list: ObjectChain) {
+        let chain = free_list
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let next_list = chain.olist_first
+
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
+            }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                free(item)
             }
             if is_last {
                 break
