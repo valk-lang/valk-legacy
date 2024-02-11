@@ -10,6 +10,9 @@ value state_solid (4)
 value state_unknown (8)
 value stack_size (1000000)
 
+value sub_state_unknown (16)
+value sub_state_keep (16)
+
 value byte_moved (0)
 
 struct Stack {
@@ -23,8 +26,10 @@ struct Stack {
     transfer : ObjectChain
     newbs : ObjectChain
     move_checks : ObjectChain
-    allow_gc : bool (false)
     bump: Bump
+    age: u8 (32)
+    run_gc : bool (false)
+    run_gc_full : bool (false)
 
     static fn new() Stack {
         let unknown = ObjectChain.new()
@@ -127,7 +132,8 @@ struct Stack {
         let item_state = @ptrv(item, u8, 0)
         if item_state == state_solid {
             stack.unknown.add_item(item)
-            @ptrv(item, u8, 1) = state_unknown @as u8
+            @ptrv(item, u8, 0) = state_unknown @as u8
+            @ptrv(item, u8, 1) = 0
         } else if item_state == state_transfer {
             // Update transfer state
             @ptrv(item, u8, 1) = state_unknown @as u8
@@ -139,31 +145,31 @@ struct Stack {
     ///////////////////////
     static fn gc_check() {
         let s = stack
-        let allow_gc = s.count <= s.lowest
-        if s.allow_gc {
-            allow_gc = true
+        let run_gc = s.count <= s.lowest
+        if s.run_gc {
+            run_gc = true
         }
         if s.object_count > s.object_count_last {
-            allow_gc = true
+            run_gc = true
         }
         // print("gc\n")
-        if allow_gc {
+        if run_gc {
             s.gc()
-            s.allow_gc = false
+            s.run_gc = false
+            s.run_gc_full = false
             s.object_count_last = (s.object_count + 100) * 12 / 10
         }
     }
     fn gc() {
-        let do_full_clear = false
         this.mark_difference_down()
-        // Fast clear
-        if do_full_clear == false {
-            this.handle_transfer_list()
-            this.clean_new_list()
-            this.check_moves()
+        this.handle_transfer_list()
+        this.clean_new_list()
+        this.check_moves()
+        if this.run_gc_full == false {
             return
         }
         // Full clear
+        this.clean_unknown_list()
     }
 
     fn mark_difference_down() {
@@ -185,6 +191,7 @@ struct Stack {
                         if @ptrv(item_prev, u8, 0) == state_solid {
                             unknown.add_item(item_prev)
                             @ptrv(item_prev, u8, 0) = state_unknown @as u8
+                            @ptrv(item_prev, u8, 1) = 0
                         }
                     }
                 }
@@ -322,6 +329,101 @@ struct Stack {
     }
 
     fn clean_unknown_list() {
+        // Update age
+                    print("mark\n")
+        let new_age = 32 @as u8
+        if this.age == 32 {
+            new_age = 34
+        }
+        let age = new_age
+        this.age = age
+        //
+                    print("1\n")
+        this.mark_stack_as_solid()
+                    print("2\n")
+
+        let chain = this.unknown
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let next_list = chain.olist_first
+
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
+            }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                // Item logic
+                if @ptrv(item, u8, 1) != age {
+                    // Free item
+                    print("free\n")
+                    free(item)
+                    // Add fields to unknown
+                    // let fields = @ptrv(item, u8, 2)
+                    // while fields > 0 {
+                    //     let field = fields--
+                    //     let sub = @ptrv(item, ptr, field)
+                    //     if sub != null {
+                    //         stack.unknown.add_item(sub)
+                    //         @ptrv(sub, u8, 0) = state_unknown @as u8
+                    //     }
+                    // }
+                }
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
+        }
+
+        chain.olist_last = chain.olist_first
+        chain.index = 0
+    }
+
+    fn mark_stack_as_solid() {
+        let data = this.data
+        let x = this.count
+        let age = this.age
+        while x > 0 {
+            x--
+            let index = x * 2
+            let item = @ptrv(data, ptr, index);
+            if item != null {
+                if @ptrv(item, u8, 1) != age {
+                    Stack.mark_stack_item_as_solid_rec(item, age)
+                }
+            }
+        }
+    }
+    static fn mark_stack_item_as_solid_rec(item: ptr, age: u8) {
+        print("*")
+        @ptrv(item, u8, 1) = age
+
+        let fields = @ptrv(item, u8, 2)
+        while fields > 0 {
+        print("-")
+            let field = fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != null {
+                let is_moved = (@ptrv(sub, u8, byte_moved) & 1) == 1
+                if is_moved {
+                    print("__NOT__")
+                }
+
+        print(".")
+        print((sub @as uint).to_hex())
+                if @ptrv(sub, u8, 1) != age {
+                    Stack.mark_stack_item_as_solid_rec(sub, age)
+        print("%")
+                }
+            }
+        }
     }
 
     fn check_moves() {
@@ -417,6 +519,7 @@ struct Stack {
         copy(item, new_item, size)
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_unknown @as u8
+        @ptrv(new_item, u8, 1) = 0
         unknown.add_item(new_item)
 
         let fields = @ptrv(new_item, u8, 2)

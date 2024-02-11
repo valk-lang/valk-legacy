@@ -51,7 +51,10 @@ struct GC {
                     s.lowest = s.lowest_next 
                     s.lowest_next = 99999999 @as uint
                 }
-                s.allow_gc = true
+                if x % 3 == 0 {
+                    s.run_gc_full = true
+                }
+                s.run_gc = true
             }
             os:sleep_ms(100)
         }
