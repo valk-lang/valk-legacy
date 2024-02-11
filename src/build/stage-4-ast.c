@@ -36,7 +36,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
     Chunk *chunk = fc->chunk_parse;
 
     if (!scope->ast)
-        scope->ast = array_make(alc, 200);
+        scope->ast = array_make(alc, 50);
 
     bool first = false;
 

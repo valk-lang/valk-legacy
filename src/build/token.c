@@ -62,6 +62,8 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
         tok_back(fc);
     }
 
+    if (!scope->ast)
+        scope->ast = array_make(alc, 20);
     array_push(scope->ast, tgen_if(alc, cond, scope_if, scope_else));
 }
 

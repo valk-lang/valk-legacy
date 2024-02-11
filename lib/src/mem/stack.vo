@@ -24,10 +24,10 @@ struct Stack {
     bump: Bump
 
     static fn new() Stack {
-        let unknown = ObjectChain.new(1)
-        let transfer = ObjectChain.new(1)
-        let newbs = ObjectChain.new(1)
-        let move_checks = ObjectChain.new(1)
+        let unknown = ObjectChain.new()
+        let transfer = ObjectChain.new()
+        let newbs = ObjectChain.new()
+        let move_checks = ObjectChain.new()
         let bump = Bump.new()
 
         let s = Stack {
@@ -74,7 +74,7 @@ struct Stack {
     ///////////////////////
     fn add_gc_object(item: ptr) {
         this.newbs.add_item(item)
-        atomic(gc_object_count + 1)
+        // atomic(gc_object_count + 1)
         this.object_count++
     }
 
@@ -96,9 +96,36 @@ struct Stack {
         s.object_count_last = s.object_count
     }
     static fn link(on: ptr, to: ptr) ptr {
+        if to == 0 @as ptr {
+            return to
+        }
+        let on_state = @ptrv(on, u8, 0)
+        if on_state > state_transfer {
+            let to_state = @ptrv(to, u8, 0)
+            if to_state == state_new {
+                // Transfer
+                stack.transfer.add_item(to)
+                @ptrv(to, u8, 0) = state_transfer @as u8
+                @ptrv(to, u8, 1) = on_state @as u8
+            } else if on_state == state_solid {
+                // Update transfer state (if solid)
+                @ptrv(to, u8, 1) = state_solid @as u8
+            }
+        }
         return to
     }
-    static fn unlink(from: ptr, item: ptr) {
+    static fn unlink(item: ptr) {
+        if item == 0 @as ptr {
+            return
+        }
+        let item_state = @ptrv(item, u8, 0)
+        if item_state == state_solid {
+            stack.unknown.add_item(item)
+            @ptrv(item, u8, 1) = state_unknown @as u8
+        } else if item_state == state_transfer {
+            // Update transfer state
+            @ptrv(item, u8, 1) = state_unknown @as u8
+        }
     }
 
     ///////////////////////
@@ -248,7 +275,7 @@ struct Stack {
                 if state == state_new {
                     // print("-")
                     // mem:free(item)
-                    atomic(gc_object_count - 1)
+                    // atomic(gc_object_count - 1)
                     this.object_count--
                     continue
                 }
@@ -300,6 +327,5 @@ struct Stack {
             }
         }
     }
-
 }
 

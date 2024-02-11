@@ -3,18 +3,14 @@ struct ObjectChain {
     olist_first : ptr
     olist_last : ptr
     index : int (0)
-    trigger_count : int (0)
-    trigger_reset : int (0)
     itemc: int (0)
     listc: int (0)
 
-    static fn new(trigger_count: int) ObjectChain {
+    static fn new() ObjectChain {
         let list = ObjectChain.new_olist();
         return ObjectChain {
             olist_first: list
             olist_last: list
-            trigger_count: trigger_count
-            trigger_reset: trigger_count
         }
     }
 
@@ -41,6 +37,6 @@ struct ObjectChain {
         let index = this.index
         @ptrv(list, ptr, index) = item
         this.index = index + 1
-        this.itemc++
+        // this.itemc++
     }
 }

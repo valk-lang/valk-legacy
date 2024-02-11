@@ -32,8 +32,6 @@ struct GC {
     static fn loop() {
         let g = gc_instance;
         let cycles = 0
-        let count = gc_object_count
-        let comp = 100 + count + count / 90
         let last_age = gc_age
         let x = 0;
         while true {
