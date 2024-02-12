@@ -8,6 +8,9 @@ struct Bump {
     adr: ptr (null)
     min: ptr (null)
     max: ptr (null)
+    // Track
+    space_added: uint (0)
+    space_total: uint (0)
     // Free list
     free_block: ptr (null)
     free_adr: ptr (null)
@@ -39,14 +42,13 @@ struct Bump {
         if adr + block_size > this.max {
             this.max = adr + block_size
         }
-        // print((adr @as uint).to_str())
-        // print("<\n")
         if current != null {
             @ptrv(current, ptr, 0) = adr
         }
         @ptrv(adr, ptr, 0) = null
         this.current = adr
         this.adr = adr + sizeof(ptr)
+        this.space_total += block_size
     }
     fn alloc(size: uint) ptr {
         let fsize = size + (size % sizeof(ptr))
@@ -57,6 +59,7 @@ struct Bump {
         let adr = this.adr;
         this.space_left -= fsize
         this.adr = adr + fsize
+        this.space_added += fsize
         return adr
     }
 
@@ -65,6 +68,7 @@ struct Bump {
         let start = this.start
         this.current = start
         this.adr = start + sizeof(ptr)
+        this.space_added = 0
     }
 
     fn delete() {

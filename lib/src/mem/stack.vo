@@ -22,10 +22,8 @@ struct Stack {
     stack_index : uint (0)
     stack_index_last : uint (0)
 
-    obcount : uint (0)
-    obcount_last : uint (0)
-    obcount_transfer : uint (0)
-    obcount_trigger : uint (100)
+    space_transfered: uint (0)
+    space_trigger : uint (10000)
 
     lowest: uint (0)
     lowest_next : uint (0)
@@ -78,15 +76,17 @@ struct Stack {
     ///////////////////////
     fn reserve(amount: uint) ptr {
         let count = this.stack_index
+        let bump = this.bump
+        let space_added = bump.space_added
         if this.run_gc_timeout == 0 {
             this.gc()
-            // print("Timeout\n")
-        } else if (count <= this.lowest) {
-            this.gc()
-            // print("Lowest\n")
-        } else if (this.obcount > this.obcount_trigger) {
-            this.gc()
-            // print("OBCOUNT\n")
+        } else if (space_added > (bump.space_total >> 1)) {
+            // Only gc when bump is atleast half full
+            if (count <= this.lowest) {
+                this.gc()
+            } else if (space_added > this.space_trigger) {
+                this.gc()
+            }
         }
         let adr = this.stack_data + (count * sizeof(ptr) * 2);
         this.stack_index = count + amount
@@ -149,7 +149,6 @@ struct Stack {
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
-        this.bump.wipe()
         this.run_gc_timeout = 10 @as i32
 
         if this.run_gc_full_timeout == 0 {
@@ -158,22 +157,22 @@ struct Stack {
             this.run_gc_full_timeout = 40 @as i32
         }
 
-        // Update counters
-        let transfered = this.obcount_transfer
-        let new_ob_count = this.obcount_last + transfered
-        let obcount_before = this.obcount
-        let freed = obcount_before - new_ob_count
+        // Update stack info
+        let bump = this.bump
+        let space_added = bump.space_added
+        bump.wipe()
+        let transfered = this.space_transfered
+
+        let freed = space_added - transfered
         if transfered > freed {
             // Increase trigger
-            this.obcount_trigger = obcount_before * 12 / 10
+            this.space_trigger = space_added * 12 / 10
         } else {
             // Reduce trigger
-            this.obcount_trigger = this.obcount_trigger * 100 / 99
+            this.space_trigger = this.space_trigger * 100 / 99
         }
 
-        this.obcount = new_ob_count
-        this.obcount_last = new_ob_count
-        this.obcount_transfer = 0
+        this.space_transfered = 0
         this.stack_index_last = this.stack_index
     }
 
@@ -316,7 +315,7 @@ struct Stack {
         chain.olist_last = first_list
         chain.index = 0
 
-        this.obcount_transfer = count
+        this.space_transfered = count
     }
 
     fn clean_unknown_list() {
@@ -485,7 +484,7 @@ struct Stack {
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_solid @as u8
 
-        @ptrv(counter, uint)++
+        @ptrv(counter, uint) += size
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
@@ -515,7 +514,7 @@ struct Stack {
         @ptrv(new_item, u8, 1) = 0
         unknown.add_item(new_item)
 
-        @ptrv(counter, uint)++
+        @ptrv(counter, uint) += size
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
