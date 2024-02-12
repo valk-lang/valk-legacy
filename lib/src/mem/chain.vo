@@ -3,8 +3,8 @@ struct ObjectChain {
     olist_first : ptr
     olist_last : ptr
     index : int (0)
-    itemc: int (0)
-    listc: int (0)
+    // itemc: int (0)
+    // listc: uint (0)
 
     static fn new() ObjectChain {
         let list = ObjectChain.new_olist();
@@ -25,10 +25,10 @@ struct ObjectChain {
         if index_ == 100 {
             let last_list = this.olist_last
             let next = @ptrv(last_list, ptr, 100)
-            if next == (null) {
+            if next == null {
                 next = ObjectChain.new_olist()
                 @ptrv(last_list, ptr, 100) = next
-                this.listc++
+                // this.listc++
             }
             this.olist_last = next
             this.index = 0
@@ -38,5 +38,15 @@ struct ObjectChain {
         @ptrv(list, ptr, index) = item
         this.index = index + 1
         // this.itemc++
+    }
+
+    fn delete() {
+        let block = this.olist_first
+        while block != null {
+            let next = @ptrv(block, ptr, 100)
+            free(block)
+            block = next
+        }
+        free(this @as ptr)
     }
 }

@@ -9,6 +9,7 @@ value state_transfer (2)
 value state_solid (4)
 value state_unknown (8)
 value state_freed (16)
+value state_global (32)
 value stack_size (100000)
 
 value sub_state_unknown (16)
@@ -40,6 +41,7 @@ struct Stack {
     run_gc_full_timeout : i32 (0)
 
     age: u8 (32)
+    stopping: bool (false)
 
     static fn new() Stack {
         let unknown = ObjectChain.new()
@@ -322,9 +324,9 @@ struct Stack {
 
     fn clean_unknown_list() {
         // Update age
-        let new_age = 32 @as u8
-        if this.age == 32 {
-            new_age = 34
+        let new_age = 64 @as u8
+        if this.age == 64 {
+            new_age = 66
         }
         let age = new_age
         this.age = age
@@ -405,6 +407,7 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 free(item)
+                // print("f")
             }
             if is_last {
                 break
@@ -439,12 +442,6 @@ struct Stack {
             let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
-                // let is_moved = (@ptrv(sub, u8, byte_moved) & 1) == 1
-                // if is_moved {
-                //     print("__MOVED__")
-                //     print((@ptrv(sub, ptr, 0) @as uint).to_hex())
-                // }
-
                 if @ptrv(sub, u8, 1) != age {
                     Stack.mark_stack_item_as_solid_rec(sub, age)
                 }
@@ -569,6 +566,95 @@ struct Stack {
             }
         }
         return new_item
+    }
+
+    fn stop() {
+        //
+        this.gc()
+        //
+        this.transfer.delete()
+        this.move_checks.delete()
+
+        // Clear bump allocator
+        this.bump.delete()
+
+        // Clear unknown list
+        let free_list = this.to_be_free
+        let chain = this.unknown
+        let last_list = chain.olist_last
+        let last_index = chain.index
+        let next_list = chain.olist_first
+
+        while true {
+            let list = next_list
+            let index = 0
+            let is_last = list == last_list
+            let until_ = 100
+            if is_last {
+                until_ = last_index
+            }
+            let until = until_
+            while index < until {
+                let item = @ptrv(list, ptr, index)
+                index++
+                // Item logic
+                if @ptrv(item, u8, 0) == state_unknown {
+                    Stack.free_item_rec(item, free_list)
+                }
+            }
+            if is_last {
+                break
+            }
+            next_list = @ptrv(list, ptr, 100)
+        }
+
+        chain.delete()
+
+
+        // Clear stack
+        let data = this.stack_data
+        let x = this.stack_index
+        while x > 0 {
+            x--
+            let index = x * 2
+            let item = @ptrv(data, ptr, index);
+            let item_prev = @ptrv(data, ptr, index + 1);
+
+            if @ptrv(item, u8, 0) == state_solid {
+                Stack.free_item_rec(item, free_list)
+            } else if @ptrv(item, u8, 0) == state_unknown {
+                Stack.free_item_rec(item, free_list)
+            }
+            if @ptrv(item_prev, u8, 0) == state_solid {
+                Stack.free_item_rec(item_prev, free_list)
+            } else if @ptrv(item_prev, u8, 0) == state_unknown {
+                Stack.free_item_rec(item_prev, free_list)
+            }
+        }
+
+        // Free all items
+        Stack.free_items(free_list)
+        free_list.delete()
+
+        // Stack is deleted by the GC
+    }
+
+    static fn free_item_rec(item: ptr, free_list: ObjectChain) {
+        @ptrv(item, u8, 0) = state_freed
+        free_list.add_item(item)
+
+        let fields = @ptrv(item, u8, 2)
+        while fields > 0 {
+            let field = fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != null {
+                if @ptrv(sub, u8, 0) == state_solid {
+                    Stack.free_item_rec(sub, free_list)
+                } else if @ptrv(sub, u8, 0) == state_unknown {
+                    Stack.free_item_rec(sub, free_list)
+                }
+            }
+        }
     }
 }
 
