@@ -49,12 +49,12 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);
         Decl* decl = arg->decl;
-        if(decl->is_gc) {
-            gc_count++;
-        }
+        // if(decl->is_gc) {
+        //     gc_count++;
+        // }
         char* var = ir_var(func);
         decl->ir_var = var;
-        if(decl->is_mut && !decl->is_gc) {
+        if(decl->is_mut) {
             decl->ir_store_var = ir_alloca(ir, func, decl->type);
         }
     }
@@ -125,29 +125,27 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);
         Decl* decl = arg->decl;
-        if(decl->is_gc) {
-            char lindex[10];
-            itoa(gc_index, lindex, 10);
-            gc_index += 2;
-            char *var = ir_var(ir->func);
-            str_flat(code, "  ");
-            str_add(code, var);
-            str_flat(code, " = getelementptr inbounds ptr, ptr ");
-            str_add(code, reserve_adr);
-            str_flat(code, ", i32 ");
-            str_add(code, lindex);
-            str_flat(code, "\n");
+        // if(decl->is_gc) {
+        //     char lindex[10];
+        //     itoa(gc_index, lindex, 10);
+        //     gc_index += 2;
+        //     char *var = ir_var(ir->func);
+        //     str_flat(code, "  ");
+        //     str_add(code, var);
+        //     str_flat(code, " = getelementptr inbounds ptr, ptr ");
+        //     str_add(code, reserve_adr);
+        //     str_flat(code, ", i32 ");
+        //     str_add(code, lindex);
+        //     str_flat(code, "\n");
 
-            decl->ir_store_var = var;
+        //     decl->ir_store_var = var;
+        //     // Store passed argument in storage var
+        //     ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
+        // } else if (decl->is_mut) {
+        // }
+        if(decl->is_mut) {
             // Store passed argument in storage var
-            printf("1");
             ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
-            printf("2");
-        } else if (decl->is_mut) {
-            // Store passed argument in storage var
-            printf("3");
-            ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
-            printf("4");
         }
     }
 
