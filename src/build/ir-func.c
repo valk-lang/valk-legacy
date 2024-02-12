@@ -33,6 +33,9 @@ void ir_gen_functions(IR* ir) {
 }
 
 void ir_gen_func(IR *ir, IRFunc *func) {
+    Allocator* alc = ir->alc;
+    Build* b = ir->b;
+
     // Arg vars
     Func* vfunc = func->func;
     Array *args = vfunc->args->values;
@@ -43,12 +46,67 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     }
 
     // Decls
+    int gc_count = 0;
     Scope* scope = vfunc->scope;
     Array* decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
+        if(decl->is_gc) {
+            gc_count++;
+        }
         if(decl->is_mut) {
             decl->ir_var = ir_alloca(ir, func, decl->type);
+        }
+    }
+
+    //
+    ir->func = func;
+    ir->block = func->block_code;
+
+    // Start GC
+    if(func->func == ir->b->func_main) {
+        Func* gc_start = get_volt_class_func(b, "mem", "Gc", "start");
+        ir_func_call(ir, ir_func_ptr(ir, gc_start), NULL, ir_type(ir, gc_start->rett), 0, 0);
+        Func* stack_new = get_volt_class_func(b, "mem", "Stack", "new");
+        char* stack_ob = ir_func_call(ir, ir_func_ptr(ir, stack_new), NULL, ir_type(ir, stack_new->rett), 0, 0);
+        Global* g = get_volt_global(b, "mem", "stack");
+        char* stack = ir_global(ir, g);
+        ir_store(ir, g->type, stack, stack_ob);
+    }
+
+    // GC reserve
+    if(gc_count > 0) {
+        // Call reserve function
+        Global* g = get_volt_global(b, "mem", "stack");
+        Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
+        // Reserve args
+        Array* args = array_make(alc, gc_count);
+        Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, ir->b, ir->b->ptr_size, false, false));
+        array_push(args, stack);
+        array_push(args, amount);
+        // Call reserve
+        Array *values = ir_fcall_args(ir, scope, args);
+        Func* reserve = get_volt_class_func(b, "mem", "Stack", "reserve");
+        char* reserve_adr = ir_func_call(ir, ir_func_ptr(ir, reserve), values, ir_type(ir, reserve->rett), 0, 0);
+
+        // Set decl IR values
+        int index = 0;
+        for (int i = 0; i < decls->length; i++) {
+            Str *code = ir->block->code;
+            Decl* decl = array_get_index(decls, i);
+            if(decl->is_gc) {
+                char lindex[10];
+                itoa(index++, lindex, 10);
+                char *var = ir_var(ir->func);
+                str_flat(code, "  ");
+                str_add(code, var);
+                str_flat(code, " = getelementptr inbounds ptr, ptr ");
+                str_add(code, reserve_adr);
+                str_flat(code, ", i32 ");
+                str_add(code, lindex);
+                str_flat(code, "\n");
+                decl->ir_var = var;
+            }
         }
     }
 

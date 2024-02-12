@@ -95,3 +95,9 @@ Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool befor
     item->before = before;
     return value_make(alc, v_incr, item, on->rett);
 }
+Value* vgen_ir_cached(Allocator* alc, Value* value) {
+    VIRCached *item = al(alc, sizeof(VIRCached));
+    item->value = value;
+    item->ir_value = NULL;
+    return value_make(alc, v_ir_cached, item, value->rett);
+}

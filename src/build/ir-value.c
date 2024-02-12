@@ -59,6 +59,14 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char* var = ir_global(ir, g);
         return ir_load(ir, g->type, var);
     }
+    if (v->type == v_ir_cached) {
+        VIRCached* item = v->item;
+        if(item->ir_value)
+            return item->ir_value;
+        char* val = ir_value(ir, scope, item->value);
+        item->ir_value = val;
+        return val;
+    }
     if (v->type == v_op) {
         VOp *vop = v->item;
         int op = vop->op;

@@ -2,7 +2,7 @@
 use volt:mem
 use volt:os
 
-shared gc_instance : ?GC
+shared gc_instance : ?Gc
 shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
@@ -12,15 +12,15 @@ shared gc_object_count : int
 // in_list(u8)  0 new 1 unknown 2 none 3 transfer
 // fields(u8)
 
-struct GC {
+struct Gc {
     stacks : ptr
     stack_count : int (0)
 
     static fn start() {
-        gc_instance = GC {
+        gc_instance = Gc {
             stacks: mem:alloc(10000)
         }
-        os:Thread.start(GC.loop @as ptr)
+        os:Thread.start(Gc.loop @as ptr)
     }
 
     fn add_stack(s: Stack) {

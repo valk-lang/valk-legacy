@@ -51,6 +51,7 @@ typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
 typedef struct VOp VOp;
 typedef struct VIncr VIncr;
+typedef struct VIRCached VIRCached;
 
 
 #endif

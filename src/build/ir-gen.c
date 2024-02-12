@@ -71,13 +71,15 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
     str_flat(code, " ");
     str_add(code, on);
     str_flat(code, "(");
-    int argc = values->length;
-    for (int i = 0; i < values->length; i++) {
-        char *lval = array_get_index(values, i);
-        if (i > 0) {
-            str_flat(code, ", ");
+    if(values) {
+        int argc = values->length;
+        for (int i = 0; i < values->length; i++) {
+            char *lval = array_get_index(values, i);
+            if (i > 0) {
+                str_flat(code, ", ");
+            }
+            str_add(code, lval);
         }
-        str_add(code, lval);
     }
     str_flat(code, ")");
     // if (ir->debug) {

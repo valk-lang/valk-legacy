@@ -78,6 +78,7 @@ enum VALUES {
     v_stack,
     v_atomic,
     v_ptr_of,
+    v_ir_cached,
 };
 
 enum TOKENS {

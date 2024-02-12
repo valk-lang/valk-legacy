@@ -49,7 +49,7 @@ struct Decl {
     Type* type;
     char *ir_var;
     bool is_mut;
-    bool is_arg;
+    bool is_gc;
 };
 struct Global {
     char* name;

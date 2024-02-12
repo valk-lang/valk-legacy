@@ -62,7 +62,11 @@ struct Stack {
         }
 
 
-        (gc_instance @as GC).add_stack(s);
+        let gc = gc_instance;
+        while gc == null {
+            gc = gc_instance;
+        }
+        (gc @as Gc).add_stack(s);
         return s
     }
 
@@ -604,7 +608,7 @@ struct Stack {
         bump.free_all_items()
         bump.delete()
 
-        // Stack is deleted by the GC
+        // Stack is deleted by the Gc
     }
 
     static fn free_item_rec(item: ptr, bump: Bump) {

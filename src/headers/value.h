@@ -23,6 +23,7 @@ Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
+Value* vgen_ir_cached(Allocator* alc, Value* value);
 
 struct Value {
     int type;
@@ -65,6 +66,10 @@ struct VIncr {
     Value* on;
     bool increment;
     bool before;
+};
+struct VIRCached {
+    Value* value;
+    char* ir_value;
 };
 
 #endif

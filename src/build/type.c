@@ -219,6 +219,7 @@ void type_check(Chunk* chunk, Type* t1, Type* t2) {
 
 bool type_is_void(Type* type) { return type->type == type_void; }
 bool type_is_bool(Type* type) { return type->type == type_bool; }
+bool type_is_gc(Type* type) { return type->is_pointer && type->type == type_struct && type->class->type == ct_class && false; }
 
 char* type_to_str(Type* t, char* res) {
 

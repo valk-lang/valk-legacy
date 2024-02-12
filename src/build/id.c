@@ -7,12 +7,15 @@ Idf* idf_make(Allocator* alc, int type, void* item) {
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, Type* type, bool is_arg) {
+Decl* decl_make(Allocator* alc, Type* type) {
     Decl* d = al(alc, sizeof(Decl));
     d->type = type;
     d->ir_var = NULL;
-    d->is_arg = is_arg;
     d->is_mut = false;
+    d->is_gc = type_is_gc(type);
+    if(d->is_gc) {
+        d->is_mut = true;
+    }
     return d;
 }
 
@@ -109,12 +112,47 @@ Idf* scope_find_type_idf(Scope* scope, char* name, bool recursive) {
     return NULL;
 }
 
-Func *get_volt_func(Build *b, char *namespace, char *name) {
-    Nsc* nsc = get_volt_nsc(b, namespace);
+Idf* get_volt_idf(Build* b, char* ns, char* name, bool must_exist) {
+    Nsc* nsc = get_volt_nsc(b, ns);
+    if(!nsc) {
+        if(!must_exist)
+            return NULL;
+        printf("Namespace: '%s'\n", ns);
+        build_err(b, "Volt namespace not found (compiler bug)");
+    }
     Idf* idf = scope_find_idf(nsc->scope, name, false);
-    if(idf && idf->type == idf_func) {
+    if(!idf && must_exist) {
+        printf("Identifier: '%s:%s'\n", ns, name);
+        build_err(b, "Volt identifier not found (compiler bug)");
+    }
+    return idf;
+}
+
+Func *get_volt_func(Build *b, char *namespace, char *name) {
+    Idf* idf = get_volt_idf(b, namespace, name, true);
+    if(idf->type == idf_func) {
         return idf->item;
     }
-    printf("VOLT FUNCTION NOT FOUND: '%s'", name);
-    exit(1);
+    printf("Identifier: '%s:%s'\n", namespace, name);
+    build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+}
+Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn) {
+    Idf* idf = get_volt_idf(b, namespace, class_name, true);
+    if(idf->type == idf_class) {
+        Class* class = idf->item;
+        Func* func = map_get(class->funcs, fn);
+        if(func)
+            return func;
+    }
+    printf("Identifier: '%s:%s->%s'\n", namespace, class_name, fn);
+    build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+}
+
+Global *get_volt_global(Build *b, char *namespace, char *name) {
+    Idf* idf = get_volt_idf(b, namespace, name, true);
+    if(idf->type == idf_global) {
+        return idf->item;
+    }
+    printf("Identifier: '%s:%s'\n", namespace, name);
+    build_err(b, "Volt identifier was found but is not a global variable (compiler bug)");
 }
