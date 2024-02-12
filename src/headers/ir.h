@@ -19,6 +19,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size);
+void ir_func_return(IR* ir, char* type, char* value);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func);
 // AST
@@ -95,6 +96,7 @@ struct IRFunc {
     char* di_scope;
     //
     int var_count;
+    int gc_count;
 };
 struct IRBlock {
     char* name;

@@ -36,6 +36,7 @@ struct Scope {
     IRBlock* ir_cond_block;
     bool must_return;
     bool did_return;
+    bool calls_other_functions;
 };
 struct Id {
     char* ns;
@@ -48,8 +49,10 @@ struct Idf {
 struct Decl {
     Type* type;
     char *ir_var;
+    char *ir_store_var;
     bool is_mut;
     bool is_gc;
+    bool is_arg;
 };
 struct Global {
     char* name;

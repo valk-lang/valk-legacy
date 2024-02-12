@@ -43,7 +43,7 @@ void stage_types_func(Fc* fc, Func* func) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
         map_set_force_new(func->args, "this", arg);
         array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(b->alc, arg->type);
+        Decl *decl = decl_make(b->alc, arg->type, true);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, fc);
         arg->decl = decl;
@@ -74,7 +74,7 @@ void stage_types_func(Fc* fc, Func* func) {
             map_set_force_new(func->args, name, arg);
             array_push(func->arg_types, type);
 
-            Decl* decl = decl_make(b->alc, type);
+            Decl* decl = decl_make(b->alc, type, true);
             Idf* idf = idf_make(b->alc, idf_decl, decl);
             scope_set_idf(func->scope, name, idf, fc);
             arg->decl = decl;

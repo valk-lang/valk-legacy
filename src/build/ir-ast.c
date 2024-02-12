@@ -25,8 +25,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
             char *lval = ir_value(ir, scope, val);
             if (decl->is_mut) {
-                ir_store(ir, decl->type, decl->ir_var, lval);
+                ir_store(ir, decl->type, decl->ir_store_var, lval);
             } else {
+                if(decl->is_gc) {
+                    ir_store(ir, decl->type, decl->ir_store_var, lval);
+                }
                 decl->ir_var = lval;
             }
             continue;
@@ -43,19 +46,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         if (tt == t_return) {
             Value *v = t->item;
-            char *irv = "void";
-            if(v)
-                irv = ir_value(ir, scope, v);
-            Str* code = ir->block->code;
-            str_flat(code, "  ret ");
             if(v) {
-                str_add(code, ir_type(ir, v->rett));
-                str_flat(code, " ");
-                str_add(code, irv);
+                char* irv = ir_value(ir, scope, v);
+                ir_func_return(ir, ir_type(ir, v->rett), irv);
             } else {
-                str_flat(code, "void");
+                ir_func_return(ir, NULL, "void");
             }
-            str_flat(code, "\n");
             continue;
         }
 

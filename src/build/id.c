@@ -7,15 +7,15 @@ Idf* idf_make(Allocator* alc, int type, void* item) {
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, Type* type) {
+Decl* decl_make(Allocator* alc, Type* type, bool is_arg) {
+    bool is_gc = type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->type = type;
     d->ir_var = NULL;
+    d->ir_store_var = NULL;
     d->is_mut = false;
-    d->is_gc = type_is_gc(type);
-    if(d->is_gc) {
-        d->is_mut = true;
-    }
+    d->is_gc = is_gc;
+    d->is_arg = is_arg;
     return d;
 }
 

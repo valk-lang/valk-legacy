@@ -43,16 +43,16 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     }
     if (v->type == v_decl) {
         Decl *decl = v->item;
-        char *var_val = decl->ir_var;
-        if (!var_val) {
-            // printf("Decl name: %s\n", decl->name);
-            printf("Missing decl value (compiler bug)\n");
-            raise(11);
+        if(decl->is_mut) {
+            if (!decl->ir_store_var) {
+                build_err(ir->b, "Missing decl storage variable (compiler bug)");
+            }
+            return ir_load(ir, decl->type, decl->ir_store_var);
         }
-        if (!decl->is_mut) {
-            return var_val;
+        if (!decl->ir_var) {
+            build_err(ir->b, "Missing decl value variable (compiler bug)");
         }
-        return ir_load(ir, decl->type, var_val);
+        return decl->ir_var;
     }
     if (v->type == v_global) {
         Global* g = v->item;
@@ -170,7 +170,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
 char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_decl) {
         Decl *decl = v->item;
-        return decl->ir_var;
+        return decl->ir_store_var;
     }
     if (v->type == v_global) {
         Global* g = v->item;

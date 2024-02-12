@@ -19,6 +19,7 @@ void ir_gen_functions(IR* ir) {
         func->di_scope = NULL;
         //
         func->var_count = 0;
+        func->gc_count = 0;
 
         IRBlock* start = ir_block_make(ir, func);
         IRBlock* code = ir_block_make(ir, func);
@@ -35,18 +36,30 @@ void ir_gen_functions(IR* ir) {
 void ir_gen_func(IR *ir, IRFunc *func) {
     Allocator* alc = ir->alc;
     Build* b = ir->b;
+    int gc_count = 0;
+    int gc_index = 0;
+
+    ir->func = func;
+    ir->block = func->block_code;
+    Str *code = ir->block->code;
 
     // Arg vars
     Func* vfunc = func->func;
     Array *args = vfunc->args->values;
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);
-        char *v = ir_var(func);
-        arg->decl->ir_var = v;
+        Decl* decl = arg->decl;
+        if(decl->is_gc) {
+            gc_count++;
+        }
+        char* var = ir_var(func);
+        decl->ir_var = var;
+        if(decl->is_mut && !decl->is_gc) {
+            decl->ir_store_var = ir_alloca(ir, func, decl->type);
+        }
     }
 
     // Decls
-    int gc_count = 0;
     Scope* scope = vfunc->scope;
     Array* decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
@@ -55,13 +68,9 @@ void ir_gen_func(IR *ir, IRFunc *func) {
             gc_count++;
         }
         if(decl->is_mut) {
-            decl->ir_var = ir_alloca(ir, func, decl->type);
+            decl->ir_store_var = ir_alloca(ir, func, decl->type);
         }
     }
-
-    //
-    ir->func = func;
-    ir->block = func->block_code;
 
     // Start GC
     if(func->func == ir->b->func_main) {
@@ -75,7 +84,9 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     }
 
     // GC reserve
+    char* reserve_adr = NULL;
     if(gc_count > 0) {
+        func->gc_count = gc_count;
         // Call reserve function
         Global* g = get_volt_global(b, "mem", "stack");
         Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
@@ -87,16 +98,15 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         // Call reserve
         Array *values = ir_fcall_args(ir, scope, args);
         Func* reserve = get_volt_class_func(b, "mem", "Stack", "reserve");
-        char* reserve_adr = ir_func_call(ir, ir_func_ptr(ir, reserve), values, ir_type(ir, reserve->rett), 0, 0);
+        reserve_adr = ir_func_call(ir, ir_func_ptr(ir, reserve), values, ir_type(ir, reserve->rett), 0, 0);
 
         // Set decl IR values
-        int index = 0;
         for (int i = 0; i < decls->length; i++) {
-            Str *code = ir->block->code;
             Decl* decl = array_get_index(decls, i);
             if(decl->is_gc) {
                 char lindex[10];
-                itoa(index++, lindex, 10);
+                itoa(gc_index, lindex, 10);
+                gc_index += 2;
                 char *var = ir_var(ir->func);
                 str_flat(code, "  ");
                 str_add(code, var);
@@ -105,8 +115,39 @@ void ir_gen_func(IR *ir, IRFunc *func) {
                 str_flat(code, ", i32 ");
                 str_add(code, lindex);
                 str_flat(code, "\n");
-                decl->ir_var = var;
+
+                decl->ir_store_var = var;
             }
+        }
+    }
+
+    // Store arg values
+    for (int i = 0; i < args->length; i++) {
+        FuncArg *arg = array_get_index(args, i);
+        Decl* decl = arg->decl;
+        if(decl->is_gc) {
+            char lindex[10];
+            itoa(gc_index, lindex, 10);
+            gc_index += 2;
+            char *var = ir_var(ir->func);
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = getelementptr inbounds ptr, ptr ");
+            str_add(code, reserve_adr);
+            str_flat(code, ", i32 ");
+            str_add(code, lindex);
+            str_flat(code, "\n");
+
+            decl->ir_store_var = var;
+            // Store passed argument in storage var
+            printf("1");
+            ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
+            printf("2");
+        } else if (decl->is_mut) {
+            // Store passed argument in storage var
+            printf("3");
+            ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
+            printf("4");
         }
     }
 
@@ -117,7 +158,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir_write_ast(ir, vfunc->scope);
     //
     if (!vfunc->scope->did_return) {
-        str_flat(ir->block->code, "  ret void\n");
+        ir_func_return(ir, NULL, "void");
     }
 
     // Jump from start to code block
@@ -210,4 +251,35 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size) {
     str_flat(code, ", align 8\n");
 
     return var;
+}
+
+
+void ir_func_return(IR* ir, char* type, char* value) {
+    IRFunc* func = ir->func;
+    int gc_count = func->gc_count;
+    if(gc_count > 0) {
+        Allocator* alc = ir->alc;
+        Build* b = ir->b;
+        Scope *scope = func->func->scope;
+        // Call reserve function
+        Global* g = get_volt_global(b, "mem", "stack");
+        Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
+        // Pop args
+        Array* args = array_make(alc, gc_count);
+        Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
+        array_push(args, stack);
+        array_push(args, amount);
+        // Call pop
+        Array *values = ir_fcall_args(ir, scope, args);
+        Func* pop = get_volt_class_func(b, "mem", "Stack", "pop");
+        ir_func_call(ir, ir_func_ptr(ir, pop), values, ir_type(ir, pop->rett), 0, 0);
+    }
+    Str* code = ir->block->code;
+    str_flat(code, "  ret ");
+    if(type) {
+        str_add(code, type);
+        str_flat(code, " ");
+    }
+    str_add(code, value);
+    str_flat(code, "\n");
 }
