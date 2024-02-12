@@ -17,22 +17,28 @@ value sub_state_keep (16)
 value byte_moved (0)
 
 struct Stack {
-    data : ptr
-    count : uint (0)
-    count_last : uint (0)
-    object_count : uint (0)
-    object_count_last : uint (0)
-    object_count_transfer : uint (0)
-    object_count_trigger : uint (100)
+    stack_data : ptr
+    stack_index : uint (0)
+    stack_index_last : uint (0)
+
+    obcount : uint (0)
+    obcount_last : uint (0)
+    obcount_transfer : uint (0)
+    obcount_trigger : uint (100)
+
     lowest: uint (0)
     lowest_next : uint (0)
+
     unknown : ObjectChain
     transfer : ObjectChain
     move_checks : ObjectChain
     to_be_free : ObjectChain
+
     bump: Bump
+
     run_gc_timeout : i32 (0)
     run_gc_full_timeout : i32 (0)
+
     age: u8 (32)
 
     static fn new() Stack {
@@ -50,7 +56,7 @@ struct Stack {
         }
 
         let s = Stack {
-            data: data
+            stack_data: data
             unknown: unknown
             transfer: transfer
             move_checks: move_checks
@@ -72,21 +78,24 @@ struct Stack {
     // Stack items
     ///////////////////////
     fn reserve(amount: uint) ptr {
-        let count = this.count
+        let count = this.stack_index
         if this.run_gc_timeout == 0 {
             this.gc()
+            // print("Timeout\n")
         } else if (count <= this.lowest) {
             this.gc()
-        } else if (this.object_count > this.object_count_trigger) {
+            // print("Lowest\n")
+        } else if (this.obcount > this.obcount_trigger) {
             this.gc()
+            // print("OBCOUNT\n")
         }
-        let adr = this.data + (count * sizeof(ptr) * 2);
-        this.count = count + amount
+        let adr = this.stack_data + (count * sizeof(ptr) * 2);
+        this.stack_index = count + amount
         return adr
     }
     fn pop(amount: uint) {
-        let data = this.data;
-        let count = this.count
+        let data = this.stack_data;
+        let count = this.stack_index
         let new_count = count - amount
         if new_count < this.lowest_next {
             this.lowest_next = new_count
@@ -94,7 +103,7 @@ struct Stack {
         if new_count < this.lowest {
             this.lowest = new_count
         }
-        this.count = new_count;
+        this.stack_index = new_count;
     }
 
     ///////////////////////
@@ -151,23 +160,28 @@ struct Stack {
         }
 
         // Update counters
-        let tc = this.object_count_transfer
-        if tc > 0 {
-        print(tc.to_str())
-        print("<\n")
+        let transfered = this.obcount_transfer
+        let new_ob_count = this.obcount_last + transfered
+        let obcount_before = this.obcount
+        let freed = obcount_before - new_ob_count
+        if transfered > freed {
+            // Increase trigger
+            this.obcount_trigger = obcount_before * 12 / 10
+        } else {
+            // Reduce trigger
+            this.obcount_trigger = this.obcount_trigger * 100 / 99
         }
-        let new_ob_count = this.object_count_last + this.object_count_transfer
-        this.object_count = new_ob_count
-        this.object_count_last = new_ob_count
-        this.object_count_trigger = (new_ob_count + 100) * 15 / 10
-        this.object_count_transfer = 0
-        this.count_last = this.count
+
+        this.obcount = new_ob_count
+        this.obcount_last = new_ob_count
+        this.obcount_transfer = 0
+        this.stack_index_last = this.stack_index
     }
 
     fn mark_difference_down() {
-        let data = this.data
-        let new_count = this.count
-        let last_count = this.count_last
+        let data = this.stack_data
+        let new_count = this.stack_index
+        let last_count = this.stack_index_last
         let x = new_count
         if last_count > x {
             x = last_count
@@ -303,7 +317,7 @@ struct Stack {
         chain.olist_last = first_list
         chain.index = 0
 
-        this.object_count_transfer = count
+        this.obcount_transfer = count
     }
 
     fn clean_unknown_list() {
@@ -403,8 +417,8 @@ struct Stack {
     }
 
     fn mark_stack_as_solid() {
-        let data = this.data
-        let x = this.count
+        let data = this.stack_data
+        let x = this.stack_index
         let age = this.age
         while x > 0 {
             x--
@@ -481,8 +495,8 @@ struct Stack {
         chain.index = 0
 
         // Check stack objects that have been moved
-        let data = this.data
-        let x = this.count
+        let data = this.stack_data
+        let x = this.stack_index
         while x > 0 {
             x--
             let index = x * 2
