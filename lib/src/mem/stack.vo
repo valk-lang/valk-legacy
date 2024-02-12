@@ -100,33 +100,24 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    fn link(on: ptr, to: ptr) ptr {
-        if to == null {
-            return to
-        }
+    fn link(on: ptr, to: ptr) {
         let to_state = @ptrv(to, u8, 0)
-        if to_state > state_transfer {
-            return to
-        }
         let on_state = @ptrv(on, u8, 0)
-        if on_state > state_transfer {
-            if to_state == state_new {
-                // Transfer
-                this.transfer.add_item(to)
-                @ptrv(to, u8, 0) = state_transfer @as u8
-                @ptrv(to, u8, 1) = on_state @as u8
-            } else if on_state == state_solid {
-                // Update transfer state (if solid)
-                @ptrv(to, u8, 1) = state_solid @as u8
-            }
-            // Add to move check list
-            let in_list = @ptrv(on, u8, 3)
-            if in_list == 0 {
-                this.move_checks.add_item(on)
-                @ptrv(on, u8, 3) = 1
-            }
+        if to_state == state_new {
+            // Transfer
+            this.transfer.add_item(to)
+            @ptrv(to, u8, 0) = state_transfer @as u8
+            @ptrv(to, u8, 1) = on_state @as u8
+        } else if on_state == state_solid {
+            // Update transfer state (if solid)
+            @ptrv(to, u8, 1) = state_solid @as u8
         }
-        return to
+        // Add to move check list
+        let in_list = @ptrv(on, u8, 3)
+        if in_list == 0 {
+            this.move_checks.add_item(on)
+            @ptrv(on, u8, 3) = 1
+        }
     }
     static fn unlink(item: ptr) {
         if item == (null) {
