@@ -74,11 +74,13 @@ struct Stack {
     fn reserve(amount: uint) ptr {
         let count = this.count
         if this.run_gc_timeout == 0 {
+            // print("_")
             this.gc()
         } else if (count <= this.lowest) {
+            // print("l")
             this.gc()
-        } else if (this.object_count > this.object_count_trigger) {
-            this.gc()
+        // } else if (this.object_count > this.object_count_trigger) {
+        //     this.gc()
         }
         let adr = this.data + (count * sizeof(ptr) * 2);
         this.count = count + amount
@@ -100,34 +102,35 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    fn link(on: ptr, to: ptr) ptr {
-        if to == null {
-            return to
-        }
-        let to_state = @ptrv(to, u8, 0)
-        if to_state > state_transfer {
-            return to
-        }
-        let on_state = @ptrv(on, u8, 0)
-        if on_state > state_transfer {
-            if to_state == state_new {
-                // Transfer
-                this.transfer.add_item(to)
-                @ptrv(to, u8, 0) = state_transfer @as u8
-                @ptrv(to, u8, 1) = on_state @as u8
-            } else if on_state == state_solid {
-                // Update transfer state (if solid)
-                @ptrv(to, u8, 1) = state_solid @as u8
-            }
-            // Add to move check list
-            let in_list = @ptrv(on, u8, 3)
-            if in_list == 0 {
-                this.move_checks.add_item(on)
-                @ptrv(on, u8, 3) = 1
-            }
-        }
-        return to
-    }
+    // fn link(on: ptr, to: ptr) ptr {
+    //     return to
+    //     if to == null {
+    //         return to
+    //     }
+    //     let to_state = @ptrv(to, u8, 0)
+    //     if to_state > state_transfer {
+    //         return to
+    //     }
+    //     let on_state = @ptrv(on, u8, 0)
+    //     if on_state > state_transfer {
+    //         if to_state == state_new {
+    //             // Transfer
+    //             this.transfer.add_item(to)
+    //             @ptrv(to, u8, 0) = state_transfer @as u8
+    //             @ptrv(to, u8, 1) = on_state @as u8
+    //         } else if on_state == state_solid {
+    //             // Update transfer state (if solid)
+    //             @ptrv(to, u8, 1) = state_solid @as u8
+    //         }
+    //         // Add to move check list
+    //         let in_list = @ptrv(on, u8, 3)
+    //         if in_list == 0 {
+    //             this.move_checks.add_item(on)
+    //             @ptrv(on, u8, 3) = 1
+    //         }
+    //     }
+    //     return to
+    // }
     static fn unlink(item: ptr) {
         if item == (null) {
             return
@@ -151,15 +154,20 @@ struct Stack {
         this.handle_transfer_list()
         this.check_moves()
         this.bump.wipe()
-        this.run_gc_timeout = 5 @as i32
+        this.run_gc_timeout = 10 @as i32
 
         if this.run_gc_full_timeout == 0 {
             // Full clear
             this.clean_unknown_list()
-            this.run_gc_full_timeout = 20 @as i32
+            this.run_gc_full_timeout = 40 @as i32
         }
 
         // Update counters
+        let tc = this.object_count_transfer
+        if tc > 0 {
+        print(tc.to_str())
+        print("<\n")
+        }
         let new_ob_count = this.object_count_last + this.object_count_transfer
         this.object_count = new_ob_count
         this.object_count_last = new_ob_count
