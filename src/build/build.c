@@ -76,7 +76,7 @@ int cmd_build(int argc, char *argv[]) {
 
     b->ptr_size = 8;
     b->export_count = 0;
-    b->verbose = 3;
+    b->verbose = 2;
     b->LOC = 0;
     b->parser_started = false;
 

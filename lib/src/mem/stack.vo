@@ -11,7 +11,7 @@ value state_solid (4)
 value state_unknown (8)
 value state_freed (16)
 value state_global (32)
-value stack_size (100000)
+value stack_size (1000000)
 
 value sub_state_unknown (16)
 value sub_state_keep (16)
@@ -180,10 +180,10 @@ struct Stack {
         let freed = space_added - transfered
         if transfered > freed {
             // Increase trigger
-            this.space_trigger = space_added * 12 / 10
+            this.space_trigger = space_added * 15 / 10
         } else {
             // Reduce trigger
-            this.space_trigger = this.space_trigger * 100 / 99
+            this.space_trigger = this.space_trigger * 100 / 95
         }
 
         this.space_transfered = 0
