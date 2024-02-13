@@ -45,11 +45,11 @@ struct Gc {
                 let s = @ptrv(stacks, Stack, si);
                 if x < 20 {
                     s.lowest = s.lowest_next 
-                    s.lowest_next = 99999999 @as uint
+                    s.lowest_next = s.stack_adr + (100000 * sizeof(ptr)) // Add 100k
                 }
                 if x % 20 == 0 {
                     s.lowest = s.lowest_next 
-                    s.lowest_next = 99999999 @as uint
+                    s.lowest_next = s.stack_adr + (100000 * sizeof(ptr)) // Add 100k
                 }
                 //
                 if s.run_gc_timeout > 0 {

@@ -5,6 +5,12 @@ use volt:os
 global stack : ?Stack;
 global allocator : ?Bump;
 
+global stack_adr_ref : ptr (null);
+
+global space_trigger_min_ref : ptr (null);
+global space_trigger_max_ref : ptr (null);
+global lowest_ref : ptr (null);
+
 value state_new (0)
 value state_transfer (2)
 value state_solid (4)
@@ -19,15 +25,15 @@ value sub_state_keep (16)
 value byte_moved (0)
 
 struct Stack {
-    stack_data : ptr
-    stack_index : uint (0)
-    stack_index_last : uint (0)
+    stack_base : ptr
+    stack_adr : ptr
+    stack_adr_last : ptr
 
     space_transfered: uint (0)
     space_trigger : uint (10000)
 
-    lowest: uint (0)
-    lowest_next : uint (0)
+    lowest: ptr
+    lowest_next : ptr
 
     unknown : ObjectChain
     transfer : ObjectChain
@@ -55,7 +61,13 @@ struct Stack {
         }
 
         let s = Stack {
-            stack_data: data
+            stack_base: data
+            stack_adr: data
+            stack_adr_last: data
+
+            lowest: data
+            lowest_next: data
+
             unknown: unknown
             transfer: transfer
             move_checks: move_checks
@@ -81,7 +93,7 @@ struct Stack {
     // Stack items
     ///////////////////////
     fn reserve(amount: uint) ptr {
-        let count = this.stack_index
+        let adr = this.stack_adr;
         let bump = this.bump
         let space_added = bump.space_added
         if this.run_gc_timeout == 0 {
@@ -89,7 +101,7 @@ struct Stack {
             // print("T\n")
         } else if (space_added > (bump.space_total >> 1)) {
             // Only gc when bump is atleast half full
-            if (count <= this.lowest) {
+            if (adr <= this.lowest) {
                 this.gc()
                 // print("L\n")
             } else if (space_added > this.space_trigger) {
@@ -97,10 +109,8 @@ struct Stack {
                 // print("A\n")
             }
         }
-        let adr = this.stack_data + (count * sizeof(ptr) * 2);
-        this.stack_index = count + amount
+        this.stack_adr = adr + (amount * sizeof(ptr) * 2);
         //
-        let adr_ = adr;
         let amount_ = amount
         while amount_ > 0 {
             amount_--
@@ -110,16 +120,17 @@ struct Stack {
         return adr
     }
     fn pop(amount: uint) {
-        let data = this.stack_data;
-        let count = this.stack_index
-        let new_count = count - amount
-        if new_count < this.lowest_next {
-            this.lowest_next = new_count
+        let adr = this.stack_adr;
+        let new_adr = adr - (amount * sizeof(ptr) * 2)
+        this.stack_adr = new_adr;
+
+        // let new_count = count - amount
+        if new_adr < this.lowest_next {
+            this.lowest_next = new_adr
         }
-        if new_count < this.lowest {
-            this.lowest = new_count
+        if new_adr < this.lowest {
+            this.lowest = new_adr
         }
-        this.stack_index = new_count;
     }
 
     ///////////////////////
@@ -198,25 +209,23 @@ struct Stack {
         }
 
         this.space_transfered = 0
-        this.stack_index_last = this.stack_index
+        this.stack_adr_last = this.stack_adr
     }
 
     fn mark_difference_down() {
-        let data = this.stack_data
-        let new_count = this.stack_index
-        let last_count = this.stack_index_last
-        let x = new_count
-        if last_count > x {
-            x = last_count
-        }
         let transfer = this.transfer
         let unknown = this.unknown
-        while x > 0 {
-            x--
-            let index = x * 2
-            let item_prev = @ptrv(data, ptr, index + 1);
-            if x < new_count {
-                let item = @ptrv(data, ptr, index);
+
+        let data = this.stack_base
+        let adr = this.stack_adr
+        let adr_last = this.stack_adr_last
+        let age = this.age
+        while adr > data {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item_prev = @ptrv(item_adr, ptr, 1);
+            if item_adr < adr_last {
+                let item = @ptrv(item_adr, ptr);
                 if item != item_prev {
                     // Stack position changed
                     if item_prev != null {
@@ -240,7 +249,7 @@ struct Stack {
                         } 
                     }
                     // Overwrite prev
-                    @ptrv(data, ptr, index + 1) = item
+                    @ptrv(item_adr, ptr, 1) = item
                 }
             } else {
                 // 
@@ -252,7 +261,8 @@ struct Stack {
                         @ptrv(item_prev, u8, 1) = 0
                     }
                 }
-                @ptrv(data, ptr, index + 1) = null
+
+                @ptrv(item_adr, ptr, 1) = null
             }
         }
     }
@@ -413,13 +423,13 @@ struct Stack {
     }
 
     fn mark_stack_as_solid() {
-        let data = this.stack_data
-        let x = this.stack_index
+        let data = this.stack_base
+        let adr = this.stack_adr
         let age = this.age
-        while x > 0 {
-            x--
-            let index = x * 2
-            let item = @ptrv(data, ptr, index);
+        while adr > data {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item = @ptrv(item_adr, ptr);
             if item != null {
                 if @ptrv(item, u8, 1) != age {
                     Stack.mark_stack_item_as_solid_rec(item, age)
@@ -485,12 +495,13 @@ struct Stack {
         chain.index = 0
 
         // Check stack objects that have been moved
-        let data = this.stack_data
-        let x = this.stack_index
-        while x > 0 {
-            x--
-            let index = x * 2
-            let item = @ptrv(data, ptr, index);
+        let data = this.stack_base
+        let adr = this.stack_adr
+        let age = this.age
+        while adr > data {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item = @ptrv(item_adr, ptr);
             if item == null {
                 continue
             }
@@ -498,8 +509,8 @@ struct Stack {
                 // Object was moved
                 let new_item = @ptrv(item, ptr, 0) - 1
 
-                @ptrv(data, ptr, index) = new_item
-                @ptrv(data, ptr, index + 1) = new_item
+                @ptrv(item_adr, ptr) = new_item
+                @ptrv(item_adr, ptr, 1) = new_item
             }
         }
     }
@@ -607,13 +618,14 @@ struct Stack {
         chain.delete()
 
         // Clear stack
-        let data = this.stack_data
-        let x = this.stack_index
-        while x > 0 {
-            x--
-            let index = x * 2
-            let item = @ptrv(data, ptr, index);
-            let item_prev = @ptrv(data, ptr, index + 1);
+        let data = this.stack_base
+        let adr = this.stack_adr
+        let age = this.age
+        while adr > data {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item = @ptrv(item_adr, ptr);
+            let item_prev = @ptrv(item_adr, ptr, 1);
 
             if @ptrv(item, u8, 0) == state_solid {
                 Stack.free_item_rec(item, bump)
