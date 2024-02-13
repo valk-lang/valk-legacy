@@ -17,6 +17,9 @@ void ir_gen_functions(IR* ir) {
         //
         func->stack_save_vn = NULL;
         func->di_scope = NULL;
+        func->gc_stack = NULL;
+        func->gc_stack_adr = NULL;
+        func->gc_stack_adr_val = NULL;
         //
         func->var_count = 0;
         func->gc_count = 0;
@@ -87,12 +90,29 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     char* reserve_adr = NULL;
     if(gc_count > 0) {
         func->gc_count = gc_count;
-        // Call reserve function
+        // Get stack object
         Global* g = get_volt_global(b, "mem", "stack");
         Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
-        // Reserve args
+        char* lstack = ir_value(ir, vfunc->scope, stack);
+        // Increase stack
+        // Class* class = g->type->class;
+        // ClassProp* prop = map_get(class->props, "stack_adr");
+        // char* stack_adr = ir_class_pa(ir, class, lstack, prop);
+        // char* stack_adr_val = ir_load(ir, prop->type, stack_adr);
+        // char* add = ir_var(func);
+        // char buf[100];
+        // sprintf(buf, "  %s = getelementptr inbounds ptr, ptr %s, i32 %d\n", add, stack_adr_val, gc_count * 2);
+        // str_add(code, buf);
+        // ir_store(ir, prop->type, stack_adr, add);
+        // char* reserve_adr = stack_adr_val;
+
+        func->gc_stack = lstack;
+        // func->gc_stack_adr = stack_adr;
+        // func->gc_stack_adr_val = stack_adr_val;
+
+        // // Reserve args
         Array* args = array_make(alc, gc_count);
-        Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, ir->b, ir->b->ptr_size, false, false));
+        Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
         array_push(args, stack);
         array_push(args, amount);
         // Call reserve
@@ -117,6 +137,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
                 str_flat(code, "\n");
 
                 decl->ir_store_var = var;
+                ir_store(ir, decl->type, var, "null");
             }
         }
     }
@@ -271,6 +292,8 @@ void ir_func_return(IR* ir, char* type, char* value) {
         Array *values = ir_fcall_args(ir, scope, args);
         Func* pop = get_volt_class_func(b, "mem", "Stack", "pop");
         ir_func_call(ir, ir_func_ptr(ir, pop), values, ir_type(ir, pop->rett), 0, 0);
+
+        // ir_store(ir, type_gen_volt(ir->alc, ir->b, "ptr"), func->gc_stack_adr, func->gc_stack_adr_val);
     }
     Str* code = ir->block->code;
     str_flat(code, "  ret ");

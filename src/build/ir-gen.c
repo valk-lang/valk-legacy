@@ -303,8 +303,20 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
 
     char *ltype = ir_type(ir, rett);
     char *var = ir_var(ir->func);
-
     Str *code = ir->block->code;
+
+    // if(rett->is_pointer) {
+    //     // Add / sub pointers
+    //     str_flat(code, "  ");
+    //     str_add(code, var);
+    //     str_flat(code, " = getelementptr i8, ptr ");
+    //     str_add(code, left);
+    //     str_flat(code, ", i64 ");
+    //     str_add(code, right);
+    //     str_flat(code, "\n");
+    //     return var;
+    // }
+
     str_flat(code, "  ");
     str_add(code, var);
     str_flat(code, " = ");
