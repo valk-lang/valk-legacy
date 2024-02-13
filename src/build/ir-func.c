@@ -94,55 +94,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     if(gc_reserve) {
         ir_write_ast(ir, gc_reserve);
 
-        // Get stack object
-        // Global* g = get_volt_global(b, "mem", "stack");
-        // Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
-        // char* lstack = ir_value(ir, vfunc->scope, stack);
-        // // Increase stack
-        // Class* class = g->type->class;
-        // ClassProp* prop_stack_adr = map_get(class->props, "stack_adr");
-        // char* stack_adr = ir_class_pa(ir, class, lstack, prop_stack_adr);
-        // char* stack_adr_val = ir_load(ir, prop_stack_adr->type, stack_adr);
-        // // Add
-        // char* add = ir_var(func);
-        // char buf[100];
-        // sprintf(buf, "  %s = getelementptr inbounds ptr, ptr %s, i32 %d\n", add, stack_adr_val, gc_count * 2);
-        // str_add(code, buf);
-        // // Store
-        // ir_store(ir, prop_stack_adr->type, stack_adr, add);
-        // reserve_adr = stack_adr_val;
-
-        // // Compare lowest
-        // ClassProp* prop_next = map_get(class->props, "lowest_next");
-        // char* next_var = ir_class_pa(ir, class, lstack, prop_stack_adr);
-        // char* next_val = ir_load(ir, prop_next->type, stack_adr);
-        // Type* type_next = prop_next->type;
-        // char* type_next_ir = ir_type(ir, type_next);
-        // char* comp = ir_compare(ir, op_lt, stack_adr_val, next_val, type_next_ir, type_next->is_signed, false);
-        // IRBlock *block_if = ir_block_make(ir, ir->func, "if_gc_next_");
-        // IRBlock *after = ir_block_make(ir, ir->func, "if_gc_next_");
-        // char *lcond_i1 = ir_i1_cast(ir, comp);
-        // ir_cond_jump(ir, lcond_i1, block_if, after);
-        // ir->block = block_if;
-        // code = block_if->code;
-        // ir_store(ir, type_next, next_var, stack_adr_val);
-        // ir->block = after;
-        // code = after->code;
-
-        // func->gc_stack = lstack;
-        // func->gc_stack_adr = stack_adr;
-        // func->gc_stack_adr_val = stack_adr_val;
-
-        // // Reserve args
-        // Array* args = array_make(alc, gc_count);
-        // Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-        // array_push(args, stack);
-        // array_push(args, amount);
-        // // Call reserve
-        // Array *values = ir_fcall_args(ir, scope, args);
-        // Func* reserve = get_volt_class_func(b, "mem", "Stack", "reserve");
-        // reserve_adr = ir_func_call(ir, ir_func_ptr(ir, reserve), values, ir_type(ir, reserve->rett), 0, 0);
-
         // Set decl IR values
         int gc_index = 0;
         Idf* idf = map_get(gc_reserve->identifiers, "STACK_ADR");
@@ -288,30 +239,6 @@ void ir_func_return(IR* ir, char* type, char* value) {
         Build* b = ir->b;
 
         ir_write_ast(ir, func->func->scope_gc_pop);
-
-        // Map *idfs = map_make(alc);
-        // Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-        // Idf *idf = idf_make(alc, idf_value, amount);
-        // map_set(idfs, "amount", idf);
-        // Fc* fc = ir->fc;
-        // Scope* ast = gen_snippet_ast(alc, ir->fc, get_volt_snippet(ir->b, "mem", "pop"), idfs, ir->func->func->scope);
-        // ir_write_ast(ir, ast);
-
-        // Scope *scope = func->func->scope;
-        // // Call reserve function
-        // Global* g = get_volt_global(b, "mem", "stack");
-        // Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
-        // // Pop args
-        // Array* args = array_make(alc, gc_count);
-        // Value* amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-        // array_push(args, stack);
-        // array_push(args, amount);
-        // // Call pop
-        // Array *values = ir_fcall_args(ir, scope, args);
-        // Func* pop = get_volt_class_func(b, "mem", "Stack", "pop");
-        // ir_func_call(ir, ir_func_ptr(ir, pop), values, ir_type(ir, pop->rett), 0, 0);
-
-        // ir_store(ir, type_gen_volt(ir->alc, ir->b, "ptr"), func->gc_stack_adr, func->gc_stack_adr_val);
     }
     Str* code = ir->block->code;
     str_flat(code, "  ret ");
