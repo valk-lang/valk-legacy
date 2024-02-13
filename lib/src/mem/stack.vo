@@ -86,16 +86,27 @@ struct Stack {
         let space_added = bump.space_added
         if this.run_gc_timeout == 0 {
             this.gc()
+            // print("T\n")
         } else if (space_added > (bump.space_total >> 1)) {
             // Only gc when bump is atleast half full
             if (count <= this.lowest) {
                 this.gc()
+                // print("L\n")
             } else if (space_added > this.space_trigger) {
                 this.gc()
+                // print("A\n")
             }
         }
         let adr = this.stack_data + (count * sizeof(ptr) * 2);
         this.stack_index = count + amount
+        //
+        let adr_ = adr;
+        let amount_ = amount
+        while amount_ > 0 {
+            amount_--
+            @ptrv(adr, ptr, amount * 2) = null
+        }
+        //
         return adr
     }
     fn pop(amount: uint) {
@@ -169,6 +180,13 @@ struct Stack {
         let space_added = bump.space_added
         bump.wipe()
         let transfered = this.space_transfered
+        // print(space_added.to_str())
+        // print(".")
+        // print(transfered.to_str())
+        // print("|")
+        // print("total:")
+        // print(bump.space_total.to_str())
+        // print("\n")
 
         let freed = space_added - transfered
         if transfered > freed {
