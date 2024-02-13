@@ -7,11 +7,6 @@ shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
 
-// item :
-// state(u8)    0 new 1 unknown 2 solid
-// in_list(u8)  0 new 1 unknown 2 none 3 transfer
-// fields(u8)
-
 struct Gc {
     stacks : ptr
     stack_count : int (0)

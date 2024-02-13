@@ -5,12 +5,6 @@ use volt:os
 global stack : ?Stack;
 global allocator : ?Bump;
 
-global stack_adr_ref : ptr (null);
-
-global space_trigger_min_ref : ptr (null);
-global space_trigger_max_ref : ptr (null);
-global lowest_ref : ptr (null);
-
 value state_new (0)
 value state_transfer (2)
 value state_solid (4)
@@ -30,7 +24,7 @@ struct Stack {
     stack_adr_last : ptr
 
     space_transfered: uint (0)
-    space_trigger : uint (10000)
+    space_trigger : uint (100000)
 
     lowest: ptr
     lowest_next : ptr
@@ -98,15 +92,12 @@ struct Stack {
         let space_added = bump.space_added
         if this.run_gc_timeout == 0 {
             this.gc()
-            // print("T\n")
         } else if (space_added > (bump.space_total >> 1)) {
             // Only gc when bump is atleast half full
             if (adr <= this.lowest) {
                 this.gc()
-                // print("L\n")
             } else if (space_added > this.space_trigger) {
                 this.gc()
-                // print("A\n")
             }
         }
         this.stack_adr = adr + (amount * sizeof(ptr) * 2);
@@ -191,13 +182,6 @@ struct Stack {
         let space_added = bump.space_added
         bump.wipe()
         let transfered = this.space_transfered
-        // print(space_added.to_str())
-        // print(".")
-        // print(transfered.to_str())
-        // print("|")
-        // print("total:")
-        // print(bump.space_total.to_str())
-        // print("\n")
 
         let freed = space_added - transfered
         if transfered > freed {
@@ -230,14 +214,11 @@ struct Stack {
                     // Stack position changed
                     if item_prev != null {
                         // Mark prev as unknown
-                        // let is_moved = (@ptrv(item_prev, u8, byte_moved) & 1) == 1
-                        // if is_moved == false {
-                            if @ptrv(item_prev, u8, 0) == state_solid {
-                                unknown.add_item(item_prev)
-                                @ptrv(item_prev, u8, 0) = state_unknown @as u8
-                                @ptrv(item_prev, u8, 1) = 0
-                            }
-                        // }
+                        if @ptrv(item_prev, u8, 0) == state_solid {
+                            unknown.add_item(item_prev)
+                            @ptrv(item_prev, u8, 0) = state_unknown @as u8
+                            @ptrv(item_prev, u8, 1) = 0
+                        }
                     }
                     if item != null {
                         // Make sure transfer state is solid
