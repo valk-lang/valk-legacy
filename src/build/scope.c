@@ -35,7 +35,21 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc) {
     map_set_force_new(scope->identifiers, name, idf);
 }
 
-void scope_add_decl(Scope* scope, Decl* decl) {
+void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
+    if(decl->is_gc) {
+        Scope *loop = scope;
+        while (loop && loop->type != sc_loop) {
+            loop = loop->parent;
+        }
+        if (loop) {
+            Array* decls = loop->decls;
+            if(!decls) {
+                decls = array_make(alc, 4);
+                loop->decls = decls;
+            }
+            array_push(decls, decl);
+        }
+    }
     while(scope && scope->type != sc_func) {
         scope = scope->parent;
     }

@@ -7,7 +7,7 @@
 // Scopes
 Scope* scope_make(Allocator* alc, int type, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc);
-void scope_add_decl(Scope* scope, Decl* decl);
+void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl);
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end);
 // Read
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);

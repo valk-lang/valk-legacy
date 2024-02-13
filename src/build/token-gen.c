@@ -13,7 +13,7 @@ Token *tgen_return(Allocator *alc, Value *value) {
 }
 
 Token *tgen_declare(Allocator *alc, Scope* scope, Decl *decl, Value* value) {
-    scope_add_decl(scope, decl);
+    scope_add_decl(alc, scope, decl);
     TDeclare *item = al(alc, sizeof(TDeclare));
     item->decl = decl;
     item->value = value;

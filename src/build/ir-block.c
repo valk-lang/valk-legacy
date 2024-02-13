@@ -1,10 +1,11 @@
 
 #include "../all.h"
 
-IRBlock *ir_block_make(IR *ir, IRFunc *func) {
-    char *name = al(ir->alc, 20);
-    strcpy(name, "block_");
-    itoa(func->blocks->length, name + 6, 10);
+IRBlock *ir_block_make(IR *ir, IRFunc *func, char* prefix) {
+    int len = strlen(prefix);
+    char *name = al(ir->alc, len + 10);
+    strcpy(name, prefix);
+    itoa(func->blocks->length, name + len, 10);
 
     IRBlock *block = al(ir->alc, sizeof(IRBlock));
     block->name = name;

@@ -21,8 +21,8 @@ void ir_gen_functions(IR* ir) {
         func->var_count = 0;
         func->gc_count = 0;
 
-        IRBlock* start = ir_block_make(ir, func);
-        IRBlock* code = ir_block_make(ir, func);
+        IRBlock* start = ir_block_make(ir, func, "start_");
+        IRBlock* code = ir_block_make(ir, func, "code_");
 
         func->block_start = start;
         func->block_code = code;

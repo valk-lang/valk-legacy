@@ -449,9 +449,9 @@ void ir_if(IR *ir, Scope *scope, TIf *ift) {
     Scope *scope_if = ift->scope_if;
     Scope *scope_else = ift->scope_else;
 
-    IRBlock *block_if = ir_block_make(ir, ir->func);
-    IRBlock *block_else = ir_block_make(ir, ir->func);
-    IRBlock *after = ir_block_make(ir, ir->func);
+    IRBlock *block_if = ir_block_make(ir, ir->func, "if_");
+    IRBlock *block_else = ir_block_make(ir, ir->func, "if_else_");
+    IRBlock *after = ir_block_make(ir, ir->func, "if_after_");
 
     char *lcond = ir_value(ir, scope, cond);
     char *lcond_i1 = ir_i1_cast(ir, lcond);
@@ -477,9 +477,9 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     Value *cond = item->cond;
     Scope *scope_while = item->scope_while;
 
-    IRBlock *block_cond = ir_block_make(ir, ir->func);
-    IRBlock *block_while = ir_block_make(ir, ir->func);
-    IRBlock *after = ir_block_make(ir, ir->func);
+    IRBlock *block_cond = ir_block_make(ir, ir->func, "while_cond_");
+    IRBlock *block_while = ir_block_make(ir, ir->func, "while_code_");
+    IRBlock *after = ir_block_make(ir, ir->func, "while_after_");
     scope_while->ir_after_block = after;
     scope_while->ir_cond_block = block_cond;
 
@@ -490,11 +490,26 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     char *lcond_i1 = ir_i1_cast(ir, lcond);
     ir_cond_jump(ir, lcond_i1, block_while, after);
 
+    // Code
     ir->block = block_while;
+
+    // Clear previous GC stack items
+    Array* decls = scope_while->decls;
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            if (decl->is_gc) {
+                ir_store(ir, decl->type, decl->ir_store_var, "null");
+            }
+        }
+    }
+
+    // Ast
     ir_write_ast(ir, scope_while);
     if (!scope_while->did_return) {
         ir_jump(ir, block_cond);
     }
 
+    //
     ir->block = after;
 }
