@@ -13,6 +13,7 @@ Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end)
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
 void tok_back(Fc* fc);
 void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline);
+char* tok_expect_two(Fc* fc, char* expect_1, char* expect_2, bool allow_space, bool allow_newline);
 char tok_id_next(Fc* fc);
 char tok_id_next_ignore_spacing(Fc* fc);
 char tok_read_byte(Fc* fc, int offset);
@@ -25,6 +26,7 @@ char* chunk_read(Chunk* chunk, int *i_ref);
 struct Scope {
     Scope* parent;
     Scope* loop_scope;
+    Scope* prio_idf_scope;
     Map* identifiers;
     Map* type_identifiers;
     Array* ast;

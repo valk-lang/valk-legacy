@@ -77,7 +77,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_compare) {
         VOp *vop = v->item;
         int op = vop->op;
-        return ir_compare(ir, scope, op, vop->left, vop->right);
+        char *l = ir_value(ir, scope, vop->left);
+        char *r = ir_value(ir, scope, vop->right);
+        Type* type = vop->left->rett;
+        char *ltype = ir_type(ir, vop->left->rett);
+        return ir_compare(ir, op, l, r, ltype, type->is_signed, type->type == type_float);
     }
     if (v->type == v_cast) {
         Value *val = v->item;

@@ -91,6 +91,11 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
         if(!idf) {
             if(!recursive)
                 break;
+            if(scope->prio_idf_scope) {
+                idf = scope_find_idf(scope->prio_idf_scope, name, true);
+                if(idf)
+                    return idf;
+            }
             scope = scope->parent;
             continue;
         }

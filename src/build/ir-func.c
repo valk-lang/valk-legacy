@@ -95,17 +95,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Value* stack = vgen_ir_cached(alc, value_make(alc, v_global, g, g->type));
         char* lstack = ir_value(ir, vfunc->scope, stack);
         // Increase stack
-        // Class* class = g->type->class;
-        // ClassProp* prop = map_get(class->props, "stack_adr");
-        // char* stack_adr = ir_class_pa(ir, class, lstack, prop);
-        // char* stack_adr_val = ir_load(ir, prop->type, stack_adr);
-        // char* add = ir_var(func);
-        // char buf[100];
-        // sprintf(buf, "  %s = getelementptr inbounds ptr, ptr %s, i32 %d\n", add, stack_adr_val, gc_count * 2);
-        // str_add(code, buf);
-        // ir_store(ir, prop->type, stack_adr, add);
-        // char* reserve_adr = stack_adr_val;
-
         func->gc_stack = lstack;
         // func->gc_stack_adr = stack_adr;
         // func->gc_stack_adr_val = stack_adr_val;

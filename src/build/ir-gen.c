@@ -361,15 +361,7 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
     return var;
 }
 
-char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right) {
-
-    char *lval1 = ir_value(ir, scope, left);
-    char *lval2 = ir_value(ir, scope, right);
-
-    Type *type = left->rett;
-    char *ltype = ir_type(ir, type);
-    bool is_signed = type->is_signed;
-    bool is_float = type->type == type_float;
+char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_signed, bool is_float) {
 
     char *var_tmp = ir_var(ir->func);
     char *var_result = ir_var(ir->func);
@@ -417,11 +409,11 @@ char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right) {
     str_flat(code, " = icmp ");
     str_add(code, sign);
     str_flat(code, " ");
-    str_add(code, ltype);
+    str_add(code, type);
     str_flat(code, " ");
-    str_add(code, lval1);
+    str_add(code, left);
     str_flat(code, ", ");
-    str_add(code, lval2);
+    str_add(code, right);
     str_flat(code, "\n");
 
     str_flat(code, "  ");

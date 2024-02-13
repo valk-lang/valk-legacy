@@ -14,6 +14,7 @@ Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->class = NULL;
+    f->cached_values = NULL;
     f->is_inline = false;
     f->is_static = false;
 

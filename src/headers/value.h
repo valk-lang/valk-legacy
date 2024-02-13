@@ -70,6 +70,7 @@ struct VIncr {
 struct VIRCached {
     Value* value;
     char* ir_value;
+    char* ir_var;
 };
 
 #endif

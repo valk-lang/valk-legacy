@@ -135,6 +135,60 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 break;
             }
         }
+        if (t == tok_at_word) {
+            if (str_is(tkn, "@cache_value")){
+                tok_expect(fc, "(", false, false);
+                Value* v = read_value(alc, fc, scope, true, 0);
+                tok_expect(fc, ")", true, true);
+                tok_expect(fc, "as", true, false);
+                char* name = tok(fc, true, false, true);
+                if(!is_valid_varname(tkn)) {
+                    sprintf(b->char_buf, "Invalid variable name: '%s'", name);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+                Value* vc = vgen_ir_cached(alc, v);
+                Idf* idf = idf_make(alc, idf_cached_value, vc);
+                scope_set_idf(scope, name, idf, fc);
+                continue;
+            }
+            if (str_is(tkn, "@snippet")){
+                tok_expect(fc, "(", false, false);
+                char* name = tok(fc, true, false, true);
+
+                Id id;
+                Idf* idf = idf_by_id(fc, scope, read_id(fc, name, &id), true);
+
+                if(idf->type != idf_snippet) {
+                    sprintf(b->char_buf, "Invalid snippet name: '%s'", name);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+                Snippet* snip = idf->item;
+                Array *args = snip->args;
+                Map *idfs = map_make(alc);
+                for(int i = 0; i < args->length; i++) {
+                    tok_expect(fc, ",", true, true);
+                    SnipArg* arg = array_get_index(args, i);
+                    if(arg->type == snip_value) {
+                        Value* v = read_value(alc, fc, scope, true, 0);
+                        Idf* idf = idf_make(alc, idf_value, v);
+                        map_set(idfs, arg->name, idf);
+                    } else {
+                        die("TODO: snippet pass types");
+                    }
+                }
+                tok_expect(fc, ")", true, true);
+
+                Scope* sub = scope_sub_make(alc, sc_default, scope, NULL);
+                sub->prio_idf_scope = snip->fc_scope;
+                sub->identifiers = idfs;
+
+                Chunk ch;
+                ch = *fc->chunk_parse;
+                read_ast(fc, sub, false);
+                *fc->chunk_parse = ch;
+                continue;
+            }
+        }
 
         tok_back(fc);
 

@@ -20,6 +20,14 @@ void tok_expect(Fc* fc, char* expect, bool allow_space, bool allow_newline) {
         parse_err(fc->chunk_parse, fc->b->char_buf);
     }
 }
+char* tok_expect_two(Fc* fc, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
+    char* tkn = tok(fc, allow_space, allow_newline, true);
+    if(!str_is(tkn, expect_1) && !str_is(tkn, expect_2)) {
+        sprintf(fc->b->char_buf, "Expected '%s' or '%s' here, instead of '%s'", expect_1, expect_2, tkn);
+        parse_err(fc->chunk_parse, fc->b->char_buf);
+    }
+    return tkn;
+}
 char tok_read_byte(Fc* fc, int offset) {
     Chunk* ch = fc->chunk_parse;
     return ch->tokens[ch->i + offset];

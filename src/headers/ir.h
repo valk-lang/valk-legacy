@@ -44,7 +44,7 @@ void ir_store(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char *ir_i1_cast(IR *ir, char *val);
 char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett);
-char* ir_compare(IR* ir, Scope* scope, int op, Value* left, Value* right);
+char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_signed, bool is_float);
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
 void ir_if(IR *ir, Scope *scope, TIf *ift);
 void ir_while(IR *ir, Scope *scope, TWhile *item);

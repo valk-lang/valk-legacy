@@ -646,7 +646,11 @@ Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, V
 }
 
 bool value_is_assignable(Value *v) {
-    return v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global;
+    if(v->type == v_ir_cached) {
+        VIRCached* vc = v->item;
+        return value_is_assignable(vc->value);
+    }
+    return v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global; 
 }
 
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {

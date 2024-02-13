@@ -65,5 +65,6 @@
 #include "headers/func.h"
 #include "headers/class.h"
 #include "headers/ir.h"
+#include "headers/snippet.h"
 
 #endif

@@ -37,6 +37,10 @@ enum IDF {
     idf_class,
     idf_global,
     idf_value_alias,
+    idf_snippet,
+    idf_value,
+    idf_type,
+    idf_cached_value,
 };
 
 enum TYPES {
@@ -117,4 +121,9 @@ enum SCOPES {
     sc_default,
     sc_func,
     sc_loop,
+};
+
+enum SNIPPET_ARG_TYPES {
+    snip_value,
+    snip_type,
 };

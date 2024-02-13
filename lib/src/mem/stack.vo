@@ -102,12 +102,6 @@ struct Stack {
         }
         this.stack_adr = adr + (amount * sizeof(ptr) * 2);
         //
-        let amount_ = amount
-        while amount_ > 0 {
-            amount_--
-            @ptrv(adr, ptr, amount * 2) = null
-        }
-        //
         return adr
     }
     fn pop(amount: uint) {
@@ -120,7 +114,7 @@ struct Stack {
             this.lowest_next = new_adr
         }
         if new_adr < this.lowest {
-            this.lowest = new_adr
+            // this.lowest = new_adr
         }
     }
 

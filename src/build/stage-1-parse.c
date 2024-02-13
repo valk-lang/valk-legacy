@@ -8,6 +8,7 @@ void stage_1_class(Fc* fc, int type, int act);
 void stage_1_use(Fc* fc);
 void stage_1_global(Fc* fc, bool shared);
 void stage_1_value_alias(Fc* fc);
+void stage_1_snippet(Fc* fc);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
@@ -83,6 +84,10 @@ void stage_parse(Fc *fc) {
         }
         if(str_is(tkn, "value")) {
             stage_1_value_alias(fc);
+            continue;
+        }
+        if(str_is(tkn, "snippet")) {
+            stage_1_snippet(fc);
             continue;
         }
 
@@ -260,6 +265,10 @@ void stage_1_global(Fc* fc, bool shared){
 void stage_1_value_alias(Fc* fc) {
     Build *b = fc->b;
     char* name = tok(fc, true, false, true);
+    if(!is_valid_varname(name)) {
+        sprintf(b->char_buf, "Invalid value alias name: '%s'", name);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
 
     tok_expect(fc, "(", true, false);
 
@@ -272,4 +281,55 @@ void stage_1_value_alias(Fc* fc) {
 
     Idf* idf = idf_make(b->alc, idf_value_alias, va);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
+}
+
+void stage_1_snippet(Fc* fc) {
+    Build *b = fc->b;
+    Allocator *alc = fc->alc;
+
+    char* name = tok(fc, true, false, true);
+    if(!is_valid_varname(name)) {
+        sprintf(b->char_buf, "Invalid snippet name: '%s'", name);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+
+    tok_expect(fc, "(", false, false);
+    Array* args = array_make(alc, 4);
+    char* tkn = tok(fc, true, true, true);
+    while(!str_is(tkn, ")")) {
+        if(!is_valid_varname(tkn)) {
+            sprintf(b->char_buf, "Invalid snippet argument name: '%s'", name);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+        char* fn = tkn;
+        tok_expect(fc, ":", true, false);
+        tkn = tok(fc, true, true, true);
+        int type = -1;
+        if(str_is(tkn, "V")) {
+            type = snip_value;
+        } else if(str_is(tkn, "T")) {
+            type = snip_type;
+        } else {
+            sprintf(b->char_buf, "Expect 'V' (value) or 'T' (type), Found: '%s'", tkn);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+
+        SnipArg* sa = al(alc, sizeof(SnipArg));
+        sa->name = fn;
+        sa->type = type;
+        array_push(args, sa);
+
+        tkn = tok_expect_two(fc, ",", ")", true, true);
+    }
+    tok_expect(fc, "{", true, true);
+
+    Snippet* snip = al(alc, sizeof(Snippet));
+    snip->chunk = chunk_clone(alc, fc->chunk_parse);
+    snip->args = args;
+    snip->fc_scope = fc->scope;
+
+    Idf* idf = idf_make(alc, idf_snippet, snip);
+    scope_set_idf(fc->nsc->scope, name, idf, fc);
+
+    skip_body(fc);
 }

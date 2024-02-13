@@ -23,6 +23,7 @@ struct Func {
     Array* arg_types;
     Type* rett;
     Class* class;
+    Array* cached_values;
     //
     bool is_static;
     bool is_inline;
