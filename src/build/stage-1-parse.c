@@ -320,6 +320,9 @@ void stage_1_snippet(Fc* fc) {
         array_push(args, sa);
 
         tkn = tok_expect_two(fc, ",", ")", true, true);
+        if(str_is(tkn, ",")) {
+            tkn = tok(fc, true, true, true);
+        }
     }
     tok_expect(fc, "{", true, true);
 
@@ -327,9 +330,33 @@ void stage_1_snippet(Fc* fc) {
     snip->chunk = chunk_clone(alc, fc->chunk_parse);
     snip->args = args;
     snip->fc_scope = fc->scope;
+    snip->exports = NULL;
 
     Idf* idf = idf_make(alc, idf_snippet, snip);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
 
     skip_body(fc);
+
+    tkn = tok(fc, true, true, true);
+
+    if(str_is(tkn, "=>")) {
+        tok_expect(fc, "(", true, true);
+        Array* exports = array_make(alc, 4);
+        tkn = tok(fc, true, true, true);
+        while(!str_is(tkn, ")")) {
+            if(!is_valid_varname(tkn)) {
+                sprintf(b->char_buf, "Invalid snippet argument name: '%s'", name);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            array_push(exports, tkn);
+            tkn = tok_expect_two(fc, ",", ")", true, true);
+            if(str_is(tkn, ",")) {
+                tkn = tok(fc, true, true, true);
+            }
+        }
+        snip->exports = exports;
+    } else {
+        tok_back(fc);
+    }
+
 }

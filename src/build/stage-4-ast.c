@@ -149,6 +149,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 Value* vc = vgen_ir_cached(alc, v);
                 Idf* idf = idf_make(alc, idf_cached_value, vc);
                 scope_set_idf(scope, name, idf, fc);
+                array_push(scope->ast, token_make(alc, t_statement, vc));
                 continue;
             }
             if (str_is(tkn, "@snippet")){
@@ -184,6 +185,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
                 Chunk ch;
                 ch = *fc->chunk_parse;
+                *fc->chunk_parse = *snip->chunk;
                 read_ast(fc, sub, false);
                 *fc->chunk_parse = ch;
                 continue;

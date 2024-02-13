@@ -16,5 +16,6 @@ Idf* get_volt_idf(Build* b, char* ns, char* name, bool must_exist);
 Func *get_volt_func(Build *b, char *namespace, char *name);
 Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn);
 Global *get_volt_global(Build *b, char *namespace, char *name);
+Snippet *get_volt_snippet(Build *b, char *namespace, char *name);
 
 #endif

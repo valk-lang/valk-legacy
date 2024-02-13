@@ -12,11 +12,11 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->ast = NULL;
     sc->rett = NULL;
     sc->decls = type == sc_func ? array_make(alc, 20) : NULL;
-    sc->must_return = false;
-    sc->did_return = false;
     sc->chunk_end = NULL;
     sc->ir_after_block = NULL;
     sc->ir_cond_block = NULL;
+    sc->must_return = false;
+    sc->did_return = false;
     return sc;
 }
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end) {

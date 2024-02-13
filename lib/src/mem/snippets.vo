@@ -15,8 +15,13 @@ snippet reserve(amount: V) {
             STACK.gc()
         }
     }
+    let x = amount
+    while x > 0 {
+        x--
+        @ptrv(STACK_ADR, ptr, x * 2) = null
+    }
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
-}
+} => (STACK, STACK_ADR)
 
 snippet pop() {
     STACK_ADR = STACK_ADR

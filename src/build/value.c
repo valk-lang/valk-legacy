@@ -341,6 +341,12 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         *fc->chunk_parse = ch;
         return val;
     }
+    if (type == idf_cached_value) {
+        return idf->item;
+    }
+    if (type == idf_value) {
+        return idf->item;
+    }
 
     sprintf(b->char_buf, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
     parse_err(chunk, b->char_buf);

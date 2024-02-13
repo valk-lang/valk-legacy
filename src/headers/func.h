@@ -7,6 +7,7 @@
 Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
 void parse_handle_func_args(Fc* fc, Func* func);
+int func_get_reserve_count(Func* func);
 
 struct Func {
     char* name;
@@ -14,6 +15,7 @@ struct Func {
     Build *b;
     Fc* fc;
     Scope* scope;
+    Scope* scope_gc_pop;
     //
     Chunk* chunk_args;
     Chunk* chunk_rett;

@@ -63,6 +63,19 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VIRCached* item = v->item;
         if(item->ir_value)
             return item->ir_value;
+        if(item->ir_var) {
+            char* val = ir_load(ir, item->value->rett, item->ir_var);
+            item->ir_value = val;
+            return val;
+        }
+        Value* vi = item->value;
+        if(value_is_assignable(vi)) {
+            char* var = ir_assign_value(ir, scope, vi);
+            char* val = ir_load(ir, item->value->rett, var);
+            item->ir_var = var;
+            item->ir_value = val;
+            return val;
+        }
         char* val = ir_value(ir, scope, item->value);
         item->ir_value = val;
         return val;
@@ -212,6 +225,14 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
         Value* on = pa->on;
         char* ob = ir_value(ir, scope, on);
         return ir_class_pa(ir, on->rett->class, ob, pa->prop);
+    }
+    if (v->type == v_ir_cached) {
+        VIRCached *item = v->item;
+        if(item->ir_var)
+            return item->ir_var;
+        char *var = ir_assign_value(ir, scope, item->value);
+        item->ir_var = var;
+        return var;
     }
     return "?-?";
 }

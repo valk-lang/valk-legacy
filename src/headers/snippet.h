@@ -4,10 +4,13 @@
 
 #include "typedefs.h"
 
+Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* scope_parent);
+
 struct Snippet {
     Array* args;
     Chunk* chunk;
     Scope* fc_scope;
+    Array* exports;
 };
 struct SnipArg {
     char* name;

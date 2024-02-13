@@ -250,7 +250,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
             const char ch2 = content[i];
             if (ch2 == '=')
                 op2 = true;
-            else if ((ch == '+' && ch2 == '+') || (ch == '-' && ch2 == '-') || (ch == '!' && ch2 == '!') || (ch == '!' && ch2 == '?') || (ch == '>' && ch2 == '>') || (ch == '<' && ch2 == '<')) {
+            else if ((ch == '+' && ch2 == '+') || (ch == '-' && ch2 == '-') || (ch == '!' && ch2 == '!') || (ch == '!' && ch2 == '?') || (ch == '>' && ch2 == '>') || (ch == '<' && ch2 == '<') || (ch == '=' && ch2 == '>')) {
                 if (ch == '-' && content[i + 1] == '-') {
                     tokens[o++] = tok_op3;
                     tokens[o++] = ch;

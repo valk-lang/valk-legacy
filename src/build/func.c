@@ -8,6 +8,7 @@ Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
     f->b = fc->b;
     f->fc = fc;
     f->scope = scope_make(alc, sc_func, fc->scope);
+    f->scope_gc_pop = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
@@ -64,3 +65,17 @@ void parse_handle_func_args(Fc* fc, Func* func) {
     skip_body(fc);
 }
 
+
+int func_get_reserve_count(Func* func) {
+    // Decls
+    int count = 0;
+    Scope* scope = func->scope;
+    Array* decls = scope->decls;
+    for (int i = 0; i < decls->length; i++) {
+        Decl* decl = array_get_index(decls, i);
+        if(decl->is_gc) {
+            count++;
+        }
+    }
+    return count;
+}

@@ -161,3 +161,12 @@ Global *get_volt_global(Build *b, char *namespace, char *name) {
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a global variable (compiler bug)");
 }
+
+Snippet *get_volt_snippet(Build *b, char *namespace, char *name) {
+    Idf* idf = get_volt_idf(b, namespace, name, true);
+    if(idf->type == idf_snippet) {
+        return idf->item;
+    }
+    printf("Identifier: '%s:%s'\n", namespace, name);
+    build_err(b, "Volt identifier was found but is not a snippet (compiler bug)");
+}
