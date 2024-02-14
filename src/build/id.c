@@ -13,7 +13,7 @@ Decl* decl_make(Allocator* alc, Type* type, bool is_arg) {
     d->type = type;
     d->ir_var = NULL;
     d->ir_store_var = NULL;
-    d->is_mut = false;
+    d->is_mut = false || is_gc;
     d->is_gc = is_gc;
     d->is_arg = is_arg;
     return d;

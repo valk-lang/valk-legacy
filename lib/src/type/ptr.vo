@@ -1,3 +1,6 @@
 
 pointer ptr math {
+    fn to_hex() string {
+        return (this @as uint).to_hex()
+    }
 }

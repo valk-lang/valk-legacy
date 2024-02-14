@@ -13,8 +13,8 @@ value state_freed (16)
 value state_global (32)
 value stack_size (1000000)
 
-value sub_state_unknown (16)
-value sub_state_keep (16)
+value sub_state_keep (5)
+value sub_state_unknown (6)
 
 value byte_moved (0)
 
@@ -48,7 +48,7 @@ struct Stack {
         let bump = Bump.new()
 
         let data = alloc(stack_size)
-        let stackc = stack_size / 8
+        let stackc = stack_size / sizeof(ptr)
         while stackc > 0 {
             stackc--
             @ptrv(data, ptr, stackc) = null
@@ -121,17 +121,23 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    fn link(on: ptr, to: ptr) {
+    fn link(on: ptr, to: ptr) ptr {
         let to_state = @ptrv(to, u8, 0)
         let on_state = @ptrv(on, u8, 0)
+        if on_state == state_global {
+            // TODO move item to global
+            print("TODO: MOVE TO GLOBAL")
+            return to
+        }
         if to_state == state_new {
             // Transfer
             this.transfer.add_item(to)
-            @ptrv(to, u8, 0) = state_transfer @as u8
-            @ptrv(to, u8, 1) = on_state @as u8
-        } else if on_state == state_solid {
+            @ptrv(to, u8, 0) = state_transfer
+            @ptrv(to, u8, 1) = state_unknown
+        }
+        if on_state == state_solid {
             // Update transfer state (if solid)
-            @ptrv(to, u8, 1) = state_solid @as u8
+            @ptrv(to, u8, 1) = state_solid
         }
         // Add to move check list
         let in_list = @ptrv(on, u8, 3)
@@ -139,6 +145,7 @@ struct Stack {
             this.move_checks.add_item(on)
             @ptrv(on, u8, 3) = 1
         }
+        return to
     }
     static fn unlink(item: ptr) {
         if item == (null) {
@@ -147,11 +154,11 @@ struct Stack {
         let item_state = @ptrv(item, u8, 0)
         if item_state == state_solid {
             stack.unknown.add_item(item)
-            @ptrv(item, u8, 0) = state_unknown @as u8
+            @ptrv(item, u8, 0) = state_unknown
             @ptrv(item, u8, 1) = 0
         } else if item_state == state_transfer {
             // Update transfer state
-            @ptrv(item, u8, 1) = state_unknown @as u8
+            @ptrv(item, u8, 1) = state_unknown
         }
     }
 
@@ -162,7 +169,6 @@ struct Stack {
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
-        this.mark_difference_down()
         this.run_gc_timeout = 10 @as i32
 
         if this.run_gc_full_timeout == 0 {
@@ -177,7 +183,7 @@ struct Stack {
         bump.wipe()
         let transfered = this.space_transfered
 
-        let freed = space_added - transfered
+        let freed = (space_added - transfered)
         if transfered > freed {
             // Increase trigger
             this.space_trigger = space_added * 15 / 10
@@ -257,7 +263,7 @@ struct Stack {
             let list = next_list
             let index = 0
             let is_last = list == last_list
-            let until_ = 100
+            let until_ = chain_size
             if is_last {
                 until_ = last_index
             }
@@ -280,7 +286,7 @@ struct Stack {
             if is_last {
                 break
             }
-            next_list = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, chain_size)
             if next_list == null {
                 break
             }
@@ -293,7 +299,7 @@ struct Stack {
             let list = next_list
             let index = 0
             let is_last = list == last_list
-            let until_ = 100
+            let until_ = chain_size
             if is_last {
                 until_ = last_index
             }
@@ -316,7 +322,7 @@ struct Stack {
             if is_last {
                 break
             }
-            next_list = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, chain_size)
             if next_list == null {
                 break
             }
@@ -351,7 +357,7 @@ struct Stack {
             let list = next_list
             let index = 0
             let is_last = list == last_list
-            let until_ = 100
+            let until_ = chain_size
             if is_last {
                 until_ = last_index
             }
@@ -368,7 +374,7 @@ struct Stack {
             if is_last {
                 break
             }
-            next_list = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, chain_size)
         }
 
         chain.olist_last = chain.olist_first
@@ -437,7 +443,7 @@ struct Stack {
             let list = next_list
             let index = 0
             let is_last = list == last_list
-            let until_ = 100
+            let until_ = chain_size
             if is_last {
                 until_ = last_index
             }
@@ -463,7 +469,7 @@ struct Stack {
             if is_last {
                 break
             }
-            next_list = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, chain_size)
         }
 
         chain.olist_last = chain.olist_first
@@ -571,7 +577,7 @@ struct Stack {
             let list = next_list
             let index = 0
             let is_last = list == last_list
-            let until_ = 100
+            let until_ = chain_size
             if is_last {
                 until_ = last_index
             }
@@ -587,7 +593,7 @@ struct Stack {
             if is_last {
                 break
             }
-            next_list = @ptrv(list, ptr, 100)
+            next_list = @ptrv(list, ptr, chain_size)
         }
 
         chain.delete()
