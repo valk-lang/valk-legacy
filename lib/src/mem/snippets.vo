@@ -10,8 +10,10 @@ snippet reserve(amount: V) {
     } else if (space_added > (bump.space_total >> 2)) {
         // Only gc when bump is atleast half full
         if (STACK_ADR <= STACK.lowest) {
+            // print("l")
             STACK.gc()
         } else if (space_added > STACK.space_trigger) {
+            // print("f")
             STACK.gc()
         }
     }
@@ -32,3 +34,4 @@ snippet pop() {
         STACK.lowest_next = STACK_ADR
     }
 }
+

@@ -17,6 +17,11 @@ value sub_state_keep (5)
 value sub_state_unknown (6)
 
 value byte_moved (0)
+value byte_state (0)
+value byte_sub_state (1)
+value byte_fields (2)
+value byte_in_move_check_list (3)
+// size : i32
 
 struct Stack {
     stack_base : ptr
@@ -25,6 +30,7 @@ struct Stack {
 
     space_transfered: uint (0)
     space_trigger : uint (100000)
+    items_in_unknown_last: uint (0)
 
     lowest: ptr
     lowest_next : ptr
@@ -145,6 +151,13 @@ struct Stack {
             this.move_checks.add_item(on)
             @ptrv(on, u8, 3) = 1
         }
+        // if (@ptrv(on, u8, byte_moved) & 1) == 1 {
+        //     print("LINKING ON A MOVED ITEM (BUG)")
+        // }
+        // if (@ptrv(to, u8, byte_moved) & 1) == 1 {
+        //     print("LINKING TO A MOVED ITEM (BUG)")
+        //     return to
+        // }
         return to
     }
     static fn unlink(item: ptr) {
@@ -171,24 +184,48 @@ struct Stack {
         this.check_moves()
         this.run_gc_timeout = 10 @as i32
 
-        if this.run_gc_full_timeout == 0 {
-            // Full clear
-            this.clean_unknown_list()
-            this.run_gc_full_timeout = 40 @as i32
-        }
-
         // Update stack info
         let bump = this.bump
         let space_added = bump.space_added
+        let space_total = bump.space_total
         bump.wipe()
         let transfered = this.space_transfered
+
+        // Full clear
+        gcc++
+        let full_gc = false;
+        let now = this.unknown.itemc
+        if (gcc % 10) == 0 {
+            if now > this.items_in_unknown_last {
+                full_gc = true;
+            }
+        }
+        if full_gc {
+            print("*")
+            this.clean_unknown_list()
+            this.run_gc_full_timeout = 40 @as i32
+            this.items_in_unknown_last = now / 2
+        }
+
+        //
+        if this.lowest_next == 0 {
+            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr)) // Add 100k
+        }
+
+
+        if space_total > bump.space_total_last {
+            print(space_total.to_str())
+        }
+        bump.space_total_last = space_total
 
         let freed = (space_added - transfered)
         if transfered > freed {
             // Increase trigger
-            this.space_trigger = space_added * 15 / 10
+            // print("+")
+            this.space_trigger = space_added * 20 / 10
         } else {
             // Reduce trigger
+            // print("-")
             this.space_trigger = this.space_trigger * 100 / 95
         }
 
@@ -201,14 +238,28 @@ struct Stack {
         let unknown = this.unknown
 
         let data = this.stack_base
-        let adr = this.stack_adr
+        let stack_adr = this.stack_adr
         let adr_last = this.stack_adr_last
+        let adr = stack_adr
+        if adr_last > adr {
+            adr = adr_last
+        }
         let age = this.age
         while adr > data {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item_prev = @ptrv(item_adr, ptr, 1);
-            if item_adr < adr_last {
+            //
+            // if item_prev != null {
+            //     if @ptrv(item_prev, u8, byte_state) < state_solid {
+            //         print("PREVIOUS STACK ITEM NOT TRANSFERED (BUG)")
+            //     } 
+            //     if (@ptrv(item_prev, u8, byte_moved) & 1) == 1 {
+            //         print("PREVIOUS STACK ITEM UNMOVED (BUG)")
+            //     } 
+            // } 
+            //
+            if item_adr < stack_adr {
                 let item = @ptrv(item_adr, ptr);
                 if item != item_prev {
                     // Stack position changed
@@ -278,6 +329,11 @@ struct Stack {
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
+                // if @ptrv(item, u8, 1) != state_solid {
+                //     if @ptrv(item, u8, 1) != state_unknown {
+                //         print("INVALID TRANSFER STATE (BUG)")
+                //     }
+                // }
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
@@ -328,8 +384,7 @@ struct Stack {
             }
         }
 
-        chain.olist_last = first_list
-        chain.index = 0
+        chain.wipe()
 
         this.space_transfered = count
     }
@@ -377,8 +432,7 @@ struct Stack {
             next_list = @ptrv(list, ptr, chain_size)
         }
 
-        chain.olist_last = chain.olist_first
-        chain.index = 0
+        chain.wipe()
 
         bump.add_free_item(null)
         bump.free_all_items()
@@ -472,8 +526,7 @@ struct Stack {
             next_list = @ptrv(list, ptr, chain_size)
         }
 
-        chain.olist_last = chain.olist_first
-        chain.index = 0
+        chain.wipe()
 
         // Check stack objects that have been moved
         let data = this.stack_base
@@ -492,6 +545,9 @@ struct Stack {
 
                 @ptrv(item_adr, ptr) = new_item
                 @ptrv(item_adr, ptr, 1) = new_item
+
+            // } else if @ptrv(item, u8, byte_state) < state_solid {
+            //     print("UNMOVED STACK ITEM (BUG)")
             }
         }
     }
@@ -546,8 +602,7 @@ struct Stack {
                     @ptrv(new_item, ptr, field) = @ptrv(sub, ptr, 0) - 1
                     continue
                 }
-                let substate = @ptrv(sub, u8, 0)
-                if substate < state_solid {
+                if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
                     @ptrv(new_item, ptr, field) = Stack.transfer_to_unknown_rec(sub, unknown, counter)
                 }

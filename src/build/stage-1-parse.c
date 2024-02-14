@@ -158,9 +158,6 @@ void stage_1_class(Fc *fc, int type, int act) {
     Class* class = class_make(b->alc, b, type);
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
-    if(str_is(name, "Node")) {
-        class->size = 24;
-    }
 
     Scope* nsc_scope = fc->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);

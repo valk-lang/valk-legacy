@@ -38,8 +38,8 @@ void ir_write_ast(IR* ir, Scope* scope) {
             VPair* pair = t->item;
             Value* left = pair->left;
             Value* right = pair->right;
-            char* var = ir_assign_value(ir, scope, left);
             char* value = ir_value(ir, scope, right);
+            char* var = ir_assign_value(ir, scope, left);
             ir_store(ir, left->rett, var, value);
             continue;
         }

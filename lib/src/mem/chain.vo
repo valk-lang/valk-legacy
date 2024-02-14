@@ -5,6 +5,7 @@ struct ObjectChain {
     olist_first : ptr
     olist_last : ptr
     index : int (0)
+    itemc : uint (0)
 
     static fn new() ObjectChain {
         let list = ObjectChain.new_olist();
@@ -36,6 +37,13 @@ struct ObjectChain {
         let index = this.index
         @ptrv(list, ptr, index) = item
         this.index = index + 1
+        this.itemc++;
+    }
+
+    fn wipe() {
+        this.olist_last = this.olist_first
+        this.index = 0
+        this.itemc = 0
     }
 
     fn delete() {

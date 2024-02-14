@@ -11,6 +11,7 @@ struct Bump {
     // Track
     space_added: uint (0)
     space_total: uint (0)
+    space_total_last: uint (0)
     // Free list
     free_block: ptr (null)
     free_adr: ptr (null)
@@ -56,7 +57,7 @@ struct Bump {
         if left < fsize {
             this.create_block()
         }
-        let adr = this.adr;
+        let adr = this.adr
         this.space_left -= fsize
         this.adr = adr + fsize
         this.space_added += fsize

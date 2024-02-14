@@ -7,6 +7,8 @@ shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
 
+global gcc : uint
+
 struct Gc {
     stacks : ptr
     stack_count : int (0)
@@ -47,16 +49,16 @@ struct Gc {
                     s.lowest_next = s.stack_adr + (100000 * sizeof(ptr)) // Add 100k
                 }
                 //
-                if s.run_gc_timeout > 0 {
-                    s.run_gc_timeout--
-                }
-                let full_tm = s.run_gc_full_timeout
-                if full_tm > 0 {
-                    s.run_gc_full_timeout--
-                    if full_tm == 1 {
-                        s.run_gc_timeout = 0
-                    }
-                }
+                // if s.run_gc_timeout > 0 {
+                //     s.run_gc_timeout--
+                // }
+                // let full_tm = s.run_gc_full_timeout
+                // if full_tm > 0 {
+                //     s.run_gc_full_timeout--
+                //     if full_tm == 1 {
+                //         s.run_gc_timeout = 0
+                //     }
+                // }
             }
             os:sleep_ms(10)
         }
