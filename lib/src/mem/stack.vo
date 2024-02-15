@@ -31,7 +31,8 @@ struct Stack {
     stack_adr_last : ptr
 
     space_transfered: uint (0)
-    space_trigger : uint (100000)
+    space_min : uint (1000)
+    space_max : uint (100000)
     items_in_unknown_last: uint (100)
 
     lowest: ptr
@@ -174,11 +175,12 @@ struct Stack {
         let freed = (space_added - transfered)
         if transfered > freed {
             // Increase trigger
-            this.space_trigger = space_added * 20 / 10
+            this.space_max = space_added * 15 / 10
         } else {
             // Reduce trigger
-            this.space_trigger = this.space_trigger * 100 / 95
+            this.space_max = this.space_max * 100 / 95
         }
+        this.space_min = this.bump.space_total >> 2
 
         this.space_transfered = 0
         this.stack_adr_last = this.stack_adr

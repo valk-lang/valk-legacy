@@ -6,8 +6,6 @@ struct Bump {
     start: ptr (null)
     current: ptr (null)
     adr: ptr (null)
-    min: ptr (null)
-    max: ptr (null)
     // Track
     space_added: uint (0)
     space_total: uint (0)
@@ -35,14 +33,6 @@ struct Bump {
             }
         }
         let adr = alloc(block_size)
-        if this.min == null {
-            this.min = adr
-        } else if adr < this.min {
-            this.min = adr
-        }
-        if adr + block_size > this.max {
-            this.max = adr + block_size
-        }
         if current != null {
             @ptrv(current, ptr, 0) = adr
         }
