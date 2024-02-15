@@ -28,7 +28,7 @@ struct Gc {
         let g = gc_instance;
         let cycles = 0
         let last_age = gc_age
-        let x = 0;
+        let x = 0 @as uint;
         while true {
             x++
             let sc = g.stack_count;
@@ -38,25 +38,6 @@ struct Gc {
             while si > 0 {
                 si--
                 let s = @ptrv(stacks, Stack, si);
-                if x < 20 {
-                    s.lowest = s.lowest_next 
-                    s.lowest_next = s.stack_adr + (100000 * sizeof(ptr)) // Add 100k
-                }
-                if x % 20 == 0 {
-                    s.lowest = s.lowest_next 
-                    s.lowest_next = s.stack_adr + (100000 * sizeof(ptr)) // Add 100k
-                }
-                //
-                // if s.run_gc_timeout > 0 {
-                //     s.run_gc_timeout--
-                // }
-                // let full_tm = s.run_gc_full_timeout
-                // if full_tm > 0 {
-                //     s.run_gc_full_timeout--
-                //     if full_tm == 1 {
-                //         s.run_gc_timeout = 0
-                //     }
-                // }
             }
             os:sleep_ms(10)
         }

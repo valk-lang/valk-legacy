@@ -33,19 +33,18 @@ struct Stack {
     space_transfered: uint (0)
     space_min : uint (1000)
     space_max : uint (100000)
-    items_in_unknown_last: uint (100)
+    unknown_count_trigger: uint (100)
 
     lowest: ptr
     lowest_next : ptr
+    lowest_delay: uint (20)
+    gc_count: uint (0)
 
     unknown : ObjectChain
     transfer : ObjectChain
     move_checks : ObjectChain
 
     bump: Bump
-
-    run_gc_timeout : i32 (0)
-    run_gc_full_timeout : i32 (0)
 
     age: u8 (33)
     force_full: bool (false)
@@ -70,7 +69,7 @@ struct Stack {
             stack_adr_last: data
 
             lowest: data
-            lowest_next: data
+            lowest_next: data + (100 * sizeof(ptr))
 
             unknown: unknown
             transfer: transfer
@@ -140,12 +139,11 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
-    fn gc() {
+    fn gc(from_lowest: bool) {
         let ub = this.unknown.itemc
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
-        this.run_gc_timeout = 10 @as i32
 
         // Update stack info
         let bump = this.bump
@@ -156,34 +154,44 @@ struct Stack {
 
         // Full clear
         let now = this.unknown.itemc
-        let unknown_trigger = this.items_in_unknown_last
+        let unknown_trigger = this.unknown_count_trigger
         if this.force_full {
             unknown_trigger = 0
         }
         if now >= unknown_trigger {
             this.clean_unknown_list()
-            this.run_gc_full_timeout = 40 @as i32
-            this.items_in_unknown_last = now / 2
+            this.unknown_count_trigger = now / 2
             this.force_full = false
         }
 
-        //
-        if this.lowest_next == 0 {
-            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr)) // Add 100k
+        // Lowest update
+        let lowest_delay = this.lowest_delay
+        let gc_count = this.gc_count;
+        if (gc_count % lowest_delay) == 0 {
+            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
+        } else if gc_count < 10 {
+            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         }
 
-        let freed = (space_added - transfered)
-        if transfered > freed {
-            // Increase trigger
-            this.space_max = space_added * 15 / 10
+        if this.lowest_next < this.lowest {
+            if lowest_delay > 20 {
+                lowest_delay = lowest_delay - 2
+            }
         } else {
-            // Reduce trigger
-            this.space_max = this.space_max * 100 / 95
+            if from_lowest == false {
+                lowest_delay = lowest_delay * 2
+            }
         }
+
+        this.lowest = this.lowest_next 
+        this.lowest_delay = lowest_delay 
+
+        this.space_max = this.bump.space_total * 2
         this.space_min = this.bump.space_total >> 2
 
         this.space_transfered = 0
         this.stack_adr_last = this.stack_adr
+        this.gc_count++
     }
 
     fn mark_difference_down() {
@@ -568,7 +576,7 @@ struct Stack {
         //
         this.force_full = true
         this.stack_adr = this.stack_base
-        this.gc()
+        this.gc(true)
         //
         this.transfer.delete()
         this.move_checks.delete()

@@ -14,9 +14,9 @@ snippet reserve(amount: V) {
     // } else
     if (space_added > STACK.space_min) {
         if (STACK_ADR <= STACK.lowest) {
-            STACK.gc()
+            STACK.gc(true)
         } else if (space_added > STACK.space_max) {
-            STACK.gc()
+            STACK.gc(false)
         }
     }
 
