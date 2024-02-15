@@ -93,41 +93,6 @@ struct Stack {
     }
 
     ///////////////////////
-    // Stack items
-    ///////////////////////
-    fn reserve(amount: uint) ptr {
-        let adr = this.stack_adr;
-        let bump = this.bump
-        let space_added = bump.space_added
-        if this.run_gc_timeout == 0 {
-            this.gc()
-        } else if (space_added > (bump.space_total >> 1)) {
-            // Only gc when bump is atleast half full
-            if (adr <= this.lowest) {
-                this.gc()
-            } else if (space_added > this.space_trigger) {
-                this.gc()
-            }
-        }
-        this.stack_adr = adr + (amount * sizeof(ptr) * 2);
-        //
-        return adr
-    }
-    fn pop(amount: uint) {
-        let adr = this.stack_adr;
-        let new_adr = adr - (amount * sizeof(ptr) * 2)
-        this.stack_adr = new_adr;
-
-        // let new_count = count - amount
-        if new_adr < this.lowest_next {
-            this.lowest_next = new_adr
-        }
-        if new_adr < this.lowest {
-            // this.lowest = new_adr
-        }
-    }
-
-    ///////////////////////
     // Runtime functions
     ///////////////////////
     fn link(on: ptr, to: ptr) ptr {
@@ -383,7 +348,7 @@ struct Stack {
         if this.age == 64 {
             new_age = 66
         }
-        let age = new_age
+        let age = this.age + 1
         this.age = age
 
         //
@@ -437,9 +402,10 @@ struct Stack {
             let sub = @ptrv(item, ptr, field)
             if sub != null {
                 let sub_state = @ptrv(sub, u8, 0)
-                if sub_state == state_solid {
+                if sub_state != state_freed {
                     if @ptrv(sub, u8, 1) != age {
                         Stack.free_rec(sub, age, bump)
+                        continue;
                     }
                 }
             }
@@ -686,5 +652,6 @@ struct Stack {
             }
         }
     }
+
 }
 
