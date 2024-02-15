@@ -2,30 +2,31 @@
 snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
+    @cache_value(amount) as AM
 
-    let bump = STACK.bump
-    let space_added = bump.space_added
-    if STACK.run_gc_timeout == 0 {
-        STACK.gc()
-    } else if (space_added > (bump.space_total >> 2)) {
-        // Only gc when bump is atleast half full
-        if (STACK_ADR <= STACK.lowest) {
-            // print("l")
-            STACK.gc()
-        } else if (space_added > STACK.space_trigger) {
-            // print("f")
-            STACK.gc()
-        }
-    }
-
-    let x = amount
+    let x = AM
     while x > 0 {
         x--
         @ptrv(STACK_ADR, ptr, x * 2) = null
     }
 
+    let bump = STACK.bump
+    let space_added = bump.space_added
+
+    // if STACK.run_gc_timeout == 0 {
+    //     STACK.gc()
+    // } else
+    if (space_added > (bump.space_total >> 2)) {
+        // Only gc when bump is atleast 1/4 full
+        if (STACK_ADR <= STACK.lowest) {
+            STACK.gc()
+        } else if (space_added > STACK.space_trigger) {
+            STACK.gc()
+        }
+    }
+
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
-} => (STACK, STACK_ADR)
+} => (STACK, STACK_ADR, AM)
 
 snippet pop() {
     STACK_ADR = STACK_ADR

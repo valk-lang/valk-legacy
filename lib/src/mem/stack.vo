@@ -10,11 +10,13 @@ value state_transfer (2)
 value state_solid (4)
 value state_unknown (8)
 value state_freed (16)
+value state_freed2 (18)
 value state_global (32)
 value stack_size (1000000)
 
 value sub_state_keep (5)
 value sub_state_unknown (6)
+value sub_state_on_stack (7)
 
 value byte_moved (0)
 value byte_state (0)
@@ -30,7 +32,7 @@ struct Stack {
 
     space_transfered: uint (0)
     space_trigger : uint (100000)
-    items_in_unknown_last: uint (0)
+    items_in_unknown_last: uint (100)
 
     lowest: ptr
     lowest_next : ptr
@@ -44,7 +46,8 @@ struct Stack {
     run_gc_timeout : i32 (0)
     run_gc_full_timeout : i32 (0)
 
-    age: u8 (32)
+    age: u8 (33)
+    force_full: bool (false)
     stopping: bool (false)
 
     static fn new() Stack {
@@ -151,13 +154,6 @@ struct Stack {
             this.move_checks.add_item(on)
             @ptrv(on, u8, 3) = 1
         }
-        // if (@ptrv(on, u8, byte_moved) & 1) == 1 {
-        //     print("LINKING ON A MOVED ITEM (BUG)")
-        // }
-        // if (@ptrv(to, u8, byte_moved) & 1) == 1 {
-        //     print("LINKING TO A MOVED ITEM (BUG)")
-        //     return to
-        // }
         return to
     }
     static fn unlink(item: ptr) {
@@ -179,6 +175,7 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
+        let ub = this.unknown.itemc
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
@@ -192,19 +189,16 @@ struct Stack {
         let transfered = this.space_transfered
 
         // Full clear
-        gcc++
-        let full_gc = false;
         let now = this.unknown.itemc
-        if (gcc % 10) == 0 {
-            if now > this.items_in_unknown_last {
-                full_gc = true;
-            }
+        let unknown_trigger = this.items_in_unknown_last
+        if this.force_full {
+            unknown_trigger = 0
         }
-        if full_gc {
-            print("*")
+        if now >= unknown_trigger {
             this.clean_unknown_list()
             this.run_gc_full_timeout = 40 @as i32
             this.items_in_unknown_last = now / 2
+            this.force_full = false
         }
 
         //
@@ -212,20 +206,12 @@ struct Stack {
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr)) // Add 100k
         }
 
-
-        if space_total > bump.space_total_last {
-            print(space_total.to_str())
-        }
-        bump.space_total_last = space_total
-
         let freed = (space_added - transfered)
         if transfered > freed {
             // Increase trigger
-            // print("+")
             this.space_trigger = space_added * 20 / 10
         } else {
             // Reduce trigger
-            // print("-")
             this.space_trigger = this.space_trigger * 100 / 95
         }
 
@@ -237,65 +223,72 @@ struct Stack {
         let transfer = this.transfer
         let unknown = this.unknown
 
-        let data = this.stack_base
+        let stack_base = this.stack_base
         let stack_adr = this.stack_adr
         let adr_last = this.stack_adr_last
-        let adr = stack_adr
-        if adr_last > adr {
-            adr = adr_last
-        }
-        let age = this.age
-        while adr > data {
+
+        // Mark previous items as: not on stack
+        let adr = adr_last;
+        while adr > stack_base {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item_prev = @ptrv(item_adr, ptr, 1);
-            //
-            // if item_prev != null {
-            //     if @ptrv(item_prev, u8, byte_state) < state_solid {
-            //         print("PREVIOUS STACK ITEM NOT TRANSFERED (BUG)")
-            //     } 
-            //     if (@ptrv(item_prev, u8, byte_moved) & 1) == 1 {
-            //         print("PREVIOUS STACK ITEM UNMOVED (BUG)")
-            //     } 
-            // } 
-            //
-            if item_adr < stack_adr {
-                let item = @ptrv(item_adr, ptr);
-                if item != item_prev {
-                    // Stack position changed
-                    if item_prev != null {
-                        // Mark prev as unknown
-                        if @ptrv(item_prev, u8, 0) == state_solid {
-                            unknown.add_item(item_prev)
-                            @ptrv(item_prev, u8, 0) = state_unknown @as u8
-                            @ptrv(item_prev, u8, 1) = 0
-                        }
-                    }
-                    if item != null {
-                        // Make sure transfer state is solid
-                        @ptrv(item, u8, 1) = state_solid @as u8
-                        // Check if transfer needed
-                        if @ptrv(item, u8, 0) == state_new {
-                            transfer.add_item(item)
-                            @ptrv(item, u8, 0) = state_transfer @as u8
-                        } 
-                    }
-                    // Overwrite prev
-                    @ptrv(item_adr, ptr, 1) = item
-                }
-            } else {
-                // 
-                if item_prev != null {
-                    // Mark prev as unknown
+            if item_prev != null {
+                @ptrv(item_prev, u8, byte_sub_state) = 0
+            }
+        }
+
+        // Mark items as: on stack
+        // Mark new items as transfer
+        adr = stack_adr;
+        while adr > stack_base {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item = @ptrv(item_adr, ptr, 0);
+            if item != null {
+                //
+                let state = @ptrv(item, u8, 0)
+                if state == state_new {
+                    // Transfer new items
+                    transfer.add_item(item)
+                    @ptrv(item, u8, 0) = state_transfer @as u8
+                    @ptrv(item, u8, 1) = state_solid @as u8
+                    continue;
+                } 
+                if state == state_transfer {
+                    @ptrv(item, u8, 1) = state_solid @as u8
+                    continue;
+                } 
+
+                @ptrv(item, u8, 1) = sub_state_on_stack
+            }
+        }
+
+        // Previous items that are not on stack: add them to unknown
+        // Set previous to null
+        adr = adr_last;
+        while adr > stack_base {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let item_prev = @ptrv(item_adr, ptr, 1);
+            if item_prev != null {
+                if @ptrv(item_prev, u8, byte_sub_state) != sub_state_on_stack {
                     if @ptrv(item_prev, u8, 0) == state_solid {
                         unknown.add_item(item_prev)
                         @ptrv(item_prev, u8, 0) = state_unknown @as u8
-                        @ptrv(item_prev, u8, 1) = 0
                     }
                 }
-
+                // Clear previous
                 @ptrv(item_adr, ptr, 1) = null
             }
+        }
+
+        // Set previous to current
+        adr = stack_adr;
+        while adr > stack_base {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            @ptrv(item_adr, ptr, 1) = @ptrv(item_adr, ptr, 0)
         }
     }
 
@@ -329,11 +322,6 @@ struct Stack {
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
-                // if @ptrv(item, u8, 1) != state_solid {
-                //     if @ptrv(item, u8, 1) != state_unknown {
-                //         print("INVALID TRANSFER STATE (BUG)")
-                //     }
-                // }
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
@@ -397,6 +385,7 @@ struct Stack {
         }
         let age = new_age
         this.age = age
+
         //
         this.mark_stack_as_solid()
 
@@ -458,18 +447,17 @@ struct Stack {
     }
 
     fn mark_stack_as_solid() {
-        let data = this.stack_base
-        let adr = this.stack_adr
+        let item_adr = this.stack_base
+        let stack_adr = this.stack_adr
         let age = this.age
-        while adr > data {
-            let item_adr = adr - sizeof(ptr) * 2
-            adr = item_adr
+        while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
                 if @ptrv(item, u8, 1) != age {
                     Stack.mark_stack_item_as_solid_rec(item, age)
                 }
             }
+            item_adr = item_adr + sizeof(ptr) * 2
         }
     }
     static fn mark_stack_item_as_solid_rec(item: ptr, age: u8) {
@@ -505,6 +493,8 @@ struct Stack {
             while index < until {
                 let item = @ptrv(list, ptr, index)
                 index++
+                // Remove checkmark
+                @ptrv(item, u8, 3) = 0
                 // Item logic
                 let fields = @ptrv(item, u8, 2)
                 while fields > 0 {
@@ -531,7 +521,6 @@ struct Stack {
         // Check stack objects that have been moved
         let data = this.stack_base
         let adr = this.stack_adr
-        let age = this.age
         while adr > data {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
@@ -545,9 +534,6 @@ struct Stack {
 
                 @ptrv(item_adr, ptr) = new_item
                 @ptrv(item_adr, ptr, 1) = new_item
-
-            // } else if @ptrv(item, u8, byte_state) < state_solid {
-            //     print("UNMOVED STACK ITEM (BUG)")
             }
         }
     }
@@ -587,7 +573,6 @@ struct Stack {
         copy(item, new_item, size)
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_unknown @as u8
-        @ptrv(new_item, u8, 1) = 0
         unknown.add_item(new_item)
 
         @ptrv(counter, uint) += size
@@ -613,6 +598,8 @@ struct Stack {
 
     fn stop() {
         //
+        this.force_full = true
+        this.stack_adr = this.stack_base
         this.gc()
         //
         this.transfer.delete()
@@ -656,7 +643,6 @@ struct Stack {
         // Clear stack
         let data = this.stack_base
         let adr = this.stack_adr
-        let age = this.age
         while adr > data {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
@@ -684,7 +670,7 @@ struct Stack {
     }
 
     static fn free_item_rec(item: ptr, bump: Bump) {
-        @ptrv(item, u8, 0) = state_freed
+        @ptrv(item, u8, 0) = state_freed2
         bump.add_free_item(item)
 
         let fields = @ptrv(item, u8, 2)

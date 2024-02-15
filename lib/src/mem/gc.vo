@@ -7,8 +7,6 @@ shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
 
-global gcc : uint
-
 struct Gc {
     stacks : ptr
     stack_count : int (0)
