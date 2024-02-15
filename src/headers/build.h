@@ -33,6 +33,7 @@ void build_run_stages(Build *b);
 void stage_1_parse(Fc *fc);
 void stage_2_alias(Fc *fc);
 void stage_2_props(Fc *fc);
+void stage_2_update_classes(Build* b);
 void stage_2_types(Fc *fc);
 void stage_3_values(Fc *fc);
 void stage_4_ast(Fc *fc);
@@ -67,6 +68,7 @@ struct Build {
     Stage *stage_1_parse;
     Stage *stage_2_alias;
     Stage *stage_2_props;
+    Stage *stage_2_class_sizes;
     Stage *stage_2_types;
     Stage *stage_3_values;
     Stage *stage_4_ast;
@@ -81,6 +83,8 @@ struct Build {
     Pkc *pkc_volt;
     Nsc *nsc_main;
     Func *func_main;
+    //
+    Array *classes;
     //
     size_t mem_parse;
     size_t mem_objects;

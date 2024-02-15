@@ -72,6 +72,8 @@ int cmd_build(int argc, char *argv[]) {
     b->nsc_by_path = map_make(alc);
     b->pkcs = array_make(alc, 20);
 
+    b->classes = array_make(alc, 40);
+
     b->func_main = NULL;
 
     b->ptr_size = 8;

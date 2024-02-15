@@ -16,3 +16,24 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->is_signed = true;
     return c;
 }
+
+
+bool class_determine_size(Build* b, Class* class) {
+
+    int type = class->type;
+    if(type == ct_bool) {
+        class->size = 1;
+        return true;
+    }
+    if(type == ct_ptr) {
+        class->size = b->ptr_size;
+        return true;
+    }
+    if(type == ct_int) {
+        class->size = 1;
+        return true;
+    }
+
+    return false;
+}
+

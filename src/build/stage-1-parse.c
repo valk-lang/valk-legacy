@@ -163,18 +163,19 @@ void stage_1_class(Fc *fc, int type, int act) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, fc);
     array_push(fc->classes, class);
+    array_push(b->classes, class);
     if(!nsc_scope->type_identifiers)
         nsc_scope->type_identifiers = map_make(b->alc);
     map_set_force_new(nsc_scope->type_identifiers, name, idf);
 
     //
     if(type == ct_int) {
-        class->allow_math = true;
         class->size = b->ptr_size;
+        class->allow_math = true;
         char* tkn = tok(fc, true, true, true);
         if(is_valid_number(tkn)) {
             int size = atoi(tkn);
-            if (size != 1 && size != 2 && size != 4 && size != 8 && size != 16) {
+            if (size != 1 && size != 2 && size != 4 && size != 8) {
                 sprintf(b->char_buf, "Invalid integer size: '%d'", size);
                 parse_err(fc->chunk_parse, b->char_buf);
             }
@@ -187,8 +188,21 @@ void stage_1_class(Fc *fc, int type, int act) {
         }
         tok_back(fc);
     } else if(type == ct_float) {
+        class->size = b->ptr_size;
         class->allow_math = true;
+        char* tkn = tok(fc, true, true, true);
+        if(is_valid_number(tkn)) {
+            int size = atoi(tkn);
+            if (size != 4 && size != 8) {
+                sprintf(b->char_buf, "Invalid float size: '%d'", size);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            class->size = size;
+            tkn = tok(fc, true, true, true);
+        }
+        tok_back(fc);
     } else if(type == ct_ptr) {
+        class->size = b->ptr_size;
         char* tkn = tok(fc, true, true, true);
         if(str_is(tkn, "math")) {
             class->allow_math = true;

@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 Class* class_make(Allocator* alc, Build* b, int type);
+bool class_determine_size(Build* b, Class* class);
 
 struct Class {
     char* name;
