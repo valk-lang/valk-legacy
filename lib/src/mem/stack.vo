@@ -37,7 +37,7 @@ struct Stack {
 
     lowest: ptr
     lowest_next : ptr
-    lowest_delay: uint (100)
+    lowest_delay: uint (50)
     gc_count: uint (0)
 
     unknown : ObjectChain
@@ -174,7 +174,7 @@ struct Stack {
             }
         } else {
             if lowest_delay > 50 {
-                this.lowest_delay = lowest_delay / 2
+                this.lowest_delay = lowest_delay / 15 * 10
             }
         }
 
