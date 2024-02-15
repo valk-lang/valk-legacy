@@ -33,11 +33,11 @@ struct Stack {
     space_transfered: uint (0)
     space_min : uint (1000)
     space_max : uint (100000)
-    unknown_count_trigger: uint (100)
+    unknown_count_trigger: uint (50)
 
     lowest: ptr
     lowest_next : ptr
-    lowest_delay: uint (20)
+    lowest_delay: uint (100)
     gc_count: uint (0)
 
     unknown : ObjectChain
@@ -140,51 +140,43 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc(from_lowest: bool) {
-        let ub = this.unknown.itemc
+
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
-
-        // Update stack info
-        let bump = this.bump
-        let space_added = bump.space_added
-        let space_total = bump.space_total
-        bump.wipe()
-        let transfered = this.space_transfered
+        this.bump.wipe()
 
         // Full clear
-        let now = this.unknown.itemc
+        let unknown_count = this.unknown.itemc
         let unknown_trigger = this.unknown_count_trigger
         if this.force_full {
             unknown_trigger = 0
         }
-        if now >= unknown_trigger {
+        if unknown_count >= unknown_trigger {
             this.clean_unknown_list()
-            this.unknown_count_trigger = now / 2
+            this.unknown_count_trigger = unknown_count / 2 + 1 // Minimum 1 item
             this.force_full = false
         }
 
-        // Lowest update
-        let lowest_delay = this.lowest_delay
+        // 
         let gc_count = this.gc_count;
+        let lowest_delay = this.lowest_delay
         if (gc_count % lowest_delay) == 0 {
-            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
-        } else if gc_count < 10 {
+            this.lowest = this.lowest_next 
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         }
 
-        if this.lowest_next < this.lowest {
-            if lowest_delay > 20 {
-                lowest_delay = lowest_delay - 2
+        let transfered = this.space_transfered
+        let freed = this.bump.space_added - transfered
+        if transfered > freed {
+            if lowest_delay < 1000 {
+                this.lowest_delay = lowest_delay * 2
             }
         } else {
-            if from_lowest == false {
-                lowest_delay = lowest_delay * 2
+            if lowest_delay > 50 {
+                this.lowest_delay = lowest_delay / 2
             }
         }
-
-        this.lowest = this.lowest_next 
-        this.lowest_delay = lowest_delay 
 
         this.space_max = this.bump.space_total * 2
         this.space_min = this.bump.space_total >> 2
