@@ -152,6 +152,11 @@ struct Stack {
         if this.force_full {
             unknown_trigger = 0
         }
+        if this.lowest_next < this.lowest {
+            // When reaching a new low, do a full clear
+            unknown_trigger = 0
+            this.lowest = this.lowest_next
+        }
         if unknown_count >= unknown_trigger {
             this.clean_unknown_list()
             this.unknown_count_trigger = unknown_count / 2 + 1 // Minimum 1 item
@@ -168,10 +173,6 @@ struct Stack {
         } else if from_lowest == false {
             // If we didnt reached lowest stack point, increase the lowest point
             this.lowest = this.lowest + (this.stack_adr - this.lowest) / 2
-        } else {
-            // If we did reach the lowest point, set to next lowest
-            // Because it's always lower or equal
-            this.lowest = this.lowest_next
         }
 
         // Delay when lowest_next resets
