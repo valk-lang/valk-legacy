@@ -28,12 +28,14 @@ void stage_4_ir(Fc* fc) {
         Str* buf = str_make(alc, 100);
         file_get_contents(buf, fc->path_cache);
         b->time_io += microtime() - start;
+        old_hash = str_to_chars(alc, buf);
     }
     if(!str_is(old_hash, ir_hash)) {
         usize start = microtime();
         fc->ir_changed = true;
         fc->hash = ir_hash;
         write_file(fc->path_ir, ir_code, false);
+        write_file(fc->path_cache, ir_hash, false);
         if(b->verbose > 2)
             printf("> IR changed: %s\n", fc->path_ir);
         b->time_io += microtime() - start;
