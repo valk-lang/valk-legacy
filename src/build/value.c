@@ -378,6 +378,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
     int offset = arg_i;
+    bool contains_gc_args = false;
 
     tok_skip_whitespace(fc);
     if (tok_id_next(fc) == tok_scope_close) {
@@ -391,6 +392,11 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 try_convert_number(arg, arg_type);
                 type_check(fc->chunk_parse, arg_type, arg->rett);
             }
+            if (type_is_gc(arg_type)) {
+                contains_gc_args = true;
+            }
+            // TODO: try convert
+
             array_push(args, arg);
 
             char *tkn = tok(fc, true, true, true);
@@ -415,7 +421,37 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    return vgen_func_call(alc, on, args);
+    Value* fcall = vgen_func_call(alc, on, args);
+
+    if(contains_gc_args) {
+        VFuncCallBuffer* fbuff = al(alc, sizeof(VFuncCallBuffer));
+        Scope* before = scope_sub_make(alc, sc_default, scope, NULL);
+        Scope* after = scope_sub_make(alc, sc_default, scope, NULL);
+        fbuff->fcall = fcall;
+        fbuff->before = before;
+        fbuff->after = after;
+        before->ast = array_make(alc, args->length);
+        after->ast = array_make(alc, args->length);
+
+        for(int i = 0; i < args->length; i++) {
+            Value* arg = array_get_index(args, i);
+            bool buffer = arg->type == v_class_pa || arg->type == v_func_call || arg->type == v_fcall_buffer;
+            // Declare
+            Decl *decl = decl_make(alc, arg->rett, false);
+            array_push(before->ast, tgen_declare(alc, before, decl, arg));
+            // Replace args
+            Value *new_value = value_make(alc, v_decl, decl, decl->type);
+            array_set_index(args, i, new_value);
+            // Remove from stack
+            if(decl->is_gc) {
+                array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
+            }
+        }
+
+        fcall = value_make(alc, v_fcall_buffer, fbuff, fcall->rett);
+    }
+
+    return fcall;
 }
 
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {

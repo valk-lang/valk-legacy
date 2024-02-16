@@ -26,6 +26,7 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Cla
 Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);
+Value* vgen_null(Allocator* alc, Build* b);
 
 struct Value {
     int type;
@@ -45,6 +46,11 @@ struct VFuncCall {
     Array *args;
     int line;
     int col;
+};
+struct VFuncCallBuffer {
+    Value* fcall;
+    Scope* before;
+    Scope* after;
 };
 struct VNumber {
     long int value_int;

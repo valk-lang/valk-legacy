@@ -125,3 +125,7 @@ Value* vgen_ir_cached(Allocator* alc, Value* value) {
     item->ir_var = NULL;
     return value_make(alc, v_ir_cached, item, value->rett);
 }
+
+Value* vgen_null(Allocator* alc, Build* b) {
+    return value_make(alc, v_null, NULL, type_gen_null(alc, b));
+}
