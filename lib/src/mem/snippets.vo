@@ -12,11 +12,13 @@ snippet reserve(amount: V) {
     // if STACK.run_gc_timeout == 0 {
     //     STACK.gc()
     // } else
-    if (space_added > STACK.space_min) {
-        if (STACK_ADR <= STACK.lowest) {
-            STACK.gc(true)
-        } else if (space_added > STACK.space_max) {
-            STACK.gc(false)
+    if space_added > STACK.space_min {
+        if STACK_ADR <= STACK.lowest {
+            STACK.gc(trigger_lowest)
+        } else if space_added > STACK.space_max {
+            STACK.gc(trigger_buffer_size)
+        } else if STACK.gc_count++ > STACK.gc_trigger {
+            STACK.gc(trigger_gc_count)
         }
     }
 

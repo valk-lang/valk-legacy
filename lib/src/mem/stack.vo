@@ -25,6 +25,10 @@ value byte_fields (2)
 value byte_in_move_check_list (3)
 // size : i32
 
+value trigger_lowest (0)
+value trigger_buffer_size (1)
+value trigger_gc_count (2)
+
 struct Stack {
     stack_base : ptr
     stack_adr : ptr
@@ -37,8 +41,8 @@ struct Stack {
 
     lowest: ptr
     lowest_next : ptr
-    lowest_delay: uint (50)
     gc_count: uint (0)
+    gc_trigger: uint (1000)
 
     unknown : ObjectChain
     transfer : ObjectChain
@@ -134,7 +138,23 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
-    fn gc(from_lowest: bool) {
+    fn gc(trigger_type: u8) {
+
+        let gc_trigger = this.gc_trigger;
+        let gc_count = this.gc_count;
+        if trigger_type == trigger_gc_count {
+            // Cannot find lowest point, reset lowest
+            this.lowest = this.lowest_next
+            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
+            // Increase trigger count
+            gc_trigger = gc_trigger * 100
+            if gc_trigger > 4000000 {
+                gc_trigger = 4000000
+            }
+            this.gc_count = 0;
+            this.gc_trigger = gc_trigger;
+            return
+        }
 
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -145,50 +165,43 @@ struct Stack {
         let unknown_count = this.unknown.itemc
         let unknown_trigger = this.unknown_count_trigger
         if this.force_full {
-            unknown_trigger = 0
+            unknown_count = 1
         }
         if this.lowest_next < this.lowest {
             // When reaching a new low, do a full clear
-            unknown_trigger = 0
+            unknown_count = 1
             this.lowest = this.lowest_next
         }
-        if unknown_count >= unknown_trigger {
+        if unknown_count > 0 {
             this.clean_unknown_list()
-            this.unknown_count_trigger = unknown_count / 2 + 1 // Minimum 1 item
+            this.unknown_count_trigger = unknown_count / 2
             this.force_full = false
         }
 
         // Lowest stack point
-        let gc_count = this.gc_count;
-        let lowest_delay = this.lowest_delay
-        if (gc_count % lowest_delay) == 0 {
-            // Every x times reset lowest_next
-            this.lowest = this.lowest_next 
+        if trigger_type == trigger_lowest {
+            gc_trigger = gc_trigger / 99 * 100
+            if gc_trigger < 10000 {
+                gc_trigger = 10000
+            }
+        } else if trigger_type == trigger_buffer_size {
+            // Increase lowest point
+            this.lowest = this.lowest_next
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
-        } else if from_lowest == false {
-            // If we didnt reached lowest stack point, increase the lowest point
-            this.lowest = this.lowest + (this.stack_adr - this.lowest) / 2
-        }
-
-        // Delay when lowest_next resets
-        let transfered = this.space_transfered
-        let freed = this.bump.space_added - transfered
-        if transfered > freed {
-            if lowest_delay < 1000 {
-                this.lowest_delay = lowest_delay * 2
-            }
-        } else {
-            if lowest_delay > 50 {
-                this.lowest_delay = lowest_delay / 15 * 10
+            // Reduce trigger count
+            gc_trigger = gc_trigger / 100
+            if gc_trigger < 1000 {
+                gc_trigger = 1000
             }
         }
 
-        this.space_max = this.bump.space_total * 15 / 10
+        this.space_max = this.bump.space_total * 12 / 10
         this.space_min = this.bump.space_total >> 2
 
         this.space_transfered = 0
         this.stack_adr_last = this.stack_adr
-        this.gc_count++
+        this.gc_count = 0
+        this.gc_trigger = gc_trigger
     }
 
     fn mark_difference_down() {
@@ -573,7 +586,7 @@ struct Stack {
         //
         this.force_full = true
         this.stack_adr = this.stack_base
-        this.gc(true)
+        this.gc(trigger_lowest)
         //
         this.transfer.delete()
         this.move_checks.delete()
