@@ -86,6 +86,16 @@ void stage_build_o_file(Build* b, Nsc* nsc, Array* ir_files) {
     stage_set_target(b, data);
 
     llvm_build_o_file(data);
+
+    // Update cache
+    usize start = microtime();
+    Array* fcs = nsc->fcs;
+    for(int i = 0; i < fcs->length; i++) {
+        Fc* fc = array_get_index(fcs, i);
+        if(fc->ir_changed && fc->hash)
+            write_file(fc->path_cache, fc->hash, false);
+    }
+    b->time_io += microtime() - start;
 }
 
 void llvm_build_o_file(void* data_) {

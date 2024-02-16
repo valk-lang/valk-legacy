@@ -12,11 +12,16 @@ class Thread {
 
 	static fn start(start_func: ptr) void {
 
-    	let thr = mem:alloc(24 @as uint) @as pt:pthread_t;
+    	let thr = pt:pthread_t{ data: 0 @as uint };
     	let err = pt:pthread_create(thr, null, start_func, null);
     	// if err != 0 {
 		// 	throw fail;
     	// }
 		// let t = Thread{ os_thread: thr };
+	}
+
+	static fn start_without_gc(start_func: ptr) void {
+    	let thr = pt:pthread_t{ data: 0 @as uint };
+    	let err = pt:pthread_create(thr, null, start_func, null);
 	}
 }

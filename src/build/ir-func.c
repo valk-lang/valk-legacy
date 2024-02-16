@@ -83,11 +83,8 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     if(func->func == ir->b->func_main) {
         Func* gc_start = get_volt_class_func(b, "mem", "Gc", "start");
         ir_func_call(ir, ir_func_ptr(ir, gc_start), NULL, ir_type(ir, gc_start->rett), 0, 0);
-        Func* stack_new = get_volt_class_func(b, "mem", "Stack", "new");
+        Func* stack_new = get_volt_class_func(b, "mem", "Stack", "init");
         char* stack_ob = ir_func_call(ir, ir_func_ptr(ir, stack_new), NULL, ir_type(ir, stack_new->rett), 0, 0);
-        Global* g = get_volt_global(b, "mem", "stack");
-        char* stack = ir_global(ir, g);
-        ir_store(ir, g->type, stack, stack_ob);
     }
 
     // GC reserve

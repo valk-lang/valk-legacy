@@ -35,7 +35,6 @@ void stage_4_ir(Fc* fc) {
         fc->ir_changed = true;
         fc->hash = ir_hash;
         write_file(fc->path_ir, ir_code, false);
-        write_file(fc->path_cache, ir_hash, false);
         if(b->verbose > 2)
             printf("> IR changed: %s\n", fc->path_ir);
         b->time_io += microtime() - start;

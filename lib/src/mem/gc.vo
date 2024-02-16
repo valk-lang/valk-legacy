@@ -17,19 +17,39 @@ fn gc_alloc(size: u32, sub_field_count: u8) ptr {
 
 struct Gc {
     stacks : ptr
-    stack_count : int (0)
+    stack_count : uint (0)
+    free_index : uint(0)
+    free_index_lock : uint (0)
+    has_free_index : bool (false)
 
     static fn start() {
-        gc_instance = Gc {
-            stacks: mem:alloc(10000)
+        if gc_instance != null {
+            return
         }
-        os:Thread.start(Gc.loop @as ptr)
+        gc_instance = Gc {
+            stacks: mem:alloc(2000 * sizeof(ptr))
+        }
+        os:Thread.start_without_gc(Gc.loop @as ptr)
     }
 
     fn add_stack(s: Stack) {
-        let index = this.stack_count
+        let index = 0 @as uint
+        let has_index = false
+        if(this.has_free_index) {
+            let lock = atomic(this.free_index_lock + 1)
+            if lock == this.free_index {
+                index = lock
+                has_index = true
+                atomic(this.free_index_lock - lock)
+                this.has_free_index = false
+            } else {
+                atomic(this.free_index_lock - 1)
+            }
+        }
+        if has_index == false {
+            index = atomic(this.stack_count + 1)
+        }
         @ptrv(this.stacks, Stack, index) = s
-        atomic(this.stack_count + 1)
     }
 
     static fn loop() {
@@ -46,8 +66,21 @@ struct Gc {
             while si > 0 {
                 si--
                 let s = @ptrv(stacks, Stack, si);
+                if s @as ?Stack == null {
+                    if g.has_free_index == false {
+                        g.free_index = si
+                        atomic(g.free_index_lock + si)
+                        g.has_free_index = true
+                    }
+                    continue;
+                }
+                if s.stopped {
+                    @ptrv(stacks, ?Stack, si) = null
+                    free(s @as ptr)
+                    continue
+                }
             }
-            os:sleep_ms(10)
+            os:sleep_ms(100)
         }
     }
 }

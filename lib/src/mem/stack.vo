@@ -48,9 +48,9 @@ struct Stack {
 
     age: u8 (33)
     force_full: bool (false)
-    stopping: bool (false)
+    stopped: bool (false)
 
-    static fn new() Stack {
+    static fn init() {
         let unknown = ObjectChain.new()
         let transfer = ObjectChain.new()
         let move_checks = ObjectChain.new()
@@ -78,18 +78,13 @@ struct Stack {
         }
 
         allocator = bump
+        stack = s;
 
         let gc = gc_instance;
         while gc == null {
             gc = gc_instance;
         }
         (gc @as Gc).add_stack(s);
-        return s
-    }
-
-    static fn create_thread_stack() {
-        let s = Stack.new()
-        stack = s;
     }
 
     ///////////////////////
@@ -645,6 +640,7 @@ struct Stack {
         bump.delete()
 
         // Stack is deleted by the Gc
+        this.stopped = true
     }
 
     static fn free_item_rec(item: ptr, bump: Bump) {
