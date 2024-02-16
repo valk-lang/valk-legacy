@@ -66,7 +66,7 @@ Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
 
     Idf* idf = scope_find_idf(scope, name, true);
     if(!idf && !ns) {
-        if(str_is(name, "string") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "int") || str_is(name, "uint") || str_is(name, "i32") || str_is(name, "u8")) {
+        if(str_is(name, "string") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "int") || str_is(name, "uint") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u8")) {
             Nsc* ns = get_volt_nsc(fc->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         }

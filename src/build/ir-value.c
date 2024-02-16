@@ -106,7 +106,12 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_class_init) {
         Map* values = v->item;
         Class* class = v->rett->class;
-        Value* ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
+        Value* ob = NULL;
+        if(class->type == ct_class) {
+            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class->gc_fields, class);
+        } else {
+            ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
+        }
         char* obj = ir_value(ir, scope, ob);
 
         for (int i = 0; i < values->keys->length; i++) {

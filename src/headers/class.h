@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 Class* class_make(Allocator* alc, Build* b, int type);
+ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value);
 int class_determine_size(Build* b, Class* class);
 
 struct Class {
@@ -17,6 +18,7 @@ struct Class {
     Map* funcs;
     int type;
     int size;
+    int gc_fields;
     bool packed;
     bool is_signed;
     bool allow_math;
@@ -26,6 +28,7 @@ struct ClassProp {
     Chunk* chunk_type;
     Chunk* chunk_value;
     int index;
+    bool skip_default_value;
 };
 
 #endif

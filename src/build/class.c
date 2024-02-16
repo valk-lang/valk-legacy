@@ -10,12 +10,22 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->body = NULL;
     c->scope = NULL;
     c->size = -1;
+    c->gc_fields = 0;
     // c->size = 200; // Temporary
     c->props = map_make(alc);
     c->funcs = map_make(alc);
     c->packed = false;
     c->is_signed = true;
     return c;
+}
+ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value) {
+    ClassProp* prop = al(b->alc, sizeof(ClassProp));
+    prop->chunk_type = NULL;
+    prop->chunk_value = NULL;
+    prop->index = -1;
+    prop->type = type;
+    prop->skip_default_value = skip_default_value;
+    return prop;
 }
 
 

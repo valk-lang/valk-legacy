@@ -87,6 +87,19 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
+Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Class* cast_as) {
+    Func *func = get_volt_func(b, "mem", "gc_alloc");
+    Value *fptr = vgen_func_ptr(alc, func, NULL);
+    Array *alloc_values = array_make(alc, func->args->values->length);
+    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "u32"));
+    array_push(alloc_values, v_size);
+    Value *v_fields = vgen_int(alc, gc_fields, type_gen_volt(alc, b, "u8"));
+    array_push(alloc_values, v_fields);
+    Value *res = vgen_func_call(alc, fptr, alloc_values);
+    if(cast_as)
+        res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
+    return res;
+}
 
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before) {
     VIncr *item = al(alc, sizeof(VIncr));

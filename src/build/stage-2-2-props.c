@@ -115,4 +115,53 @@ void stage_props_class(Fc* fc, Class *class) {
 
         parse_handle_func_args(fc, func);
     }
+
+    // Add GC properties + re-order previous properties
+    if(class->type == ct_class) {
+        Map* props = class->props;
+        Map* new_props = map_make(b->alc);
+        class->props = new_props;
+        int index = 0;
+        int fields = 0;
+
+        ClassProp* gc_state = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_state->index = index++;
+        ClassProp* gc_sub_state = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_sub_state->index = index++;
+        ClassProp* gc_fields = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_fields->index = index++;
+        ClassProp* gc_in_list = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_in_list->index = index++;
+        ClassProp* gc_size = class_prop_make(b, type_gen_volt(b->alc, b, "i32"), true);
+        gc_size->index = index++;
+
+        map_set(new_props, "GC_state", gc_state);
+        map_set(new_props, "GC_sub_state", gc_sub_state);
+        map_set(new_props, "GC_fields", gc_fields);
+        map_set(new_props, "GC_in_list", gc_in_list);
+        map_set(new_props, "GC_size", gc_size);
+
+        // GC properties
+        for(int i = 0; i < props->values->length; i++) {
+            char* name = array_get_index(props->keys, i);
+            ClassProp* prop = array_get_index(props->values, i);
+            if(prop->type->class->type == ct_class) {
+                map_set(new_props, name, prop);
+                prop->index = index++;
+                fields++;
+            }
+        }
+
+        // Non GC properties
+        for(int i = 0; i < props->values->length; i++) {
+            char* name = array_get_index(props->keys, i);
+            ClassProp* prop = array_get_index(props->values, i);
+            if(prop->type->class->type != ct_class) {
+                prop->index = index++;
+                map_set(new_props, name, prop);
+            }
+        }
+
+        class->gc_fields = fields;
+    }
 }

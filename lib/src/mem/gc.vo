@@ -7,6 +7,14 @@ shared gc_age : u8
 shared gc_busy : uint
 shared gc_object_count : int
 
+fn gc_alloc(size: u32, sub_field_count: u8) ptr {
+    let adr = allocator.alloc(size @as uint)
+    @ptrv(adr, i32, 0) = 0
+    @ptrv(adr, u32, 1) = size @as u32
+    @ptrv(adr, u8, byte_fields) = sub_field_count
+    return adr
+}
+
 struct Gc {
     stacks : ptr
     stack_count : int (0)
