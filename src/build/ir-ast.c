@@ -39,8 +39,18 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Value* left = pair->left;
             Value* right = pair->right;
             char* value = ir_value(ir, scope, right);
-            char* var = ir_assign_value(ir, scope, left);
-            ir_store(ir, left->rett, var, value);
+            if (left->type == v_class_pa && type_is_gc(left->rett) && type_is_gc(right->rett)) {
+                // GC link
+                VClassPA *pa = left->item;
+                Type* on_type = pa->on->rett;
+                char* on_var = ir_assign_value(ir, scope, pa->on);
+                char* on = ir_load(ir, on_type, on_var);
+                char* var = ir_class_pa(ir, on_type->class, on, pa->prop);
+                ir_gc_link(ir, on, on_type, var, value, pa->prop->type);
+            } else {
+                char* var = ir_assign_value(ir, scope, left);
+                ir_store(ir, left->rett, var, value);
+            }
             continue;
         }
 
@@ -87,4 +97,57 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         die("Unhandled IR token (compiler bug)");
     }
+}
+
+
+void ir_gc_link(IR* ir, char* on, Type* on_type, char* prop_var, char* to, Type* prop_type) {
+    Build* b = ir->b;
+
+    Class* on_class = on_type->class;
+    ClassProp* prop_state = class_get_prop(b, on_class, "GC_state");
+    Type* ptr_type = type_gen_volt(ir->alc, b, "ptr");
+
+    char *on_state = ir_load(ir, prop_state->type, ir_class_pa(ir, on_class, on, prop_state));
+
+    IRBlock *block_if = ir_block_make(ir, ir->func, "if_link_");
+    IRBlock *block_link = ir_block_make(ir, ir->func, "link_");
+    IRBlock *dont_link = ir_block_make(ir, ir->func, "dont_link_");
+    IRBlock *after = ir_block_make(ir, ir->func, "link_after_");
+
+    // On state > transfer
+    char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);
+    comp_on = ir_i1_cast(ir, comp_on);
+    ir_cond_jump(ir, comp_on, block_if, dont_link);
+
+    // To state < solid
+    ir->block = block_if;
+    char *to_state = ir_load(ir, prop_state->type, ir_class_pa(ir, prop_type->class, to, prop_state));
+    char *comp_to = ir_compare(ir, op_lt, to_state, "4", "i8", false, false);
+    comp_to = ir_i1_cast(ir, comp_to);
+    ir_cond_jump(ir, comp_to, block_link, dont_link);
+
+    // Link
+    ir->block = block_link;
+    Func *func = get_volt_class_func(b, "mem", "Stack", "link");
+    Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
+    //
+    Array* types = array_make(ir->alc, 2);
+    array_push(types, ptr_type);
+    array_push(types, ptr_type);
+    Array* values = array_make(ir->alc, 2);
+    array_push(values, on);
+    array_push(values, to);
+    Array* args = ir_fcall_ir_args(ir, values, types);
+    //
+    char* link = ir_value(ir, NULL, fptr);
+    char* link_rett = ir_func_call(ir, link, args, "ptr", 0, 0);
+    ir_store(ir, prop_type, prop_var, link_rett);
+    ir_jump(ir, after);
+
+    // Dont link
+    ir->block = dont_link;
+    ir_store(ir, prop_type, prop_var, to);
+    ir_jump(ir, after);
+
+    ir->block = after;
 }

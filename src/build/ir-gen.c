@@ -33,14 +33,26 @@ char *ir_int(IR* ir, long int value) {
 }
 
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
-    Array *result = array_make(ir->alc, values->length + 1);
+    Array *ir_values = array_make(ir->alc, values->length + 1);
+    Array *types = array_make(ir->alc, values->length + 1);
     for (int i = 0; i < values->length; i++) {
         Value *v = array_get_index(values, i);
         char *val = ir_value(ir, scope, v);
-        char *buf = ir->char_buf;
+        array_push(ir_values, val);
+        array_push(types, v->rett);
+    }
+    return ir_fcall_ir_args(ir, ir_values, types);
+}
 
-        Type *type = v->rett;
+Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types) {
+    Array *result = array_make(ir->alc, values->length + 1);
+    for (int i = 0; i < values->length; i++) {
+        char *val = array_get_index(values, i);
+        Type *type = array_get_index(types, i);
+
+        char *buf = ir->char_buf;
         char *ltype = ir_type(ir, type);
+
         int len = strlen(ltype);
         bool notnull = type->type == type_struct && type->is_pointer && type->nullable == false;
         //

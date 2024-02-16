@@ -1,12 +1,25 @@
 
 header "sys" as sys
 
+global acount : uint
+global fcount : uint
+
 fn alloc(size: uint) ptr {
+    acount++
 	return sys:malloc(size);
 }
 
 fn free(adr: ptr) {
+    fcount++
 	sys:free(adr);
+}
+
+fn mprint() {
+    print("Alloc: ")
+    print(acount.to_str())
+    print(" | Free: ")
+    print(fcount.to_str())
+    print("\n")
 }
 
 fn copy(from: ptr, to: ptr, length: uint) {

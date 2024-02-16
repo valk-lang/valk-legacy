@@ -95,7 +95,7 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    fn link(on: ptr, to: ptr) ptr {
+    static fn link(on: ptr, to: ptr) ptr {
         let to_state = @ptrv(to, u8, 0)
         let on_state = @ptrv(on, u8, 0)
         if on_state == state_global {
@@ -105,7 +105,7 @@ struct Stack {
         }
         if to_state == state_new {
             // Transfer
-            this.transfer.add_item(to)
+            stack.transfer.add_item(to)
             @ptrv(to, u8, 0) = state_transfer
             @ptrv(to, u8, 1) = state_unknown
         }
@@ -116,7 +116,7 @@ struct Stack {
         // Add to move check list
         let in_list = @ptrv(on, u8, 3)
         if in_list == 0 {
-            this.move_checks.add_item(on)
+            stack.move_checks.add_item(on)
             @ptrv(on, u8, 3) = 1
         }
         return to

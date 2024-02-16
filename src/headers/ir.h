@@ -24,6 +24,7 @@ void ir_func_return(IR* ir, char* type, char* value);
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
+void ir_gc_link(IR* ir, char* on_var, Type* on_type, char* prop_var, char* to, Type* prop_type);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
@@ -36,6 +37,7 @@ void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, long int value);
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
+Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
 char *ir_string(IR *ir, char *body);

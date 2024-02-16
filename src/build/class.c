@@ -28,6 +28,14 @@ ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value) {
     return prop;
 }
 
+ClassProp* class_get_prop(Build* b, Class* class, char* name) {
+    ClassProp* prop = map_get(class->props, name);
+    if(!prop) {
+        sprintf(b->char_buf, "Class property '%s' not found", name);
+        build_err(b, b->char_buf);
+    }
+    return prop;
+}
 
 int class_determine_size(Build* b, Class* class) {
 
