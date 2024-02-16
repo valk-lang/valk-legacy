@@ -11,11 +11,15 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->scope = NULL;
     c->size = -1;
     c->gc_fields = 0;
-    // c->size = 200; // Temporary
     c->props = map_make(alc);
     c->funcs = map_make(alc);
     c->packed = false;
     c->is_signed = true;
+    //
+    c->generics = NULL;
+    c->generic_names = NULL;
+    c->is_generic_base = false;
+    //
     return c;
 }
 ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value) {

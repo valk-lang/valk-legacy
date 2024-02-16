@@ -160,6 +160,29 @@ void stage_1_class(Fc *fc, int type, int act) {
     class->ir_name = gen_export_name(fc->nsc, name);
     class->scope = scope_sub_make(b->alc, sc_default, fc->scope, NULL);
 
+    if(str_is(tok(fc, false, false, false), "[")) {
+        char* tkn = tok(fc, false, false, true);
+        Array* generic_names = array_make(b->alc, 2);
+        while (true) {
+            tkn = tok(fc, true, false, true);
+            if(!is_valid_varname(tkn)){
+                sprintf(b->char_buf, "Invalid generic type name: '%s'", tkn);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            if (array_contains(generic_names, tkn, arr_find_str)) {
+                sprintf(b->char_buf, "Duplicate generic type name: '%s'", tkn);
+                parse_err(fc->chunk_parse, b->char_buf);
+            }
+            array_push(generic_names, tkn);
+            tkn = tok(fc, true, false, true);
+            if (str_is(tok_expect_two(fc, ",", "]", true, false), "]"))
+                break;
+        }
+        class->generics = map_make(b->alc);
+        class->generic_names = generic_names;
+        class->is_generic_base = true;
+    }
+
     Scope* nsc_scope = fc->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, fc);

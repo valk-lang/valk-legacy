@@ -27,6 +27,9 @@ void stage_props(Fc *fc) {
 
 void stage_props_class(Fc* fc, Class *class) {
 
+    if (class->is_generic_base)
+        return;
+
     Build *b = fc->b;
     *fc->chunk_parse = *class->body;
 

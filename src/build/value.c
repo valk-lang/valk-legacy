@@ -457,6 +457,18 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     Build* b = fc->b;
     Chunk* ch = fc->chunk_parse;
+
+    if(class->is_generic_base) {
+        tok_expect(fc, "[", false, false);
+        Array* names = class->generic_names;
+        Map* generic_types = map_make(alc);
+        for (int i = 0; i < names->length; i++) {
+            char* name = array_get_index(names, i);
+            Type* type = read_type(fc, alc, scope, false);
+            map_set(generic_types, name, type);
+        }
+    }
+
     if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {
         // Static functions
         tok(fc, false, false, true);

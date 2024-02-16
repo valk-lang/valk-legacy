@@ -17,12 +17,15 @@ struct Class {
     Scope* scope;
     Map* props;
     Map* funcs;
+    Array* generic_names;
+    Map* generics;
     int type;
     int size;
     int gc_fields;
     bool packed;
     bool is_signed;
     bool allow_math;
+    bool is_generic_base;
 };
 struct ClassProp {
     Type* type;
