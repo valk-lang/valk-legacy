@@ -84,8 +84,10 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             if (idf->type == idf_class) {
                 Class *class = idf->item;
                 type = type_gen_class(alc, class);
-                if (is_inline)
+                if (is_inline) {
                     type->is_pointer = false;
+                    type->size = class->size;
+                }
             }
         }
     }
@@ -240,3 +242,14 @@ char* type_to_str(Type* t, char* res) {
     return res;
 }
 
+int type_get_size(Build* b, Type* type) {
+    if (type->size > 0) {
+        return type->size;
+    }
+    if (type->is_pointer) {
+        return b->ptr_size;
+    } else if (type->class) {
+        return type->class->size;
+    }
+    return -1;
+}

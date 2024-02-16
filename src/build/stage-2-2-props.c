@@ -68,7 +68,7 @@ void stage_props_class(Fc* fc, Class *class) {
             prop->index = class->props->values->length;
             map_set_force_new(class->props, name, prop);
 
-            skip_type(fc);
+            prop->type = read_type(fc, fc->alc, class->scope, false);
 
             tok_skip_whitespace(fc);
             if(tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {

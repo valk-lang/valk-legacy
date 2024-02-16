@@ -17,6 +17,7 @@ bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);
 char* type_to_str(Type* t, char* res);
+int type_get_size(Build* b, Type* type);
 
 struct Type {
     Class* class;

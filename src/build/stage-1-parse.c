@@ -158,6 +158,7 @@ void stage_1_class(Fc *fc, int type, int act) {
     Class* class = class_make(b->alc, b, type);
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
+    class->scope = scope_sub_make(b->alc, sc_default, fc->scope, NULL);
 
     Scope* nsc_scope = fc->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);
@@ -209,6 +210,8 @@ void stage_1_class(Fc *fc, int type, int act) {
             tkn = tok(fc, true, true, true);
         }
         tok_back(fc);
+    } else if(type == ct_bool) {
+        class->size = 1;
     }
 
     tok_expect(fc, "{", true, true);

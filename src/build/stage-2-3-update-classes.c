@@ -23,23 +23,32 @@ void stage_2_update_classes(Build* b) {
 void stage_determine_class_sizes(Build* b, Array* classes) {
 
     int count = classes->length;
-    int changed = 0;
+    int found = 0;
 
     for (int i = 0; i < classes->length; i++) {
         Class *class = array_get_index(classes, i);
-        if(class->size > 0) {
-            changed++;
+        if(class->size > -1) {
+            found++;
         }
     }
 
-    while (changed < count) {
+    while (found < count) {
+        int changed = 0;
+
         for (int i = 0; i < classes->length; i++) {
             Class *class = array_get_index(classes, i);
-            if(class->size > 0)
+            if(class->size > -1)
                 continue;
+            
+            if(b->verbose > 2) {
+                printf("# Try find class size for: %s\n", class->name);
+            }
 
-            bool done = class_determine_size(b, class);
-            if(done) {
+            int size = class_determine_size(b, class);
+            if(size > -1) {
+                if(b->verbose > 2) {
+                    printf("# Class size for '%s' is: %d\n", class->name, size);
+                }
                 changed++;
             }
         }
@@ -47,6 +56,7 @@ void stage_determine_class_sizes(Build* b, Array* classes) {
         if(changed == 0) {
             build_err(b, "Cannot determine all class sizes because of a circular dependency");
         }
+        found += changed;
     }
 }
 
