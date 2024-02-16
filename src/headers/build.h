@@ -7,6 +7,8 @@
 int cmd_build(int argc, char *argv[]);
 void build_err(Build *b, char *msg);
 void parse_err(Chunk *chunk, char *msg);
+Str* build_get_str_buf(Build* b);
+void build_return_str_buf(Build* b, Str* buf);
 
 Pkc *pkc_make(Allocator *alc, Build *b, char *name_suggestion);
 void pkc_set_dir(Pkc *pkc, char *dir);
@@ -85,6 +87,7 @@ struct Build {
     Func *func_main;
     //
     Array *classes;
+    Array *pool_str;
     //
     size_t mem_parse;
     size_t mem_objects;

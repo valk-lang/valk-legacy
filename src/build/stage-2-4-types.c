@@ -116,7 +116,7 @@ void stage_types_class(Fc* fc, Class* class) {
         ClassProp *prop = array_get_index(props, i);
         if (prop->chunk_type) {
             *fc->chunk_parse = *prop->chunk_type;
-            Type *type = read_type(fc, fc->alc, fc->scope, false);
+            Type *type = read_type(fc, fc->alc, class->scope, false);
             prop->type = type;
         }
     }

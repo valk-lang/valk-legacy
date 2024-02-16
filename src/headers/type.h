@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 Type *read_type(Fc *fc, Allocator *alc, Scope *scope, bool allow_newline);
+Type* type_clone(Allocator* alc, Type* type);
 Type* type_gen_void(Allocator* alc);
 Type* type_gen_null(Allocator* alc, Build* b);
 Type* type_gen_class(Allocator* alc, Class* class);
@@ -17,6 +18,7 @@ bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);
 char* type_to_str(Type* t, char* res);
+void type_to_str_append(Type* t, Str* buf);
 int type_get_size(Build* b, Type* type);
 
 struct Type {

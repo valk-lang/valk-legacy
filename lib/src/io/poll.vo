@@ -1,129 +1,129 @@
 
-header "sys" as sys
+// header "sys" as sys
 
-use mem
-use utils
-use os
+// use mem
+// use utils
+// use os
 
-class Poll[T] {
-    - epoll_fd: i32 (0)
-    - epoll_buffer: ptr
-    - listeners: Array[Listener[T]] (Array[Listener[T]].new())
-    - lsn_by_index: ptr
-    - lsn_by_index_size: uxx (20)
+// class Poll[T] {
+//     - epoll_fd: i32 (0)
+//     - epoll_buffer: ptr
+//     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
+//     - lsn_by_index: ptr
+//     - lsn_by_index_size: uxx (20)
 
-    static fn new() CLASS {
+//     static fn new() CLASS {
 
-        let fd = sys.epoll_create(1)
-        return CLASS {
-            epoll_fd: fd
-            epoll_buffer: mem:alloc(20 * sizeof_class(sys.cstruct_epoll_event))
-            lsn_by_index: 0 @as ptr
-        }
-    }
+//         let fd = sys.epoll_create(1)
+//         return CLASS {
+//             epoll_fd: fd
+//             epoll_buffer: mem:alloc(20 * sizeof_class(sys.cstruct_epoll_event))
+//             lsn_by_index: 0 @as ptr
+//         }
+//     }
 
-    fn wait(timeout: i32 (-1)) Array[Listener[T]] {
+//     fn wait(timeout: i32 (-1)) Array[Listener[T]] {
 
-        let events = Array[Listener[T]].new()
+//         let events = Array[Listener[T]].new()
 
-        let ebuf = this.epoll_buffer
-        let count = sys.epoll_wait(this.epoll_fd, ebuf, 10, timeout)
-        if count <= 0 {
-            os:sleep_ms(100)
-            return events
-        }
-        rep count = count @as uxx
-        let i = 0#uxx
-        while i < count {
-            let ev = (ebuf + (i * sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event
-            let lsn = ev.data @as &Listener[T]
-            let add = share(lsn)
-            lsn.set_events(ev.events)
-            if lsn.has_stopped_the_connection() {
-                this.listeners.remove_item(lsn)
-            }
-            events.push(add)
-            i++
-        }
+//         let ebuf = this.epoll_buffer
+//         let count = sys.epoll_wait(this.epoll_fd, ebuf, 10, timeout)
+//         if count <= 0 {
+//             os:sleep_ms(100)
+//             return events
+//         }
+//         rep count = count @as uxx
+//         let i = 0#uxx
+//         while i < count {
+//             let ev = (ebuf + (i * sizeof_class(sys.cstruct_epoll_event))) @as sys.cstruct_epoll_event
+//             let lsn = ev.data @as &Listener[T]
+//             let add = share(lsn)
+//             lsn.set_events(ev.events)
+//             if lsn.has_stopped_the_connection() {
+//                 this.listeners.remove_item(lsn)
+//             }
+//             events.push(add)
+//             i++
+//         }
 
-        return events
-    }
+//         return events
+//     }
 
-    fn create_listener(fd: i32, data: T) Listener[T] {
-        let lsn = Listener[T] {
-            epoll_fd: this.epoll_fd
-            fd: fd
-            data: data
-        }
+//     fn create_listener(fd: i32, data: T) Listener[T] {
+//         let lsn = Listener[T] {
+//             epoll_fd: this.epoll_fd
+//             fd: fd
+//             data: data
+//         }
 
-        let ev = @stack_object(sys.cstruct_epoll_event)
-        ev.events = 0
-        ev.data = lsn @as ptr
-        let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_ADD, fd, ev)
-        if res != 0 {
-            //println("> Failed to add epoll listener")
-        }
+//         let ev = @stack_object(sys.cstruct_epoll_event)
+//         ev.events = 0
+//         ev.data = lsn @as ptr
+//         let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_ADD, fd, ev)
+//         if res != 0 {
+//             //println("> Failed to add epoll listener")
+//         }
 
-        lsn.update_epoll()
-        let result = share(lsn)
-        this.listeners.push(lsn)
+//         lsn.update_epoll()
+//         let result = share(lsn)
+//         this.listeners.push(lsn)
 
-        return result
-    }
+//         return result
+//     }
 
-    // - fn __before_free() {
-    //     mem:free(this.epoll_buffer)
-    // }
-}
+//     // - fn __before_free() {
+//     //     mem:free(this.epoll_buffer)
+//     // }
+// }
 
-class Listener[T] {
-    data: T
-    ~ epoll_fd: i32 (0)
-    ~ fd: i32
-    ~ detect_read: bool (false)
-    ~ detect_write: bool (false)
-    - detect_events: u32 (0)
-    - events: u32 (0)
+// class Listener[T] {
+//     data: T
+//     ~ epoll_fd: i32 (0)
+//     ~ fd: i32
+//     ~ detect_read: bool (false)
+//     ~ detect_write: bool (false)
+//     - detect_events: u32 (0)
+//     - events: u32 (0)
 
-    fn set_events(events: u32) {
-        this.events = events
-    }
+//     fn set_events(events: u32) {
+//         this.events = events
+//     }
 
-    fn has_read_request() bool {
-        return (this.events & sys.OS.EPOLLIN) > 0
-    }
-    fn has_write_request() bool {
-        return (this.events & sys.OS.EPOLLOUT) > 0
-    }
-    fn has_stopped_the_connection() bool {
-        let evs = this.events
-        return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0
-    }
+//     fn has_read_request() bool {
+//         return (this.events & sys.OS.EPOLLIN) > 0
+//     }
+//     fn has_write_request() bool {
+//         return (this.events & sys.OS.EPOLLOUT) > 0
+//     }
+//     fn has_stopped_the_connection() bool {
+//         let evs = this.events
+//         return (evs & sys.OS.EPOLLRDHUP) > 0 || (evs & sys.OS.EPOLLHUP) > 0 || (evs & sys.OS.EPOLLERR) > 0
+//     }
 
-    fn detect_read_request(v: bool) {
-        this.detect_read = v
-        this.update_epoll()
-    }
-    fn detect_write_request(v: bool) {
-        this.detect_write = v
-        this.update_epoll()
-    }
-    - fn update_epoll() {
-        let ev = 0#u32
-        if this.detect_read {
-            ev = ev | sys.OS.EPOLLIN
-        }
-        if this.detect_write {
-            ev = ev | sys.OS.EPOLLOUT
-        }
-        ev = ev | sys.OS.EPOLLRDHUP
+//     fn detect_read_request(v: bool) {
+//         this.detect_read = v
+//         this.update_epoll()
+//     }
+//     fn detect_write_request(v: bool) {
+//         this.detect_write = v
+//         this.update_epoll()
+//     }
+//     - fn update_epoll() {
+//         let ev = 0#u32
+//         if this.detect_read {
+//             ev = ev | sys.OS.EPOLLIN
+//         }
+//         if this.detect_write {
+//             ev = ev | sys.OS.EPOLLOUT
+//         }
+//         ev = ev | sys.OS.EPOLLRDHUP
 
-        this.detect_events = ev
+//         this.detect_events = ev
 
-        let evo = @stack_object(sys.cstruct_epoll_event)
-        evo.events = this.detect_events
-        evo.data = this @as ptr
-        let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo)
-    }
-}
+//         let evo = @stack_object(sys.cstruct_epoll_event)
+//         evo.events = this.detect_events
+//         evo.data = this @as ptr
+//         let res = sys.epoll_ctl(this.epoll_fd, sys.OS.EPOLL_CTL_MOD, this.fd, evo)
+//     }
+// }
 

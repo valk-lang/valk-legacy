@@ -84,16 +84,21 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             if (idf->type == idf_class) {
                 Class *class = idf->item;
                 type = type_gen_class(alc, class);
-                if (is_inline) {
-                    type->is_pointer = false;
-                    type->size = class->size;
-                }
+            }
+            if (idf->type == idf_type) {
+                type = type_clone(alc, idf->item);
             }
         }
     }
 
     if (type) {
-        if(nullable) {
+        if (is_inline) {
+            type->is_pointer = false;
+            if(type->type == type_struct) {
+                type->size = type->class->size;
+            }
+        }
+        if (nullable) {
             if (!type->is_pointer) {
                 char buf[256];
                 sprintf(b->char_buf, "This type cannot be null: '?%s'", type_to_str(type, buf));
@@ -107,6 +112,11 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
     sprintf(b->char_buf, "Invalid type: '%s'", tkn);
     parse_err(fc->chunk_parse, b->char_buf);
     return NULL;
+}
+Type* type_clone(Allocator* alc, Type* type) {
+    Type* t = al(alc, sizeof(Type));
+    *t = *type;
+    return t;
 }
 
 Type* type_gen_void(Allocator* alc) {
@@ -240,6 +250,19 @@ char* type_to_str(Type* t, char* res) {
     }
 
     return res;
+}
+
+void type_to_str_append(Type* t, Str* buf) {
+    if (t->nullable) {
+        str_flat(buf, "?");
+    }
+    if (t->type == type_void) {
+        str_flat(buf, "void");
+    } else if (t->type == type_null) {
+        str_flat(buf, "null");
+    } else if (t->class) {
+        str_add(buf, t->class->name);
+    }
 }
 
 int type_get_size(Build* b, Type* type) {

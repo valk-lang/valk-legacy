@@ -112,6 +112,10 @@ char *str_to_chars(Allocator *alc, Str *str) {
 }
 
 void str_clear(Str *str) {
-    //
     str->length = 0;
+}
+
+char* str_temp_chars(Str *str) {
+    ((char*)(str->data))[str->length] = '\0';
+    return str->data;
 }

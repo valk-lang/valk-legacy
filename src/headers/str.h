@@ -22,5 +22,6 @@ char *str_to_chars(Allocator *alc, Str *);
 void str_clear(Str *str);
 void str_increase_memsize(Str *str, int new_memsize);
 void str_preserve(Str *str, int size);
+char* str_temp_chars(Str *str);
 
 #endif

@@ -156,6 +156,7 @@ void stage_1_class(Fc *fc, int type, int act) {
     }
 
     Class* class = class_make(b->alc, b, type);
+    class->fc = fc;
     class->name = name;
     class->ir_name = gen_export_name(fc->nsc, name);
     class->scope = scope_sub_make(b->alc, sc_default, fc->scope, NULL);
@@ -174,7 +175,6 @@ void stage_1_class(Fc *fc, int type, int act) {
                 parse_err(fc->chunk_parse, b->char_buf);
             }
             array_push(generic_names, tkn);
-            tkn = tok(fc, true, false, true);
             if (str_is(tok_expect_two(fc, ",", "]", true, false), "]"))
                 break;
         }

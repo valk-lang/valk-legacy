@@ -18,6 +18,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     //
     c->generics = NULL;
     c->generic_names = NULL;
+    c->generic_types = NULL;
     c->is_generic_base = false;
     //
     return c;
@@ -94,3 +95,75 @@ int class_determine_size(Build* b, Class* class) {
     return size;
 }
 
+
+Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
+    Build* b = fc->b;
+    //
+    Str* hash = build_get_str_buf(b);
+    Array* names = generic_types->keys;
+    Array* types = generic_types->values;
+    for (int i = 0; i < types->length; i++) {
+        char* name = array_get_index(names, i);
+        Type* type = array_get_index(types, i);
+        type_to_str_append(type, hash);
+        str_flat(hash, "|");
+    }
+    char* h = str_temp_chars(hash);
+    Class* gclass = map_get(class->generics, h);
+    if (gclass) {
+        build_return_str_buf(b, hash);
+        return gclass;
+    }
+    // Generate new
+    h = str_to_chars(b->alc, hash);
+    str_clear(hash);
+    // Name
+    for (int i = 0; i < types->length; i++) {
+        if(i > 0)
+            str_flat(hash, ", ");
+        char buf[256];
+        Type* type = array_get_index(types, i);
+        type_to_str(type, buf);
+        str_add(hash, buf);
+    }
+    char* name = str_to_chars(b->alc, hash);
+
+    gclass = class_make(b->alc, b, ct_struct);
+    gclass->body = chunk_clone(b->alc, class->body);
+    gclass->scope = scope_sub_make(b->alc, sc_default, gclass->body->fc->scope, NULL);
+    gclass->type = class->type;
+    gclass->b = class->b;
+    gclass->fc = class->fc;
+
+    gclass->name = name;
+    gclass->ir_name = gen_export_name(gclass->fc->nsc, name);
+
+    Scope* scope = gclass->scope;
+    for (int i = 0; i < types->length; i++) {
+        char* name = array_get_index(names, i);
+        Type* type = array_get_index(types, i);
+        Idf* idf = idf_make(b->alc, idf_type, type);
+        scope_set_idf(scope, name, idf, fc);
+    }
+
+    // Save chunk for parser
+    Chunk ch;
+    ch = *fc->chunk_parse;
+
+    // Stage 2
+    stage_props_class(fc, gclass);
+    // Class size
+    int size = class_determine_size(b, gclass);
+    if(size == -1) {
+        sprintf(b->char_buf, "Cannot determine size of class: '%s'\n", gclass->name);
+        parse_err(fc->chunk_parse, b->char_buf);
+    }
+    // Types
+    stage_types_class(fc, gclass);
+
+    // Restore chunk
+    *fc->chunk_parse = ch;
+    //
+    build_return_str_buf(b, hash);
+    return gclass;
+}

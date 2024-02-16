@@ -466,7 +466,14 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             char* name = array_get_index(names, i);
             Type* type = read_type(fc, alc, scope, false);
             map_set(generic_types, name, type);
+            if(i + 1 < names->length) {
+                tok_expect(fc, ",", true, false);
+            } else {
+                tok_expect(fc, "]", true, false);
+                break;
+            }
         }
+        class = get_generic_class(fc, class, generic_types);
     }
 
     if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {

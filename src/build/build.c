@@ -73,12 +73,13 @@ int cmd_build(int argc, char *argv[]) {
     b->pkcs = array_make(alc, 20);
 
     b->classes = array_make(alc, 40);
+    b->pool_str = array_make(alc, 20);
 
     b->func_main = NULL;
 
     b->ptr_size = 8;
     b->export_count = 0;
-    b->verbose = 2;
+    b->verbose = 3;
     b->LOC = 0;
     b->parser_started = false;
 
@@ -242,28 +243,16 @@ void parse_err(Chunk *chunk, char *msg) {
         printf("#");
     printf("\n");
 
-    // int spaces = (col >= 10) ? 0 : (10 - col);
-    // i -= len + (10 - spaces) - 1;
-    // int x = len + 34;
-    // while (x-- > 0)
-    //     printf("#");
-    // printf("\n");
-    // x = spaces;
-    // while (x-- > 0)
-    //     printf(" ");
-    // x = 0;
-    // while (content[i] != 0 && content[i] != '\n' && x++ < (20 + len)) {
-    //     char ch = content[i++];
-    //     if(ch == '\t')
-    //         ch = ' ';
-    //     printf("%c", ch);
-    // }
-    // printf("\n######## ");
-    // x = len;
-    // while (x-- > 0)
-    //     printf("^");
-    // printf(" ########################\n");
     exit(1);
+}
+
+Str* build_get_str_buf(Build* b) {
+    Str* res = b->pool_str->length > 0 ? array_pop(b->pool_str) : str_make(b->alc, 1000);
+    str_clear(res);
+    return res;
+}
+void build_return_str_buf(Build* b, Str* buf) {
+    array_push(b->pool_str, buf);
 }
 
 void cmd_build_help() {
