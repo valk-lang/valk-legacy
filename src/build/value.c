@@ -444,6 +444,30 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
     Value* fcall = vgen_func_call(alc, on, args);
 
+    if(ont->func_errors) {
+        VFuncCall* f = fcall->item;
+        char* tkn = tok_expect_two(fc, "!", "?", true, false);
+
+        if(str_is(tkn, "!")) {
+            tok_expect(fc, "{", true, false);
+            Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
+            chunk_end->i = chunk_end->scope_end_i;
+            Scope* err_scope = scope_sub_make(alc, sc_default, scope, chunk_end);
+
+            read_ast(fc, err_scope, false);
+            f->err_scope = err_scope;
+
+            if(!err_scope->did_return) {
+                parse_err(fc->chunk_parse, "Expected scope to contain one of the following tokens: return, throw, break, continue");
+            }
+
+        } else if(str_is(tkn, "?")) {
+            Value* errv = read_value(alc, fc, scope, false, 0);
+            type_check(fc->chunk_parse, fcall->rett, errv->rett);
+            f->err_value = errv;
+        }
+    }
+
     if(contains_gc_args) {
         VFuncCallBuffer* fbuff = al(alc, sizeof(VFuncCallBuffer));
         Scope* before = scope_sub_make(alc, sc_default, scope, NULL);

@@ -88,7 +88,7 @@ struct Build {
     //
     Array *classes;
     Array *pool_str;
-    Map *errors;
+    ErrorCollection* errors;
     //
     size_t mem_parse;
     size_t mem_objects;

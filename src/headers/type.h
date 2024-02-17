@@ -25,12 +25,14 @@ struct Type {
     Class* class;
     Array* func_args;
     Array* func_default_values;
+    Map* func_errors;
     Type* func_rett;
     int type;
     int size;
     bool nullable;
     bool is_pointer;
     bool is_signed;
+    bool func_can_error;
 };
 
 #endif

@@ -13,13 +13,13 @@ void ir_gen_globals(IR* ir) {
     itoa(fc->b->ptr_size, bytes, 10);
 
     if (is_main_fc) {
-        str_flat(code, "@ki_err_code_buffer = dso_local thread_local(initialexec) global i32 0, align 4\n");
-        str_flat(code, "@ki_err_msg_buffer = dso_local thread_local(initialexec) global i8* null, align ");
+        str_flat(code, "@volt_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
+        str_flat(code, "@volt_err_msg = dso_local thread_local(initialexec) global i8* null, align ");
         str_add(code, bytes);
         str_flat(code, "\n");
     } else {
-        str_flat(code, "@ki_err_code_buffer = external thread_local(initialexec) global i32, align 4\n");
-        str_flat(code, "@ki_err_msg_buffer = external thread_local(initialexec) global i8*, align ");
+        str_flat(code, "@volt_err_code = external thread_local(initialexec) global i32, align 4\n");
+        str_flat(code, "@volt_err_msg = external thread_local(initialexec) global i8*, align ");
         str_add(code, bytes);
         str_flat(code, "\n");
     }

@@ -44,6 +44,8 @@ struct VFuncPtr {
 struct VFuncCall {
     Value *on;
     Array *args;
+    Scope *err_scope;
+    Value *err_value;
     int line;
     int col;
 };

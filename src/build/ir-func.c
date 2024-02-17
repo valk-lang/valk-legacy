@@ -227,6 +227,19 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size) {
     return var;
 }
 
+void ir_func_return_nothing(IR* ir) {
+    Func* func = ir->func->func;
+    if(!func->rett || type_is_void(func->rett)) {
+        ir_func_return(ir, NULL, "void");
+    } else {
+        if(func->rett->is_pointer) {
+            ir_func_return(ir, "ptr", "null");
+        } else {
+            char* type = ir_type(ir, func->rett);
+            ir_func_return(ir, type, "0");
+        }
+    }
+}
 
 void ir_func_return(IR* ir, char* type, char* value) {
     IRFunc* func = ir->func;

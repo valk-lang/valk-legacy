@@ -94,6 +94,14 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_jump(ir, cond);
             continue;
         }
+        if (tt == t_throw) {
+            TThrow* tt = t->item;
+            ir_store(ir, type_gen_volt(alc, ir->b, "i32"), "@volt_err_code", ir_int(ir, tt->err->value));
+            char *msg = ir_string(ir, tt->msg);
+            ir_store(ir, type_gen_volt(alc, ir->b, "ptr"), "@volt_err_msg", msg);
+            ir_func_return_nothing(ir);
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

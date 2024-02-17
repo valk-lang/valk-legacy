@@ -8,10 +8,12 @@ Type* type_make(Allocator* alc, int type) {
     t->class = NULL;
     t->func_args = NULL;
     t->func_default_values = NULL;
+    t->func_errors = NULL;
     t->func_rett = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
+    t->func_can_error = false;
     return t;
 }
 
@@ -157,8 +159,10 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     t->func_rett = func->rett;
     t->func_args = func->arg_types;
     t->func_default_values = func->arg_values;
+    t->func_errors = func->errors;
     t->size = func->b->ptr_size;
     t->is_pointer = true;
+    t->func_can_error = func->errors ? true : false;
     return t;
 }
 Type* type_gen_volt(Allocator* alc, Build* b, char* name) {

@@ -74,7 +74,8 @@ int cmd_build(int argc, char *argv[]) {
 
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);
-    b->errors = map_make(alc);
+    b->errors = al(alc, sizeof(ErrorCollection));
+    b->errors->errors = map_make(alc);
 
     b->func_main = NULL;
 

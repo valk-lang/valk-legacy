@@ -77,11 +77,12 @@ void parse_handle_func_args(Fc* fc, Func* func) {
         if(fc->is_header) {
             build_err(b, "TODO: header errors");
         } else {
-            err = map_get(b->errors, name);
+            err = map_get(b->errors->errors, name);
             if(!err) {
                 err = al(b->alc, sizeof(FuncError));
                 err->value = ++b->error_count;
-                map_set(b->errors, name, err);
+                err->collection = b->errors;
+                map_set(b->errors->errors, name, err);
             }
         }
         Idf* idf = idf_make(b->alc, idf_error, err);
