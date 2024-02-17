@@ -8,10 +8,11 @@ global allocator : ?Bump;
 value state_new (0)
 value state_transfer (2)
 value state_solid (4)
-value state_unknown (8)
-value state_freed (16)
-value state_freed2 (18)
-value state_global (32)
+value state_unknown (6)
+value state_freed (8)
+value state_freed2 (10)
+value state_global (12)
+value state_const (14)
 value stack_size (1000000)
 
 value sub_state_keep (5)
@@ -117,9 +118,6 @@ struct Stack {
         return to
     }
     static fn unlink(item: ptr) {
-        if item == (null) {
-            return
-        }
         let item_state = @ptrv(item, u8, 0)
         if item_state == state_solid {
             stack.unknown.add_item(item)
@@ -389,6 +387,10 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
+                if @ptrv(item, u8, 0) > state_unknown {
+                    // Ignore freed, globals, consts
+                    continue;
+                }
                 if @ptrv(item, u8, 1) != age {
                     // Free item + all sub items with incorrect age and have solid state
                     Stack.free_rec(item, age, bump)
@@ -416,7 +418,7 @@ struct Stack {
             let sub = @ptrv(item, ptr, field)
             if sub != null {
                 let sub_state = @ptrv(sub, u8, 0)
-                if sub_state != state_freed {
+                if sub_state < state_freed {
                     if @ptrv(sub, u8, 1) != age {
                         Stack.free_rec(sub, age, bump)
                         continue;
@@ -433,8 +435,10 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, 1) != age {
-                    Stack.mark_stack_item_as_solid_rec(item, age)
+                if @ptrv(item, u8, 0) < state_freed {
+                    if @ptrv(item, u8, 1) != age {
+                        Stack.mark_stack_item_as_solid_rec(item, age)
+                    }
                 }
             }
             item_adr = item_adr + sizeof(ptr) * 2
@@ -448,8 +452,10 @@ struct Stack {
             let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
-                if @ptrv(sub, u8, 1) != age {
-                    Stack.mark_stack_item_as_solid_rec(sub, age)
+                if @ptrv(sub, u8, 0) < state_freed {
+                    if @ptrv(sub, u8, 1) != age {
+                        Stack.mark_stack_item_as_solid_rec(sub, age)
+                    }
                 }
             }
         }
