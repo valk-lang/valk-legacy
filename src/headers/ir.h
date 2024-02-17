@@ -21,6 +21,7 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size);
 void ir_func_return_nothing(IR* ir);
 void ir_func_return(IR* ir, char* type, char* value);
+char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST

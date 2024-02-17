@@ -120,3 +120,65 @@ int func_get_reserve_count(Func* func) {
     }
     return count;
 }
+
+
+char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
+    if(!fcall->err_scope && !fcall->err_value) {
+        return res;
+    }
+
+    IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
+    IRBlock *block_else = fcall->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
+    IRBlock *after = ir_block_make(ir, ir->func, "if_err_after_");
+
+    Type* type_i32 = type_gen_volt(ir->alc, ir->b, "i32");
+    char *load = ir_load(ir, type_i32, "@volt_err_code");
+    char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
+    char *lcond_i1 = ir_i1_cast(ir, lcond);
+
+    // Clear error
+    ir_store(ir, type_i32, "@volt_err_code", "0");
+
+    ir_cond_jump(ir, lcond_i1, block_err, fcall->err_value ? block_else : after);
+
+    if(fcall->err_scope) {
+
+        Scope* err_scope = fcall->err_scope;
+        ir->block = block_err;
+        ir_write_ast(ir, err_scope);
+        ir->block = after;
+
+        return res;
+
+    } else if(fcall->err_value) {
+
+        Value* val = fcall->err_value;
+        char* ltype = ir_type(ir, val->rett);
+
+        ir->block = block_err;
+        char* alt_val = ir_value(ir, scope, val);
+        ir_jump(ir, after);
+
+        ir->block = block_else;
+        ir_jump(ir, after);
+
+        ir->block = after;
+        Str* code = after->code;
+        char* var = ir_var(ir->func);
+        str_flat(code, "  ");
+        str_add(code, var);
+        str_flat(code, " = phi ");
+        str_add(code, ltype);
+        str_flat(code, " [ ");
+        str_add(code, res);
+        str_flat(code, ", %");
+        str_add(code, block_else->name);
+        str_flat(code, " ], [ ");
+        str_add(code, alt_val);
+        str_flat(code, ", %");
+        str_add(code, block_err->name);
+        str_flat(code, " ]\n");
+
+        return var;
+    }
+}

@@ -22,7 +22,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *on = ir_value(ir, scope, fcall->on);
         Array *values = ir_fcall_args(ir, scope, fcall->args);
         char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
-        return res;
+        return ir_func_err_handler(ir, scope, res, fcall);
     }
     if (v->type == v_fcall_buffer) {
         VFuncCallBuffer* fbuff = v->item;
@@ -32,13 +32,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir_write_ast(ir, fbuff->before);
         str_add(ir->block->code, "  ; FCALL BUFFER ON\n");
         char *on = ir_value(ir, scope, fcall->on);
-        str_add(ir->block->code, "  ; FCALL BUFFER ARGS\n");
         Array *values = ir_fcall_args(ir, scope, fcall->args);
-        str_add(ir->block->code, "  ; FCALL BUFFER CALL\n");
         char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
         str_add(ir->block->code, "  ; FCALL BUFFER CLEAR\n");
         ir_write_ast(ir, fbuff->after);
-        return res;
+        return ir_func_err_handler(ir, scope, res, fcall);
     }
     if (v->type == v_func_ptr) {
         VFuncPtr *fptr = v->item;
