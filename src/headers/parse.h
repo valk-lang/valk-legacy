@@ -9,6 +9,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Fc* fc);
 void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl);
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end);
+Scope* scope_get_func(Scope* scope, bool must_exist, Fc* fc);
 // Read
 char* tok(Fc* fc, bool allow_space, bool allow_newline, bool update);
 void tok_back(Fc* fc);
@@ -36,6 +37,7 @@ struct Scope {
     Chunk* chunk_end;
     IRBlock* ir_after_block;
     IRBlock* ir_cond_block;
+    Func* func;
     bool must_return;
     bool did_return;
     bool calls_other_functions;

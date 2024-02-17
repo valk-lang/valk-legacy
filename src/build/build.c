@@ -74,10 +74,12 @@ int cmd_build(int argc, char *argv[]) {
 
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);
+    b->errors = map_make(alc);
 
     b->func_main = NULL;
 
     b->ptr_size = 8;
+    b->error_count = 0;
     b->export_count = 0;
     b->verbose = 3;
     b->LOC = 0;

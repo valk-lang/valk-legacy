@@ -24,6 +24,7 @@ int type_get_size(Build* b, Type* type);
 struct Type {
     Class* class;
     Array* func_args;
+    Array* func_default_values;
     Type* func_rett;
     int type;
     int size;

@@ -64,7 +64,7 @@ void stage_types_func(Fc* fc, Func* func) {
             }
 
             tok_expect(fc, ":", true, false);
-            Type* type = read_type(fc, fc->alc, fc->scope, false);
+            Type* type = read_type(fc, fc->alc, func->scope, false);
             if(type->type == type_void) {
                 sprintf(b->char_buf, "You cannot use void types for arguments");
                 parse_err(fc->chunk_parse, b->char_buf);
@@ -82,6 +82,7 @@ void stage_types_func(Fc* fc, Func* func) {
             tkn = tok(fc, true, true, true);
             if(str_is(tkn, "(")) {
                 arg->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
+                array_push(func->arg_values, arg->chunk_value);
                 skip_body(fc);
                 tkn = tok(fc, true, true, true);
             }
@@ -98,7 +99,7 @@ void stage_types_func(Fc* fc, Func* func) {
     }
     if(func->chunk_rett) {
         *fc->chunk_parse = *func->chunk_rett;
-        Type *type = read_type(fc, fc->alc, fc->scope, false);
+        Type *type = read_type(fc, fc->alc, func->scope, false);
         func->rett = type;
         func->scope->must_return = !type_is_void(type);
         func->scope->rett = type;

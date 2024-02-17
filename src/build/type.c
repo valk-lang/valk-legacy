@@ -7,6 +7,7 @@ Type* type_make(Allocator* alc, int type) {
     t->size = 0;
     t->class = NULL;
     t->func_args = NULL;
+    t->func_default_values = NULL;
     t->func_rett = NULL;
     t->is_pointer = false;
     t->is_signed = false;
@@ -155,6 +156,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     Type* t = type_make(alc, type_func);
     t->func_rett = func->rett;
     t->func_args = func->arg_types;
+    t->func_default_values = func->arg_values;
     t->size = func->b->ptr_size;
     t->is_pointer = true;
     return t;

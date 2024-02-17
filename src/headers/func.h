@@ -4,7 +4,7 @@
 
 #include "typedefs.h"
 
-Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name);
+Func* func_make(Allocator* alc, Fc* fc, Scope* parent, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
 void parse_handle_func_args(Fc* fc, Func* func);
 int func_get_reserve_count(Func* func);
@@ -23,6 +23,7 @@ struct Func {
     //
     Map* args;
     Array* arg_types;
+    Array* arg_values;
     Type* rett;
     Class* class;
     Array* cached_values;

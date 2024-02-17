@@ -88,11 +88,13 @@ struct Build {
     //
     Array *classes;
     Array *pool_str;
+    Map *errors;
     //
     size_t mem_parse;
     size_t mem_objects;
     //
     int ptr_size;
+    int error_count;
     int export_count;
     int verbose;
     int LOC;

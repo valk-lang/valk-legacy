@@ -34,3 +34,10 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
     item->scope_while = scope_while;
     return token_make(alc, t_while, item);
 }
+
+Token *tgen_throw(Allocator *alc, FuncError* err, char* msg) {
+    TThrow *item = al(alc, sizeof(TThrow));
+    item->err = err;
+    item->msg = msg;
+    return token_make(alc, t_throw, item);
+}

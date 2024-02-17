@@ -109,7 +109,7 @@ void stage_props_class(Fc* fc, Class *class) {
             parse_err(fc->chunk_parse, b->char_buf);
         }
 
-        Func *func = func_make(b->alc, fc, name, NULL);
+        Func *func = func_make(b->alc, fc, class->scope, name, NULL);
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;

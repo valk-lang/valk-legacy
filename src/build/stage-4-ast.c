@@ -134,6 +134,25 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 *fc->chunk_parse = *scope->chunk_end;
                 break;
             }
+            if (str_is(tkn, "throw")){
+                char* name = tok(fc, true, false, true);
+                if(!is_valid_varname(tkn)) {
+                    sprintf(b->char_buf, "Invalid error name: '%s'", name);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+                Scope* fscope = scope_get_func(scope, true, fc);
+                FuncError* err = NULL;
+                if (fscope->func->errors) {
+                    err = map_get(fscope->func->errors, name);
+                }
+                if(!err) {
+                    sprintf(b->char_buf, "Function has no error defined named: '%s'", name);
+                    parse_err(fc->chunk_parse, b->char_buf);
+                }
+
+                array_push(scope->ast, tgen_throw(alc, err, NULL));
+                continue;
+            }
         }
         if (t == tok_at_word) {
             if (str_is(tkn, "@cache_value")){

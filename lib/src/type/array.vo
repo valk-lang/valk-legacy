@@ -5,13 +5,13 @@ class Array[T] {
     ~ data: ptr
     - is_transfered: bool (false) 
 
-    static fn new(start_size: uint = 2) CLASS {
+    static fn new(start_size: uint (2)) CLASS {
         if start_size < 2 {
             start_size = 2
         }
         return CLASS {
-            size: start_size,
-            data: mem:gc_bump_alloc(start_size * sizeof(T)),
+            size: start_size
+            data: mem:gc_bump_alloc(start_size * sizeof(T))
         };
     }
 
@@ -52,9 +52,10 @@ class Array[T] {
 
     fn increase_size() ptr {
         let data = this.data
-        let new_size = this.size * 2
+        let size = this.size
+        let new_size = size * 2
         let new_data = mem:alloc(new_size * sizeof(T))
-        if this.transfered {
+        if this.is_transfered {
             new_data = mem:alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
             mem:free(data);
@@ -127,7 +128,7 @@ class Array[T] {
         @ptrv(data, T, index_b) = a
     }
 
-    fn index_of(item: &T) uint !not_found {
+    fn index_of(item: T) uint !not_found {
         let index : uint = 0
         let adr = this.data
         let len = this.length
@@ -141,7 +142,7 @@ class Array[T] {
         throw not_found
     }
 
-    fn sort {
+    fn sort() {
         let len_ = this.length
         if len_ < 2 : return
 
@@ -165,7 +166,7 @@ class Array[T] {
         }
     }
 
-    fn reverse {
+    fn reverse() {
         let len_ = this.length
         if len_ < 2 : return
         let last = len_ - 1
@@ -183,10 +184,10 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        this.transfered = true
+        this.is_transfered = true
     }
     fn _gc_free() {
-        if this.transfered {
+        if this.is_transfered {
             mem:free(this.data)
         }
     }

@@ -105,7 +105,7 @@ void stage_1_func(Fc* fc, int act) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    Func* func = func_make(b->alc, fc, name, NULL);
+    Func* func = func_make(b->alc, fc, fc->scope, name, NULL);
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(fc->nsc->scope, name, idf, fc);
     array_push(fc->funcs, func);

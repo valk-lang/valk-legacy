@@ -1,25 +1,28 @@
 
 #include "../all.h"
 
-Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
+Func* func_make(Allocator* alc, Fc* fc, Scope* parent, char* name, char* export_name) {
     Func* f = al(alc, sizeof(Func));
     f->name = name;
     f->export_name = export_name;
     f->b = fc->b;
     f->fc = fc;
-    f->scope = scope_make(alc, sc_func, fc->scope);
+    f->scope = scope_make(alc, sc_func, parent);
     f->scope_gc_pop = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
+    f->arg_values = array_make(alc, 4);
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
+
+    f->scope->func = f;
 
     if(!f->export_name) {
         f->export_name = gen_export_name(fc->nsc, name);
@@ -64,14 +67,26 @@ void parse_handle_func_args(Fc* fc, Func* func) {
         errors = map_make(b->alc);
     }
     while(str_is(tkn, "!")) {
-        tkn = tok(fc, false, false, true);
-        if(!is_valid_varname(tkn)) {
-            sprintf(b->char_buf, "Invalid error name: '%s'", tkn);
+        char *name = tok(fc, false, false, true);
+        if(!is_valid_varname(name)) {
+            sprintf(b->char_buf, "Invalid error name: '%s'", name);
             parse_err(fc->chunk_parse, b->char_buf);
         }
-        FuncError* err = al(b->alc, sizeof(FuncError));
-        err->value = -1;
-        map_set(errors, tkn, err);
+        // Get error value
+        FuncError* err = NULL;
+        if(fc->is_header) {
+            build_err(b, "TODO: header errors");
+        } else {
+            err = map_get(b->errors, name);
+            if(!err) {
+                err = al(b->alc, sizeof(FuncError));
+                err->value = ++b->error_count;
+                map_set(b->errors, name, err);
+            }
+        }
+        Idf* idf = idf_make(b->alc, idf_error, err);
+        map_set(errors, name, err);
+        scope_set_idf(func->scope, name, idf, fc);
 
         tkn = tok(fc, true, true, true);
     }

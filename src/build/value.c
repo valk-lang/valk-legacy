@@ -361,6 +361,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     
     Build* b = fc->b;
     Array* func_args = ont->func_args;
+    Array* func_default_values = ont->func_default_values;
     Type *rett = ont->func_rett;
 
     if (!func_args || !rett) {
@@ -414,7 +415,27 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         parse_err(fc->chunk_parse, b->char_buf);
     }
 
-    // TODO: default values if missing arguments
+    // Add default values
+    if (func_default_values) {
+        int index = args->length;
+        while (index < func_args->length) {
+            Type *arg_type = array_get_index(func_args, index);
+            Chunk *default_value_ch = array_get_index(func_default_values, index);
+            if(!arg_type || !default_value_ch)
+                break;
+            Chunk ch;
+            ch = *fc->chunk_parse;
+            *fc->chunk_parse = *default_value_ch;
+            //
+            Value* arg = read_value(b->alc, fc, default_value_ch->fc->scope, true, 0);
+            try_convert_number(arg, arg_type);
+            type_check(fc->chunk_parse, arg_type, arg->rett);
+            //
+            *fc->chunk_parse = ch;
+            array_push(args, arg);
+            index++;
+        }
+    }
 
     if(args->length < func_args->length) {
         sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);

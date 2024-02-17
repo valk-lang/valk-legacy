@@ -15,6 +15,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->chunk_end = NULL;
     sc->ir_after_block = NULL;
     sc->ir_cond_block = NULL;
+    sc->func = NULL;
     sc->must_return = false;
     sc->did_return = false;
     return sc;
@@ -57,4 +58,14 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
     if(!scope)
         return;
     array_push(scope->decls, decl);
+}
+
+Scope* scope_get_func(Scope* scope, bool must_exist, Fc* fc) {
+    while(scope && scope->type != sc_func) {
+        scope = scope->parent;
+    }
+    if(!scope && must_exist) {
+        parse_err(fc->chunk_parse, "Missing function scope");
+    }
+    return scope;
 }

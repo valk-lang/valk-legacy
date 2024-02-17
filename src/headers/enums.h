@@ -41,6 +41,7 @@ enum IDF {
     idf_value,
     idf_type,
     idf_cached_value,
+    idf_error,
 };
 
 enum TYPES {
@@ -95,6 +96,7 @@ enum TOKENS {
     t_while,
     t_break,
     t_continue,
+    t_throw,
 };
 
 enum OPERATORS {
