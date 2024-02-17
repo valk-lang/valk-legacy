@@ -145,6 +145,8 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
         Idf* idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(scope, name, idf, fc);
     }
+    Idf* idf = idf_make(b->alc, idf_class, gclass);
+    scope_set_idf(class->scope, "CLASS", idf, fc);
 
     // Save chunk for parser
     Chunk ch;

@@ -191,6 +191,8 @@ void stage_1_class(Fc *fc, int type, int act) {
     if(!nsc_scope->type_identifiers)
         nsc_scope->type_identifiers = map_make(b->alc);
     map_set_force_new(nsc_scope->type_identifiers, name, idf);
+    if(!class->is_generic_base)
+        scope_set_idf(class->scope, "CLASS", idf, fc);
 
     //
     if(type == ct_int) {

@@ -2,34 +2,31 @@
 use volt:mem
 use volt:os
 
-shared gc_instance : ?Gc
-shared gc_age : u8
-shared gc_busy : uint
-shared gc_object_count : int
+shared gc_manager_instance : ?GcManager
 
-fn gc_alloc(size: u32, sub_field_count: u8) ptr {
-    let adr = allocator.alloc(size @as uint)
-    @ptrv(adr, i32, 0) = 0
-    @ptrv(adr, u32, 1) = size @as u32
-    @ptrv(adr, u8, byte_fields) = sub_field_count
-    return adr
+fn gc_manager() GcManager {
+    let gc = gc_manager_instance
+    while gc == null {
+        gc = gc_manager_instance
+    }
+    return gc @as GcManager
 }
 
-struct Gc {
+struct GcManager {
     stacks : ptr
     stack_count : uint (0)
     free_index : uint(0)
     free_index_lock : uint (0)
     has_free_index : bool (false)
 
-    static fn start() {
-        if gc_instance != null {
+    static fn init() {
+        if gc_manager_instance != null {
             return
         }
-        gc_instance = Gc {
+        gc_manager_instance = GcManager {
             stacks: mem:alloc(2000 * sizeof(ptr))
         }
-        os:Thread.start_without_gc(Gc.loop @as ptr)
+        os:Thread.start_without_gc(GcManager.loop @as ptr)
     }
 
     fn add_stack(s: Stack) {
@@ -53,9 +50,8 @@ struct Gc {
     }
 
     static fn loop() {
-        let g = gc_instance;
+        let g = gc_manager_instance;
         let cycles = 0
-        let last_age = gc_age
         let x = 0 @as uint;
         while true {
             x++

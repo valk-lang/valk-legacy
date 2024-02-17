@@ -1,0 +1,224 @@
+
+class Array[T] {
+    ~ size: uint
+    ~ length: uint (0)
+    ~ data: ptr
+    - is_transfered: bool (false) 
+
+    static fn new(start_size: uint = 2) CLASS {
+        if start_size < 2 {
+            start_size = 2
+        }
+        return CLASS {
+            size: start_size,
+            data: mem:gc_bump_alloc(start_size * sizeof(T)),
+        };
+    }
+
+    fn push(item: T) uint {
+        let size = this.size
+        let length = this.length
+        let data = this.data
+
+        if length == size {
+            data = this.increase_size()
+        }
+
+        @ptrv(data, T, length) = item
+        this.length = length + 1
+
+        return length
+    }
+
+    fn prepend(item: T) void {
+
+        let size = this.size
+        let length = this.length
+        let data = this.data
+
+        if length == size {
+            data = this.increase_size()
+        }
+
+        let to_pos = length
+        while to_pos > 0 {
+            @ptrv(data, T, to_pos) = @ptrv(data, T, to_pos - 1)
+            to_pos--
+        }
+
+        @ptrv(data, T, 0) = item
+        this.length = length + 1
+    }
+
+    fn increase_size() ptr {
+        let data = this.data
+        let new_size = this.size * 2
+        let new_data = mem:alloc(new_size * sizeof(T))
+        if this.transfered {
+            new_data = mem:alloc(new_size * sizeof(T));
+            mem:copy(data, new_data, size * sizeof(T));
+            mem:free(data);
+        } else {
+            new_data = mem:gc_bump_alloc(new_size * sizeof(T));
+            mem:copy(data, new_data, size * sizeof(T));
+        }
+        this.data = new_data
+        this.size = new_size
+        return new_data
+    }
+
+    fn get(index: uint) T !not_found {
+        if index >= this.length {
+            throw not_found;
+        }
+        return @ptrv(this.data, T, index);
+    }
+
+    fn set(index: uint, value: T) void !out_of_range {
+        if index >= this.length {
+            throw out_of_range;
+        }
+        let data = this.data;
+        let current = @ptrv(data, T, index);
+        @gc_unlink(current)
+        @ptrv(data, T, index) = @gc_link(this, value)
+    }
+
+    fn remove_index(index: uint) {
+        let len = this.length;
+        if index >= len : return;
+        let data = this.data;
+        let after_count = len - (index + 1);
+
+        let v = @ptrv(data, T, index);
+        @gc_unlink(v)
+
+        if after_count > 0 {
+            mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T));
+        }
+
+        this.length--;
+    }
+    fn remove_item(item: T) {
+        let index = this.index_of(item) !! {
+            return
+        }
+        this.remove_index(index);
+    }
+
+    fn pop() T !empty {
+        if this.length > 0 {
+            let value = @ptrv(this.data, T, this.length - 1);
+            @gc_unlink(value)
+            return value
+        }
+        throw empty
+    }
+
+    fn swap(index_a: uint, index_b: uint) {
+        let len = this.length
+        if index_a >= len || index_b >= len {
+            return
+        }
+        let data = this.data
+        let a = @ptrv(data, T, index_a)
+        let b = @ptrv(data, T, index_b)
+        @ptrv(data, T, index_a) = b
+        @ptrv(data, T, index_b) = a
+    }
+
+    fn index_of(item: &T) uint !not_found {
+        let index : uint = 0
+        let adr = this.data
+        let len = this.length
+        while index < len {
+            let x = @ptrv(adr, T, index)
+            if x == item {
+                return index
+            }
+            index++
+        }
+        throw not_found
+    }
+
+    fn sort {
+        let len_ = this.length
+        if len_ < 2 : return
+
+        let v = true
+        let i : uint = 0
+        let len = len_ - 1
+        while i < len && v {
+            v = false
+            let j : uint = 0
+            let until = len - i
+            while j < until {
+                let item = this.get(j) !! break
+                let next = this.get(j + 1) !! break
+                if item > next {
+                    this.swap(j, j + 1)
+                    v = true
+                }
+                j++
+            }
+            i++
+        }
+    }
+
+    fn reverse {
+        let len_ = this.length
+        if len_ < 2 : return
+        let last = len_ - 1
+        let first = 0
+        while len_ > 1 {
+            this.swap(first, last)
+            first++
+            last--
+            len_ -= 2
+        }
+    }
+
+    ////////////////
+    // Gc
+    ////////////////
+
+    fn _gc_transfer() {
+        this.transfered = true
+    }
+    fn _gc_free() {
+        if this.transfered {
+            mem:free(this.data)
+        }
+    }
+
+    ////////////////
+    // Internals
+    ////////////////
+
+    // fn __each_init() uxx {
+    //     return 0
+    // }
+
+    // fn __each(key_ref: uxx[1]) T !end {
+    //     let key = key_ref[0]
+    //     if key >= this.length {
+    //         throw end
+    //     }
+    //     key_ref[0] = key + 1
+    //     return this.get(key) !! throw end;;
+    // }
+
+    // fn __before_free() void {
+    //     // Deref items
+    //     let index = 0#uxx;
+    //     let length = this.length;
+    //     let data = this.data;
+    //     while index < length {
+    //         let value = @ptrv(data, T, index);
+    //         index++;
+    //     }
+
+    //     //
+    //     mem:free(this.data);
+    // }
+}

@@ -83,11 +83,8 @@ struct Stack {
         allocator = bump
         stack = s;
 
-        let gc = gc_instance;
-        while gc == null {
-            gc = gc_instance;
-        }
-        (gc @as Gc).add_stack(s);
+        let gcm = gc_manager()
+        gcm.add_stack(s);
     }
 
     ///////////////////////
