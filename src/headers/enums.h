@@ -85,6 +85,7 @@ enum VALUES {
     v_ptr_of,
     v_ir_cached,
     v_fcall_buffer,
+    v_gc_link,
 };
 
 enum TOKENS {
@@ -97,6 +98,7 @@ enum TOKENS {
     t_break,
     t_continue,
     t_throw,
+    t_gc_unlink,
 };
 
 enum OPERATORS {

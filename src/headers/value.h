@@ -28,6 +28,7 @@ Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);
 Value* vgen_null(Allocator* alc, Build* b);
+Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett);
 
 struct Value {
     int type;

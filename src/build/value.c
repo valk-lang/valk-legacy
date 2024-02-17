@@ -44,6 +44,18 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             Type* type = read_type(fc, alc, scope, true);
             tok_expect(fc, ")", true, true);
             v = value_make(alc, v_stack, NULL, type);
+
+        } else if (str_is(tkn, "@gc_link")){
+            tok_expect(fc, "(", false, false);
+            Value* on = read_value(alc, fc, scope, true, 0);
+            tok_expect(fc, ",", true, true);
+            Value* to = read_value(alc, fc, scope, true, 0);
+            tok_expect(fc, ")", true, true);
+            if(type_is_gc(on->rett) && type_is_gc(to->rett)) {
+                v = vgen_gc_link(alc, on, to, to->rett);
+            } else {
+                v = to;
+            }
         }
     } else if (t == tok_string) {
         char *body = tkn;

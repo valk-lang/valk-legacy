@@ -207,6 +207,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 *fc->chunk_parse = ch;
                 continue;
             }
+            if (str_is(tkn, "@gc_unlink")){
+            }
         }
 
         tok_back(fc);

@@ -127,3 +127,10 @@ Value* vgen_ir_cached(Allocator* alc, Value* value) {
 Value* vgen_null(Allocator* alc, Build* b) {
     return value_make(alc, v_null, NULL, type_gen_null(alc, b));
 }
+
+Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett) {
+    VPair* item = al(alc, sizeof(VPair));
+    item->left = on;
+    item->right = to;
+    return value_make(alc, v_gc_link, item, rett);
+}

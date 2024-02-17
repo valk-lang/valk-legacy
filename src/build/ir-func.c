@@ -124,7 +124,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Decl* decl = arg->decl;
         if(decl->is_mut) {
             // Store passed argument in storage var
-            ir_store(ir, decl->type, decl->ir_store_var, decl->ir_var);
+            ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
         }
     }
 

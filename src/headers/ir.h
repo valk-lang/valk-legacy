@@ -26,7 +26,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall);
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
-void ir_gc_link(IR* ir, char* on_var, Type* on_type, char* prop_var, char* to, Type* prop_type);
+char* ir_gc_link(IR* ir, char* on, char* to);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
@@ -44,7 +44,8 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
 char *ir_func_ptr(IR *ir, Func *func);
 char *ir_string(IR *ir, char *body);
 char* ir_load(IR* ir, Type* type, char* var);
-void ir_store(IR *ir, Type *type, char *var, char *val);
+void ir_store(IR *ir, char *var, char *val, char* type, int type_size);
+void ir_store_old(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char *ir_i1_cast(IR *ir, char *val);
 char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett);
@@ -52,6 +53,9 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
 void ir_if(IR *ir, Scope *scope, TIf *ift);
 void ir_while(IR *ir, Scope *scope, TWhile *item);
+char* ir_ptrv(IR* ir, char* on, char* type, int index);
+char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* type);
+char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* that2, IRBlock* that_block2, char* type);
 
 // Structs
 struct IR {

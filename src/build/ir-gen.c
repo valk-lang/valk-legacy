@@ -208,7 +208,27 @@ char* ir_load(IR* ir, Type* type, char* var) {
 
     return var_result;
 }
-void ir_store(IR *ir, Type *type, char *var, char *val) {
+
+void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
+    Str *code = ir->block->code;
+
+    char bytes[20];
+    if(type_size > ir->b->ptr_size)
+        type_size = ir->b->ptr_size;
+    itoa(type_size, bytes, 10);
+
+    str_flat(code, "  store ");
+    str_add(code, type);
+    str_flat(code, " ");
+    str_add(code, val);
+    str_flat(code, ", ptr ");
+    str_add(code, var);
+    str_flat(code, ", align ");
+    str_add(code, bytes);
+    str_flat(code, "\n");
+}
+
+void ir_store_old(IR *ir, Type *type, char *var, char *val) {
     Str *code = ir->block->code;
     char *ltype = ir_type(ir, type);
 
@@ -515,7 +535,7 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
         for (int i = 0; i < decls->length; i++) {
             Decl *decl = array_get_index(decls, i);
             if (decl->is_gc) {
-                ir_store(ir, decl->type, decl->ir_store_var, "null");
+                ir_store_old(ir, decl->type, decl->ir_store_var, "null");
             }
         }
     }
@@ -528,4 +548,68 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
 
     //
     ir->block = after;
+}
+
+char* ir_ptrv(IR* ir, char* on, char* type, int index) {
+
+    char index_buf[20];
+    itoa(index, index_buf, 10);
+
+    char *result = ir_var(ir->func);
+    Str *code = ir->block->code;
+    str_flat(code, "  ");
+    str_add(code, result);
+    str_flat(code, " = getelementptr inbounds ");
+    str_add(code, type);
+    str_flat(code, ", ptr ");
+    str_add(code, on);
+    str_flat(code, ", i32 ");
+    str_add(code, index_buf);
+    str_flat(code, "\n");
+
+    return result;
+}
+
+char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* type) {
+    Str *code = ir->block->code;
+    char *var = ir_var(ir->func);
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = phi ");
+    str_add(code, type);
+    str_flat(code, " [ ");
+    str_add(code, this);
+    str_flat(code, ", %");
+    str_add(code, this_block->name);
+    str_flat(code, " ], [ ");
+    str_add(code, that);
+    str_flat(code, ", %");
+    str_add(code, that_block->name);
+    str_flat(code, " ]\n");
+
+    return var;
+}
+
+char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* that2, IRBlock* that_block2, char* type) {
+    Str *code = ir->block->code;
+    char *var = ir_var(ir->func);
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = phi ");
+    str_add(code, type);
+    str_flat(code, " [ ");
+    str_add(code, this);
+    str_flat(code, ", %");
+    str_add(code, this_block->name);
+    str_flat(code, " ], [ ");
+    str_add(code, that);
+    str_flat(code, ", %");
+    str_add(code, that_block->name);
+    str_flat(code, " ], [ ");
+    str_add(code, that2);
+    str_flat(code, ", %");
+    str_add(code, that_block2->name);
+    str_flat(code, " ]\n");
+
+    return var;
 }

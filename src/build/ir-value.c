@@ -55,6 +55,17 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         // TODO: use class size
         return ir_alloca_by_size(ir, ir->func, "50");
     }
+    if (v->type == v_gc_link) {
+        VPair* pair = v->item;
+        Value* on = pair->left;
+        Value* to = pair->right;
+        //
+        Type *on_type = on->rett;
+        char *ir_on = ir_value(ir, scope, on);
+        char *ir_to = ir_value(ir, scope, to);
+        char *res = ir_gc_link(ir, ir_on, ir_to);
+        return res;
+    }
     if (v->type == v_decl) {
         Decl *decl = v->item;
         if(decl->is_mut) {
@@ -135,7 +146,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
             Type *type = prop->type;
             char *lval = ir_value(ir, scope, val);
             char *pvar = ir_class_pa(ir, class, obj, prop);
-            ir_store(ir, type, pvar, lval);
+            ir_store_old(ir, type, pvar, lval);
         }
 
         return obj;
@@ -155,7 +166,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *left = ir_load(ir, on->rett, var);
         char *right = ir_int(ir, 1);
         char* op = ir_op(ir, scope, item->increment ? op_add : op_sub, left, right, v->rett);
-        ir_store(ir, v->rett, var, op);
+        ir_store_old(ir, v->rett, var, op);
         return item->before ? op : left;
     }
     if (v->type == v_atomic) {

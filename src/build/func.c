@@ -137,7 +137,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     char *lcond_i1 = ir_i1_cast(ir, lcond);
 
     // Clear error
-    ir_store(ir, type_i32, "@volt_err_code", "0");
+    ir_store_old(ir, type_i32, "@volt_err_code", "0");
 
     ir_cond_jump(ir, lcond_i1, block_err, fcall->err_value ? block_else : after);
 
