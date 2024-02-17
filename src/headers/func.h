@@ -26,15 +26,20 @@ struct Func {
     Type* rett;
     Class* class;
     Array* cached_values;
+    Map* errors;
     //
     bool is_static;
     bool is_inline;
+    bool can_error;
 };
 struct FuncArg {
     Type* type;
     Value* value;
     Chunk* chunk_value;
     Decl* decl;
+};
+struct FuncError {
+    int value;
 };
 
 #endif

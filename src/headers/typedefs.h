@@ -27,6 +27,7 @@ typedef struct IRBlock IRBlock;
 // Parse
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;
+typedef struct FuncError FuncError;
 typedef struct Scope Scope;
 typedef struct Idf Idf;
 typedef struct Id Id;

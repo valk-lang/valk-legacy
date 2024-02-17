@@ -16,8 +16,10 @@ Func* func_make(Allocator* alc, Fc* fc, char* name, char* export_name) {
     f->arg_types = array_make(alc, 4);
     f->class = NULL;
     f->cached_values = NULL;
+    f->errors = NULL;
     f->is_inline = false;
     f->is_static = false;
+    f->can_error = false;
 
     if(!f->export_name) {
         f->export_name = gen_export_name(fc->nsc, name);
@@ -35,6 +37,7 @@ FuncArg* func_arg_make(Allocator* alc, Type* type) {
 }
 
 void parse_handle_func_args(Fc* fc, Func* func) {
+    Build* b = fc->b;
 
     tok_expect(fc, "(", true, false);
     func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
@@ -43,26 +46,48 @@ void parse_handle_func_args(Fc* fc, Func* func) {
     if(fc->is_header) {
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
         skip_type(fc);
-        return;
+    } else {
+        char *tkn = tok(fc, true, true, true);
+        if (!str_is(tkn, "{") && !str_is(tkn, "!")) {
+            // Has return type
+            tok_back(fc);
+            func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
+            skip_type(fc);
+        } else {
+            tok_back(fc);
+        }
     }
 
     char *tkn = tok(fc, true, true, true);
-    char *end = "{";
-
-    if (!str_is(tkn, end)) {
-        // Has return type
-        tok_back(fc);
-        func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_type(fc);
-        tok_expect(fc, end, true, true);
+    Map *errors = NULL;
+    if (str_is(tkn, "!")) {
+        errors = map_make(b->alc);
     }
+    while(str_is(tkn, "!")) {
+        tkn = tok(fc, false, false, true);
+        if(!is_valid_varname(tkn)) {
+            sprintf(b->char_buf, "Invalid error name: '%s'", tkn);
+            parse_err(fc->chunk_parse, b->char_buf);
+        }
+        FuncError* err = al(b->alc, sizeof(FuncError));
+        err->value = -1;
+        map_set(errors, tkn, err);
 
-    Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
-    chunk_end->i = chunk_end->scope_end_i;
-    func->scope->chunk_end = chunk_end;
+        tkn = tok(fc, true, true, true);
+    }
+    func->errors = errors;
+    tok_back(fc);
 
-    func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
-    skip_body(fc);
+    if(!fc->is_header) {
+        tok_expect(fc, "{", true, true);
+
+        Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
+        chunk_end->i = chunk_end->scope_end_i;
+        func->scope->chunk_end = chunk_end;
+
+        func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
+        skip_body(fc);
+    }
 }
 
 
