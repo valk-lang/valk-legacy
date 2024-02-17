@@ -1,8 +1,6 @@
 
 # Volt ⚡
 
-Volt (WIP) is a programming language aimed to be fast & simple at the same time. You can write both high & low level code. You can choose to use the GC or not or 50/50. In other words, Volt provides choice. Some want performance, others want safety and fast development time. You choose.
+Volt (WIP) is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Volt is unique in that, where traditional garbage collectors slow down the program, volt GC speeds up te program. The main reason we use a GC in the first place, is to keep the language simple like python, go, php, ... and when it runs faster than rust, that's just an extra benefit. You get the best of both worlds.
 
-That being said, the language defaults towards safety.
-
-**Features**: Non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, Using c-libraries.
+**Features**: Super fast non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, Using c-libraries.
