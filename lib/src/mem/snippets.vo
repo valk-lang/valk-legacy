@@ -9,9 +9,6 @@ snippet reserve(amount: V) {
     }
 
     let space_added = STACK.bump.space_added
-    // if STACK.run_gc_timeout == 0 {
-    //     STACK.gc()
-    // } else
     if space_added > STACK.space_min {
         if STACK_ADR <= STACK.lowest {
             STACK.gc(trigger_lowest)
@@ -30,6 +27,9 @@ snippet pop() {
 
     if STACK_ADR < STACK.lowest_next {
         STACK.lowest_next = STACK_ADR
+        // if STACK_ADR < STACK.lowest {
+        //     STACK.space_min = 0
+        // }
     }
 }
 
