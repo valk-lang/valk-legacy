@@ -90,6 +90,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Class* class = get_volt_class(ir->b, "type", "String");
         ClassProp* prop = map_get(class->props, "data");
         ClassProp* prop_len = map_get(class->props, "bytes");
+        ClassProp* prop_state = map_get(class->props, "GC_state");
         if(!prop || !prop_len) {
             build_err(ir->b, "Missing String.data or String.bytes");
         }
@@ -102,6 +103,9 @@ void ir_gen_func(IR *ir, IRFunc *func) {
             char* pa_len = ir_class_pa(ir, class, str->ir_object_name, prop_len);
             char* len = ir_int(ir, strlen(str->body));
             ir_store(ir, pa_len, len, "i32", b->ptr_size);
+            // Make const
+            char* pa_state = ir_class_pa(ir, class, str->ir_object_name, prop_state);
+            ir_store(ir, pa_state, ir_int(ir, 14), "i8", b->ptr_size);
         }
 
         // Gc
