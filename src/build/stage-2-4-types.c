@@ -130,4 +130,8 @@ void stage_types_global(Fc* fc, Global* g) {
     *fc->chunk_parse = *g->chunk_type;
     Type *type = read_type(fc, fc->alc, fc->scope, false);
     g->type = type;
+
+    if (g->is_shared && type_is_gc(type)) {
+        parse_err(fc->chunk_parse, "The compiler currently does not yet support classes in shared globals");
+    }
 }

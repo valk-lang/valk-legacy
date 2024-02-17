@@ -76,6 +76,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
 
                 Value* val = read_value(alc, fc, scope, true, 0);
                 if(type) {
+                    val = try_convert(alc, b, val, type);
                     type_check(fc->chunk_parse, type, val->rett);
                 } else {
                     type = val->rett;
@@ -149,6 +150,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 }
 
                 array_push(scope->ast, tgen_throw(alc, err, name));
+                scope->did_return = true;
                 continue;
             }
         }
@@ -208,6 +210,13 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 continue;
             }
             if (str_is(tkn, "@gc_unlink")){
+                tok_expect(fc, "(", false, false);
+                Value *val = read_value(alc, fc, scope, true, 0);
+                tok_expect(fc, ")", true, true);
+                if (type_is_gc(val->rett)) {
+                    array_push(scope->ast, token_make(alc, t_gc_unlink, val));
+                }
+                continue;
             }
         }
 

@@ -27,6 +27,7 @@ IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
 char* ir_gc_link(IR* ir, char* on, char* to);
+char* ir_gc_unlink(IR* ir, char* val, bool nullable);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
