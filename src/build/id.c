@@ -152,6 +152,14 @@ Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn)
     printf("Identifier: '%s:%s->%s'\n", namespace, class_name, fn);
     build_err(b, "Volt identifier was found but is not a function (compiler bug)");
 }
+Class *get_volt_class(Build *b, char *namespace, char *name) {
+    Idf* idf = get_volt_idf(b, namespace, name, true);
+    if(idf->type == idf_class) {
+        return idf->item;
+    }
+    printf("Identifier: '%s:%s'\n", namespace, name);
+    build_err(b, "Volt identifier was found but is not a class (compiler bug)");
+}
 
 Global *get_volt_global(Build *b, char *namespace, char *name) {
     Idf* idf = get_volt_idf(b, namespace, name, true);

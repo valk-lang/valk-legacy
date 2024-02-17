@@ -390,7 +390,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             Value *arg = read_value(alc, fc, scope, true, 0);
             Type *arg_type = array_get_index(func_args, arg_i++);
             if (arg_type) {
-                try_convert_number(arg, arg_type);
+                arg = try_convert(alc, b, arg, arg_type);
                 type_check(fc->chunk_parse, arg_type, arg->rett);
             }
             if (type_is_gc(arg_type)) {
@@ -428,7 +428,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             *fc->chunk_parse = *default_value_ch;
             //
             Value* arg = read_value(b->alc, fc, default_value_ch->fc->scope, true, 0);
-            try_convert_number(arg, arg_type);
+            arg = try_convert(alc, b, arg, arg_type);
             type_check(fc->chunk_parse, arg_type, arg->rett);
             //
             *fc->chunk_parse = ch;
@@ -575,9 +575,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             *fc->chunk_parse = *prop->chunk_value;
             Value* val = read_value(alc, fc, prop->chunk_value->fc->scope, true, 0);
 
-            if (val->type == v_number) {
-                try_convert_number(val, prop->type);
-            }
+            val = try_convert(alc, b, val, prop->type);
             type_check(fc->chunk_parse, prop->type, val->rett);
             *fc->chunk_parse = backup;
             map_set_force_new(values, name, val);
@@ -721,10 +719,10 @@ Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, V
     bool is_ptr = lt->is_pointer || rt->is_pointer;
     if(is_ptr) {
         // Pointers
-        if(!lt->is_pointer) {
+        if(lt->type == type_int) {
             left = vgen_cast(alc, left, type_gen_volt(alc, b, "ptr"));
         }
-        if(!rt->is_pointer) {
+        if(rt->type == type_int) {
             right = vgen_cast(alc, right, type_gen_volt(alc, b, "ptr"));
         }
     } else {
@@ -786,6 +784,51 @@ void value_is_mutable(Value* v) {
         Decl *decl = v->item;
         decl->is_mut = true;
     }
+}
+
+Value* try_convert(Allocator* alc, Build* b, Value* val, Type* type) {
+    // If number literal, change the type
+    if(val->type == v_number && (type->type == type_int || type->type == type_float)){
+        try_convert_number(val, type);
+    }
+
+    // If number value, cast if appropriate
+    if(val->type != v_number){
+        if (val->rett->type == type_int && type->type == type_float) {
+            // We can always convert to float
+            val->rett = type_clone(alc, type);
+        } else if (val->rett->type == type_float && type->type == type_float) {
+            // f32 -> f64
+            if(val->rett->size < type->size) {
+                val = vgen_cast(alc, val, type);
+            }
+        } else if (val->rett->type == type_int && type->type == type_int) {
+            if(val->rett->is_signed && !type->is_signed) {
+                // Not possible
+            } else {
+                int from_size = val->rett->size;
+                int to_size = type->size;
+                if(type->is_signed && !val->rett->is_signed) {
+                    from_size *= 2;
+                }
+                if (from_size <= to_size) {
+                    val = vgen_cast(alc, val, type);
+                }
+            }
+        }
+    }
+
+    // If to ptr, just change value return type to ptr
+    Class* ptr = get_volt_class(b, "type", "ptr");
+    if (val->rett->class != ptr && type->class == ptr) {
+        bool nullable = val->rett->nullable;
+        val->rett = type_gen_class(alc, ptr);
+        val->rett->nullable = nullable;
+    }
+    return val;
+}
+
+bool try_auto_cast_number(Value* val, Type* type) {
 }
 
 bool try_convert_number(Value* val, Type* type) {

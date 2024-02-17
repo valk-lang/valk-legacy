@@ -114,9 +114,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 Value* val = NULL;
                 if(scope->rett) {
                     val = read_value(alc, fc, scope, false, 0);
-                    if (val->type == v_number) {
-                        try_convert_number(val, scope->rett);
-                    }
+                    val = try_convert(alc, b, val, scope->rett);
                     type_check(fc->chunk_parse, scope->rett, val->rett);
                 } else {
                     char* tkn = tok(fc, true, false, true);
@@ -244,10 +242,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 if(op != op_eq) {
                     right = value_handle_op(alc, fc, scope, left, right, op);
                 }
-                if(right->type == v_number) {
-                    try_convert_number(right, left->rett);
-                }
 
+                right = try_convert(alc, b, right, left->rett);
                 type_check(chunk, left->rett, right->rett);
 
                 array_push(scope->ast, tgen_assign(alc, left, right));
