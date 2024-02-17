@@ -89,6 +89,7 @@ struct Build {
     Array *classes;
     Array *pool_str;
     ErrorCollection* errors;
+    Array *strings;
     //
     size_t mem_parse;
     size_t mem_objects;
@@ -96,6 +97,7 @@ struct Build {
     int ptr_size;
     int error_count;
     int export_count;
+    int string_count;
     int verbose;
     int LOC;
     //

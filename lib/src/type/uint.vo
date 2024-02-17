@@ -5,54 +5,43 @@ global str_buf : ?ptr
 global str_rev : ?ptr
 
 integer uint unsigned {
-    fn to_hex() string {
+    fn to_hex() String {
         let base = 16 @as uint
         return this.to_base(base)
     }
-    fn to_str() string {
+    fn to_str() String {
         let base = 10 @as uint
         return this.to_base(base)
     }
-    fn to_base(base: uint) string {
-        let chars = "0123456789ABCDEF"
-        let offset = 10 @as uint // start of string bytes
+    fn to_base(base: uint) String {
+        let chars = "0123456789ABCDEF".data
 
         if str_buf == null {
             str_buf = mem:alloc(24)
             str_rev = mem:alloc(24)
         }
-        let buf = str_buf @as string
+        let buf = str_buf
         let rev = str_rev
 
         if(this == 0) {
-            @ptrv(buf @as ptr, uint, 0) = 1 @as uint
-            @ptrv(buf @as ptr, u8, offset) = 48 @as u8
-            return buf;
+            return "0";
         }
 
         let val = this
         let i = 0 @as uint;
-        let x = offset
         while val > 0 {
-            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base) + offset)
+            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
             i++
             val = val / base
         }
         // Set len
-        @ptrv(buf, uint, 0) = i @as uint
+        let len = i @as uint
         // Reverse
         let up = 0
         while i-- > 0 {
-            @ptrv(buf, u8, offset + i) = @ptrv(rev, u8, up++)
+            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
         }
 
-        return buf
-        // char rev[32];
-        // for (; val; i++, val /= base)
-        //     rev[i] = "0123456789ABCDEF"[val % base];
-        // buf[i] = 0;
-        // int up = 0;
-        // while(i-- > 0)
-        // buf[i] = rev[up++];
+        return String.make_from_ptr(buf @as ptr, len)
     }
 }

@@ -117,85 +117,16 @@ char *ir_func_ptr(IR *ir, Func *func) {
     return dups(ir->alc, buf);
 }
 
-char *ir_string(IR *ir, char *body) {
-    //
-    Fc *fc = ir->fc;
-    Str *code = ir->code_global;
-    str_preserve(code, 100);
-
-    char var[64];
-    strcpy(var, "@.str.");
-    itoa(ir->string_count++, (char*)((intptr_t)var + 6), 10);
-
-    int ptr_size = ir->b->ptr_size;
-    int len = strlen(body);
-    int blen = len + ptr_size + 2;
-
-    str_add(code, var);
-    str_flat(code, " = private unnamed_addr constant [");
-    char len_str[32];
-    itoa(blen, len_str, 10);
-    str_add(code, len_str);
-    str_flat(code, " x i8] c\"");
-
-    // Bytes
-    // Len bytes
-    size_t len_buf = len;
-    unsigned char *len_ptr = (unsigned char *)&len_buf;
-    int c = 0;
-    while (c++ < ptr_size) {
-        //
-        unsigned char ch = (c > sizeof(size_t)) ? 0 : *(len_ptr + c - 1);
-        //
-        ((char*)code->data)[code->length] = '\\';
-        code->length++;
-        //
-        unsigned char hex[3];
-        char_to_hex(ch, hex);
-        ((char *)code->data)[code->length] = hex[0];
-        ((char *)code->data)[code->length + 1] = hex[1];
-        code->length += 2;
-    }
-
-    // Const byte
-    str_flat(code, "\\01");
-    str_flat(code, "\\00");
-
-    // String bytes
-    int index = 0;
-    while (index < len) {
-        if(index % 100 == 0)
-            str_preserve(code, 100);
-        //
-        unsigned char ch = body[index++];
-        if (ch > 34 && ch < 127 && ch != 92) {
-            ((char *)code->data)[code->length] = ch;
-            code->length++;
-            continue;
-        }
-        ((char *)code->data)[code->length] = '\\';
-        code->length++;
-        //
-        unsigned char hex[3];
-        char_to_hex(ch, hex);
-        ((char *)code->data)[code->length] = hex[0];
-        ((char *)code->data)[code->length + 1] = hex[1];
-        code->length += 2;
-    }
-    //
-    str_flat(code, "\", align 8\n");
-
-    sprintf(ir->char_buf, "getelementptr inbounds ([%d x i8], [%d x i8]* %s, i64 0, i64 0)", blen, blen, var);
-    return dups(ir->alc, ir->char_buf);
-}
-
 char* ir_load(IR* ir, Type* type, char* var) {
     char *var_result = ir_var(ir->func);
     char *ltype = ir_type(ir, type);
 
+
     char bytes[20];
 
     Str *code = ir->block->code;
+    str_preserve(code, 200);
+
     str_flat(code, "  ");
     str_add(code, var_result);
     str_flat(code, " = load ");

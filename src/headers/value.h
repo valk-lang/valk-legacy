@@ -84,5 +84,10 @@ struct VIRCached {
     char* ir_value;
     char* ir_var;
 };
+struct VString {
+    char* body;
+    char* ir_object_name;
+    char* ir_body_name;
+};
 
 #endif

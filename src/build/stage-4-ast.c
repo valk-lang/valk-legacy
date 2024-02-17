@@ -149,7 +149,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     parse_err(fc->chunk_parse, b->char_buf);
                 }
 
-                array_push(scope->ast, tgen_throw(alc, err, name));
+                array_push(scope->ast, tgen_throw(alc, b, err, name));
                 scope->did_return = true;
                 continue;
             }

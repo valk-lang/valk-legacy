@@ -3,7 +3,7 @@ use volt:mem
 
 integer int {
 
-    fn to_str() string {
+    fn to_str() String {
         if this < 0 {
             return "negative"
         }

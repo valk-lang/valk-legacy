@@ -76,13 +76,15 @@ int cmd_build(int argc, char *argv[]) {
     b->pool_str = array_make(alc, 20);
     b->errors = al(alc, sizeof(ErrorCollection));
     b->errors->errors = map_make(alc);
+    b->strings = array_make(alc, 100);
 
     b->func_main = NULL;
 
     b->ptr_size = 8;
     b->error_count = 0;
     b->export_count = 0;
-    b->verbose = 2;
+    b->string_count = 0;
+    b->verbose = 3;
     b->LOC = 0;
     b->parser_started = false;
 

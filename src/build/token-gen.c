@@ -35,9 +35,27 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
     return token_make(alc, t_while, item);
 }
 
-Token *tgen_throw(Allocator *alc, FuncError* err, char* msg) {
+Token *tgen_throw(Allocator *alc, Build* b, FuncError* err, char* msg) {
+
+    b->string_count++;
+    char var[64];
+    strcpy(var, "@.str.object.");
+    itoa(b->string_count, (char *)((intptr_t)var + 13), 10);
+    char* object_name = dups(b->alc, var);
+
+    strcpy(var, "@.str.body.");
+    itoa(b->string_count, (char *)((intptr_t)var + 11), 10);
+    char* body_name = dups(b->alc, var);
+
+    VString *str = al(b->alc, sizeof(VString));
+    str->body = msg;
+    str->ir_object_name = object_name;
+    str->ir_body_name = body_name;
+
+    array_push(b->strings, str);
+
     TThrow *item = al(alc, sizeof(TThrow));
     item->err = err;
-    item->msg = msg;
+    item->msg = str;
     return token_make(alc, t_throw, item);
 }

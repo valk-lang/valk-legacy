@@ -79,8 +79,32 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->func = func;
     ir->block = func->block_code;
 
+    if(ir->b->verbose > 2)
+        printf("> Func IR: %s\n", vfunc->export_name);
+
     // Start GC
     if(func->func == ir->b->func_main) {
+
+        // Set globals
+        Array* strings = b->strings;
+        Class* class = get_volt_class(ir->b, "type", "String");
+        ClassProp* prop = map_get(class->props, "data");
+        ClassProp* prop_len = map_get(class->props, "bytes");
+        if(!prop || !prop_len) {
+            build_err(ir->b, "Missing String.data or String.bytes");
+        }
+        Type* type = type_gen_class(ir->alc, class);
+        for (int i = 0; i < strings->length; i++) {
+            str_preserve(ir->block->code, 200);
+            VString* str = array_get_index(strings, i);
+            char* pa = ir_class_pa(ir, class, str->ir_object_name, prop);
+            ir_store(ir, pa, str->ir_body_name, "ptr", b->ptr_size);
+            char* pa_len = ir_class_pa(ir, class, str->ir_object_name, prop_len);
+            char* len = ir_int(ir, strlen(str->body));
+            ir_store(ir, pa_len, len, "i32", b->ptr_size);
+        }
+
+        // Gc
         Func* gc_start = get_volt_class_func(b, "mem", "GcManager", "init");
         ir_func_call(ir, ir_func_ptr(ir, gc_start), NULL, ir_type(ir, gc_start->rett), 0, 0);
         Func* stack_new = get_volt_class_func(b, "mem", "Stack", "init");
@@ -198,6 +222,8 @@ void ir_define_ext_func(IR* ir, Func* func) {
 char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
     IRBlock *block = func->block_start;
     Str *code = block->code;
+
+    str_preserve(code, 200);
 
     char bytes[20];
 

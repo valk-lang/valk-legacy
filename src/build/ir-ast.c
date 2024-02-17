@@ -12,6 +12,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
     for (int i = 0; i < ast->length; i++) {
         Token *t = array_get_index(ast, i);
         int tt = t->type;
+        // printf("tt:%d\n", tt);
 
         if (tt == t_statement) {
             Value *v = t->item;
@@ -97,7 +98,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_throw) {
             TThrow* tt = t->item;
             ir_store_old(ir, type_gen_volt(alc, ir->b, "i32"), "@volt_err_code", ir_int(ir, tt->err->value));
-            char *msg = ir_string(ir, tt->msg);
+            char *msg = ir_string(ir, tt->msg, true);
             ir_store_old(ir, type_gen_volt(alc, ir->b, "ptr"), "@volt_err_msg", msg);
             ir_func_return_nothing(ir);
             continue;

@@ -59,8 +59,27 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         }
     } else if (t == tok_string) {
         char *body = tkn;
-        body = string_replace_backslash_chars(alc, body);
-        v = value_make(alc, v_string, body, type_gen_volt(alc, b, "string"));
+        body = string_replace_backslash_chars(b->alc, body);
+
+        b->string_count++;
+        char var[64];
+        strcpy(var, "@.str.object.");
+        itoa(b->string_count, (char *)((intptr_t)var + 13), 10);
+        char *object_name = dups(b->alc, var);
+
+        strcpy(var, "@.str.body.");
+        itoa(b->string_count, (char *)((intptr_t)var + 11), 10);
+        char *body_name = dups(b->alc, var);
+
+        VString* str = al(b->alc, sizeof(VString));
+        str->body = body;
+        str->ir_object_name = object_name;
+        str->ir_body_name = body_name;
+
+        array_push(b->strings, str);
+
+        v = value_make(alc, v_string, str, type_gen_volt(alc, b, "String"));
+
     } else if (t == tok_scope_open && str_is(tkn, "(")) {
         v = read_value(alc, fc, scope, true, 0);
         tok_expect(fc, ")", true, true);

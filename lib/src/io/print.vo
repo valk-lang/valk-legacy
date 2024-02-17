@@ -1,6 +1,6 @@
 
 header "sys" as sys
 
-fn print(str: string) {
-    sys:write(1 @as i32, str.data(), str.bytes());
+fn print(str: String) {
+    sys:write(1 @as i32, str.data, str.bytes);
 }

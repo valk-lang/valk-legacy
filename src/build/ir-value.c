@@ -6,7 +6,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     str_preserve(ir->block->code, 512);
 
     if (v->type == v_string) {
-        return ir_string(ir, v->item);
+        return ir_string(ir, v->item, true);
     }
     if (v->type == v_number) {
         VNumber* item = v->item;

@@ -23,7 +23,7 @@ Fc *fc_make(Nsc *nsc, char *path) {
 
     fc->hash = NULL;
 
-    fc->ir_changed = false;
+    fc->ir_changed = true;
 
     // Paths
     char *path_ir = al(alc, VOLT_PATH_MAX);

@@ -1,18 +1,17 @@
 
-// const:   {string_length:uint}-1-{unused 1}{...string bytes...}
-// dynamic: {string_length:uint}-0-{age 1}-{...string bytes...}
+use mem;
 
-pointer string {
+class String {
+    data: ptr
+    bytes: uint
 
-    inline fn is_const() bool {
-		// return @ptrv(this @as ptr + sizeof(uint), u8, 0) == 1#u8;
-		  return @ptrv(this @as ptr + sizeof(uint), u8, 0) == 1;
-	  }
-
-    fn data() ptr {
-        return this @as ptr + sizeof(uint) + 2;
-    }
-    fn bytes() uint {
-		return @ptrv(this @as ptr, uint);
+    static fn make_from_ptr(data: ptr, length: uint) String {
+        let d = mem:alloc(length + 1)
+        mem:copy(data, d, length)
+        @ptrv(d, u8, length) = 0
+        return String {
+            data: d
+            bytes: length
+        }
     }
 }
