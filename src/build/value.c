@@ -500,7 +500,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    if(contains_gc_args && false) {
+    if(contains_gc_args) {
         VFuncCallBuffer* fbuff = al(alc, sizeof(VFuncCallBuffer));
         Scope* before = scope_sub_make(alc, sc_default, scope, NULL);
         Scope* after = scope_sub_make(alc, sc_default, scope, NULL);
@@ -870,7 +870,8 @@ bool try_convert_number(Value* val, Type* type) {
     int bits = bytes * 8;
     VNumber *number = val->item;
     if (type->type == type_int && val->rett->type != type_float) {
-        long int max = bytes < sizeof(intptr_t) ? ipow(2, bits) : INTPTR_MAX;
+        long int one = 1;
+        long int max = bytes < sizeof(intptr_t) ? (one << (bits - 1)) : INTPTR_MAX;
         long int min = 0;
         if (type->is_signed) {
             min = max * -1;
