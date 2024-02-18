@@ -107,7 +107,6 @@ struct Stack {
             stack.transfer.add_item(to)
             @ptrv(to, u8, 0) = state_transfer
             @ptrv(to, u8, 1) = state_unknown
-            // io:print_fake("A" @as ptr)
         }
         if on_state == state_solid {
             // Update transfer state (if solid)
@@ -118,20 +117,6 @@ struct Stack {
         if in_list == 0 {
             stack.move_checks.add_item(on)
             @ptrv(on, u8, 3) = 1
-            // io:print_fake("C." @as ptr)
-            // io:print_fake(on.to_hex() @as ptr)
-            // io:print_fake(":" @as ptr)
-            // io:print_fake(to.to_hex() @as ptr)
-            // io:print_fake("'" @as ptr)
-            // io:print_fake((to_state @as uint).to_str() @as ptr)
-            // io:print_fake("'" @as ptr)
-            // io:print_fake((@ptrv(to, u8, 0) @as uint).to_str() @as ptr)
-            // io:print_fake("'" @as ptr)
-            // io:print_fake(@ptrv(to, ptr, 0).to_hex() @as ptr)
-            // print(".")
-        } else {
-            // io:print_fake("SKIP." @as ptr)
-            // io:print_fake(on.to_hex() @as ptr)
         }
         return to
     }
@@ -168,8 +153,6 @@ struct Stack {
             return
         }
 
-        io:print_fake("#\n" @as ptr)
-        // this.has_invalid_transfers()
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
@@ -186,6 +169,7 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if unknown_count > 0 {
+            // io:print_fake("f\n")
             this.clean_unknown_list()
             this.force_full = false
         }
@@ -215,10 +199,7 @@ struct Stack {
         this.gc_count = 0
         this.gc_trigger = gc_trigger
 
-        // io:print_fake("\nR" @as ptr)
         gc_cc++;
-        // io:print_fake((gc_cc @as uint).to_str() @as ptr)
-        // io:print_fake("\n" @as ptr)
     }
 
     fn mark_difference_down() {
@@ -255,7 +236,6 @@ struct Stack {
                     transfer.add_item(item)
                     @ptrv(item, u8, 0) = state_transfer @as u8
                     @ptrv(item, u8, 1) = state_solid @as u8
-            // io:print_fake("***" @as ptr)
                     continue;
                 } 
                 if state == state_transfer {
@@ -279,9 +259,6 @@ struct Stack {
                     if @ptrv(item_prev, u8, 0) == state_solid {
                         unknown.add_item(item_prev)
                         @ptrv(item_prev, u8, 0) = state_unknown @as u8
-            // io:print_fake("U:" @as ptr)
-            // io:print_fake(item_prev.to_hex() @as ptr)
-            // io:print_fake(":" @as ptr)
                     }
                 }
                 // Clear previous
@@ -320,21 +297,12 @@ struct Stack {
                 index++
                 // Item logic
                 if (@ptrv(item, u8, byte_moved) & 1) == 1 {
-                io:print_fake("M" @as ptr)
                     continue
                 }
                 if @ptrv(item, u8, 0) != state_transfer {
-                io:print_fake("___INVALID___" @as ptr)
-                io:print_fake("N" @as ptr)
-                io:print_fake(item.to_hex() @as ptr)
-                io:print_fake("_" @as ptr)
-                io:print_fake((@ptrv(item, ptr, 0) @as uint).to_hex() @as ptr)
-                // io:print_fake((@ptrv(item, u8, 0) @as uint).to_str() @as ptr)
-                os:exit(1 @as i32)
                     continue
                 }
                 if @ptrv(item, u8, 1) != state_solid {
-                io:print_fake("S" @as ptr)
                     continue
                 }
             }
@@ -381,7 +349,6 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                io:print_fake("T" @as ptr)
                 Stack.transfer_to_solid_rec(item, counter)
             }
             if is_last {
@@ -517,7 +484,6 @@ struct Stack {
             if item != null {
                 if @ptrv(item, u8, 0) < state_freed {
                     if @ptrv(item, u8, 1) != age {
-                    io:print_fake("<")
                         Stack.mark_stack_item_as_solid_rec(item, age)
                     }
                 }
@@ -529,27 +495,12 @@ struct Stack {
         @ptrv(item, u8, 1) = age
 
         let fields = @ptrv(item, u8, 2)
-                if fields > 2 {
-                    io:print_fake("_wtf:")
-                    io:print_fake((fields @as uint).to_str() @as ptr)
-                    io:print_fake(":")
-                    io:print_fake(item.to_hex() @as ptr)
-                    io:print_fake(":")
-                    io:print_fake(@ptrv(item, ptr, 0).to_hex() @as ptr)
-                    os:exit(1 @as i32)
-                }
         while fields > 0 {
             let field = fields--
             let sub = @ptrv(item, ptr, field)
             if sub != null {
                 if @ptrv(sub, u8, 0) < state_freed {
                     if @ptrv(sub, u8, 1) != age {
-                        // if @ptrv(sub, u8, byte_fields) > 6 {
-                        //     print("on:")
-                        //     print(item.to_hex())
-                        //     print("_")
-                        // }
-                    io:print_fake(">")
                         Stack.mark_stack_item_as_solid_rec(sub, age)
                     }
                 }
@@ -562,10 +513,6 @@ struct Stack {
         let last_list = chain.olist_last
         let last_index = chain.index
         let next_list = chain.olist_first
-
-                //             io:print_fake("_COUNT:")
-                // io:print_fake(chain.itemc.to_str() @as ptr)
-                //             io:print_fake(":")
 
         while true {
             let list = next_list
@@ -582,12 +529,7 @@ struct Stack {
                 // Remove checkmark
                 @ptrv(item, u8, 3) = 0
 
-                //             io:print_fake("_CHECK:")
-                // io:print_fake(item.to_hex() @as ptr)
-                //             io:print_fake(":")
-
                 // Item logic
-                let has = false
                 let fields = @ptrv(item, u8, 2)
                 while fields > 0 {
                     let field = fields--
@@ -595,30 +537,10 @@ struct Stack {
                     if sub != null {
                         let is_moved = (@ptrv(sub, u8, byte_moved) & 1) == 1
                         if is_moved {
-                            has = true
                             // Adjust field
                             @ptrv(item, ptr, field) = @ptrv(sub, ptr, 0) - 1
-
-                            // io:print_fake("_M:")
-                            // io:print_fake(sub.to_hex() @as ptr)
-                            // io:print_fake("->")
-                            // io:print_fake(@ptrv(item, ptr, field).to_hex() @as ptr)
-                            // io:print_fake("<")
                         }
                     }
-                }
-                if has == false {
-                fields = @ptrv(item, u8, 2)
-                while fields > 0 {
-                    let field = fields--
-                    let sub = @ptrv(item, ptr, field)
-                    this.space_min = this.space_max
-                    io:print_y()
-                    io:print_fake(sub.to_hex() @as ptr)
-                    io:print_fake("|")
-                    io:print_fake(@ptrv(sub, ptr, 0).to_hex() @as ptr)
-                }
-                    os:exit(1 @as i32)
                 }
 
             }
@@ -637,8 +559,6 @@ struct Stack {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item = @ptrv(item_adr, ptr);
-                            // io:print_fake("\n_MUV:")
-                            // io:print_fake(item.to_hex() @as ptr)
             if item == null {
                 continue
             }
@@ -648,11 +568,6 @@ struct Stack {
 
                 @ptrv(item_adr, ptr) = new_item
                 @ptrv(item_adr, ptr, 1) = new_item
-
-                            // io:print_fake(item.to_hex() @as ptr)
-                            // io:print_fake("->")
-                            // io:print_fake(new_item.to_hex() @as ptr)
-                            // io:print_fake("")
             }
         }
     }
@@ -680,20 +595,12 @@ struct Stack {
                 }
                 if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
-                    // @ptrv(new_item, ptr, field) = Stack.transfer_to_solid_rec(sub, counter)
                     let new = Stack.transfer_to_solid_rec(sub, counter);
-                    // @ptrv(item, ptr, field) = new
-                    // @ptrv(new_item, ptr, field) = new
-                    //         io:print_fake("." @as ptr)
-                    //         io:print_fake(item.to_hex())
-                    //         io:print_fake("->" @as ptr)
-                    //         io:print_fake(sub.to_hex())
-                    //         io:print_fake(" to " @as ptr)
-                    //         io:print_fake(new.to_hex())
-                    //         io:print_fake("." @as ptr)
+                    @ptrv(new_item, ptr, field) = new
                 }
             }
         }
+
         return new_item
     }
     static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain, counter: ptr) ptr {
@@ -720,17 +627,8 @@ struct Stack {
                 }
                 if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
-                    // @ptrv(new_item, ptr, field) = Stack.transfer_to_unknown_rec(sub, unknown, counter)
                     let new = Stack.transfer_to_unknown_rec(sub, unknown, counter);
-                    // @ptrv(item, ptr, field) = new
                     @ptrv(new_item, ptr, field) = new
-                            io:print_fake(".U." @as ptr)
-                            io:print_fake(item.to_hex())
-                            io:print_fake("->" @as ptr)
-                            io:print_fake(sub.to_hex())
-                            io:print_fake(" to " @as ptr)
-                            io:print_fake(new.to_hex())
-                            io:print_fake("." @as ptr)
                 }
             }
         }

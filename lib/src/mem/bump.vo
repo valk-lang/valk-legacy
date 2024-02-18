@@ -117,7 +117,7 @@ struct Bump {
                     block = null
                     break
                 }
-                // free(item)
+                free(item)
                 adr += sizeof(ptr)
                 space_left -= sizeof(ptr)
             }

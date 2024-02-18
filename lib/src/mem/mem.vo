@@ -40,11 +40,11 @@ fn gc_initialize_bytes(item: ptr, state: u8, sub_field_count: u8, size: u16) {
 }
 
 fn mprint() {
-    // print("Alloc: ")
-    // print(acount.to_str())
-    // print(" | Free: ")
-    // print(fcount.to_str())
-    // print("\n")
+    print("Alloc: ")
+    print(acount.to_str())
+    print(" | Free: ")
+    print(fcount.to_str())
+    print("\n")
 }
 
 fn copy(from: ptr, to: ptr, length: uint) {
