@@ -605,7 +605,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             Chunk backup;
             backup = *fc->chunk_parse;
             *fc->chunk_parse = *prop->chunk_value;
-            Value* val = read_value(alc, fc, prop->chunk_value->fc->scope, true, 0);
+            Value* val = read_value(alc, fc, class->scope, true, 0);
 
             val = try_convert(alc, b, val, prop->type);
             type_check(fc->chunk_parse, prop->type, val->rett);

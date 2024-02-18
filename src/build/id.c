@@ -56,9 +56,9 @@ Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
     char* name = id->name;
 
     if(ns) {
-        Idf* idf = scope_find_idf(fc->scope, ns, false);
+        Idf* idf = scope_find_idf(scope, ns, true);
         if(!idf || idf->type != idf_scope) {
-            sprintf(b->char_buf, "Unknown namespace: '%s' (You can import namespaces using the 'use' keyword)", ns);
+            sprintf(b->char_buf, "Unknown namespace: '%s' (try adding 'use %s' to your file)", ns, ns);
             parse_err(fc->chunk_parse, b->char_buf);
         }
         scope = idf->item;

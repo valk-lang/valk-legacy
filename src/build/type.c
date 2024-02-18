@@ -68,7 +68,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             return t;
         }
 
-        if (str_is(tkn, "struct")) {
+        if (str_is(tkn, "inline")) {
             is_inline = true;
             tkn = tok(fc, true, false, true);
             t = fc->chunk_parse->token;
@@ -86,6 +86,25 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             }
             if (idf->type == idf_class) {
                 Class *class = idf->item;
+
+                if (class->is_generic_base) {
+                    tok_expect(fc, "[", false, false);
+                    Array *names = class->generic_names;
+                    Map *generic_types = map_make(alc);
+                    for (int i = 0; i < names->length; i++) {
+                        char *name = array_get_index(names, i);
+                        Type *type = read_type(fc, alc, scope, false);
+                        map_set(generic_types, name, type);
+                        if (i + 1 < names->length) {
+                            tok_expect(fc, ",", true, false);
+                        } else {
+                            tok_expect(fc, "]", true, false);
+                            break;
+                        }
+                    }
+                    class = get_generic_class(fc, class, generic_types);
+                }
+
                 type = type_gen_class(alc, class);
             }
             if (idf->type == idf_type) {

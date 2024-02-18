@@ -1,5 +1,5 @@
 
-header "sys" as sys;
+header "sys" as sys
 
 fn exit(code: i32) {
     sys:exit(code)

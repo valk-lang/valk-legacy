@@ -43,13 +43,13 @@ void stage_props_class(Fc* fc, Class *class) {
         int act = act_public;
         if(str_is(tkn, "-")) {
             act = act_private_fc;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         } else if(str_is(tkn, "~")) {
             act = act_readonly_fc;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         }
         t = fc->chunk_parse->token;
-        char* next = tok(fc, true, true, true);
+        char* next = tok(fc, true, false, true);
 
         if(str_is(next, ":")) {
             char* name = tkn;

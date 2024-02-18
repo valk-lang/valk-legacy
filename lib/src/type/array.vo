@@ -1,4 +1,6 @@
 
+use mem
+
 class Array[T] {
     ~ size: uint
     ~ length: uint (0)
