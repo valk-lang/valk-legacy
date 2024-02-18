@@ -1,8 +1,11 @@
 
 header "sys" as sys
 
+use io
+
 global acount : uint
 global fcount : uint
+global gc_cc : u8
 
 fn alloc(size: uint) ptr {
     acount++
@@ -18,20 +21,30 @@ fn gc_bump_alloc(size: uint) ptr {
     return allocator.alloc(size)
 }
 
-fn gc_class_alloc(size: u32, sub_field_count: u8) ptr {
+fn gc_class_alloc(size: u16, sub_field_count: u8) ptr {
     let adr = allocator.alloc(size @as uint)
     @ptrv(adr, i32, 0) = 0
-    @ptrv(adr, u32, 1) = size @as u32
+    @ptrv(adr, i32, 1) = 0
+    @ptrv(adr, u16, 3) = size @as u16
     @ptrv(adr, u8, byte_fields) = sub_field_count
+    @ptrv(adr, u8, byte_uu2) = gc_cc
     return adr
+}
+fn gc_initialize_bytes(item: ptr, state: u8, sub_field_count: u8, size: u16) {
+    @ptrv(item, i32, 0) = 0
+    @ptrv(item, i32, 1) = 0
+    @ptrv(item, u16, 3) = size
+    @ptrv(item, u8, byte_state) = state
+    @ptrv(item, u8, byte_uu2) = gc_cc
+    @ptrv(item, u8, byte_fields) = sub_field_count
 }
 
 fn mprint() {
-    print("Alloc: ")
-    print(acount.to_str())
-    print(" | Free: ")
-    print(fcount.to_str())
-    print("\n")
+    // print("Alloc: ")
+    // print(acount.to_str())
+    // print(" | Free: ")
+    // print(fcount.to_str())
+    // print("\n")
 }
 
 fn copy(from: ptr, to: ptr, length: uint) {

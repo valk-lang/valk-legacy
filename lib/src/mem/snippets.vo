@@ -1,7 +1,13 @@
 
+use io;
+
+fn p() {
+    io:print_fake("d" @as ptr)
+}
 snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
+    @cache_value(amount) as AM
 
     let x = amount
     while x-- > 0 {
@@ -20,7 +26,7 @@ snippet reserve(amount: V) {
     }
 
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
-} => (STACK, STACK_ADR)
+} => (STACK, STACK_ADR, AM)
 
 snippet pop() {
     STACK_ADR = STACK_ADR

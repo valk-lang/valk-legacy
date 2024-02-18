@@ -421,13 +421,14 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             Value *arg = read_value(alc, fc, scope, true, 0);
             Type *arg_type = array_get_index(func_args, arg_i++);
             if (arg_type) {
+
                 arg = try_convert(alc, b, arg, arg_type);
                 type_check(fc->chunk_parse, arg_type, arg->rett);
+
+                if (type_is_gc(arg_type)) {
+                    contains_gc_args = true;
+                }
             }
-            if (type_is_gc(arg_type)) {
-                contains_gc_args = true;
-            }
-            // TODO: try convert
 
             array_push(args, arg);
 
@@ -499,7 +500,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    if(contains_gc_args) {
+    if(contains_gc_args && false) {
         VFuncCallBuffer* fbuff = al(alc, sizeof(VFuncCallBuffer));
         Scope* before = scope_sub_make(alc, sc_default, scope, NULL);
         Scope* after = scope_sub_make(alc, sc_default, scope, NULL);
@@ -620,7 +621,7 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
     tok_expect(fc, "(", false, false);
     // On
     Value *on = read_value(alc, fc, scope, true, 0);
-    if (on->rett->type != type_ptr) {
+    if (!on->rett->is_pointer) {
         parse_err(fc->chunk_parse, "First argument of '@ptrv' must be a value of type 'ptr'");
     }
     // Type

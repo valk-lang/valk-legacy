@@ -2,6 +2,7 @@
 use mem;
 
 class String {
+    // x: uint (0)
     data: ptr
     bytes: uint
 
@@ -9,9 +10,16 @@ class String {
         let d = mem:alloc(length + 1)
         mem:copy(data, d, length)
         @ptrv(d, u8, length) = 0
-        return String {
-            data: d
-            bytes: length
-        }
+        // let str = String {
+        //     data: d
+        //     bytes: length
+        // }
+        let adr = mem:alloc(32)
+        @ptrv(adr, u8, 0) = mem:state_const
+        @ptrv(adr, u8, 1) = 0
+        @ptrv(adr, u8, mem:byte_fields) = 0
+        (adr @as String).data = d
+        (adr @as String).bytes = length
+        return adr @as String
     }
 }

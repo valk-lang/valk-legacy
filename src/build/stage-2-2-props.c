@@ -135,13 +135,19 @@ void stage_props_class(Fc* fc, Class *class) {
         gc_fields->index = index++;
         ClassProp* gc_in_list = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
         gc_in_list->index = index++;
-        ClassProp* gc_size = class_prop_make(b, type_gen_volt(b->alc, b, "i32"), true);
+        ClassProp* gc_uu1 = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_uu1->index = index++;
+        ClassProp* gc_uu2 = class_prop_make(b, type_gen_volt(b->alc, b, "u8"), true);
+        gc_uu2->index = index++;
+        ClassProp* gc_size = class_prop_make(b, type_gen_volt(b->alc, b, "u16"), true);
         gc_size->index = index++;
 
         map_set(new_props, "GC_state", gc_state);
         map_set(new_props, "GC_sub_state", gc_sub_state);
         map_set(new_props, "GC_fields", gc_fields);
         map_set(new_props, "GC_in_list", gc_in_list);
+        map_set(new_props, "GC_uu1", gc_uu1);
+        map_set(new_props, "GC_uu2", gc_uu2);
         map_set(new_props, "GC_size", gc_size);
 
         // GC properties

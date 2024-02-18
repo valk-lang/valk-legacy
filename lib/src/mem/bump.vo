@@ -15,6 +15,20 @@ struct Bump {
     free_adr: ptr (null)
     free_space_left: uint (0)
 
+    static fn contains_ptr(item: ptr) bool {
+        let b = stack.bump
+        let block = b.start
+        while block != null {
+            if item > block {
+                if item < (block + block_size) {
+                    return true
+                }
+            }
+            block = @ptrv(block, ptr, 0)
+        }
+        return false
+    }
+
     static fn new() Bump {
         let b = Bump {}
         b.create_block()
@@ -103,7 +117,7 @@ struct Bump {
                     block = null
                     break
                 }
-                free(item)
+                // free(item)
                 adr += sizeof(ptr)
                 space_left -= sizeof(ptr)
             }

@@ -71,6 +71,8 @@ Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types) {
 
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col) {
     Str *code = ir->block->code;
+    str_preserve(ir->block->code, 200);
+
     char *var_result = "";
     str_flat(code, "  ");
     if (!str_is(lrett, "void")) {
@@ -86,6 +88,7 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
     if(values) {
         int argc = values->length;
         for (int i = 0; i < values->length; i++) {
+            str_preserve(ir->block->code, 200);
             char *lval = array_get_index(values, i);
             if (i > 0) {
                 str_flat(code, ", ");

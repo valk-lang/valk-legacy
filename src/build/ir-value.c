@@ -137,6 +137,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         } else {
             ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
         }
+        // TODO stack buffer variable
         char* obj = ir_value(ir, scope, ob);
 
         for (int i = 0; i < values->keys->length; i++) {
