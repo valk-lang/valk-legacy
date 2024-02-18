@@ -301,7 +301,7 @@ void type_to_str_append(Type* t, Str* buf) {
     } else if (t->type == type_null) {
         str_flat(buf, "null");
     } else if (t->class) {
-        str_add(buf, t->class->name);
+        str_add(buf, t->class->ir_name);
     }
 }
 

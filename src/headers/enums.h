@@ -50,7 +50,7 @@ enum TYPES {
     type_struct,
     type_int,
     type_float,
-    type_func,
+    type_func, // 5
     type_bool,
     type_undefined,
     type_null,

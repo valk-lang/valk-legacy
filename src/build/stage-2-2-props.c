@@ -154,7 +154,7 @@ void stage_props_class(Fc* fc, Class *class) {
         for(int i = 0; i < props->values->length; i++) {
             char* name = array_get_index(props->keys, i);
             ClassProp* prop = array_get_index(props->values, i);
-            if(prop->type->class->type == ct_class) {
+            if(prop->type->class && prop->type->class->type == ct_class) {
                 map_set(new_props, name, prop);
                 prop->index = index++;
                 fields++;
@@ -165,7 +165,7 @@ void stage_props_class(Fc* fc, Class *class) {
         for(int i = 0; i < props->values->length; i++) {
             char* name = array_get_index(props->keys, i);
             ClassProp* prop = array_get_index(props->values, i);
-            if(prop->type->class->type != ct_class) {
+            if(!prop->type->class || prop->type->class->type != ct_class) {
                 prop->index = index++;
                 map_set(new_props, name, prop);
             }

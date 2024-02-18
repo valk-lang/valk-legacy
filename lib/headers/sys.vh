@@ -20,6 +20,25 @@ struct cstruct_epoll_event {
     data: ptr // data
 }
 
+struct cstruct_addrinfo {
+    ai_flags: i32
+    ai_family: i32
+    ai_socktype: i32
+    ai_protocol: i32
+    ai_addrlen: u32
+    ai_addr: cstruct_sockaddr
+    ai_canonname: ptr // char*
+    ai_next: ?cstruct_addrinfo
+}
+
+struct cstruct_sockaddr {
+	sa_family: u16
+	sa_data_1: u32
+	sa_data_2: u32
+	sa_data_3: u32
+	sa_data_4: u16
+}
+
 value EPOLLERR (8)
 value EPOLLET (-2147483648)
 value EPOLLHUP (16)

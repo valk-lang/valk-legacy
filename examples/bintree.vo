@@ -1,0 +1,65 @@
+
+class Node {
+    left : ?Node (null)
+    right : ?Node (null)
+
+    static fn tree(x: int) Node {
+        if x == 0 {
+            return Node {}
+        }
+        let lt = Node.tree(x - 1)
+        let rt = Node.tree(x - 1)
+        return Node {
+            left: lt
+            right: rt
+        }
+    }
+    fn check() uint {
+        if this.left == null {
+            return 1
+        }
+        return 1 + this.left.check() + this.right.check()
+    }
+
+}
+
+fn stretch(depth: int) {
+    let check_stretch = Node.tree(depth + 1).check()
+    print("stretch: ")
+    print(check_stretch.to_str())
+    print("\n")
+}
+
+fn main() i32 {
+
+    let depth = 17
+
+    stretch(depth)
+    let keep = Node.tree(depth)
+
+    let x = 4
+    while x <= depth {
+        let mul = (depth - x + 4)
+        let iters = 1
+        while mul-- > 0 {
+            iters = iters * 2
+        }
+        let check = 0 @as uint
+
+        let i = 0
+        while i++ < iters {
+            check += Node.tree(x).check()
+        }
+        print("check: ")
+        print(check.to_str())
+        print("\n")
+        x += 2
+    }
+
+    print("long-lived: ")
+    print(keep.check().to_str())
+    print("\n")
+
+    mem:stack.stop()
+    return 0
+}
