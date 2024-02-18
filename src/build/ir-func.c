@@ -149,6 +149,8 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         for (int i = 0; i < decls->length; i++) {
             Decl* decl = array_get_index(decls, i);
             if(decl->is_gc) {
+                str_preserve(ir->block->code, 256);
+
                 char lindex[10];
                 itoa(gc_index, lindex, 10);
                 gc_index += 2;

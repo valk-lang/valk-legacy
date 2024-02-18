@@ -4,6 +4,7 @@
 void ir_write_ast(IR* ir, Scope* scope) {
 
     Allocator *alc = ir->alc;
+    str_preserve(ir->block->code, 512);
 
     if(!scope->ast)
         return;
