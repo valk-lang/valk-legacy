@@ -198,8 +198,6 @@ struct Stack {
         this.stack_adr_last = this.stack_adr
         this.gc_count = 0
         this.gc_trigger = gc_trigger
-
-        gc_cc++;
     }
 
     fn mark_difference_down() {
