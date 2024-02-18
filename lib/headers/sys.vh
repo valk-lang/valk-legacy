@@ -2,18 +2,22 @@
 fn exit(code: i32) void
 fn malloc(size: uint) ptr
 fn free(adr: ptr) i32
-fn write(fd: i32, data: ptr, length: uint) i32
 
-fn nanosleep(req: libc_timespec, rem: libc_timespec) i32;
+fn read(fd: i32, buf: ptr, size: uint) int
+fn write(fd: i32, data: ptr, length: uint) i32
+fn open(path: ptr, flags: i32, mode: i32) i32
+fn close(fd: i32) i32
+
+fn epoll_create(size: i32) i32;
+fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
+fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: cstruct_epoll_event) i32;
+
+fn nanosleep(req: libc_timespec, rem: libc_timespec) i32
 
 struct libc_timespec {
 	tv_sec: int // seconds
 	tv_nsec: int // nanoseconds
 }
-
-fn epoll_create(size: i32) i32;
-fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
-fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: cstruct_epoll_event) i32;
 
 struct cstruct_epoll_event {
     events: u32 // events

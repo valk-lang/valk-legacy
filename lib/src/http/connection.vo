@@ -7,112 +7,114 @@ use utils;
 // use fs;
 
 class Connection {
-	netcon: net:Connection
-	fd: i32
-	uploads: ?Array[String] (null)
-	read_buf: utils:ByteBuffer (ByteBuffer.new(500))
-	parse_result: ParseResult (ParseResult{})
+    netcon: net:Connection
+    fd: i32
+    uploads: ?Array[String] (null)
+    read_buf: utils:ByteBuffer (ByteBuffer.new(500))
+    parse_result: ParseResult (ParseResult{})
 
-	// Response
-	// out_file: ?fs:FileStream = null;
-	out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
-	out_pos: uint (0)
+    // Response
+    // out_file: ?fs:FileStream = null;
+    out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
+    out_pos: uint (0)
 
-	fn reset_parser() void {
+    fn reset_parser() void {
 
-		this.parse_result = ParseResult{};
+        this.parse_result = ParseResult{};
 
         let read_buf = this.read_buf;
         if read_buf.start_index == read_buf.length {
             read_buf.clear();
         }
-	}
+    }
 
-	fn reset_out() void {
+    fn reset_out() void {
         this.out_buf.clear();
         this.out_pos = 0;
-	}
+    }
 
-	// fn send_file(stream: fs:FileStream, filename: &?String) void {
+    // fn send_file(stream: fs:FileStream, filename: &?String) void {
 
-	// 	let out = this.out_buf;
-	// 	let path = stream.path;
-	// 	let fsize = fs:size(path);
-	// 	let ext = fs:ext(path);
-	// 	let mime = fs:mime(ext);
+    // 	let out = this.out_buf;
+    // 	let path = stream.path;
+    // 	let fsize = fs:size(path);
+    // 	let ext = fs:ext(path);
+    // 	let mime = fs:mime(ext);
 
-	// 	this.out_file = stream;
+    // 	this.out_file = stream;
 
-	// 	out.append_str("HTTP/1.1 200 OK\r\nContent-Type: %\r\nContent-Length: %\r\n"{ mime, fsize.str() });
+    // 	out.append_str("HTTP/1.1 200 OK\r\nContent-Type: %\r\nContent-Length: %\r\n"{ mime, fsize.str() });
 
-	// 	if isset(filename) {
-	// 		out.append_str("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n");
-	// 	}
+    // 	if isset(filename) {
+    // 		out.append_str("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n");
+    // 	}
 
-	// 	out.append_str("\r\n");
+    // 	out.append_str("\r\n");
 
-	// 	this.send_response_bytes();
-	// }
+    // 	this.send_response_bytes();
+    // }
 
-	fn respond(resp: &Response) void {
-		let filepath = resp.filepath;
-		// if isset(filepath) {
-		// 	let stream = fs:open(filepath + "", true, false) !! {
-		// 		this.respond(Response.error(404));
-		// 		return;
+    fn respond(resp: Response) void {
+        let filepath = resp.filepath;
+        // if isset(filepath) {
+        // 	let stream = fs:open(filepath + "", true, false) !! {
+        // 		this.respond(Response.error(404));
+        // 		return;
         //     };
         //     this.send_file(stream, resp.filename);
-		// 	return;
-		// }
+        // 	return;
+        // }
 
-		resp.compile(this.out_buf);
-		this.send_response_bytes();
-	}
+        resp.compile(this.out_buf);
+        this.send_response_bytes();
+    }
 
-	fn can_clear_out() bool {
-		return this.out_pos >= this.out_buf.length;
-	}
+    fn can_clear_out() bool {
+        return this.out_pos >= this.out_buf.length;
+    }
 
-	fn has_data_to_send() bool {
-		if this.out_pos < this.out_buf.length {
-			return true;
-		}
-		let file = this.out_file;
-		if isset(file) {
-			if file.reading {
-				return true;
-			}
-		}
-		return false;
-	}
+    fn has_data_to_send() bool {
+        if this.out_pos < this.out_buf.length {
+            return true;
+        }
+        // let file = this.out_file;
+        // if isset(file) {
+        //     if file.reading {
+        //         return true;
+        //     }
+        // }
+        return false;
+    }
 
-	// Returns 'true' if all bytes were sent
-	fn send_response_bytes() void {
+    // Returns 'true' if all bytes were sent
+    fn send_response_bytes() void {
 
-		let out = this.out_buf;
+        let out = this.out_buf;
 
-		// Check file stream
-		let file = this.out_file;
-		if isset(file) && this.can_clear_out() {
-			if file.reading {
-				let part = file.read(65535) !? "";
-				out.append_str(part);
-			}
-		}
+        // Check file stream
+        // let file = this.out_file;
+        // if file != null {
+        //     if this.can_clear_out() {
+        //         if file.reading {
+        //             let part = file.read(65535) !? "";
+        //             out.append_str(part);
+        //         }
+        //     }
+        // }
 
-		let pos = this.out_pos;
-		let bytes = out.length - pos;
-		if bytes > 0 {
-    		#if OS == win
-			let wbytes = sys.send(this.fd, out.data + pos, bytes @as i32, 0);
-			if wbytes < 0 : wbytes = 0;
-			this.out_pos += wbytes @as uint;
-			#else
-			let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
-			this.out_pos += wbytes;
-			#end
-		}
-	}
+        let pos = this.out_pos;
+        let bytes = out.length - pos;
+        if bytes > 0 {
+            // #if OS == win
+            // let wbytes = sys.send(this.fd, out.data + pos, bytes @as i32, 0);
+            // if wbytes < 0 : wbytes = 0;
+            // this.out_pos += wbytes @as uint;
+            // #else
+            let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
+            this.out_pos += wbytes;
+            // #end
+        }
+    }
 
 }
 

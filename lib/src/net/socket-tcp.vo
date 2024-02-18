@@ -117,7 +117,7 @@ class SocketTCP {
 
 	}
 
-	- static fn get_addrinfo(host: &String, port: u16) sys:cstruct_addrinfo !failed {
+	- static fn get_addrinfo(host: String, port: u16) sys:cstruct_addrinfo !failed {
 
 		let addrinfo : ?sys:cstruct_addrinfo = null;
 		let hints = @stack_object(sys:cstruct_addrinfo);

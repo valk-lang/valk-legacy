@@ -21,6 +21,7 @@ Func* func_make(Allocator* alc, Fc* fc, Scope* parent, char* name, char* export_
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
+    f->types_parsed = false;
 
     f->scope->func = f;
 

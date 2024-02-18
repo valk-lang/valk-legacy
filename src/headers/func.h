@@ -32,6 +32,7 @@ struct Func {
     bool is_static;
     bool is_inline;
     bool can_error;
+    bool types_parsed;
 };
 struct FuncArg {
     Type* type;

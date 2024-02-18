@@ -1,4 +1,6 @@
 
+use utils
+
 class Response {
 	status: u32 (200)
 	body: String ("")
@@ -35,7 +37,7 @@ class Response {
 	// 	return Response{ filepath: path + "", filename: filename };
 	// }
 
-	fn compile(buf: ByteBuffer) void {
+	fn compile(buf: utils:ByteBuffer) void {
 
 		let len = this.body.bytes();
 

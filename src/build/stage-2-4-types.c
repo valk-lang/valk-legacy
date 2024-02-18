@@ -37,6 +37,10 @@ void stage_types(Fc *fc) {
 
 void stage_types_func(Fc* fc, Func* func) {
 
+    if(func->types_parsed)
+        return;
+    func->types_parsed = true;
+
     Build *b = fc->b;
 
     if(func->class && !func->is_static) {

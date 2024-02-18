@@ -58,7 +58,7 @@ class Server {
         };
     }
 
-    fn start(worker_count: i32 = 16) void {
+    fn start(worker_count: i32 (16)) void {
 
         // SIGINT
         os:signal(os:SIG.hup, interrupt);
