@@ -11,6 +11,10 @@ class Poll[T] {
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
     - lsn_by_index: ptr
     - lsn_by_index_size: uint (20)
+    - event_buf: sys:cstruct_epoll_event (sys:cstruct_epoll_event{
+        events: 0
+        data: null
+    })
 
     static fn new() CLASS {
 
@@ -27,22 +31,21 @@ class Poll[T] {
         let events = Array[Listener[T]].new()
 
         let ebuf = this.epoll_buffer
-        let count = sys:epoll_wait(this.epoll_fd, ebuf, 10, timeout)
-        if count <= 0 {
+        let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 10, timeout)
+        if count_ <= 0 {
             os:sleep_ms(100)
             return events
         }
-        rep count = count @as uint
+        let count = count_ @as uint
         let i : uint = 0
         while i < count {
             let ev = (ebuf + (i * sizeof(inline sys:cstruct_epoll_event))) @as sys:cstruct_epoll_event
-            let lsn = ev.data @as &Listener[T]
-            let add = share(lsn)
+            let lsn = ev.data @as Listener[T]
             lsn.set_events(ev.events)
             if lsn.has_stopped_the_connection() {
                 this.listeners.remove_item(lsn)
             }
-            events.push(add)
+            events.push(lsn)
             i++
         }
 
@@ -56,7 +59,7 @@ class Poll[T] {
             data: data
         }
 
-        let ev = @stack_object(sys:cstruct_epoll_event)
+        let ev = this.event_buf
         ev.events = 0
         ev.data = lsn @as ptr
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_ADD, fd, ev)
@@ -65,10 +68,9 @@ class Poll[T] {
         }
 
         lsn.update_epoll()
-        let result = share(lsn)
         this.listeners.push(lsn)
 
-        return result
+        return lsn
     }
 
     // - fn __before_free() {
@@ -84,6 +86,10 @@ class Listener[T] {
     ~ detect_write: bool (false)
     - detect_events: u32 (0)
     - events: u32 (0)
+    - event_buf: sys:cstruct_epoll_event (sys:cstruct_epoll_event{
+        events: 0
+        data: null
+    })
 
     fn set_events(events: u32) {
         this.events = events
@@ -120,10 +126,10 @@ class Listener[T] {
 
         this.detect_events = ev
 
-        // let evo = @stack_object(sys:cstruct_epoll_event)
-        // evo.events = this.detect_events
-        // evo.data = this @as ptr
-        // let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
+        let evo = this.event_buf
+        evo.events = this.detect_events
+        evo.data = this @as ptr
+        let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
     }
 }
 

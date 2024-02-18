@@ -586,6 +586,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         }
         tok_expect(fc, ":", true, false);
         Value* val = read_value(alc, fc, scope, true, 0);
+        val = try_convert(alc, b, val, prop->type);
         type_check(fc->chunk_parse, prop->type, val->rett);
         map_set_force_new(values, name, val);
         name = tok(fc, true, true, true);

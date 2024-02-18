@@ -18,6 +18,7 @@ bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);
 char* type_to_str(Type* t, char* res);
+char* type_to_str_export(Type* t, char* res);
 void type_to_str_append(Type* t, Str* buf);
 int type_get_size(Build* b, Type* type);
 

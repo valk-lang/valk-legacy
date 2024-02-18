@@ -264,7 +264,6 @@ char* type_to_str(Type* t, char* res) {
     if (t->nullable) {
         strcat(res, "?");
     }
-
     if (t->type == type_void) {
         strcpy(res, "void");
     } else if (t->type == type_null) {
@@ -273,7 +272,23 @@ char* type_to_str(Type* t, char* res) {
         Class *class = t->class;
         strcat(res, class->name);
     }
+    return res;
+}
 
+char* type_to_str_export(Type* t, char* res) {
+
+    strcpy(res, "");
+    if (t->nullable) {
+        strcat(res, "?");
+    }
+    if (t->type == type_void) {
+        strcpy(res, "void");
+    } else if (t->type == type_null) {
+        strcpy(res, "null");
+    } else if (t->class) {
+        Class *class = t->class;
+        strcat(res, class->ir_name);
+    }
     return res;
 }
 

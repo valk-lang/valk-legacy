@@ -198,7 +198,7 @@ void stage_1_class(Fc *fc, int type, int act) {
     if(type == ct_int) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        char* tkn = tok(fc, true, true, true);
+        char* tkn = tok(fc, true, false, true);
         if(is_valid_number(tkn)) {
             int size = atoi(tkn);
             if (size != 1 && size != 2 && size != 4 && size != 8) {
@@ -206,17 +206,17 @@ void stage_1_class(Fc *fc, int type, int act) {
                 parse_err(fc->chunk_parse, b->char_buf);
             }
             class->size = size;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         }
         if(str_is(tkn, "unsigned")) {
             class->is_signed = false;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         }
         tok_back(fc);
     } else if(type == ct_float) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        char* tkn = tok(fc, true, true, true);
+        char* tkn = tok(fc, true, false, true);
         if(is_valid_number(tkn)) {
             int size = atoi(tkn);
             if (size != 4 && size != 8) {
@@ -224,19 +224,26 @@ void stage_1_class(Fc *fc, int type, int act) {
                 parse_err(fc->chunk_parse, b->char_buf);
             }
             class->size = size;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         }
         tok_back(fc);
     } else if(type == ct_ptr) {
         class->size = b->ptr_size;
-        char* tkn = tok(fc, true, true, true);
+        char* tkn = tok(fc, true, false, true);
         if(str_is(tkn, "math")) {
             class->allow_math = true;
-            tkn = tok(fc, true, true, true);
+            tkn = tok(fc, true, false, true);
         }
         tok_back(fc);
     } else if(type == ct_bool) {
         class->size = 1;
+    } else if(type == ct_struct) {
+        char* tkn = tok(fc, true, false, true);
+        if(str_is(tkn, "packed")) {
+            class->packed = true;
+            tkn = tok(fc, true, false, true);
+        }
+        tok_back(fc);
     }
 
     tok_expect(fc, "{", true, true);

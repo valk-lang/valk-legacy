@@ -17,9 +17,7 @@ fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: cstruct_epoll_event) i32;
 
 struct cstruct_epoll_event {
     events: u32 // events
-    data1: u32 // data
-    data2: u32 // data
-    //data: ptr // data
+    data: ptr // data
 }
 
 value EPOLLERR (8)

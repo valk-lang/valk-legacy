@@ -116,8 +116,11 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     }
     // Generate new
     h = str_to_chars(b->alc, hash);
-    str_clear(hash);
+
     // Name
+    str_clear(hash);
+    str_add(hash, class->name);
+    str_flat(hash, "[");
     for (int i = 0; i < types->length; i++) {
         if(i > 0)
             str_flat(hash, ", ");
@@ -126,7 +129,23 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
         type_to_str(type, buf);
         str_add(hash, buf);
     }
+    str_flat(hash, "]");
     char* name = str_to_chars(b->alc, hash);
+
+    // Export name
+    str_clear(hash);
+    str_add(hash, class->name);
+    str_flat(hash, "__");
+    for (int i = 0; i < types->length; i++) {
+        if(i > 0)
+            str_flat(hash, ", ");
+        char buf[256];
+        Type* type = array_get_index(types, i);
+        type_to_str_export(type, buf);
+        str_add(hash, buf);
+    }
+    str_flat(hash, "__");
+    char* export_name = str_to_chars(b->alc, hash);
 
     gclass = class_make(b->alc, b, ct_struct);
     gclass->body = chunk_clone(b->alc, class->body);
@@ -134,9 +153,12 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     gclass->type = class->type;
     gclass->b = class->b;
     gclass->fc = class->fc;
+    gclass->packed = class->packed;
 
     gclass->name = name;
-    gclass->ir_name = gen_export_name(gclass->fc->nsc, name);
+    gclass->ir_name = gen_export_name(gclass->fc->nsc, export_name);
+
+    map_set(class->generics, h, gclass);
 
     // Set type identifiers
     for (int i = 0; i < types->length; i++) {
