@@ -1,4 +1,6 @@
 
+use mem
+
 class ByteBuffer {
     ~ data: ptr
 	~ size: uint
@@ -27,7 +29,7 @@ class ByteBuffer {
 
 	fn append_from_ptr(data: ptr, length: uint) void {
 		if(length == 0) {
-			return;
+			return
 		}
 		let bytes : uint = this.length;
 		let new_bytes : uint = bytes + length;
@@ -49,19 +51,19 @@ class ByteBuffer {
 	}
 
 	fn append_str(str: String) void {
-		this.append_from_ptr(str.data(), str.bytes());
+		this.append_from_ptr(str.data, str.bytes);
 	}
 
 	// Compare
 
-	fn eq_str(str: String) bool {
-		let str_len = str.bytes();
-		let len = this.length;
-		if str_len != len {
-			return false;
-		}
-		return mem:equal(this.data, str.data(), len);
-	}
+	// fn eq_str(str: String) bool {
+	// 	let str_len = str.bytes;
+	// 	let len = this.length;
+	// 	if str_len != len {
+	// 		return false;
+	// 	}
+	// 	return mem:equal(this.data, str.data, len);
+	// }
 
 	// Find
 
@@ -102,29 +104,32 @@ class ByteBuffer {
 			return "";
 		}
 		let str = String.make_empty(this.length);
-		mem:copy(this.data, str.data(), this.length);
+		mem:copy(this.data, str.data, this.length);
 		return str;
 	}
 
 	fn sub_str(start_index: uint, length: uint) String {
 		let len = this.length;
-		if length == 0 || start_index >= len {
+		if length == 0 {
+			return "";
+        }
+        if start_index >= len {
 			return "";
 		}
 		if start_index + length > len {
 			length = len - start_index;
 		}
 		let str = String.make_empty(length);
-		mem:copy(this.data + start_index, str.data(), length);
+		mem:copy(this.data + start_index, str.data, length);
 		return str;
 	}
 
 	fn clear_before_start_index() {
 		let index = this.start_index;
-		if index == 0 : return;
+		if index == 0 { return }
 		let bytes = this.length - index;
 		let data = this.data;
-		mem:copy(data + index, data, bytes, bytes < sizeof(ptr));
+		mem:copy(data + index, data, bytes);
 		this.length -= index;
 		this.start_index = 0;
 	}

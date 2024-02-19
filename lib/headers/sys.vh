@@ -56,11 +56,11 @@ struct cstruct_addrinfo {
 }
 
 struct cstruct_sockaddr {
-	sa_family: u16
-	sa_data_1: u32
-	sa_data_2: u32
-	sa_data_3: u32
-	sa_data_4: u16
+	sa_family: u16 (0)
+	sa_data_1: u32 (0)
+	sa_data_2: u32 (0)
+	sa_data_3: u32 (0)
+	sa_data_4: u16 (0)
 }
 
 value EAGAIN (11)

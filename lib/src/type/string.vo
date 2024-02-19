@@ -13,6 +13,15 @@ class String {
         return this
     }
 
+    static fn make_empty(length: uint) String {
+        let d = mem:alloc(length + 1)
+        @ptrv(d, u8, length) = 0
+        return String {
+            data: d
+            bytes: length
+        };
+    }
+
     static fn make_from_ptr(data: ptr, length: uint) String {
         let d = mem:alloc(length + 1)
         mem:copy(data, d, length)
