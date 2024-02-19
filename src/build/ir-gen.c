@@ -147,6 +147,10 @@ void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
     Str *code = ir->block->code;
     str_preserve(code, 512);
 
+    if(!var) {
+        build_err(ir->b, "Missing IR store var (compiler bug)");
+    }
+
     char bytes[20];
     if(type_size > ir->b->ptr_size)
         type_size = ir->b->ptr_size;
@@ -166,6 +170,10 @@ void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
 void ir_store_old(IR *ir, Type *type, char *var, char *val) {
     Str *code = ir->block->code;
     char *ltype = ir_type(ir, type);
+
+    if(!var) {
+        build_err(ir->b, "Missing IR store var (compiler bug)");
+    }
 
     str_preserve(code, 512);
 

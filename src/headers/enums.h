@@ -71,17 +71,17 @@ enum VALUES {
     v_ptrv,
     v_global,
     v_func_ptr,
-    v_func_call,
+    v_func_call, // 5
     v_number,
     v_cast,
     v_string,
     v_op,
-    v_compare,
+    v_compare, // 10
     v_class_init,
     v_incr,
     v_null,
     v_stack,
-    v_atomic,
+    v_atomic, // 15
     v_ptr_of,
     v_ir_cached,
     v_gc_link,
@@ -92,9 +92,9 @@ enum TOKENS {
     t_assign,
     t_statement,
     t_return,
-    t_declare,
+    t_declare, // 3
     t_if,
-    t_while,
+    t_while, // 5
     t_break,
     t_continue,
     t_throw,

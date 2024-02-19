@@ -55,8 +55,10 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
     while(scope && scope->type != sc_func) {
         scope = scope->parent;
     }
-    if(!scope)
-        return;
+    if(!scope) {
+        printf("Missing function scope (compiler bug)\n");
+        exit(1);
+    }
     array_push(scope->decls, decl);
 }
 

@@ -13,7 +13,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
     for (int i = 0; i < ast->length; i++) {
         Token *t = array_get_index(ast, i);
         int tt = t->type;
-        // printf("tt:%d\n", tt);
 
         if (tt == t_statement) {
             Value *v = t->item;

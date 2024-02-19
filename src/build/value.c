@@ -583,7 +583,10 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             Chunk backup;
             backup = *fc->chunk_parse;
             *fc->chunk_parse = *prop->chunk_value;
-            Value* val = read_value(alc, fc, class->scope, true, 0);
+            Scope* prio = scope->prio_idf_scope;
+            scope->prio_idf_scope = class->scope;
+            Value* val = read_value(alc, fc, scope, true, 0);
+            scope->prio_idf_scope = prio;
 
             val = try_convert(alc, b, val, prop->type);
             type_check(fc->chunk_parse, prop->type, val->rett);

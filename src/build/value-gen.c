@@ -138,8 +138,8 @@ Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett) {
 
 Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args) {
     VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
-    Scope *before = scope_sub_make(alc, sc_default, scope, NULL);
-    Scope *after = scope_sub_make(alc, sc_default, scope, NULL);
+    Scope *before = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
+    Scope *after = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
     buf->value = val;
     buf->before = before;
     buf->after = after;
