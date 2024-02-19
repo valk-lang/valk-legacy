@@ -97,7 +97,7 @@ class Server {
         worker_count--;
         while worker_count > 0 {
             // let copy = this.server_data();
-            // let thread = os:Thread.start(Server.worker)
+            let thread = os:Thread.start(Server.worker)
             worker_count--;
         }
 
@@ -110,6 +110,7 @@ class Server {
 
     - static fn worker() void {
 
+        print("yolo\n")
         let data = Server.server_data() ! {
             print("failed to get data\n")
             return
@@ -135,26 +136,25 @@ class Server {
         sock_lsn.detect_read_request(true);
 
         while true {
-            // print("poll wait\n")
             let events = poll.wait();
             let event_count = events.length;
             let i : uint = 0;
-            // print("event count: ")
-            // println(event_count.to_str())
 
             while i < event_count {
-                let lsn = events.get(i) ! { break }
+                let lsn_ = events.get(i) ! { break }
+                if (@ptrv(lsn_, ptr) & 1) == 1 {
+                    lsn_ = (@ptrv(lsn_, ptr) @as ptr - 1) @as io:Listener[?Connection]
+                    lsn_.update_epoll()
+                }
+                let lsn = lsn_
                 let fd = lsn.fd;
                 i++;
-                // print("event\n")
-
-                //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
                 if fd == sock_fd {
                     // New connection
-                    print("new connection\n")
+                    // print("new connection\n")
                     let netcon = sock.accept() ! {
-                        print("failed to accept\n")
+                        // print("failed to accept\n")
                         continue
                     }
 
@@ -168,7 +168,6 @@ class Server {
                         fd: fd,
                     };
 
-                    print("create lsn\n")
                     let lsn = poll.create_listener(fd, http_con);
                     lsn.detect_read_request(true);
                     lsn.detect_write_request(false);

@@ -62,10 +62,6 @@ class Poll[T] {
         let ev = this.event_buf
         ev.events = 0
         ev.data = lsn @as ptr
-        print("add epoll, epoll_fd: ")
-        print(this.epoll_fd.to_str())
-        print(", fd: ")
-        println(fd.to_str())
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_ADD, fd, ev)
         if res != 0 {
             println("> Failed to add epoll listener")
@@ -118,7 +114,7 @@ class Listener[T] {
         this.detect_write = v
         this.update_epoll()
     }
-    - fn update_epoll() {
+    fn update_epoll() {
         let ev : u32 = 0
         if this.detect_read {
             ev = ev | sys:EPOLLIN
@@ -134,22 +130,7 @@ class Listener[T] {
         evo.events = this.detect_events
         evo.data = this
 
-        print("epoll_ctl, epoll_fd: ")
-        print(this.epoll_fd.to_str())
-        print(", fd: ")
-        print(this.fd.to_str())
-        print(", evo: ")
-        println(ev.to_str())
-
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
-        print("epoll_ctl, res: ")
-        println(res.to_str())
-    }
-
-    fn _gc_transfer() {
-        io:print_fake("LsnMuv.")
-        io:print_fake((this @as ptr).to_hex())
-        io:print_fake(".")
     }
 }
 

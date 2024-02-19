@@ -72,8 +72,6 @@ class ByteBuffer {
 		let index = start_index;
 		let len = this.length;
 		let data = this.data;
-        io:print_fake(@ptrv(this, ptr, 0).to_hex())
-        io:print_fake("\n")
 		while index < len {
 			let ch = @ptrv(data, u8, index);
 			if ch == byte {
@@ -123,21 +121,9 @@ class ByteBuffer {
 			length = len - start_index;
 		}
 		let str = String.make_empty(length);
-        // println("-")
-        io:print_fake(@ptrv(this, ptr, 0).to_hex())
-        io:print_fake("\n")
 		mem:copy(this.data + start_index, str.data, length);
-
-        // print("sub: ")
-        // println(str)
 		return str;
 	}
-
-    fn _gc_transfer() {
-        io:print_fake("BB.")
-        io:print_fake((this @as ptr).to_hex())
-        io:print_fake(".")
-    }
 
 	fn clear_before_start_index() {
 		let index = this.start_index;

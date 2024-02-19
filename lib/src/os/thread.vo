@@ -6,14 +6,16 @@ use volt:mem;
 class Thread {
 
     - static fn entry(data: ptr) void {
-		// let func = data @as fn()(void);
-		// func();
+		mem:Stack.init()
+		let func = data @as fn()(void);
+		func();
+		mem:stack.stop()
 	}
 
 	static fn start(start_func: ptr) void {
 
     	let thr = pt:pthread_t{ data: 0 @as uint };
-    	let err = pt:pthread_create(thr, null, start_func, null);
+    	let err = pt:pthread_create(thr, null, Thread.entry, start_func);
     	// if err != 0 {
 		// 	throw fail;
     	// }

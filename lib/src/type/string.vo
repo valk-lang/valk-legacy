@@ -28,8 +28,4 @@ class String {
         mem:copy(data, s.data, length)
         return s
     }
-
-    fn _gc_transfer() {
-        io:print_fake("StrMuv.")
-    }
 }

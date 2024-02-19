@@ -159,7 +159,8 @@ struct Stack {
             return
         }
 
-        io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
+        // io:print_fake("#")
+        // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
