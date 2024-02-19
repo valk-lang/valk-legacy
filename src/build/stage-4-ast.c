@@ -14,6 +14,20 @@ void stage_4_ast(Fc *fc) {
 
     fc->alc_ast = b->alc_ast;
 
+    if(fc->contains_main_func)
+        return;
+
+    usize start = microtime();
+    stage_ast(fc);
+    b->time_parse += microtime() - start;
+
+    stage_4_ir(fc);
+}
+
+void stage_4_ast_main(Fc *fc) {
+
+    Build *b = fc->b;
+
     usize start = microtime();
     stage_ast(fc);
     b->time_parse += microtime() - start;
@@ -149,7 +163,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                     parse_err(fc->chunk_parse, b->char_buf);
                 }
 
-                array_push(scope->ast, tgen_throw(alc, b, err, name));
+                array_push(scope->ast, tgen_throw(alc, b, fc, err, name));
                 scope->did_return = true;
                 continue;
             }

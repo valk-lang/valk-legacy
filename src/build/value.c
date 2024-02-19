@@ -75,6 +75,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
         str->body = body;
         str->ir_object_name = object_name;
         str->ir_body_name = body_name;
+        str->fc = fc;
 
         array_push(b->strings, str);
 

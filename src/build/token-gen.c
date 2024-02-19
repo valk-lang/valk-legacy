@@ -35,7 +35,7 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
     return token_make(alc, t_while, item);
 }
 
-Token *tgen_throw(Allocator *alc, Build* b, FuncError* err, char* msg) {
+Token *tgen_throw(Allocator *alc, Build* b, Fc* fc, FuncError* err, char* msg) {
 
     b->string_count++;
     char var[64];
@@ -51,6 +51,7 @@ Token *tgen_throw(Allocator *alc, Build* b, FuncError* err, char* msg) {
     str->body = msg;
     str->ir_object_name = object_name;
     str->ir_body_name = body_name;
+    str->fc = fc;
 
     array_push(b->strings, str);
 

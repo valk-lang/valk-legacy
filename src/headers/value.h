@@ -90,6 +90,7 @@ struct VString {
     char* body;
     char* ir_object_name;
     char* ir_body_name;
+    Fc* fc;
 };
 
 #endif

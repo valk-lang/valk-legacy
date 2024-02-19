@@ -40,6 +40,7 @@ void stage_2_types(Fc *fc);
 void stage_3_values(Fc *fc);
 void stage_4_ast(Fc *fc);
 void stage_4_ir(Fc *fc);
+void stage_4_ast_main(Fc *fc);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
 // Sub stages
