@@ -98,7 +98,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_throw) {
             TThrow* tt = t->item;
             ir_store_old(ir, type_gen_volt(alc, ir->b, "i32"), "@volt_err_code", ir_int(ir, tt->err->value));
-            char *msg = ir_string(ir, tt->msg, true);
+            char *msg = ir_string(ir, tt->msg, tt->msg->fc != ir->fc);
             ir_store_old(ir, type_gen_volt(alc, ir->b, "ptr"), "@volt_err_msg", msg);
             ir_func_return_nothing(ir);
             continue;

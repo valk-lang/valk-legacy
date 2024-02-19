@@ -2,7 +2,6 @@
 use mem;
 
 class String {
-    // x: uint (0)
     data: ptr
     bytes: uint
 

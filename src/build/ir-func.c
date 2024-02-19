@@ -90,49 +90,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         ir_func_call(ir, ir_func_ptr(ir, gc_start), NULL, ir_type(ir, gc_start->rett), 0, 0);
         Func* stack_new = get_volt_class_func(b, "mem", "Stack", "init");
         char* stack_ob = ir_func_call(ir, ir_func_ptr(ir, stack_new), NULL, ir_type(ir, stack_new->rett), 0, 0);
-
-        // Set globals
-        Array* strings = b->strings;
-        Class* class = get_volt_class(ir->b, "type", "String");
-        ClassProp* prop = map_get(class->props, "data");
-        ClassProp* prop_len = map_get(class->props, "bytes");
-        // ClassProp* prop_state = map_get(class->props, "GC_state");
-        if(!prop || !prop_len) {
-            build_err(ir->b, "Missing String.data or String.bytes");
-        }
-        Func *gc_init_bytes = get_volt_func(b, "mem", "gc_initialize_bytes");
-        if (!gc_init_bytes) {
-            build_err(ir->b, "Missing mem function: gc_initialize_bytes");
-        }
-        Type *type_u8 = type_gen_volt(ir->alc, b, "u8");
-        Type *type_u16 = type_gen_volt(ir->alc, b, "u16");
-        Type *type_ptr = type_gen_volt(ir->alc, b, "ptr");
-        for (int i = 0; i < strings->length; i++) {
-            str_preserve(ir->block->code, 200);
-            VString* str = array_get_index(strings, i);
-            char* pa = ir_class_pa(ir, class, str->ir_object_name, prop);
-            ir_store(ir, pa, str->ir_body_name, "ptr", b->ptr_size);
-            char* pa_len = ir_class_pa(ir, class, str->ir_object_name, prop_len);
-            char* len = ir_int(ir, strlen(str->body));
-            ir_store(ir, pa_len, len, "i16", b->ptr_size);
-            // Make const
-            // char* pa_state = ir_class_pa(ir, class, str->ir_object_name, prop_state);
-            // ir_store(ir, pa_state, ir_int(ir, 14), "i8", b->ptr_size);
-            char class_size[20];
-            itoa(class->size, class_size, 10);
-            Array *types = array_make(ir->alc, 4);
-            array_push(types, type_ptr);
-            array_push(types, type_u8);
-            array_push(types, type_u8);
-            array_push(types, type_u16);
-            Array *values = array_make(ir->alc, 4);
-            array_push(values, str->ir_object_name);
-            array_push(values, "14");
-            array_push(values, "0");
-            array_push(values, class_size);
-            Array *args = ir_fcall_ir_args(ir, values, types);
-            ir_func_call(ir, ir_func_ptr(ir, gc_init_bytes), args, ir_type(ir, gc_init_bytes->rett), 0, 0);
-        }
     }
 
     // GC reserve

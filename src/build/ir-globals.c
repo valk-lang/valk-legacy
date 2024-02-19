@@ -56,15 +56,6 @@ void ir_gen_globals(IR* ir) {
 
         array_push(ir->declared_globals, g);
     }
-
-    // Set string globals
-    if(is_main_fc) {
-        Array *strings = ir->b->strings;
-        for (int i = 0; i < strings->length; i++) {
-            VString *str = array_get_index(strings, i);
-            ir_string(ir, str, false);
-        }
-    }
 }
 
 void *ir_global(IR *ir, Global *g) {
@@ -111,19 +102,23 @@ char *ir_string(IR *ir, VString *str, bool external) {
     char* object_name = str->ir_object_name;
     char* body = str->body;
 
+    int ptr_size = ir->b->ptr_size;
+    int len = strlen(body);
+    int blen = len + 1;
+
+    char blen_str[32];
+    itoa(blen, blen_str, 10);
+    char len_str[32];
+    itoa(len, len_str, 10);
+
     if (!external) {
-        int ptr_size = ir->b->ptr_size;
-        int len = strlen(body);
-        int blen = len + 1;
 
         str_preserve(code, 200 + blen * 3);
 
         str_add(code, body_name);
         str_flat(code, " = ");
         str_flat(code, "private unnamed_addr constant [");
-        char len_str[32];
-        itoa(blen, len_str, 10);
-        str_add(code, len_str);
+        str_add(code, blen_str);
         str_flat(code, " x i8] c\"");
 
         // String bytes
@@ -153,7 +148,7 @@ char *ir_string(IR *ir, VString *str, bool external) {
     }
 
     // Define object global
-    str_preserve(code, 200);
+    str_preserve(code, 512);
     Type* t = type_gen_volt(ir->alc, ir->b, "String");
     t->is_pointer = false;
     char *ltype = ir_type(ir, t);
@@ -162,8 +157,15 @@ char *ir_string(IR *ir, VString *str, bool external) {
     str_add(code, external ? "external" : "dso_local");
     str_flat(code, " global ");
     str_add(code, ltype);
-    if(!external)
-    str_flat(code, " zeroinitializer");
+    if (!external) {
+        str_flat(code, " { i8 14, i8 0, i8 0, i8 0, i8 0, i8 0, i16 0, ptr ");
+        str_add(code, str->ir_body_name);
+        str_flat(code, ", ");
+        str_add(code, ir_type_int(ir, ir->b->ptr_size));
+        str_flat(code, " ");
+        str_add(code, len_str);
+        str_flat(code, " }");
+    }
     str_flat(code, ", align 8\n");
 
     return object_name;
