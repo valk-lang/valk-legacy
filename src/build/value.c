@@ -121,7 +121,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             Idf *idf = idf_by_id(fc, scope, &id, true);
             v = value_handle_idf(alc, fc, scope, idf);
         }
-    } else if (t == tok_number || (t == tok_op1 && tok_read_byte(fc, 1) == '-')) {
+    } else if (t == tok_number || (t == tok_op1 && tkn[0] == '-')) {
         bool negative = false;
         if(t == tok_op1) {
             negative = true;
@@ -495,6 +495,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
         } else if(str_is(tkn, "?")) {
             Value* errv = read_value(alc, fc, scope, false, 0);
+            errv = try_convert(alc, b, errv, fcall->rett);
             type_check(fc->chunk_parse, fcall->rett, errv->rett);
             f->err_value = errv;
         }
@@ -512,7 +513,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
         for(int i = 0; i < args->length; i++) {
             Value* arg = array_get_index(args, i);
-            bool buffer = arg->type == v_class_pa || arg->type == v_func_call || arg->type == v_fcall_buffer;
+            // bool buffer = arg->type == v_class_pa || arg->type == v_func_call || arg->type == v_fcall_buffer;
             // Declare
             Decl *decl = decl_make(alc, arg->rett, false);
             array_push(before->ast, tgen_declare(alc, before, decl, arg));
@@ -615,7 +616,34 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         }
     }
 
-    return value_make(alc, v_class_init, values, type_gen_class(alc, class));
+    Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
+
+// return init;
+    // Buffer value
+    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
+    Scope *before = scope_sub_make(alc, sc_default, scope, NULL);
+    Scope *after = scope_sub_make(alc, sc_default, scope, NULL);
+    buf->value = init;
+    buf->before = before;
+    buf->after = after;
+    before->ast = array_make(alc, values->values->length);
+    after->ast = array_make(alc, values->values->length);
+
+    for (int i = 0; i < values->values->length; i++) {
+        Value* val = array_get_index(values->values, i);
+        if(!value_needs_gc_buffer(val))
+            continue;
+        // Create temp decl
+        Decl *decl = decl_make(alc, val->rett, false);
+        array_push(before->ast, tgen_declare(alc, before, decl, val));
+        // Replace args
+        Value *new_value = value_make(alc, v_decl, decl, decl->type);
+        array_set_index(values->values, i, new_value);
+        // Remove from stack
+        // array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
+    }
+
+    return value_make(alc, v_gc_buffer, buf, init->rett);
 }
 
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
@@ -888,4 +916,14 @@ bool try_convert_number(Value* val, Type* type) {
         // TODO: float
     }
     return false;
+}
+
+bool value_needs_gc_buffer(Value* val) {
+    if(!val->rett->is_pointer)
+        return false;
+    if(val->type == v_null)
+        return false;
+    if(val->type == v_decl)
+        return false;
+    return type_is_gc(val->rett);
 }

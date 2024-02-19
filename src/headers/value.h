@@ -11,6 +11,7 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
 void value_is_mutable(Value* v);
 Value* try_convert(Allocator* alc, Build* b, Value* val, Type* type);
 bool try_convert_number(Value* val, Type* type);
+bool value_needs_gc_buffer(Value* val);
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
@@ -59,6 +60,11 @@ struct VFuncCallBuffer {
 struct VNumber {
     long int value_int;
     double value_float;
+};
+struct VGcBuffer {
+    Value* value;
+    Scope* before;
+    Scope* after;
 };
 struct VClassPA {
     Value* on;

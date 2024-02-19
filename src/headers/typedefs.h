@@ -51,6 +51,7 @@ typedef struct VFuncPtr VFuncPtr;
 typedef struct VFuncCall VFuncCall;
 typedef struct VFuncCallBuffer VFuncCallBuffer;
 typedef struct VNumber VNumber;
+typedef struct VGcBuffer VGcBuffer;
 typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
 typedef struct VOp VOp;

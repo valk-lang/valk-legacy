@@ -110,7 +110,7 @@ class Connection {
             // if wbytes < 0 : wbytes = 0;
             // this.out_pos += wbytes @as uint;
             // #else
-            let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) !? 0;
+            let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) ? 0;
             this.out_pos += wbytes;
             // #end
         }

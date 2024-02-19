@@ -10,7 +10,7 @@ class Map[T] {
 	fn set(key: String, value: T) void {
 		let index = this._keys.index_of(key) ! {
 			// Set new key / value
-			this._keys.push(key + "");
+			this._keys.push(key);
 			this._values.push(value);
 			return;
 		}

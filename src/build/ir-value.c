@@ -38,6 +38,13 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir_write_ast(ir, fbuff->after);
         return ir_func_err_handler(ir, scope, res, fcall);
     }
+    if (v->type == v_gc_buffer) {
+        VGcBuffer* buf = v->item;
+        ir_write_ast(ir, buf->before);
+        char* res = ir_value(ir, scope, buf->value);
+        ir_write_ast(ir, buf->after);
+        return res;
+    }
     if (v->type == v_func_ptr) {
         VFuncPtr *fptr = v->item;
         return ir_func_ptr(ir, fptr->func);

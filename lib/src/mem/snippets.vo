@@ -7,12 +7,11 @@ fn p() {
 snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
-    @cache_value(amount) as AM
 
-    let x = amount
-    while x-- > 0 {
-        @ptrv(STACK_ADR, ptr, x * 2) = null
-    }
+    // let x = amount
+    // while x-- > 0 {
+        // @ptrv(STACK_ADR, ptr, x * 2) = null
+    // }
 
     let space_added = STACK.bump.space_added
     if space_added > STACK.space_min {
@@ -26,7 +25,7 @@ snippet reserve(amount: V) {
     }
 
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
-} => (STACK, STACK_ADR, AM)
+} => (STACK, STACK_ADR)
 
 snippet pop() {
     STACK_ADR = STACK_ADR
