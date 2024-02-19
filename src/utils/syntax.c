@@ -270,10 +270,10 @@ void char_to_hex(const unsigned char ch, char* buf) {
     buf[2] = 0;
 }
 
-void itoa(long int val, char* buf, const int base){
+char* itoa(long int val, char* buf, const int base){
     if(val == 0) {
         strcpy(buf, "0");
-        return;
+        return buf;
     }
     int i = 0;
     char rev[32];
@@ -283,4 +283,5 @@ void itoa(long int val, char* buf, const int base){
     int up = 0;
     while(i-- > 0)
         buf[i] = rev[up++];
+    return buf;
 }

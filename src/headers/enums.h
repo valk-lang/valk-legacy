@@ -86,7 +86,8 @@ enum VALUES {
     v_ir_cached,
     v_gc_link,
     v_gc_buffer,
-    v_ir_value,
+    v_ir_value, // 20
+    v_gc_get_table,
 };
 
 enum TOKENS {

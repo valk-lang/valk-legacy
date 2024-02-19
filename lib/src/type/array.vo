@@ -190,6 +190,7 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
+        print("TRANSFERED")
         // let new_data = mem:alloc(this.size * sizeof(T))
         // let data = this.data
         // let x = this.length

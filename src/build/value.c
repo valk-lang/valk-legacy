@@ -56,6 +56,11 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             } else {
                 v = to;
             }
+        } else if (str_is(tkn, "@gc_get_vtable")) {
+            tok_expect(fc, "(", false, false);
+            Value* index = read_value(alc, fc, scope, true, 0);
+            tok_expect(fc, ")", true, true);
+            v = value_make(alc, v_gc_get_table, index, type_gen_volt(alc, b, "ptr"));
         }
     } else if (t == tok_string) {
         char *body = tkn;

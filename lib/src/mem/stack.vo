@@ -600,6 +600,17 @@ struct Stack {
             }
         }
 
+        // print("T")
+        // print(@ptrv(new_item, ptr).to_hex())
+        let vtable = @ptrv(new_item, u16, 2)
+        if vtable > 0 {
+            let table = @gc_get_vtable(vtable)
+            let func = @ptrv(table, fn(ptr)(void), 0)
+            if func @as ptr != null {
+                func(new_item);
+            }
+        }
+
         return new_item
     }
     static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain, counter: ptr) ptr {

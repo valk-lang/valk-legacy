@@ -508,6 +508,24 @@ char* ir_ptrv(IR* ir, char* on, char* type, int index) {
 
     return result;
 }
+char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type) {
+
+    char *result = ir_var(ir->func);
+    Str *code = ir->block->code;
+    str_flat(code, "  ");
+    str_add(code, result);
+    str_flat(code, " = getelementptr inbounds ");
+    str_add(code, type);
+    str_flat(code, ", ptr ");
+    str_add(code, on);
+    str_flat(code, ", ");
+    str_add(code, index_type);
+    str_flat(code, " ");
+    str_add(code, index);
+    str_flat(code, "\n");
+
+    return result;
+}
 
 char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* type) {
     Str *code = ir->block->code;
