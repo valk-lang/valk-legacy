@@ -80,6 +80,7 @@ int cmd_build(int argc, char *argv[]) {
     b->gc_transfer_funcs = array_make(alc, 20);
     b->gc_mark_funcs = array_make(alc, 20);
     b->gc_free_funcs = array_make(alc, 20);
+    b->gc_check_moves = array_make(alc, 20);
 
     b->func_main = NULL;
 

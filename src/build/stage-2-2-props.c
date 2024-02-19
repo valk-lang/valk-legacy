@@ -174,11 +174,12 @@ void stage_props_class(Fc* fc, Class *class) {
         class->gc_fields = fields;
 
         // Check for vtable functions
-        if (map_contains(class->funcs, "_gc_transfer") || map_contains(class->funcs, "_gc_mark") || map_contains(class->funcs, "_gc_free")) {
+        if (map_contains(class->funcs, "_gc_transfer") || map_contains(class->funcs, "_gc_mark") || map_contains(class->funcs, "_gc_free") || map_contains(class->funcs, "_gc_check_moves")) {
             class->gc_vtable_index = ++b->gc_vtables;
             array_push(b->gc_transfer_funcs, map_get(class->funcs, "_gc_transfer"));
             array_push(b->gc_mark_funcs, map_get(class->funcs, "_gc_mark"));
             array_push(b->gc_free_funcs, map_get(class->funcs, "_gc_free"));
+            array_push(b->gc_check_moves, map_get(class->funcs, "_gc_check_moves"));
         }
     }
 }

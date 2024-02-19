@@ -56,7 +56,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (v->type == v_gc_get_table) {
         Value* index = v->item;
         char* i = ir_value(ir, scope, index);
-        char* mul = ir_op(ir, scope, op_shl, i, "3", index->rett);
+        char* mul = ir_op(ir, scope, op_shl, i, "2", index->rett);
         char* result = ir_ptrv_dyn(ir, "@volt_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
         return result;
     }

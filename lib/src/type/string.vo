@@ -27,18 +27,9 @@ class String {
         // let d = mem:alloc(length + 1)
         mem:copy(data, s.data, length)
         return s
-        // @ptrv(d, u8, length) = 0
-        // let str = String {
-        //     data: d
-        //     bytes: length
-        // }
-        let adr = mem:alloc(32)
-        @ptrv(adr, u8, 0) = mem:state_const
-        @ptrv(adr, u8, 1) = 0
-        @ptrv(adr, u8, mem:byte_fields) = 0
-        (adr @as String).data = d
-        (adr @as String).bytes = length
-        return adr @as String
     }
 
+    fn _gc_transfer() {
+        io:print_fake("StrMuv.")
+    }
 }

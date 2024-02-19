@@ -12,6 +12,7 @@ class Array[T] {
         if start_size < 2 {
             start_size = 2
         }
+        io:print_fake("A.")
         return CLASS {
             size: start_size
             data: mem:gc_bump_alloc(start_size * sizeof(T))
@@ -58,14 +59,14 @@ class Array[T] {
         let size = this.size
         let new_size = size * 2
         let new_data : ptr = null
-        if this.is_transfered {
-            new_data = mem:alloc(new_size * sizeof(T));
-            mem:copy(data, new_data, size * sizeof(T));
-            mem:free(data);
-        } else {
+        // if this.is_transfered {
+        //     new_data = mem:alloc(new_size * sizeof(T));
+        //     mem:copy(data, new_data, size * sizeof(T));
+        //     mem:free(data);
+        // } else {
             new_data = mem:gc_bump_alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
-        }
+        // }
         this.data = new_data
         this.size = new_size
         return new_data
@@ -83,8 +84,7 @@ class Array[T] {
             throw out_of_range;
         }
         let data = this.data;
-        let current = @ptrv(data, T, index);
-        @gc_unlink(current)
+        @gc_unlink(@ptrv(data, T, index))
         @ptrv(data, T, index) = @gc_link(this, value)
     }
 
@@ -94,8 +94,7 @@ class Array[T] {
         let data = this.data;
         let after_count = len - (index + 1);
 
-        let v = @ptrv(data, T, index);
-        @gc_unlink(v)
+        @gc_unlink(@ptrv(data, T, index))
 
         if after_count > 0 {
             mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T));
@@ -190,23 +189,46 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        print("TRANSFERED")
-        // let new_data = mem:alloc(this.size * sizeof(T))
-        // let data = this.data
-        // let x = this.length
-        // while x-- > 0 {
-        //     @ptrv(new_data, T, x) = @gc_transfer(@ptrv(data, T, x))
-        // }
-        // this.data = new_data
+        this.is_transfered = true
+        let new_data = mem:alloc(this.size * sizeof(T))
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            io:print_fake(">")
+            let item = @ptrv(data, ptr, x)
+            // // io:print_fake(@ptrv(item, ptr).to_hex())
+            // if (@ptrv(item, u8, mem:byte_moved) & 1) == 1 {
+            //     @ptrv(new_data, ptr, x) = @ptrv(item, ptr, 0) - 1
+            //     continue
+            // }
+            @ptrv(new_data, ptr, x) = mem:Stack.transfer_item(item)
+            io:print_fake("_")
+            io:print_fake(@ptrv(new_data, ptr, x).to_hex())
+            io:print_fake("<")
+        }
+        this.data = new_data
     }
-    fn _gc_mark() {
-        // let data = this.data
-        // let x = this.length
-        // while x-- > 0 {
-        //     @gc_mark(@ptrv(data, T, x))
-        // }
+    fn _gc_mark(age: u8) {
+        io:print_fake("M.")
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            mem:Stack.mark_stack_item_as_solid_rec(@ptrv(data, T, x), age)
+        }
+    }
+    fn _gc_check_moves(age: u8) {
+        io:print_fake("CM.")
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            let item = @ptrv(data, ptr, x)
+            if (@ptrv(item, u8, mem:byte_moved) & 1) == 1 {
+                @ptrv(data, ptr, x) = @ptrv(item, ptr)
+            }
+        }
     }
     fn _gc_free() {
+        // print("FREE ARRAY")
         mem:free(this.data)
     }
 

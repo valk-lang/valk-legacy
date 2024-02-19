@@ -38,7 +38,6 @@ struct Stack {
     stack_adr : ptr
     stack_adr_last : ptr
 
-    space_transfered: uint (0)
     space_min : uint (1000)
     space_max : uint (100000)
 
@@ -56,6 +55,7 @@ struct Stack {
     age: u8 (33)
     force_full: bool (false)
     stopped: bool (false)
+    disable: bool (false)
 
     static fn init() {
         let unknown = ObjectChain.new()
@@ -137,6 +137,11 @@ struct Stack {
     ///////////////////////
     fn gc(trigger_type: u8) {
 
+        if this.disable {
+            return
+        }
+        this.disable = true
+
         let gc_trigger = this.gc_trigger;
         let gc_count = this.gc_count;
         if trigger_type == trigger_gc_count {
@@ -150,10 +155,11 @@ struct Stack {
             }
             this.gc_count = 0;
             this.gc_trigger = gc_trigger;
+            this.disable = false
             return
         }
 
-        // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
+        io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
         this.mark_difference_down()
         this.handle_transfer_list()
         this.check_moves()
@@ -195,10 +201,10 @@ struct Stack {
         this.space_max = this.bump.space_total * 12 / 10
         this.space_min = this.bump.space_total >> 2
 
-        this.space_transfered = 0
         this.stack_adr_last = this.stack_adr
         this.gc_count = 0
         this.gc_trigger = gc_trigger
+        this.disable = false
     }
 
     fn mark_difference_down() {
@@ -322,9 +328,6 @@ struct Stack {
         let first_list = chain.olist_first
         let next_list = first_list
 
-        let count : uint = 0 @as uint
-        let counter = @ptr_of(count)
-
         // Mark solid
         while true {
             let list = next_list
@@ -348,7 +351,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                Stack.transfer_to_solid_rec(item, counter)
+                Stack.transfer_to_solid_rec(item)
             }
             if is_last {
                 break
@@ -384,7 +387,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_unknown {
                     continue
                 }
-                Stack.transfer_to_unknown_rec(item, unknown, counter)
+                Stack.transfer_to_unknown_rec(item, unknown)
             }
             if is_last {
                 break
@@ -396,8 +399,6 @@ struct Stack {
         }
 
         chain.wipe()
-
-        this.space_transfered = count
     }
 
     fn clean_unknown_list() {
@@ -505,6 +506,15 @@ struct Stack {
                 }
             }
         }
+
+        let vtable = @ptrv(item, u16, 2)
+        if vtable > 0 {
+            let table = @gc_get_vtable(vtable)
+            let func = @ptrv(table, fn(ptr, u8)(void), 1)
+            if func @as ptr != null {
+                func(item, age);
+            }
+        }
     }
 
     fn check_moves() {
@@ -542,6 +552,14 @@ struct Stack {
                     }
                 }
 
+                let vtable = @ptrv(item, u16, 2)
+                if vtable > 0 {
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr)(void), 3)
+                    if func @as ptr != null {
+                        func(item);
+                    }
+                }
             }
             if is_last {
                 break
@@ -571,14 +589,13 @@ struct Stack {
         }
     }
 
-    static fn transfer_to_solid_rec(item: ptr, counter: ptr) ptr {
+    static fn transfer_to_solid_rec(item: ptr) ptr {
         // 
         let size = @ptrv(item, u16, 3) @as uint
         let new_item = alloc(size)
         copy(item, new_item, size)
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_solid @as u8
-        @ptrv(counter, uint) += size
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
@@ -594,14 +611,12 @@ struct Stack {
                 }
                 if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
-                    let new = Stack.transfer_to_solid_rec(sub, counter);
+                    let new = Stack.transfer_to_solid_rec(sub);
                     @ptrv(new_item, ptr, field) = new
                 }
             }
         }
 
-        // print("T")
-        // print(@ptrv(new_item, ptr).to_hex())
         let vtable = @ptrv(new_item, u16, 2)
         if vtable > 0 {
             let table = @gc_get_vtable(vtable)
@@ -613,7 +628,52 @@ struct Stack {
 
         return new_item
     }
-    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain, counter: ptr) ptr {
+
+    static fn transfer_item(item: ptr) ptr {
+        if (@ptrv(item, u8, byte_moved) & 1) == 1 {
+            return @ptrv(item, ptr, 0) - 1
+        }
+        if @ptrv(item, u8, 0) > state_transfer {
+            return item
+        }
+        let size = @ptrv(item, u16, 3) @as uint
+        let new_item = alloc(size)
+        copy(item, new_item, size)
+        @ptrv(item, ptr, 0) = new_item | 1
+        @ptrv(new_item, u8, 0) = state_solid @as u8
+
+        let fields = @ptrv(new_item, u8, 2)
+        while fields > 0 {
+            let field = fields--
+            let sub = @ptrv(item, ptr, field)
+            if sub != null {
+                if (@ptrv(sub, u8, byte_moved) & 1) == 1 {
+                    // Already moved
+                    let new = @ptrv(sub, ptr, 0) - 1
+                    @ptrv(new_item, ptr, field) = new
+                    continue
+                }
+                if @ptrv(sub, u8, 0) < state_solid {
+                    // transfer or new
+                    let new = Stack.transfer_to_solid_rec(sub);
+                    @ptrv(new_item, ptr, field) = new
+                }
+            }
+        }
+
+        let vtable = @ptrv(new_item, u16, 2)
+        if vtable > 0 {
+            let table = @gc_get_vtable(vtable)
+            let func = @ptrv(table, fn(ptr)(void), 0)
+            if func @as ptr != null {
+                func(new_item);
+            }
+        }
+
+        return new_item
+    }
+
+    static fn transfer_to_unknown_rec(item: ptr, unknown: ObjectChain) ptr {
         // 
         let size = @ptrv(item, u16, 3) @as uint
         let new_item = alloc(size)
@@ -621,7 +681,6 @@ struct Stack {
         @ptrv(item, ptr, 0) = new_item | 1
         @ptrv(new_item, u8, 0) = state_unknown @as u8
         unknown.add_item(new_item)
-        @ptrv(counter, uint) += size
 
         let fields = @ptrv(new_item, u8, 2)
         while fields > 0 {
@@ -637,11 +696,21 @@ struct Stack {
                 }
                 if @ptrv(sub, u8, 0) < state_solid {
                     // transfer or new
-                    let new = Stack.transfer_to_unknown_rec(sub, unknown, counter);
+                    let new = Stack.transfer_to_unknown_rec(sub, unknown);
                     @ptrv(new_item, ptr, field) = new
                 }
             }
         }
+
+        let vtable = @ptrv(new_item, u16, 2)
+        if vtable > 0 {
+            let table = @gc_get_vtable(vtable)
+            let func = @ptrv(table, fn(ptr)(void), 0)
+            if func @as ptr != null {
+                func(new_item);
+            }
+        }
+
         return new_item
     }
 

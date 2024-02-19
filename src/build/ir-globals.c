@@ -33,6 +33,7 @@ void ir_gen_globals(IR* ir) {
             Func* transfer = array_get_index(b->gc_transfer_funcs, i);
             Func* mark = array_get_index(b->gc_mark_funcs, i);
             Func* gc_free = array_get_index(b->gc_free_funcs, i);
+            Func* gc_check_moves = array_get_index(b->gc_check_moves, i);
 
             str_flat(code, ",\n");
             str_flat(code, "ptr ");
@@ -41,7 +42,8 @@ void ir_gen_globals(IR* ir) {
             str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
             str_flat(code, ", ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
-            str_flat(code, ", ptr null");
+            str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, gc_check_moves, gc_vt_name_buf));
         }
         str_flat(code, "\n], align 8\n");
     } else {
