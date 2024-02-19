@@ -1,5 +1,6 @@
 
 use mem
+use io
 
 class Array[T] {
     ~ size: uint

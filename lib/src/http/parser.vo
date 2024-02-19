@@ -1,5 +1,6 @@
 
 use utils
+use io
 
 class ServerRequest {
 	method: String ("")
@@ -129,7 +130,6 @@ class Parser {
 
 			let key = bytes.sub_str(pos, split - pos - 1);
 			let value = bytes.sub_str(split + 1, index - split - 1);
-
 			headers.set(key.to_lower(), value);
 
 			pos = index + 2;

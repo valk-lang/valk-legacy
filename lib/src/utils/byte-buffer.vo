@@ -1,5 +1,6 @@
 
 use mem
+use io
 
 class ByteBuffer {
     ~ data: ptr
@@ -121,12 +122,10 @@ class ByteBuffer {
 		}
 		let str = String.make_empty(length);
         // println("-")
-        print(@ptrv(this.data, ptr).to_hex())
-        print(":")
-        print(this.size.to_str())
-        print(":")
-        println(start_index.to_str())
+        io:print_fake(@ptrv(this, ptr, 0).to_hex())
+        io:print_fake("\n")
 		mem:copy(this.data + start_index, str.data, length);
+
         // print("sub: ")
         // println(str)
 		return str;

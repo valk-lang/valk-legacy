@@ -1,5 +1,6 @@
 
 use mem;
+use io;
 
 class String {
     data: ptr
