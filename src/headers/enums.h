@@ -84,7 +84,6 @@ enum VALUES {
     v_atomic,
     v_ptr_of,
     v_ir_cached,
-    v_fcall_buffer,
     v_gc_link,
     v_gc_buffer,
 };

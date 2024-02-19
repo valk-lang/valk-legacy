@@ -30,6 +30,7 @@ Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool befor
 Value* vgen_ir_cached(Allocator* alc, Value* value);
 Value* vgen_null(Allocator* alc, Build* b);
 Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett);
+Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args);
 
 struct Value {
     int type;
@@ -51,11 +52,6 @@ struct VFuncCall {
     Value *err_value;
     int line;
     int col;
-};
-struct VFuncCallBuffer {
-    Value* fcall;
-    Scope* before;
-    Scope* after;
 };
 struct VNumber {
     long int value_int;

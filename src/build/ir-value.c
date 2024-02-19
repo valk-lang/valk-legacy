@@ -24,20 +24,6 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
         return ir_func_err_handler(ir, scope, res, fcall);
     }
-    if (v->type == v_fcall_buffer) {
-        VFuncCallBuffer* fbuff = v->item;
-        Value *fcallv = fbuff->fcall;
-        VFuncCall* fcall = fcallv->item;
-        str_add(ir->block->code, "  ; FCALL BUFFER BEFORE\n");
-        ir_write_ast(ir, fbuff->before);
-        str_add(ir->block->code, "  ; FCALL BUFFER ON\n");
-        char *on = ir_value(ir, scope, fcall->on);
-        Array *values = ir_fcall_args(ir, scope, fcall->args);
-        char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
-        str_add(ir->block->code, "  ; FCALL BUFFER CLEAR\n");
-        ir_write_ast(ir, fbuff->after);
-        return ir_func_err_handler(ir, scope, res, fcall);
-    }
     if (v->type == v_gc_buffer) {
         VGcBuffer* buf = v->item;
         ir_write_ast(ir, buf->before);
@@ -139,22 +125,30 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         Map* values = v->item;
         Class* class = v->rett->class;
         Value* ob = NULL;
+
+        // Write prop values
+        Array* ir_props = array_make(ir->alc, values->keys->length);
+        for (int i = 0; i < values->keys->length; i++) {
+            Value *val = array_get_index(values->values, i);
+            char *lval = ir_value(ir, scope, val);
+            array_push(ir_props, lval);
+        }
+
+        // Alloc memory
         if(class->type == ct_class) {
             ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class->gc_fields, class);
         } else {
             ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
         }
-        // TODO stack buffer variable
         char* obj = ir_value(ir, scope, ob);
 
-        for (int i = 0; i < values->keys->length; i++) {
+        // Set props
+        for (int i = 0; i < ir_props->length; i++) {
+            char* lval = array_get_index(ir_props, i);
             char *prop_name = array_get_index(values->keys, i);
-            Value *val = array_get_index(values->values, i);
             ClassProp *prop = map_get(class->props, prop_name);
-            Type *type = prop->type;
-            char *lval = ir_value(ir, scope, val);
             char *pvar = ir_class_pa(ir, class, obj, prop);
-            ir_store_old(ir, type, pvar, lval);
+            ir_store_old(ir, prop->type, pvar, lval);
         }
 
         return obj;

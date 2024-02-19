@@ -502,31 +502,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
 
     if(contains_gc_args) {
-        VFuncCallBuffer* fbuff = al(alc, sizeof(VFuncCallBuffer));
-        Scope* before = scope_sub_make(alc, sc_default, scope, NULL);
-        Scope* after = scope_sub_make(alc, sc_default, scope, NULL);
-        fbuff->fcall = fcall;
-        fbuff->before = before;
-        fbuff->after = after;
-        before->ast = array_make(alc, args->length);
-        after->ast = array_make(alc, args->length);
-
-        for(int i = 0; i < args->length; i++) {
-            Value* arg = array_get_index(args, i);
-            // bool buffer = arg->type == v_class_pa || arg->type == v_func_call || arg->type == v_fcall_buffer;
-            // Declare
-            Decl *decl = decl_make(alc, arg->rett, false);
-            array_push(before->ast, tgen_declare(alc, before, decl, arg));
-            // Replace args
-            Value *new_value = value_make(alc, v_decl, decl, decl->type);
-            array_set_index(args, i, new_value);
-            // Remove from stack
-            if(decl->is_gc) {
-                array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
-            }
-        }
-
-        fcall = value_make(alc, v_fcall_buffer, fbuff, fcall->rett);
+        fcall = vgen_gc_buffer(alc, b, scope, fcall, args);
     }
 
     return fcall;
@@ -617,33 +593,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
-
-// return init;
-    // Buffer value
-    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
-    Scope *before = scope_sub_make(alc, sc_default, scope, NULL);
-    Scope *after = scope_sub_make(alc, sc_default, scope, NULL);
-    buf->value = init;
-    buf->before = before;
-    buf->after = after;
-    before->ast = array_make(alc, values->values->length);
-    after->ast = array_make(alc, values->values->length);
-
-    for (int i = 0; i < values->values->length; i++) {
-        Value* val = array_get_index(values->values, i);
-        if(!value_needs_gc_buffer(val))
-            continue;
-        // Create temp decl
-        Decl *decl = decl_make(alc, val->rett, false);
-        array_push(before->ast, tgen_declare(alc, before, decl, val));
-        // Replace args
-        Value *new_value = value_make(alc, v_decl, decl, decl->type);
-        array_set_index(values->values, i, new_value);
-        // Remove from stack
-        // array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
-    }
-
-    return value_make(alc, v_gc_buffer, buf, init->rett);
+    return vgen_gc_buffer(alc, b, scope, init, values->values);
 }
 
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {

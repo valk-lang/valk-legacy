@@ -134,3 +134,30 @@ Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett) {
     item->right = to;
     return value_make(alc, v_gc_link, item, rett);
 }
+
+
+Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args) {
+    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
+    Scope *before = scope_sub_make(alc, sc_default, scope, NULL);
+    Scope *after = scope_sub_make(alc, sc_default, scope, NULL);
+    buf->value = val;
+    buf->before = before;
+    buf->after = after;
+    before->ast = array_make(alc, args->length);
+    after->ast = array_make(alc, args->length);
+
+    for (int i = 0; i < args->length; i++) {
+        Value* val = array_get_index(args, i);
+        if(!value_needs_gc_buffer(val))
+            continue;
+        // Create temp decl
+        Decl *decl = decl_make(alc, val->rett, false);
+        array_push(before->ast, tgen_declare(alc, before, decl, val));
+        // Replace args
+        Value *new_value = value_make(alc, v_decl, decl, decl->type);
+        array_set_index(args, i, new_value);
+        // Remove from stack
+        // array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
+    }
+    return value_make(alc, v_gc_buffer, buf, val->rett);
+}

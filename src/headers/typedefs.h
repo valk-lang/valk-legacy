@@ -49,7 +49,6 @@ typedef struct Value Value;
 typedef struct VPair VPair;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VFuncCall VFuncCall;
-typedef struct VFuncCallBuffer VFuncCallBuffer;
 typedef struct VNumber VNumber;
 typedef struct VGcBuffer VGcBuffer;
 typedef struct VClassPA VClassPA;

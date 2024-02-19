@@ -145,6 +145,7 @@ char* ir_load(IR* ir, Type* type, char* var) {
 
 void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
     Str *code = ir->block->code;
+    str_preserve(code, 512);
 
     char bytes[20];
     if(type_size > ir->b->ptr_size)
@@ -165,6 +166,8 @@ void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
 void ir_store_old(IR *ir, Type *type, char *var, char *val) {
     Str *code = ir->block->code;
     char *ltype = ir_type(ir, type);
+
+    str_preserve(code, 512);
 
     char bytes[20];
     ir_type_align(ir, type, bytes);
@@ -394,6 +397,7 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
+    str_preserve(code, 512);
 
     char index[20];
     itoa(prop->index, index, 10);
