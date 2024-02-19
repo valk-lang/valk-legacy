@@ -51,6 +51,7 @@ void stage_types_func(Fc* fc, Func* func) {
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, fc);
         arg->decl = decl;
+        array_push(func->arg_values, NULL);
     }
 
     if(func->chunk_args) {
@@ -89,6 +90,8 @@ void stage_types_func(Fc* fc, Func* func) {
                 array_push(func->arg_values, arg->chunk_value);
                 skip_body(fc);
                 tkn = tok(fc, true, true, true);
+            } else {
+                array_push(func->arg_values, NULL);
             }
 
             if(str_is(tkn, ",")) {

@@ -65,6 +65,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             t->func_args = args;
             t->size = b->ptr_size;
             t->is_pointer = true;
+            t->nullable = nullable;
             return t;
         }
 
@@ -214,7 +215,7 @@ Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
-    if (t2->type == type_null && (t1->type == type_ptr || (t1->type == type_struct && t1->nullable))) {
+    if (t2->type == type_null && (t1->type == type_ptr || t1->nullable)) {
         return true;
     }
     if (t1->type != t2->type) {

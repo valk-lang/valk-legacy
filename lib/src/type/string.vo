@@ -6,6 +6,13 @@ class String {
     data: ptr
     bytes: uint
 
+    fn to_uint() uint !not_a_number {
+        return 0
+    }
+    fn to_lower() String {
+        return this
+    }
+
     static fn make_from_ptr(data: ptr, length: uint) String {
         let d = mem:alloc(length + 1)
         mem:copy(data, d, length)
@@ -22,4 +29,5 @@ class String {
         (adr @as String).bytes = length
         return adr @as String
     }
+
 }

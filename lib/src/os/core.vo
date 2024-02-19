@@ -4,3 +4,15 @@ header "sys" as sys
 fn exit(code: i32) {
     sys:exit(code)
 }
+
+fn signal(sig: i32, handler: fn(i32)(void)) void {
+    sys:signal(sig, handler);
+}
+
+fn signal_ignore(sig: i32) void {
+	sys:signal(sig, null);
+}
+
+fn raise(sig: i32) void {
+	sys:raise(sig);
+}

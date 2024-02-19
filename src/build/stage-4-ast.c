@@ -113,7 +113,7 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
-                if(scope->rett) {
+                if(scope->rett && !type_is_void(scope->rett)) {
                     val = read_value(alc, fc, scope, false, 0);
                     val = try_convert(alc, b, val, scope->rett);
                     type_check(fc->chunk_parse, scope->rett, val->rett);

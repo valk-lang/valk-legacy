@@ -15,6 +15,12 @@ class ServerData {
     show_info: bool
 }
 
+global server_fd : i32
+
+fn test(req: Request) Response {
+    return Response.html("Hello world!");
+}
+
 class Server {
     - host: String
     - port: u16
@@ -26,12 +32,12 @@ class Server {
 
     static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
 
-        rep host = share(host);
-        let max_connections : uxx = 10000;
-        let socket = net:Socket.new_tcp(host, port, false) !! throw socket_init_error;;
+        let max_connections : uint = 10000;
+        let socket = net:Socket.new_tcp(host, port, false) ! { throw socket_init_error }
         socket.bind() ! {
             throw socket_bind_error
         }
+        server_fd = socket.fd;
 
         return Server{
             host: host,
@@ -42,28 +48,37 @@ class Server {
         };
     }
 
-    - fn server_data() ServerData {
+    static fn server_data() ServerData !invalid_address {
 
         let dirs = Array[String].new();
-        each this.static_dirs as dir {
-            dirs.push(dir.copy());
-        }
+        // each this.static_dirs as dir {
+        //     dirs.push(dir.copy());
+        // }
+
+        let host = "localhost"
+        let port : u16 = 9000
+        let socket = net:SocketTCP {
+			host: host
+			fd: server_fd
+			port: port
+			blocking: false
+			addrinfo: net:SocketTCP.get_addrinfo(host, port) ! { throw invalid_address }
+		}
 
         return ServerData {
-            socket: this.socket.clone(),
-            max_connections: this.max_connections,
-            handler: this.handler,
-            show_info: this.show_info,
-            static_dirs: dirs,
+            socket: socket
+            max_connections: 10000
+            handler: test
+            show_info: true
         };
     }
 
     fn start(worker_count: i32 (16)) void {
 
         // SIGINT
-        os:signal(os:SIG.hup, interrupt);
+        os:signal(1, interrupt);
         // SIGPIPE
-        os:signal_ignore(os:SIG.pipe);
+        os:signal_ignore(13);
 
         if worker_count < 1 {
             worker_count = 1;
@@ -73,34 +88,32 @@ class Server {
         }
 
         if this.show_info {
-            println("[+] Running http server on port " + this.port.str());
-            println("[+] Worker count: " + worker_count.str());
+            // println("[+] Running http server on port " + this.port.str());
+            // println("[+] Worker count: " + worker_count.str());
         }
 
         worker_count--;
         while worker_count > 0 {
-            let copy = this.server_data();
-            let thread = os:Thread[ServerData].start(Server.worker, copy) !! {
-                println("[x] Failed to start new thread, retrying");
-                os:sleep_ms(1000);
-                continue;
-            };
+            // let copy = this.server_data();
+            let thread = os:Thread.start(Server.worker)
             worker_count--;
         }
 
-        let copy = this.server_data();
-        Server.worker(copy);
+        // let copy = this.server_data();
+        Server.worker();
         os:sleep_ms(200);
     }
 
-    - static fn worker(data_: ServerData) void {
+    - static fn worker() void {
 
-        let data = data_;
+        let data = Server.server_data() ! {
+            return
+        }
 
         let max_connections = data.max_connections;
         let handler = data.handler;
 
-        let nr = atomic_op(data.thread_nr ADD 1);
+        let nr = atomic(data.thread_nr + 1);
 
         //println("[-] Start thread: " + nr.str());
 
@@ -114,10 +127,10 @@ class Server {
         while true {
             let events = poll.wait();
             let event_count = events.length;
-            let i : uxx = 0;
+            let i : uint = 0;
 
             while i < event_count {
-                let lsn = events.get(i) !! break;;
+                let lsn = events.get(i) ! { break }
                 let fd = lsn.fd;
                 i++;
 
@@ -125,13 +138,13 @@ class Server {
 
                 if fd == sock_fd {
                     // New connection
-                    let netcon = sock.accept() !! {
-                        continue;
-                    };
+                    let netcon = sock.accept() ! {
+                        continue
+                    }
 
                     let fd = netcon.fd;
                     if data.show_info {
-                        println("[+] New connection: " + fd.str());
+                        // println("[+] New connection: " + fd.str());
                     }
 
                     let http_con = Connection {
@@ -145,14 +158,15 @@ class Server {
                     continue;
                 }
 
-                let http_con = lsn.data ?! {
-                    println("❓ Missing http connection for fd: " + lsn.fd.str());
+                let http_con = lsn.data @as Connection
+                if lsn.data == null {
+                    print("❓ Missing http connection for fd: \n") // + lsn.fd.str());
                     net:Socket.close(lsn.fd);
                     continue;
                 };
 
                 if http_con.fd != fd {
-                    println("❗ fd mismatch");
+                    print("❗ fd mismatch\n");
                     net:Socket.close(fd);
                     continue;
                 }
@@ -160,7 +174,7 @@ class Server {
                 // Existing connection
                 if lsn.has_stopped_the_connection() {
                     if data.show_info {
-                        println("[+] Close connection: " + fd.str());
+                        print("[+] Close connection: \n") // + fd.str());
                     }
                     net:Socket.close(fd);
                     continue;
@@ -175,24 +189,24 @@ class Server {
 
                     http_con.send_response_bytes();
 
-                    if !http_con.has_data_to_send() {
+                    if http_con.has_data_to_send() == false {
                         lsn.detect_write_request(false);
                         http_con.reset_out();
                     }
                     continue;
                 }
                 if lsn.has_read_request() {
-                    Server.respond(data, http_con, handler) !! {
+                    Server.respond(data, http_con, handler) ! {
                         if data.show_info {
-                            println("[+] Invalid request: " + fd.str());
+                            // println("[+] Invalid request: " + fd.str());
                         }
-                        net:Socket.close(fd);
-                        continue;
-                    };
+                        net:Socket.close(fd)
+                        continue
+                    }
                     if http_con.has_data_to_send() {
-                        lsn.detect_write_request(true);
+                        lsn.detect_write_request(true)
                     } else {
-                        http_con.reset_out();
+                        http_con.reset_out()
                     }
                     continue;
                 }
@@ -207,28 +221,31 @@ class Server {
             let read_buf = http_con.read_buf;
             while true {
                 if read_buf.start_index == read_buf.length {
-                    let bytes = http_con.netcon.recv(read_buf) !! |err| {
-                        if err == err#e_again {
-                            return;
-                        }
-                        http_con.respond(Response.error(400));
-                        throw read_error, "Failed reading from connection";
-                    };
+                    // let bytes = http_con.netcon.recv(read_buf) ! |err| {
+                    //     if err == err#e_again {
+                    //         return;
+                    //     }
+                    //     http_con.respond(Response.error(400));
+                    //     throw read_error, "Failed reading from connection";
+                    // };
+                    let bytes = http_con.netcon.recv(read_buf) ! {
+                        return
+                    }
                 }
-                Parser.parse_request(read_buf, res) !! {
+                Parser.parse_request(read_buf, res) ! {
                     http_con.respond(Response.error(400));
-                    throw read_error, "Invalid request";
-                };
+                    throw read_error //, "Invalid request";
+                }
 
                 read_buf.clear_before_start_index();
 
                 if res.fully_parsed {
-                    break;
+                    break
                 }
             }
 
-            if !res.fully_parsed {
-                return;
+            if res.fully_parsed == false {
+                return
             }
 
             http_con.reset_parser();
@@ -246,11 +263,11 @@ class Server {
             // }
 
             let req = Request{
-                http_con: share(http_con),
-			    headers: swap(res.headers, Map[String]{}),
-			    method: swap(res.method, ""),
-			    body: swap(res.body, ""),
-			    path: swap(res.path, ""),
+                http_con: http_con,
+			    headers: res.headers,
+			    method: res.method,
+			    body: res.body,
+			    path: res.path,
             };
             let resp = handler(req);
 
@@ -259,15 +276,15 @@ class Server {
     }
 
     fn add_static_dir(path: String, relative_to_exe: bool (false)) void {
-        let full = path + "";
-        if relative_to_exe {
-            full = fs:exe_dir() + "/" + path.trim("/");
-        }
-        full = full.rtrim("/") + "/";
-        if this.show_info {
-            println("[+] Add static dir: " + full);
-        }
-        this.static_dirs.push(full);
+        // let full = path;
+        // if relative_to_exe {
+        //     full = fs:exe_dir() + "/" + path.trim("/");
+        // }
+        // full = full.rtrim("/") + "/";
+        // if this.show_info {
+        //     // println("[+] Add static dir: " + full);
+        // }
+        // this.static_dirs.push(full);
     }
 }
 
@@ -277,7 +294,7 @@ fn interrupt(sig: i32) void {
         os:exit(1);
     }
     interrupted = true;
-    println("Interrupt - Stopping http servers...");
+    // println("Interrupt - Stopping http servers...");
     os:exit(1);
 }
 

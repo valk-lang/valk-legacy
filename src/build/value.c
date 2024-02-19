@@ -80,6 +80,10 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
 
         v = value_make(alc, v_string, str, type_gen_volt(alc, b, "String"));
 
+    } else if (t == tok_char_string) {
+
+        v = vgen_int(alc, tkn[0], type_gen_volt(alc, b, "u8"));
+
     } else if (t == tok_scope_open && str_is(tkn, "(")) {
         v = read_value(alc, fc, scope, true, 0);
         tok_expect(fc, ")", true, true);
@@ -186,8 +190,12 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
                 // Check functions
                 Func* func = map_get(class->funcs, prop_name);
                 if (!func) {
-                    sprintf(b->char_buf, "Unknown class property/function: '%s'", prop_name);
+                    sprintf(b->char_buf, "Class '%s' has no property/function named: '%s'", class->name, prop_name);
                     parse_err(chunk, b->char_buf);
+                }
+                if(func->is_static) {
+                    sprintf(b->char_buf, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name);
+                    parse_err(fc->chunk_parse, b->char_buf);
                 }
                 v = vgen_func_ptr(alc, func, v);
             }
@@ -573,6 +581,9 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         type_check(fc->chunk_parse, prop->type, val->rett);
         map_set_force_new(values, name, val);
         name = tok(fc, true, true, true);
+        if(str_is(name, ",")) {
+            name = tok(fc, true, true, true);
+        }
     }
     // Default values
     Array* props = class->props->values;

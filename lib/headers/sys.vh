@@ -1,12 +1,32 @@
 
-fn exit(code: i32) void
 fn malloc(size: uint) ptr
 fn free(adr: ptr) i32
+
+fn exit(code: i32) void
+fn signal(signum: i32, handler: ?fn(i32)(void)) void
+fn raise(sig: i32) i32
+fn __errno_location() ptr
 
 fn read(fd: i32, buf: ptr, size: uint) int
 fn write(fd: i32, data: ptr, length: uint) i32
 fn open(path: ptr, flags: i32, mode: i32) i32
 fn close(fd: i32) i32
+
+fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int
+fn send(fd: i32, buf: ptr, len: uint, flags: i32) int
+
+fn socket(domain: i32, type: i32, protocol: i32) i32
+fn connect(sockfd: i32, addr: cstruct_sockaddr, addrlen: u32) i32
+fn accept(sockfd: i32, addr: ?cstruct_sockaddr, addrlen: ?ptr) i32
+fn accept4(sockfd: i32, addr: ?cstruct_sockaddr, addrlen: ?ptr, flags: i32) i32
+fn shutdown(sockfd: i32, how: i32) i32
+fn bind(sockfd: i32, addr: cstruct_sockaddr, addrlen: u32) i32
+fn listen(sockfd: i32, backlog: i32) i32
+
+fn getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32
+fn setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32
+fn getaddrinfo(host: ptr, port: ptr, hints: cstruct_addrinfo, res: ptr) i32
+fn freeaddrinfo(info: cstruct_addrinfo) i32
 
 fn epoll_create(size: i32) i32;
 fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
@@ -25,14 +45,14 @@ struct cstruct_epoll_event {
 }
 
 struct cstruct_addrinfo {
-    ai_flags: i32
-    ai_family: i32
-    ai_socktype: i32
-    ai_protocol: i32
-    ai_addrlen: u32
+    ai_flags: i32 (0)
+    ai_family: i32 (0)
+    ai_socktype: i32 (0)
+    ai_protocol: i32 (0)
+    ai_addrlen: u32 (0)
     ai_addr: cstruct_sockaddr
-    ai_canonname: ptr // char*
-    ai_next: ?cstruct_addrinfo
+    ai_canonname: ptr (null)
+    ai_next: ?cstruct_addrinfo (null)
 }
 
 struct cstruct_sockaddr {
@@ -42,6 +62,21 @@ struct cstruct_sockaddr {
 	sa_data_3: u32
 	sa_data_4: u16
 }
+
+value EAGAIN (11)
+value SOCK_STREAM (1)
+value SOCK_NONBLOCK (2048)
+
+value SOL_SOCKET (1)
+value SOL_TCP (6)
+value SO_REUSEADDR (2)
+
+value AF_INET (2)
+value AF_UNIX (1)
+
+value AI_PASSIVE (1)
+value AI_CANONNAME (2)
+value AI_NUMERICHOST (4)
 
 value EPOLLERR (8)
 value EPOLLET (-2147483648)

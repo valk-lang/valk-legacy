@@ -12,7 +12,7 @@ class Map[T] {
 			// Set new key / value
 			this._keys.push(key);
 			this._values.push(value);
-			return;
+			return
 		}
 		// Update existing key / value
 		this._values.set(index, value) ! { return }

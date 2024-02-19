@@ -19,13 +19,13 @@ class SocketTCP {
 		// #end
 
         // #if OS == linux
-		let flags = sys:SOCK_STREAM;
-		if !blocking: flags = flags | sys:SOCK_NONBLOCK;
+		let flags : i32 = sys:SOCK_STREAM;
+		if blocking == false { flags = flags | sys:SOCK_NONBLOCK }
     	let fd = sys:socket(sys:AF_INET, flags, 0);
 		// #else
 
 		// Win & macos
-    	let fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0);
+    	// let fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0);
 
         // #if OS == macos
 		// let flags = sys:fcntl(fd, sys:F_GETFL, 0);
@@ -48,17 +48,17 @@ class SocketTCP {
     	}
 
 		// Get host info
-		let addrinfo = CLASS.get_addrinfo(host, port) !! throw invalid_host;;
+		let addrinfo = CLASS.get_addrinfo(host, port) ! { throw invalid_host }
 
 		// Set timeout
         // #if OS == win
 		// let timeout : i32 = 1000 * 5; // 5 seconds
     	// sys:setsockopt(fd, sys:SOL_SOCKET, sys:SO_RCVTIMEO, @ptr_of(timeout), sizeof(i32));
 		// #else
-		let timeout = @stack_object(sys:cstruct_timeval);
-		timeout.tv_sec = 5;
-		timeout.tv_usec = 0;
-    	sys:setsockopt(fd, sys:SOL_SOCKET, sys:SO_RCVTIMEO, timeout @as ptr, sizeof(.sys:cstruct_timeval));
+		// let timeout = @stack_object(sys:cstruct_timeval);
+		// timeout.tv_sec = 5;
+		// timeout.tv_usec = 0;
+    	// sys:setsockopt(fd, sys:SOL_SOCKET, sys:SO_RCVTIMEO, timeout @as ptr, sizeof(.sys:cstruct_timeval));
 		// #end
 
 		return SocketTCP{
@@ -70,30 +70,30 @@ class SocketTCP {
 		};
     }
 
-	fn connect() Connection !connection_failed {
+	// fn connect() Connection !connection_failed {
 
-		let c = this.connection ?? <{
-			let c = Connection {
-				fd: this.fd
-				open: false,
-			};
-			let res = share(c);
-			this.connection = c;
-			return res;
-		};
+	// 	let c = this.connection ?? <{
+	// 		let c = Connection {
+	// 			fd: this.fd
+	// 			open: false,
+	// 		};
+	// 		let res = share(c);
+	// 		this.connection = c;
+	// 		return res;
+	// 	};
 
-		if !c.open {
-        	#if OS == win
-			let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32);
-			#else
-			let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen);
-			#end
-			if err != 0 : throw connection_failed;
-			c.open = true;
-		}
+	// 	if !c.open {
+    //     	#if OS == win
+	// 		let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32);
+	// 		#else
+	// 		let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen);
+	// 		#end
+	// 		if err != 0 : throw connection_failed;
+	// 		c.open = true;
+	// 	}
 
-		return c;
-	}
+	// 	return c;
+	// }
 
 	fn bind() !get_addr_info !bind !listen {
 		let yes : i32 = 1;
@@ -101,11 +101,11 @@ class SocketTCP {
     	sys:setsockopt(this.fd, sys:SOL_SOCKET, sys:SO_REUSEADDR, yes_ptr, sizeof(i32));
 		
 		let err : i32 = 0;
-        #if OS == win
-    	err = sys:bind(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32);
-		#else
+        // #if OS == win
+    	// err = sys:bind(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32);
+		// #else
     	err = sys:bind(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen);
-		#end
+		// #end
 		if err != 0 {
 			throw bind;
 		}
@@ -142,24 +142,24 @@ class SocketTCP {
 	}
 
 	fn accept() Connection !error {
-		let flags = 0;
-        #if OS == linux
-		if !this.blocking : flags = flags | sys:SOCK_NONBLOCK;
+		let flags : i32 = 0;
+        // #if OS == linux
+		if this.blocking == false { flags = flags | sys:SOCK_NONBLOCK }
 		let fd = sys:accept4(this.fd, null, null, flags);
-		#else
-		let fd = sys:accept(this.fd, null, null);
-        #if OS == macos
-		if !this.blocking {
-			let flags = sys:fcntl(fd, sys:F_GETFL, 0);
-			if flags >= 0 : sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK);
-		}
-		#end
-        #if OS == win
-		rep fd = os:WSA_unix_fd(fd);
-		let nonblock_v = 1; // 1 = non-blocking, 0 = blocking
-		if !this.blocking : sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock_v));
-		#end
-		#end
+		// #else
+		// let fd = sys:accept(this.fd, null, null);
+        // #if OS == macos
+		// if !this.blocking {
+		// 	let flags = sys:fcntl(fd, sys:F_GETFL, 0);
+		// 	if flags >= 0 : sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK);
+		// }
+		// #end
+        // #if OS == win
+		// rep fd = os:WSA_unix_fd(fd);
+		// let nonblock_v = 1; // 1 = non-blocking, 0 = blocking
+		// if !this.blocking : sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock_v));
+		// #end
+		// #end
 		if fd == -1 {
 			throw error;
 		}

@@ -88,7 +88,7 @@ class Parser {
 				// Response "HTTP/1.1 200 OK"
 				let version = part1;
 				let status_str = part2;
-				result.status = status_str.to_uxx() ! { throw invalid }
+				result.status = status_str.to_uint() ! { throw invalid }
 			}
 
 			pos = index + 2;
@@ -113,7 +113,7 @@ class Parser {
 				result.stage = stage;
 
 				let content_len_str = headers.get("content-length") ? "0";
-				content_len = content_len_str.to_uxx() ! {
+				content_len = content_len_str.to_uint() ! {
 					throw invalid;
 				};
 				result.content_length = content_len;
@@ -137,13 +137,13 @@ class Parser {
 		}
 
 		if only_headers {
-			return;
+			return
 		}
 
 		if stage == 2 {
 			let bytes_left = length - pos;
 			if bytes_left < content_len {
-				return;
+				return
 			}
 
 			let body = bytes.sub_str(pos, content_len);

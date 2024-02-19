@@ -24,15 +24,15 @@ class Connection {
     // }
 
     fn close() {
-        if !this.open : return;
+        if this.open == false { return }
         Socket.close(this.fd);
         this.open = false;
     }
 
     fn send(buffer: utils:ByteBuffer) uint !connection_error !e_again {
 
-        if !this.open : throw connection_error;
-        if buffer.start_index >= buffer.length : return 0; 
+        if this.open == false { throw connection_error }
+        if buffer.start_index >= buffer.length { return 0 }
 
         // let ssl = this.ssl;
         let bytes_to_send = buffer.length - buffer.start_index;
@@ -56,29 +56,29 @@ class Connection {
 
         // } else {
             // No SSL
-            #if OS == win
-            let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send @as i32, 0);
-            #else
-            let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send, 0);
-            #end
+            // #if OS == win
+            // let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send @as i32, 0);
+            // #else
+            let wbytes = sys:send(this.fd, buffer.data + buffer.start_index, bytes_to_send, 0);
+            // #end
             if wbytes < 0 {
-                #if OS == win
-                let err = sys.WSAGetLastError();
-                if err == sys.OS.WSAENOBUFS {
+                // #if OS == win
+                // let err = sys.WSAGetLastError();
+                // if err == sys.OS.WSAENOBUFS {
+                //     // EAGAIN
+                //     throw e_again;
+                // }
+                // #else
+                // #if OS == macos
+                // let err = @ptrv(sys.__error(), i32, 0);
+                // #else
+                let err = @ptrv(sys:__errno_location(), i32, 0);
+                // #end
+                if err == sys:EAGAIN {
                     // EAGAIN
                     throw e_again;
                 }
-                #else
-                #if OS == macos
-                let err = @ptrv(sys.__error(), i32, 0);
-                #else
-                let err = @ptrv(sys.__errno_location(), i32, 0);
-                #end
-                if err == sys.OS.EAGAIN {
-                    // EAGAIN
-                    throw e_again;
-                }
-                #end
+                // #end
                 throw connection_error;
             }
             if wbytes == 0 {
@@ -94,38 +94,38 @@ class Connection {
 
     fn recv(buffer: utils:ByteBuffer) uint !connection_error !e_again {
 
-        if !this.open : return 0;
+        if this.open == false { return 0 }
 
         let buf_size : uint = 65535;
-        let ssl = this.ssl;
+        // let ssl = this.ssl;
 
         buffer.minimum_free_space(buf_size);
         let count : uint = 0;
 
-        if isset(ssl) {
-            let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
-            if rcvd <= 0 {
-                // SSL_ERROR_NONE: 0
-                // SSL_ERROR_WANT_READ: 2
-                // SSL_ERROR_ZERO_RETURN: 6
-                let err = ossl.SSL_get_error(ssl.ssl, rcvd);
-                if err != 0 {
-                    if err != 6 {
-                        if err == 2 {
-                            throw e_again;
-                        }
-                        throw connection_error;
-                    }
-                }
-                return 0;
-            }
-            count = rcvd @as uint;
+        // if isset(ssl) {
+        //     let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
+        //     if rcvd <= 0 {
+        //         // SSL_ERROR_NONE: 0
+        //         // SSL_ERROR_WANT_READ: 2
+        //         // SSL_ERROR_ZERO_RETURN: 6
+        //         let err = ossl.SSL_get_error(ssl.ssl, rcvd);
+        //         if err != 0 {
+        //             if err != 6 {
+        //                 if err == 2 {
+        //                     throw e_again;
+        //                 }
+        //                 throw connection_error;
+        //             }
+        //         }
+        //         return 0;
+        //     }
+        //     count = rcvd @as uint;
 
-        } else {
+        // } else {
             // #if OS == win
             // let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
             // #else
-            let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size, 0);
+            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, buf_size, 0);
             // #end
             if (rcvd < 0) {
                 // #if OS == win
@@ -138,9 +138,9 @@ class Connection {
                 // #if OS == macos
                 // let err = @ptrv(sys.__error(), i32, 0);
                 // #else
-                let err = @ptrv(sys.__errno_location(), i32, 0);
+                let err = @ptrv(sys:__errno_location(), i32, 0);
                 // #end
-                if err == sys.OS.EAGAIN {
+                if err == sys:EAGAIN {
                     // EAGAIN
                     throw e_again;
                 }
@@ -151,7 +151,7 @@ class Connection {
                 return 0;
             }
             count = rcvd @as uint;
-        }
+        // }
             
         buffer.length += count;
         return count;
