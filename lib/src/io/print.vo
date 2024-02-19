@@ -6,6 +6,13 @@ use volt:mem
 fn print(str: String) {
     sys:write(1 @as i32, str.data, str.bytes);
 }
+fn println(str: String) {
+    // @ptrv(str.data, u8, str.bytes) = '\n'
+    // sys:write(1 @as i32, str.data, str.bytes + 1);
+    // @ptrv(str.data, u8, str.bytes) = '0'
+    print(str);
+    print("\n");
+}
 fn print_fake(adr: ptr) {
     sys:write(1 @as i32, (adr @as String).data, (adr @as String).bytes);
 }

@@ -22,9 +22,11 @@ class String {
     }
 
     static fn make_from_ptr(data: ptr, length: uint) String {
-        let d = mem:alloc(length + 1)
-        mem:copy(data, d, length)
-        @ptrv(d, u8, length) = 0
+        let s = String.make_empty(length);
+        // let d = mem:alloc(length + 1)
+        mem:copy(data, s.data, length)
+        return s
+        // @ptrv(d, u8, length) = 0
         // let str = String {
         //     data: d
         //     bytes: length

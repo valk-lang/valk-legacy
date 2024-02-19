@@ -39,7 +39,7 @@ struct libc_timespec {
 	tv_nsec: int // nanoseconds
 }
 
-struct cstruct_epoll_event {
+struct cstruct_epoll_event packed {
     events: u32 // events
     data: ptr // data
 }

@@ -5,6 +5,7 @@ use os;
 use net;
 use io;
 use fs;
+use mem;
 
 class ServerData {
     socket: net:SocketTCP
@@ -15,7 +16,7 @@ class ServerData {
     show_info: bool
 }
 
-global server_fd : i32
+shared server_fd : i32
 
 fn test(req: Request) Response {
     return Response.html("Hello world!");
@@ -50,7 +51,7 @@ class Server {
 
     static fn server_data() ServerData !invalid_address {
 
-        let dirs = Array[String].new();
+        // let dirs = Array[String].new();
         // each this.static_dirs as dir {
         //     dirs.push(dir.copy());
         // }
@@ -92,53 +93,68 @@ class Server {
             // println("[+] Worker count: " + worker_count.str());
         }
 
+        print("start threads\n")
         worker_count--;
         while worker_count > 0 {
             // let copy = this.server_data();
-            let thread = os:Thread.start(Server.worker)
+            // let thread = os:Thread.start(Server.worker)
             worker_count--;
         }
 
         // let copy = this.server_data();
+        print("start main thread\n")
         Server.worker();
         os:sleep_ms(200);
+        print("main thread stopped\n")
     }
 
     - static fn worker() void {
 
         let data = Server.server_data() ! {
+            print("failed to get data\n")
             return
         }
+        print("run work\n")
 
         let max_connections = data.max_connections;
         let handler = data.handler;
 
-        let nr = atomic(data.thread_nr + 1);
+        // let nr = atomic(data.thread_nr + 1);
 
         //println("[-] Start thread: " + nr.str());
 
         let sock = data.socket;
         let sock_fd = sock.fd;
 
+        let buf = mem:alloc(1000)
+
         let poll = io:Poll[?Connection].new();
+        print("Socket fd: ")
+        println(sock_fd.to_str())
         let sock_lsn = poll.create_listener(sock_fd, null);
         sock_lsn.detect_read_request(true);
 
         while true {
+            // print("poll wait\n")
             let events = poll.wait();
             let event_count = events.length;
             let i : uint = 0;
+            // print("event count: ")
+            // println(event_count.to_str())
 
             while i < event_count {
                 let lsn = events.get(i) ! { break }
                 let fd = lsn.fd;
                 i++;
+                // print("event\n")
 
                 //println("👋 Event thread: " + nr.str() + " | FD: " + fd.str());
 
                 if fd == sock_fd {
                     // New connection
+                    print("new connection\n")
                     let netcon = sock.accept() ! {
+                        print("failed to accept\n")
                         continue
                     }
 
@@ -152,6 +168,7 @@ class Server {
                         fd: fd,
                     };
 
+                    print("create lsn\n")
                     let lsn = poll.create_listener(fd, http_con);
                     lsn.detect_read_request(true);
                     lsn.detect_write_request(false);

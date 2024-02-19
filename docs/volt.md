@@ -9,3 +9,4 @@ description: language with fast non blocking gc with optional manual memory mana
 - class_init stack buffer
 - func call buffer args on the stack (increase stack in temporary scope)
 - if func return value is not used, add to unknown
+- move func args on the stack before gc()

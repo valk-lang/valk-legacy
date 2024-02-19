@@ -20,7 +20,11 @@ class SocketTCP {
 
         // #if OS == linux
 		let flags : i32 = sys:SOCK_STREAM;
-		if blocking == false { flags = flags | sys:SOCK_NONBLOCK }
+		if blocking == false {
+            flags = flags | sys:SOCK_NONBLOCK
+        }
+        print("Socket flags: ")
+        println(flags.to_str())
     	let fd = sys:socket(sys:AF_INET, flags, 0);
 		// #else
 
@@ -44,11 +48,15 @@ class SocketTCP {
         	//#if OS == win
 			//println("WSA socket error: " + sys:WSAGetLastError().str());
 			//#end
+            println("Socket create failed")
 			throw os_socket_create;
     	}
 
 		// Get host info
-		let addrinfo = CLASS.get_addrinfo(host, port) ! { throw invalid_host }
+		let addrinfo = CLASS.get_addrinfo(host, port) ! {
+            println("Invalid host")
+            throw invalid_host
+        }
 
 		// Set timeout
         // #if OS == win
@@ -123,7 +131,7 @@ class SocketTCP {
 		// let hints = @stack_object(sys:cstruct_addrinfo);
 		// mem:clear(hints @as ptr, sizeof_class(sys:cstruct_addrinfo));
         let hints = sys:cstruct_addrinfo{
-            ai_addr: sys:cstruct_sockaddr{}
+            ai_addr: 0 @as sys:cstruct_sockaddr
         }
 
 		hints.ai_family = sys:AF_INET;
@@ -132,11 +140,17 @@ class SocketTCP {
 
 		let chost = host.data;
 		let cport = port.to_str().data;
+        print("Host: ")
+        println(host)
+        print("Port: ")
+        println(port.to_str())
     	let err = sys:getaddrinfo(chost, cport, hints, @ptr_of(addrinfo));
 		if err != 0 {
+            println("adr info failed")
 			throw failed;
 		}
         if addrinfo == null {
+            println("adr info is null")
 			throw failed;
         }
 

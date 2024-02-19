@@ -21,8 +21,8 @@ class Poll[T] {
         let fd = sys:epoll_create(1)
         return CLASS {
             epoll_fd: fd
-            epoll_buffer: mem:alloc(20 * sizeof(inline sys:cstruct_epoll_event))
-            lsn_by_index: 0 @as ptr
+            epoll_buffer: mem:alloc(40 * sizeof(inline sys:cstruct_epoll_event))
+            lsn_by_index: null
         }
     }
 
@@ -62,9 +62,13 @@ class Poll[T] {
         let ev = this.event_buf
         ev.events = 0
         ev.data = lsn @as ptr
+        print("add epoll, epoll_fd: ")
+        print(this.epoll_fd.to_str())
+        print(", fd: ")
+        println(fd.to_str())
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_ADD, fd, ev)
         if res != 0 {
-            //println("> Failed to add epoll listener")
+            println("> Failed to add epoll listener")
         }
 
         lsn.update_epoll()
@@ -128,8 +132,18 @@ class Listener[T] {
 
         let evo = this.event_buf
         evo.events = this.detect_events
-        evo.data = this @as ptr
+        evo.data = this
+
+        print("epoll_ctl, epoll_fd: ")
+        print(this.epoll_fd.to_str())
+        print(", fd: ")
+        print(this.fd.to_str())
+        print(", evo: ")
+        println(ev.to_str())
+
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
+        print("epoll_ctl, res: ")
+        println(res.to_str())
     }
 }
 
