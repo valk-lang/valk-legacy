@@ -28,7 +28,12 @@ void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else) {
 
 char *ir_int(IR* ir, long int value) {
     char *res = al(ir->alc, 32);
-    itoa(value, res, 10);
+    long int v = value;
+    if (value < 0) {
+        res[0] = '-';
+        v = v * -1;
+    }
+    itoa(v, res + (value < 0 ? 1 : 0), 10);
     return res;
 }
 

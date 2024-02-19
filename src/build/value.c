@@ -127,7 +127,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             negative = true;
             tkn = tok(fc, true, false, true);
             if(fc->chunk_parse->token != tok_number) {
-                sprintf(b->char_buf, "Invalid number: '%s'", tkn);
+                sprintf(b->char_buf, "Invalid negative number: '%s'", tkn);
                 parse_err(chunk, b->char_buf);
             }
         }
@@ -368,7 +368,10 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
         Chunk ch;
         ch = *fc->chunk_parse;
         *fc->chunk_parse = *va->chunk;
-        Value* val = read_value(alc, fc, va->fc->scope, true, 0);
+        Scope *prio = scope->prio_idf_scope;
+        scope->prio_idf_scope = va->fc->scope;
+        Value* val = read_value(alc, fc, scope, true, 0);
+        scope->prio_idf_scope = prio;
         *fc->chunk_parse = ch;
         return val;
     }
@@ -458,11 +461,14 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             Chunk ch;
             ch = *fc->chunk_parse;
             *fc->chunk_parse = *default_value_ch;
+            Scope* prio = scope->prio_idf_scope;
+            scope->prio_idf_scope = default_value_ch->fc->scope;
             //
-            Value* arg = read_value(b->alc, fc, default_value_ch->fc->scope, true, 0);
+            Value* arg = read_value(b->alc, fc, scope, true, 0);
             arg = try_convert(alc, b, arg, arg_type);
             type_check(fc->chunk_parse, arg_type, arg->rett);
             //
+            scope->prio_idf_scope = prio;
             *fc->chunk_parse = ch;
             array_push(args, arg);
             index++;
