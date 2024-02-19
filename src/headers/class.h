@@ -25,6 +25,7 @@ struct Class {
     int type;
     int size;
     int gc_fields;
+    int gc_vtable_index;
     bool packed;
     bool is_signed;
     bool allow_math;

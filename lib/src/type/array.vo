@@ -57,7 +57,7 @@ class Array[T] {
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data = mem:alloc(new_size * sizeof(T))
+        let new_data : ptr = null
         if this.is_transfered {
             new_data = mem:alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
@@ -190,12 +190,23 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        this.is_transfered = true
+        // let new_data = mem:alloc(this.size * sizeof(T))
+        // let data = this.data
+        // let x = this.length
+        // while x-- > 0 {
+        //     @ptrv(new_data, T, x) = @gc_transfer(@ptrv(data, T, x))
+        // }
+        // this.data = new_data
+    }
+    fn _gc_mark() {
+        // let data = this.data
+        // let x = this.length
+        // while x-- > 0 {
+        //     @gc_mark(@ptrv(data, T, x))
+        // }
     }
     fn _gc_free() {
-        if this.is_transfered {
-            mem:free(this.data)
-        }
+        mem:free(this.data)
     }
 
     ////////////////

@@ -9,10 +9,13 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->ir_name = NULL;
     c->body = NULL;
     c->scope = NULL;
-    c->size = -1;
-    c->gc_fields = 0;
     c->props = map_make(alc);
     c->funcs = map_make(alc);
+    //
+    c->size = -1;
+    c->gc_fields = 0;
+    c->gc_vtable_index = 0;
+    //
     c->packed = false;
     c->is_signed = true;
     //

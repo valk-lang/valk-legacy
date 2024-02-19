@@ -1,27 +1,52 @@
 
 #include "../all.h"
 
+char* ir_gc_vtable_func_name(IR* ir, Func* func, char* buf);
+
 void ir_gen_globals(IR* ir) {
     //
     Fc *fc = ir->fc;
+    Build *b = ir->b;
     Scope *scope = fc->scope;
     Str *code = ir->code_global;
 
     bool is_main_fc = fc->contains_main_func;
 
-    char bytes[20];
-    itoa(fc->b->ptr_size, bytes, 10);
+    int gc_vtables = b->gc_vtables;
+    char gc_vt_count[20];
+    itoa(gc_vtables * 4, gc_vt_count, 10);
+    char gc_vt_name_buf[256];
 
     if (is_main_fc) {
         str_flat(code, "@volt_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
-        str_flat(code, "@volt_err_msg = dso_local thread_local(initialexec) global i8* null, align ");
-        str_add(code, bytes);
-        str_flat(code, "\n");
+        str_flat(code, "@volt_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
+
+        // Gc vtable
+        str_flat(code, "@volt_gc_vtable = unnamed_addr constant [");
+        str_add(code, gc_vt_count);
+        str_flat(code, "x ptr] [\n");
+        for(int i = 0; i < gc_vtables; i++) {
+            str_preserve(code, 200);
+            if(i > 0) {
+                str_flat(code, ",\n");
+            }
+            Func* transfer = array_get_index(b->gc_transfer_funcs, i);
+            Func* mark = array_get_index(b->gc_mark_funcs, i);
+            Func* gc_free = array_get_index(b->gc_free_funcs, i);
+
+            str_flat(code, "ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, transfer, gc_vt_name_buf));
+            str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
+            str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
+            str_flat(code, ", ptr null");
+        }
+        str_flat(code, "\n], align 8\n");
     } else {
         str_flat(code, "@volt_err_code = external thread_local(initialexec) global i32, align 4\n");
-        str_flat(code, "@volt_err_msg = external thread_local(initialexec) global i8*, align ");
-        str_add(code, bytes);
-        str_flat(code, "\n");
+        str_flat(code, "@volt_err_msg = external thread_local(initialexec) global i8*, align 8\n");
+        str_flat(code, "@volt_gc_vtable = external constant ptr, align 8\n");
     }
 
     for (int i = 0; i < fc->globals->length; i++) {
@@ -56,6 +81,16 @@ void ir_gen_globals(IR* ir) {
 
         array_push(ir->declared_globals, g);
     }
+}
+
+char* ir_gc_vtable_func_name(IR* ir, Func* func, char* buf) {
+    if(!func)
+        return "null";
+    ir_define_ext_func(ir, func);
+    buf[0] = '@';
+    buf[1] = '\0';
+    strcat(buf, func->export_name);
+    return buf;
 }
 
 void *ir_global(IR *ir, Global *g) {

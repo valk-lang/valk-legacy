@@ -89,11 +89,14 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Cla
     Func *func = get_volt_func(b, "mem", "gc_class_alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "u32"));
+    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "u16"));
     array_push(alloc_values, v_size);
+    Value *v_index = vgen_int(alc, cast_as->gc_vtable_index, type_gen_volt(alc, b, "u16"));
+    array_push(alloc_values, v_index);
     Value *v_fields = vgen_int(alc, gc_fields, type_gen_volt(alc, b, "u8"));
     array_push(alloc_values, v_fields);
     Value *res = vgen_func_call(alc, fptr, alloc_values);
+    // TODO: check if we can remove cast and just change the value return type
     if(cast_as)
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;

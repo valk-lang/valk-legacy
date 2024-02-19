@@ -115,10 +115,7 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
 
 char *ir_func_ptr(IR *ir, Func *func) {
     //
-    if (func->fc != ir->fc) {
-        // Extern function
-        ir_define_ext_func(ir, func);
-    }
+    ir_define_ext_func(ir, func);
     char buf[512];
     strcpy(buf, "@");
     strcat(buf, func->export_name);

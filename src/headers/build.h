@@ -91,6 +91,9 @@ struct Build {
     Array *pool_str;
     ErrorCollection* errors;
     Array *strings;
+    Array *gc_transfer_funcs;
+    Array *gc_mark_funcs;
+    Array *gc_free_funcs;
     //
     size_t mem_parse;
     size_t mem_objects;
@@ -99,6 +102,7 @@ struct Build {
     int error_count;
     int export_count;
     int string_count;
+    int gc_vtables;
     int verbose;
     int LOC;
     //

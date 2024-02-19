@@ -231,6 +231,10 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
 }
 
 void ir_define_ext_func(IR* ir, Func* func) {
+    if (!func)
+        return;
+    if (func->fc == ir->fc)
+        return;
     if(!array_contains(ir->declared_funcs, func, arr_find_adr)) {
         Str *code = ir->code_extern;
         ir_func_definition(code, ir, func, true);
