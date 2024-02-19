@@ -135,12 +135,11 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     Type* type_i32 = type_gen_volt(ir->alc, ir->b, "i32");
     char *load = ir_load(ir, type_i32, "@volt_err_code");
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
-    char *lcond_i1 = ir_i1_cast(ir, lcond);
 
     // Clear error
     ir_store_old(ir, type_i32, "@volt_err_code", "0");
 
-    ir_cond_jump(ir, lcond_i1, block_err, fcall->err_value ? block_else : after);
+    ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
 
     if(fcall->err_scope) {
 

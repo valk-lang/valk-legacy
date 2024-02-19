@@ -12,7 +12,7 @@ char *ir_type(IR *ir, Type *type) {
     if (type_is_void(type)) {
 		return "void";
     } else if (type->type == type_bool) {
-		return "i8";
+		return "i1";
     } else if (type->type == type_struct) {
 
         ir_define_struct(ir, class);

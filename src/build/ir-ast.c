@@ -128,7 +128,6 @@ char* ir_gc_unlink(IR* ir, char* val, bool nullable) {
         IRBlock *block_not_null = ir_block_make(ir, ir->func, "unlink_not_null_");
 
         char* is_null = ir_compare(ir, op_ne, val, "null", "ptr", false, false);
-        is_null = ir_i1_cast(ir, is_null);
         ir_cond_jump(ir, is_null, block_not_null, after);
 
         ir->block = block_not_null;
@@ -138,12 +137,10 @@ char* ir_gc_unlink(IR* ir, char* val, bool nullable) {
     char* val_state = ir_load(ir, type_u8, val_state_var);
 
     char* above_new = ir_compare(ir, op_gt, val_state, "0", "i8", false, false);
-    above_new = ir_i1_cast(ir, above_new);
     ir_cond_jump(ir, above_new, block_if_min, after);
 
     ir->block = block_if_min;
     char* below_unknown = ir_compare(ir, op_gt, val_state, "6", "i8", false, false);
-    below_unknown = ir_i1_cast(ir, below_unknown);
     ir_cond_jump(ir, below_unknown, block_if_max, after);
 
     ir->block = block_if_max;
@@ -179,7 +176,6 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
 
     // On state > transfer
     char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);
-    comp_on = ir_i1_cast(ir, comp_on);
     ir_cond_jump(ir, comp_on, block_if, after);
 
     // To state < solid
@@ -188,7 +184,6 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
     char* to_state = ir_load(ir, type_u8, to_state_var);
 
     char *comp_to = ir_compare(ir, op_lt, to_state, "4", "i8", false, false);
-    comp_to = ir_i1_cast(ir, comp_to);
     ir_cond_jump(ir, comp_to, block_link, after);
 
     // Link

@@ -345,7 +345,6 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
 
 char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_signed, bool is_float) {
 
-    char *var_tmp = ir_var(ir->func);
     char *var_result = ir_var(ir->func);
 
     char *sign = "eq";
@@ -387,7 +386,7 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 
     Str *code = ir->block->code;
     str_flat(code, "  ");
-    str_add(code, var_tmp);
+    str_add(code, var_result);
     str_flat(code, " = icmp ");
     str_add(code, sign);
     str_flat(code, " ");
@@ -397,12 +396,6 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
     str_flat(code, ", ");
     str_add(code, right);
     str_flat(code, "\n");
-
-    str_flat(code, "  ");
-    str_add(code, var_result);
-    str_flat(code, " = zext i1 ");
-    str_add(code, var_tmp);
-    str_flat(code, " to i8\n");
 
     return var_result;
 }
@@ -441,8 +434,7 @@ void ir_if(IR *ir, Scope *scope, TIf *ift) {
     IRBlock *after = ir_block_make(ir, ir->func, "if_after_");
 
     char *lcond = ir_value(ir, scope, cond);
-    char *lcond_i1 = ir_i1_cast(ir, lcond);
-    ir_cond_jump(ir, lcond_i1, block_if, block_else);
+    ir_cond_jump(ir, lcond, block_if, block_else);
 
     ir->block = block_if;
     ir_write_ast(ir, scope_if);
@@ -474,8 +466,7 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
 
     ir->block = block_cond;
     char *lcond = ir_value(ir, scope, cond);
-    char *lcond_i1 = ir_i1_cast(ir, lcond);
-    ir_cond_jump(ir, lcond_i1, block_while, after);
+    ir_cond_jump(ir, lcond, block_while, after);
 
     // Code
     ir->block = block_while;
