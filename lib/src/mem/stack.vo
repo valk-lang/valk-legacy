@@ -5,6 +5,7 @@ use volt:io
 
 global stack : ?Stack;
 global allocator : ?Bump;
+global disable_gc : bool;
 
 value state_new (0)
 value state_transfer (2)
@@ -81,6 +82,7 @@ struct Stack {
         }
 
         stack = s;
+        disable_gc = false
 
         let gcm = gc_manager()
         gcm.add_stack(s);
@@ -127,6 +129,9 @@ struct Stack {
     fn gc(trigger_type: u8) {
 
         if this.disable {
+            return
+        }
+        if disable_gc {
             return
         }
         this.disable = true

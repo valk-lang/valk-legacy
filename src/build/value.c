@@ -100,7 +100,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             tok_expect(fc, ")", true, true);
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
-            v = vgen_int(alc, str_is(tkn, "true"), type_gen_volt(alc, b, "bool"));
+            v = vgen_bool(alc, b, str_is(tkn, "true"));
         } else if (str_is(tkn, "null")) {
             v = value_make(alc, v_null, NULL, type_gen_null(alc, b));
         } else if (str_is(tkn, "atomic")) {

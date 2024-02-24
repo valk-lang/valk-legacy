@@ -31,11 +31,12 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     }
     if (v->type == v_gc_buffer) {
         VGcBuffer* buf = v->item;
-        ir_write_ast(ir, buf->before);
-        Value* bval = buf->value;
-        char* res = ir_value(ir, scope, bval);
-        ir_write_ast(ir, buf->after);
-        return res;
+        ir_write_ast(ir, buf->scope);
+        VVar* var = buf->result;
+        if (!var->var) {
+            build_err(ir->b, "Missing buffer var in IR (compiler bug)");
+        }
+        return var->var;
     }
     if (v->type == v_func_ptr) {
         VFuncPtr *fptr = v->item;
@@ -226,6 +227,12 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         str_flat(code, "\n");
 
         return var;
+    }
+    if (v->type == v_var) {
+        VVar* vv = v->item;
+        char* result = ir_value(ir, scope, vv->value);
+        vv->var = result;
+        return result;
     }
 
     return "???";

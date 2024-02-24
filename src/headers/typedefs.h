@@ -57,6 +57,9 @@ typedef struct VOp VOp;
 typedef struct VIncr VIncr;
 typedef struct VIRCached VIRCached;
 typedef struct VString VString;
+typedef struct VPhiValue VPhiValue;
+typedef struct VScope VScope;
+typedef struct VVar VVar;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;
