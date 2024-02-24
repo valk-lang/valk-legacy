@@ -137,7 +137,7 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
-        // io:print_fake("#")
+        io:print_fake("#")
         // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
         this.mark_difference_down()
         this.handle_transfer_list()

@@ -34,7 +34,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir_write_ast(ir, buf->scope);
         VVar* var = buf->result;
         if (!var->var) {
-            build_err(ir->b, "Missing buffer var in IR (compiler bug)");
+            build_err(ir->b, "Missing buffer v_var in IR (compiler bug)");
         }
         return var->var;
     }
@@ -230,8 +230,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     }
     if (v->type == v_var) {
         VVar* vv = v->item;
-        char* result = ir_value(ir, scope, vv->value);
-        vv->var = result;
+        char* result = vv->var;
+        if(result == NULL) {
+            build_err(ir->b, "Missing value for v_var (compiler bug)");
+        }
         return result;
     }
 

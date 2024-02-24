@@ -161,19 +161,20 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     Global* g_disable = get_volt_global(b, "mem", "disable_gc");
     Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
     Value *var_disable = vgen_var(alc, b, disable);
+    array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
     array_push(sub->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
 
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
         // Get values
         Value* var = vgen_var(alc, b, arg);
-        array_push(sub->ast, token_make(alc, t_statement, var));
+        array_push(sub->ast, token_make(alc, t_set_var, var->item));
         // Replace args
         array_set_index(args, i, var);
     }
 
     Value *var_result = vgen_var(alc, b, val);
-    array_push(sub->ast, token_make(alc, t_statement, var_result));
+    array_push(sub->ast, token_make(alc, t_set_var, var_result->item));
 
     // Set disable_gc to previous value
     array_push(sub->ast, tgen_assign(alc, disable, var_disable));

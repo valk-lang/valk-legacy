@@ -103,6 +103,7 @@ enum TOKENS {
     t_continue,
     t_throw,
     t_gc_unlink,
+    t_set_var,
 };
 
 enum OPERATORS {
