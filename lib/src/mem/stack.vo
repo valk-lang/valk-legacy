@@ -344,7 +344,7 @@ struct Stack {
         if this.age == 64 {
             new_age = 66
         }
-        let age = this.age + 1
+        let age = new_age
         this.age = age
 
         //
