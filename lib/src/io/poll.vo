@@ -5,7 +5,7 @@ use mem
 use io
 use os
 
-class Poll[T] {
+struct Poll[T] {
     - epoll_fd: i32 (0)
     - epoll_buffer: ptr
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
@@ -78,7 +78,7 @@ class Poll[T] {
     // }
 }
 
-class Listener[T] {
+struct Listener[T] {
     data: T
     ~ epoll_fd: i32 (0)
     ~ fd: i32

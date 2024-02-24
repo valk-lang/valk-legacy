@@ -398,6 +398,15 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 }
 
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
+
+    Type *class_type = type_gen_class(ir->alc, class);
+    if (type_is_gc(class_type)) {
+        Str *code = ir->block->code;
+        str_preserve(code, 512);
+        on = ir_ptrv(ir, on, "ptr", 1);
+        on = ir_load(ir, class_type, on);
+    }
+
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
     str_preserve(code, 512);

@@ -1,5 +1,5 @@
 
-class Map[T] {
+struct Map[T] {
 	~ _keys : Array[String] (Array[String].new())
 	~ _values : Array[T] (Array[T].new())
 

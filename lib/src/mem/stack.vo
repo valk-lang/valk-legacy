@@ -20,14 +20,10 @@ value sub_state_keep (5)
 value sub_state_unknown (6)
 value sub_state_on_stack (7)
 
-value byte_moved (0)
 value byte_state (0)
 value byte_sub_state (1)
-value byte_fields (2)
-value byte_in_move_check_list (3)
-value byte_uu1 (4) // unused 1
-value byte_uu2 (5) // unused 2
-// size : i32
+value byte_temp (2)
+value byte_uu (3) // unused
 
 value trigger_lowest (0)
 value trigger_buffer_size (1)
@@ -155,20 +151,20 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if unknown_count > 0 {
-            // io:print_fake("f\n")
+            io:print_fake("f")
             this.clean_unknown_list()
             this.bucket.check_freed()
         }
 
         // Lowest stack point
         if trigger_type == trigger_lowest {
-            io:print_fake("l\n")
+            io:print_fake("l")
             if this.stack_adr < this.lowest {
                 this.lowest = this.stack_adr
             }
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         } else if trigger_type == trigger_buffer_size {
-            io:print_fake("b\n")
+            io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
@@ -270,9 +266,6 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if (@ptrv(item, u8, byte_moved) & 1) == 1 {
-                    continue
-                }
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
@@ -306,9 +299,6 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if (@ptrv(item, u8, byte_moved) & 1) == 1 {
-                    continue
-                }
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }

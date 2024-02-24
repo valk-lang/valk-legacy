@@ -12,7 +12,7 @@ void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line,
     char *content = chunk->content;
     int length = chunk->length;
     Fc *fc = chunk->fc;
-    Build *b = fc->b;
+    Build *b = chunk->b;
 
     if (fc && b->verbose > 2 && err_token_i == -1) {
         printf("Lex: %s\n", fc->path);

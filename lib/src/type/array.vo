@@ -2,7 +2,7 @@
 use mem
 use io
 
-class Array[T] {
+struct Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
@@ -187,37 +187,27 @@ class Array[T] {
     // Gc
     ////////////////
 
-    fn _gc_transfer() {
-        this.is_transfered = true
-        let new_data = mem:alloc(this.size * sizeof(T))
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            let item = @ptrv(data, ptr, x)
-            @ptrv(new_data, ptr, x) = mem:Stack.transfer_item(item)
-        }
-        this.data = new_data
-    }
-    fn _gc_mark(age: u8) {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:Stack.mark_stack_item_as_solid_rec(@ptrv(data, T, x), age)
-        }
-    }
-    fn _gc_check_moves(age: u8) {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            let item = @ptrv(data, ptr, x)
-            if (@ptrv(item, u8, mem:byte_moved) & 1) == 1 {
-                @ptrv(data, ptr, x) = @ptrv(item, ptr)
-            }
-        }
-    }
-    fn _gc_free() {
-        mem:free(this.data)
-    }
+    // fn _gc_transfer() {
+    //     this.is_transfered = true
+    //     let new_data = mem:alloc(this.size * sizeof(T))
+    //     let data = this.data
+    //     let x = this.length
+    //     while x-- > 0 {
+    //         let item = @ptrv(data, ptr, x)
+    //         @ptrv(new_data, ptr, x) = mem:Stack.transfer_item(item)
+    //     }
+    //     this.data = new_data
+    // }
+    // fn _gc_mark(age: u8) {
+    //     let data = this.data
+    //     let x = this.length
+    //     while x-- > 0 {
+    //         mem:Stack.mark_stack_item_as_solid_rec(@ptrv(data, T, x), age)
+    //     }
+    // }
+    // fn _gc_free() {
+    //     mem:free(this.data)
+    // }
 
     ////////////////
     // Internals

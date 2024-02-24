@@ -2,7 +2,12 @@
 use mem;
 use io;
 
-class String {
+struct String {
+    v1: u8 (0)
+    v2: u8 (0)
+    v3: u8 (0)
+    v4: u8 (0)
+    v5: u32 (0)
     data: ptr
     bytes: uint
 

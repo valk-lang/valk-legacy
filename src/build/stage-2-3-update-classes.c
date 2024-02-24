@@ -12,6 +12,11 @@ void stage_2_update_classes(Build* b) {
 
     stage_determine_class_sizes(b, b->classes);
 
+    for (int i = 0; i < b->classes->length; i++) {
+        Class *class = array_get_index(b->classes, i);
+        class_generate_internals(class->fc, b, class);
+    }
+
     b->time_parse += microtime() - start;
 
     Array* fcs = b->fc_by_path->values;

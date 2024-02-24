@@ -33,7 +33,6 @@ void ir_gen_globals(IR* ir) {
             Func* transfer = array_get_index(b->gc_transfer_funcs, i);
             Func* mark = array_get_index(b->gc_mark_funcs, i);
             Func* gc_free = array_get_index(b->gc_free_funcs, i);
-            Func* gc_check_moves = array_get_index(b->gc_check_moves, i);
 
             str_flat(code, ",\n");
             str_flat(code, "ptr ");
@@ -42,8 +41,7 @@ void ir_gen_globals(IR* ir) {
             str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
             str_flat(code, ", ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
-            str_flat(code, ", ptr ");
-            str_add(code, ir_gc_vtable_func_name(ir, gc_check_moves, gc_vt_name_buf));
+            str_flat(code, ", ptr null");
         }
         str_flat(code, "\n], align 8\n");
     } else {
@@ -197,7 +195,13 @@ char *ir_string(IR *ir, VString *str, bool external) {
     str_flat(code, " global ");
     str_add(code, ltype);
     if (!external) {
-        str_flat(code, " { i8 14, i8 0, i8 0, i8 0, i8 0, i8 0, i16 0, ptr ");
+        str_flat(code, " { i8 14, i8 0, i8 0, i8 0, i32 ");
+
+        char vt[32];
+        itoa(t->class->gc_vtable_index, vt, 10);
+        str_add(code, vt);
+
+        str_flat(code, ", ptr ");
         str_add(code, str->ir_body_name);
         str_flat(code, ", ");
         str_add(code, ir_type_int(ir, ir->b->ptr_size));
