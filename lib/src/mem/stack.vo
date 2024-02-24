@@ -130,6 +130,7 @@ struct Stack {
             return
         }
         this.disable = true
+        this.run_gc = false
 
         // io:print_fake("#")
         // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
@@ -272,7 +273,10 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                // Stack.transfer_to_solid_rec(item)
+                let vtable = @ptrv(item, u32, 1)
+                let table = @gc_get_vtable(vtable)
+                let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                func(item, state_solid);
             }
             if is_last {
                 break
@@ -302,10 +306,10 @@ struct Stack {
                 if @ptrv(item, u8, 0) != state_transfer {
                     continue
                 }
-                if @ptrv(item, u8, 1) != state_unknown {
-                    continue
-                }
-                // Stack.transfer_to_unknown_rec(item, unknown)
+                let vtable = @ptrv(item, u32, 1)
+                let table = @gc_get_vtable(vtable)
+                let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                func(item, state_unknown);
             }
             if is_last {
                 break
@@ -353,10 +357,11 @@ struct Stack {
                     // Ignore freed, globals, consts
                     continue;
                 }
-                if @ptrv(item, u8, 1) != age {
-                    // Free item + all sub items with incorrect age and have solid state
-
-                    // Stack.free_rec(item, age, bump)
+                if @ptrv(item, u8, 2) != age {
+                    let vtable = @ptrv(item, u32, 1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(void), 2)
+                    func(item, age);
                 }
             }
             if is_last {
@@ -376,11 +381,11 @@ struct Stack {
             let item = @ptrv(item_adr, ptr);
             if item != null {
                 if @ptrv(item, u8, 0) < state_freed {
-                    if @ptrv(item, u8, 1) != age {
-
-                        // let table = @gc_get_vtable(vtable)
-                        // let func = @ptrv(table, fn(ptr, u8)(void), 1)
-                        // func(item, age);
+                    if @ptrv(item, u8, 2) != age {
+                        let vtable = @ptrv(item, u32, 1)
+                        let table = @gc_get_vtable(vtable)
+                        let func = @ptrv(table, fn(ptr, u8)(void), 1)
+                        func(item, age);
                     }
                 }
             }

@@ -16,6 +16,11 @@ snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
 
+    let x = amount
+    while x-- > 0 {
+        @ptrv(STACK_ADR, ptr, x * 2) = null
+    }
+
     if STACK_ADR <= STACK.lowest {
         STACK.run_gc = true
         STACK.run_gc_type = trigger_lowest
