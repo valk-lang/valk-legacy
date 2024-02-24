@@ -160,7 +160,7 @@ struct Stack {
         }
         if gc_transfer_size > (gc_mark_size >> 2) {
             if this.lowest_next < this.lowest {
-                io:print_fake("_L_")
+                // io:print_fake("_L_")
                 // When reaching a new low, do a full clear
                 this.clear_unknown = true
             } else if this.unknown.itemc > 0 {
@@ -168,7 +168,7 @@ struct Stack {
             }
         }
         if this.clear_unknown {
-            io:print_fake("f:")
+            // io:print_fake("f:")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
@@ -185,9 +185,9 @@ struct Stack {
 
         // Lowest stack point
         if trigger_type == trigger_lowest {
-            io:print_fake("l")
+            // io:print_fake("l")
         } else if trigger_type == trigger_buffer_size {
-            io:print_fake("b")
+            // io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
             this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
@@ -296,7 +296,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                print("*")
+                // print("*")
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
