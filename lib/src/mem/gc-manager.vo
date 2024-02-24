@@ -75,6 +75,7 @@ struct GcManager {
                     free(s @as ptr)
                     continue
                 }
+                // s.clear_unknown = true
             }
             os:sleep_ms(100)
         }

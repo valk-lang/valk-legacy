@@ -441,10 +441,6 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 arg = try_convert(alc, b, arg, arg_type);
                 type_check(fc->chunk_parse, arg_type, arg->rett);
-
-                if (type_is_gc(arg_type)) {
-                    contains_gc_args = true;
-                }
             }
 
             array_push(args, arg);
@@ -521,11 +517,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    if(contains_gc_args) {
-        fcall = vgen_gc_buffer(alc, b, scope, fcall, args);
-    }
-
-    return fcall;
+    return vgen_gc_buffer(alc, b, scope, fcall, args);
 }
 
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {

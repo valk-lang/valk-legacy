@@ -121,6 +121,11 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_transfer_size"));
+        scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, fc);
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_mark_size"));
+        scope_set_idf(class->scope, "GC_MARK_SIZE", idf, fc);
         // MALLOC
         idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "alloc"));
         scope_set_idf(class->scope, "MALLOC", idf, fc);
@@ -200,6 +205,7 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  let b_settings = b_next_adr + sizeof(ptr)\n");
     str_flat(code, "  let transfer_count = @ptrv(b_settings, u8, 0)\n");
     str_flat(code, "  @ptrv(b_settings, u8, 0) = transfer_count + 1\n");
+    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -249,6 +255,7 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, 0) > 6 { return }\n");
     str_flat(code, "  if @ptrv(this, u8, 2) == age { return }\n");
     str_flat(code, "  @ptrv(this, u8, 2) = age\n");
+    str_flat(code, "  GC_MARK_SIZE += SIZE\n");
     // Props
     for(int i = 0; i < props->values->length; i++) {
         ClassProp* p = array_get_index(props->values, i);

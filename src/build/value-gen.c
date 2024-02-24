@@ -154,6 +154,17 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
 }
 
 Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args) {
+    bool contains_gc_values = false;
+    for (int i = 0; i < args->length; i++) {
+        Value* arg = array_get_index(args, i);
+        if(type_is_gc(arg->rett)) {
+            contains_gc_values = true;
+            break;
+        }
+    }
+    if(!contains_gc_values) {
+        return val;
+    }
 
     Scope *sub = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
     sub->ast = array_make(alc, 10);
@@ -174,11 +185,11 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
         array_set_index(args, i, var);
     }
 
-    Value *var_result = vgen_var(alc, b, val);
-    array_push(sub->ast, token_make(alc, t_set_var, var_result->item));
-
     // Set disable_gc to previous value
     array_push(sub->ast, tgen_assign(alc, disable, var_disable));
+
+    Value *var_result = vgen_var(alc, b, val);
+    array_push(sub->ast, token_make(alc, t_set_var, var_result->item));
 
     VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
     buf->result = var_result->item;

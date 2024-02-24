@@ -19,10 +19,6 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return "null";
     }
     if (v->type == v_func_call) {
-        if(type_is_gc(v->rett)){
-            Scope *pop = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), scope);
-            ir_write_ast(ir, pop);
-        }
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);
         Array *values = ir_fcall_args(ir, scope, fcall->args);

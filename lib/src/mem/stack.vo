@@ -5,6 +5,8 @@ use volt:io
 
 global stack : ?Stack;
 global disable_gc : bool;
+global gc_transfer_size : uint;
+global gc_mark_size : uint;
 
 value state_new (0)
 value state_transfer (2)
@@ -45,9 +47,11 @@ struct Stack {
     bucket: BucketMan
 
     age: u8 (33)
-    run_gc_type: u8 (trigger_lowest)
 
     run_gc: bool (false)
+    bumper_overflow: bool (false)
+    clear_unknown: bool (false)
+
     force_full: bool (false)
     stopped: bool (false)
     disable: bool (false)
@@ -125,7 +129,12 @@ struct Stack {
     ///////////////////////
     // Gc
     ///////////////////////
-    fn gc(trigger_type: u8) {
+    fn gc() {
+        let trigger_type : u8 = trigger_lowest
+        if this.bumper_overflow {
+            this.bumper_overflow = false
+            trigger_type = trigger_buffer_size
+        }
 
         if this.disable {
             return
@@ -136,7 +145,7 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
-        io:print_fake("#")
+        // io:print_fake("#")
         // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -145,29 +154,38 @@ struct Stack {
         this.bucket.index = 0
 
         // Full clear
-        let unknown_count = this.unknown.itemc
         if this.force_full {
+            this.clear_unknown = true
             this.force_full = false
-            unknown_count = 1
         }
-        if this.lowest_next < this.lowest {
-            // When reaching a new low, do a full clear
-            unknown_count = 1
-            this.lowest = this.lowest_next
+        if gc_transfer_size > gc_mark_size {
+            if this.lowest_next < this.lowest {
+                io:print_fake("_L_")
+                // When reaching a new low, do a full clear
+                this.clear_unknown = true
+            } else if this.unknown.itemc > 0 {
+                this.clear_unknown = true
+            }
         }
-        if unknown_count > 0 {
+        if this.clear_unknown {
+            io:print_fake("u:")
+            // io:print_fake(unknown_count.to_str())
             io:print_fake("f")
+            gc_mark_size = 0
+            gc_transfer_size = 0
             this.clean_unknown_list()
             this.bucket.check_freed()
+            this.clear_unknown = false
+        }
+        //
+        if this.lowest_next < this.lowest {
+            this.lowest = this.lowest_next
+            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         }
 
         // Lowest stack point
         if trigger_type == trigger_lowest {
             io:print_fake("l")
-            if this.stack_adr < this.lowest {
-                this.lowest = this.stack_adr
-            }
-            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         } else if trigger_type == trigger_buffer_size {
             io:print_fake("b")
             // Increase lowest point
@@ -178,7 +196,7 @@ struct Stack {
 
         this.stack_adr_last = this.stack_adr
         this.disable = false
-        io:print_fake("$")
+        // io:print_fake("$")
     }
 
     fn mark_difference_down() {
@@ -294,7 +312,6 @@ struct Stack {
 
         // Mark unknown
         next_list = first_list
-        let unknown = this.unknown
         while true {
             let list = next_list
             let index = 0
@@ -402,7 +419,7 @@ struct Stack {
         //
         this.force_full = true
         this.stack_adr = this.stack_base
-        this.gc(trigger_lowest)
+        this.gc()
         //
         this.transfer.delete()
         this.unknown.delete()

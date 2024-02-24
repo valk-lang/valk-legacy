@@ -51,7 +51,6 @@ struct BucketMan {
         while true {
             if @ptrv(bucket, u8) == 8 {
                 let data = @ptrv(bucket + 8, ptr)
-                // print("f:")
                 free(data)
                 @ptrv(bucket, u8) = 0
             }

@@ -42,9 +42,9 @@ struct Bumper {
         }
         this.block_count++
         bumper_usage = this.block_count * 100 / this.block_total_last
-        if bumper_usage > 110 {
+        if bumper_usage > 120 {
             stack.run_gc = true
-            stack.run_gc_type = trigger_buffer_size
+            stack.bumper_overflow = true
         }
         return this.adr @as ptr
     }
