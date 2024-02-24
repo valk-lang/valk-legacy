@@ -145,8 +145,6 @@ struct Stack {
             trigger_type = trigger_buffer_size
         }
 
-        // io:print_fake("#")
-        // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
         this.mark_difference_down()
         this.handle_transfer_list()
         this.bumper.wipe()
@@ -160,15 +158,14 @@ struct Stack {
         }
         if gc_transfer_size > (gc_mark_size >> 2) {
             if this.lowest_next < this.lowest {
-                // io:print_fake("_L_")
                 // When reaching a new low, do a full clear
                 this.clear_unknown = true
             } else if this.unknown.itemc > 0 {
+                // Do a full clear if we have single unknown item
                 this.clear_unknown = true
             }
         }
         if this.clear_unknown {
-            // io:print_fake("f:")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
@@ -177,26 +174,21 @@ struct Stack {
             this.bucket.check_freed()
             this.clear_unknown = false
         }
-        //
-        if this.lowest_next < this.lowest {
-            this.lowest = this.lowest_next
-            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
-        }
 
-        // Lowest stack point
-        if trigger_type == trigger_lowest {
-            // io:print_fake("l")
-        } else if trigger_type == trigger_buffer_size {
-            // io:print_fake("b")
+        // Adjust lowest stack point
+        if this.lowest_next < this.lowest {
+            // Lowest stack point
+            this.lowest = this.lowest_next
+        }
+        if trigger_type == trigger_buffer_size {
             // Increase lowest point
             this.lowest = this.lowest_next
-            this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         }
 
 
         this.stack_adr_last = this.stack_adr
         this.disable = false
-        // io:print_fake("$")
+        this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
     }
 
     fn mark_difference_down() {
@@ -431,16 +423,16 @@ struct Stack {
 
 
     fn print_stack() {
-        // print("---------\n")
-        // let item_adr = this.stack_base
-        // let stack_adr = this.stack_adr + (sizeof(ptr) * 4)
-        // while item_adr < stack_adr {
-        //     let item = @ptrv(item_adr, ptr);
-        //     print(item.to_hex())
-        //     print("\n")
-        //     item_adr = item_adr + sizeof(ptr) * 2
-        // }
-        // print("---------\n")
+        print("---------\n")
+        let item_adr = this.stack_base
+        let stack_adr = this.stack_adr + (sizeof(ptr) * 4)
+        while item_adr < stack_adr {
+            let item = @ptrv(item_adr, ptr);
+            print(item.to_hex())
+            print("\n")
+            item_adr = item_adr + sizeof(ptr) * 2
+        }
+        print("---------\n")
     }
 }
 

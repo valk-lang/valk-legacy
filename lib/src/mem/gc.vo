@@ -8,7 +8,7 @@ value gc_item_size ((sizeof(ptr) + sizeof(ptr)))
 fn gc_alloc(size: uint, vtable: u32) ptr {
     let bm = stack.bucket
     let br = stack.bumper
-    while(@ptrv(bm.base, uint, bucket_size * 2 + 1) > 150) {
+    while(@ptrv(bm.base, uint, bucket_size * 2 + 1) > 200) {
         bm.create_new_bucket()
     }
     let b_index = bm.index
@@ -40,11 +40,10 @@ fn gc_alloc(size: uint, vtable: u32) ptr {
     br.adr += size
     @ptrv(bucket + 8, ptr) = data
 
-    // io:print_fake("ITEM: ")
-    // io:print_fake(bucket.to_hex())
-    // io:print_fake(" | ")
-    // io:print_fake(@ptrv(bucket, ptr).to_hex())
-    // io:print_fake("\n")
+    // print("ITEM: ")
+    // print(bucket.to_hex())
+    // print(" | ")
+    // println(@ptrv(bucket, ptr).to_hex())
 
     return bucket
 }

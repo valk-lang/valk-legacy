@@ -1,21 +1,6 @@
 
 use io;
 
-snippet snip_gc(amount: V) {
-    @cache_value(stack) as STACK
-
-    if disable_gc == false {
-        if STACK.stack_adr <= STACK.lowest {
-            if bumper_usage > 30 {
-                STACK.run_gc = true
-            }
-        }
-        if STACK.run_gc {
-            STACK.gc()
-        }
-    }
-}
-
 snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
@@ -46,9 +31,6 @@ snippet pop_return(retv: V) {
 
     if STACK_ADR < STACK.lowest_next {
         STACK.lowest_next = STACK_ADR
-        // if STACK_ADR < STACK.lowest {
-        //     STACK.lowest = STACK_ADR
-        // }
     }
 }
 
@@ -58,8 +40,5 @@ snippet pop_no_return() {
 
     if STACK_ADR < STACK.lowest_next {
         STACK.lowest_next = STACK_ADR
-        // if STACK_ADR < STACK.lowest {
-        //     STACK.lowest = STACK_ADR
-        // }
     }
 }
