@@ -104,6 +104,7 @@ enum TOKENS {
     t_throw,
     t_gc_unlink,
     t_set_var,
+    t_ast_scope,
 };
 
 enum OPERATORS {

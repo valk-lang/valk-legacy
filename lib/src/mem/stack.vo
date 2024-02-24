@@ -130,12 +130,6 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        let trigger_type : u8 = trigger_lowest
-        if this.bumper_overflow {
-            this.bumper_overflow = false
-            trigger_type = trigger_buffer_size
-        }
-
         if this.disable {
             return
         }
@@ -144,6 +138,12 @@ struct Stack {
         }
         this.disable = true
         this.run_gc = false
+
+        let trigger_type : u8 = trigger_lowest
+        if this.bumper_overflow {
+            this.bumper_overflow = false
+            trigger_type = trigger_buffer_size
+        }
 
         // io:print_fake("#")
         // io:print_fake("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
@@ -158,7 +158,7 @@ struct Stack {
             this.clear_unknown = true
             this.force_full = false
         }
-        if gc_transfer_size > gc_mark_size {
+        if gc_transfer_size > (gc_mark_size >> 2) {
             if this.lowest_next < this.lowest {
                 io:print_fake("_L_")
                 // When reaching a new low, do a full clear
@@ -168,11 +168,11 @@ struct Stack {
             }
         }
         if this.clear_unknown {
-            io:print_fake("u:")
-            // io:print_fake(unknown_count.to_str())
-            io:print_fake("f")
+            io:print_fake("f:")
+            //
             gc_mark_size = 0
             gc_transfer_size = 0
+            //
             this.clean_unknown_list()
             this.bucket.check_freed()
             this.clear_unknown = false
@@ -296,6 +296,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
+                print("*")
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)

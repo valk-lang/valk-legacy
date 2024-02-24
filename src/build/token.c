@@ -96,5 +96,32 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
 
     read_ast(fc, scope_while, single);
 
+    // Gc reserve
+    if(scope_while->decls) {
+        Array* decls = scope_while->decls;
+        int gc_count = decls->length;
+        Scope* wrap = scope_sub_make(alc, sc_default, scope, chunk_end);
+        wrap->decls = decls;
+        wrap->ast = array_make(alc, 20);
+        // Reserve
+        Map *idfs = map_make(alc);
+        Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
+        Idf *idf = idf_make(alc, idf_value, amount);
+        map_set(idfs, "amount", idf);
+        Scope *gc_reserve = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "reserve"), idfs, wrap);
+        array_push(wrap->ast, token_make(alc, t_ast_scope, gc_reserve));
+        // Code
+        array_push(wrap->ast, token_make(alc, t_ast_scope, scope_while));
+        // Pop
+        if (!scope_while->did_return) {
+            Scope *pop = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), wrap);
+            array_push(wrap->ast, token_make(alc, t_ast_scope, pop));
+        }
+
+        //
+        scope_while = wrap;
+    }
+
+    //
     array_push(scope->ast, tgen_while(alc, cond, scope_while));
 }

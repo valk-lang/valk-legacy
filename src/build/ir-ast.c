@@ -33,10 +33,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 }
                 decl->ir_var = lval;
             }
-            if(type_is_gc(val->rett)){
-                Scope *pop = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), scope);
-                ir_write_ast(ir, pop);
-            }
             continue;
         }
         if (tt == t_assign) {
@@ -55,10 +51,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
             } else {
                 char* var = ir_assign_value(ir, scope, left);
                 ir_store_old(ir, left->rett, var, value);
-            }
-            if(type_is_gc(right->rett)){
-                Scope *pop = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), scope);
-                ir_write_ast(ir, pop);
             }
             continue;
         }
@@ -120,6 +112,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_set_var) {
             VVar *vv = t->item;
             vv->var = ir_value(ir, scope, vv->value);
+            continue;
+        }
+        if (tt == t_ast_scope) {
+            Scope *s = t->item;
+            ir_write_ast(ir, s);
             continue;
         }
 
