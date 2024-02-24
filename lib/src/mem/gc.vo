@@ -8,7 +8,7 @@ value gc_item_size ((sizeof(ptr) + sizeof(ptr)))
 fn gc_alloc(size: uint, vtable: u32) ptr {
     let bm = stack.bucket
     let br = stack.bumper
-    while(@ptrv(bm.base, ptr, bucket_size * 2 + 1) > 150) {
+    while(@ptrv(bm.base, uint, bucket_size * 2 + 1) > 150) {
         bm.create_new_bucket()
     }
     let b_index = bm.index

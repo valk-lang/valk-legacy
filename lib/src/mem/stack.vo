@@ -4,7 +4,6 @@ use volt:os
 use volt:io
 
 global stack : ?Stack;
-global allocator : ?Bump;
 global disable_gc : bool;
 
 value state_new (0)
@@ -179,6 +178,7 @@ struct Stack {
 
         this.stack_adr_last = this.stack_adr
         this.disable = false
+        io:print_fake("$")
     }
 
     fn mark_difference_down() {

@@ -152,7 +152,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
 
         // Alloc memory
         if(class->type == ct_class) {
-            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class->gc_fields, class);
+            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class);
         } else {
             ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
         }

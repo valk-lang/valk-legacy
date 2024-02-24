@@ -89,7 +89,7 @@ int cmd_build(int argc, char *argv[]) {
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
-    b->verbose = 3;
+    b->verbose = 2;
     b->LOC = 0;
     b->parser_started = false;
 

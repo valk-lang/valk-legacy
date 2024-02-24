@@ -39,8 +39,8 @@ struct BucketMan {
             @ptrv(bucket, ptr, i * 2) = null
         }
         // Default settings
-        @ptrv(bucket, ptr, bucket_size) = null
-        @ptrv(bucket, uint, bucket_size + 1) = 0
+        @ptrv(bucket, ptr, bucket_size * 2) = null
+        @ptrv(bucket, uint, bucket_size * 2 + 1) = 0
         this.base = bucket
         this.index = 0
     }
@@ -51,6 +51,7 @@ struct BucketMan {
         while true {
             if @ptrv(bucket, u8) == 8 {
                 let data = @ptrv(bucket + 8, ptr)
+                // print("f:")
                 free(data)
                 @ptrv(bucket, u8) = 0
             }

@@ -187,8 +187,11 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, 0) = to_state\n");
     str_flat(code, "  @ptrv(this, u8, 1) = 0\n");
     str_flat(code, "  let old_data = @ptrv(this, ptr, 1)\n");
+    // str_flat(code, "  print(\"> size: \")\n");
+    // str_flat(code, "  println((SIZE @as uint).to_str())\n");
     str_flat(code, "  let new_data = MALLOC(SIZE)\n");
     // str_flat(code, "  print(\"> Transfer: \")\n");
+    // str_flat(code, "  println(new_data.to_hex())\n");
     str_flat(code, "  MEMCOPY(old_data, new_data, SIZE)\n");
     str_flat(code, "  @ptrv(this, ptr, 1) = new_data\n");
 

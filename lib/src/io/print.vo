@@ -16,14 +16,3 @@ fn println(str: String) {
 fn print_fake(adr: ptr) {
     sys:write(1 @as i32, (adr @as String).data, (adr @as String).bytes);
 }
-
-fn print_x() {
-    let x = mem:alloc(1)
-    @ptrv(x, u8, 0) = 58
-    sys:write(1 @as i32, x, 1);
-}
-fn print_y() {
-    let x = mem:alloc(1)
-    @ptrv(x, u8, 0) = 61
-    sys:write(1 @as i32, x, 1);
-}

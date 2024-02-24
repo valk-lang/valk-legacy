@@ -118,8 +118,4 @@ void stage_props_class(Fc* fc, Class *class) {
 
         parse_handle_func_args(fc, func);
     }
-
-    // Add GC properties + re-order previous properties
-    if(class->type == ct_class) {
-    }
 }

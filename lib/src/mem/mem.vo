@@ -7,8 +7,11 @@ global acount : uint
 global fcount : uint
 
 fn alloc(size: uint) ptr {
+	// print(".")
     acount++
-	return sys:malloc(size);
+	let res = sys:malloc(size);
+	// print("_")
+	return res
 }
 
 fn free(adr: ptr) {
@@ -34,9 +37,9 @@ fn copy(from: ptr, to: ptr, length: uint) {
 // Debug & compiler functions
 ////////////////////////////////
 
-fn gc_bump_alloc(size: uint) ptr {
-    return allocator.alloc(size)
-}
+// fn gc_bump_alloc(size: uint) ptr {
+//     return allocator.alloc(size)
+// }
 
 // fn gc_class_alloc(size: u16, vtable_index: u16, sub_field_count: u8) ptr {
 //     let adr = allocator.alloc(size @as uint)

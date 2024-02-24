@@ -62,7 +62,7 @@ struct Bumper {
         let block = this.first @as ptr
         while block != null {
             if item > block {
-                if item < (block + block_size) {
+                if item < (block + bump_block_size) {
                     return true
                 }
             }

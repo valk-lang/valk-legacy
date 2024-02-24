@@ -3,7 +3,7 @@ header "pthread" as pt;
 
 use volt:mem;
 
-class Thread {
+struct Thread {
 
     - static fn entry(data: ptr) void {
 		mem:Stack.init()

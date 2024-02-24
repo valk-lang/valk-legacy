@@ -89,16 +89,17 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Class* class) {
+Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     Func *func = get_volt_func(b, "mem", "gc_alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "u16"));
+    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "uint"));
     array_push(alloc_values, v_size);
-    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_volt(alc, b, "u16"));
+    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_volt(alc, b, "u32"));
     array_push(alloc_values, v_index);
     Value *res = vgen_func_call(alc, fptr, alloc_values);
-    res->rett = type_gen_class(alc, class);
+    if(class)
+        res->rett = type_gen_class(alc, class);
     return res;
 }
 Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right) {
