@@ -7,15 +7,8 @@ fn p() {
 snippet snip_gc(amount: V) {
     @cache_value(stack) as STACK
 
-    let space_added = STACK.bump.space_added
-    if space_added > STACK.space_min {
-        if STACK.stack_adr <= STACK.lowest {
-            STACK.gc(trigger_lowest)
-        } else if space_added > STACK.space_max {
-            STACK.gc(trigger_buffer_size)
-        } else if STACK.gc_count++ > STACK.gc_trigger {
-            STACK.gc(trigger_gc_count)
-        }
+    if STACK.run_gc {
+        STACK.gc(trigger_lowest)
     }
 }
 
@@ -23,14 +16,16 @@ snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
 
+    if STACK_ADR <= STACK.lowest {
+        STACK.run_gc = true
+        STACK.run_gc_type = trigger_lowest
+    }
+
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
 
 } => (STACK, STACK_ADR)
 
 snippet pop_return(retv: V) {
-
-    // @ptrv(STACK_ADR, ptr, 0) = retv @as ptr
-    // STACK_ADR = STACK_ADR + (2 * sizeof(ptr))
 
     STACK_ADR = STACK_ADR
 
@@ -46,15 +41,4 @@ snippet pop_no_return() {
     if STACK_ADR < STACK.lowest_next {
         STACK.lowest_next = STACK_ADR
     }
-
-    // let space_added = STACK.bump.space_added
-    // if space_added > STACK.space_min {
-    //     if STACK.stack_adr <= STACK.lowest {
-    //         STACK.gc(trigger_lowest)
-    //     } else if space_added > STACK.space_max {
-    //         STACK.gc(trigger_buffer_size)
-    //     } else if STACK.gc_count++ > STACK.gc_trigger {
-    //         STACK.gc(trigger_gc_count)
-    //     }
-    // }
 }

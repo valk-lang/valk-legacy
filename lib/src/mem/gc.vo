@@ -6,7 +6,7 @@ value gc_item_size ((sizeof(ptr) + sizeof(ptr)))
 
 // Allocating
 fn gc_alloc(size: uint, vtable: u32) ptr {
-    let bm = stack.bucketm
+    let bm = stack.bucket
     let br = stack.bumper
     while(@ptrv(bm.base, ptr, bucket_size * 2 + 1) > 150) {
         bm.create_new_bucket()
@@ -29,7 +29,7 @@ fn gc_alloc(size: uint, vtable: u32) ptr {
     }
     @ptrv(bucket, u16, 0) = 0
     @ptrv(bucket, u8, 2) = 0
-    @ptrv(bucket, u8, 3) = b_index
+    @ptrv(bucket, u8, 3) = b_index @as u8
     @ptrv(bucket, u32, 1) = vtable
 
     let data = br.adr @as ptr
