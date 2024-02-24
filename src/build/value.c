@@ -517,7 +517,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    return vgen_gc_buffer(alc, b, scope, fcall, args);
+    return vgen_gc_buffer(alc, b, scope, fcall, args, true);
 }
 
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
@@ -611,7 +611,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
-    return vgen_gc_buffer(alc, b, scope, init, values->values);
+    return vgen_gc_buffer(alc, b, scope, init, values->values, false);
 }
 
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {

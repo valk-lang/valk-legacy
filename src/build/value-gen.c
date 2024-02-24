@@ -153,11 +153,11 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
     return value_make(alc, v_gc_link, item, rett);
 }
 
-Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args) {
+Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack) {
     bool contains_gc_values = false;
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
-        if(type_is_gc(arg->rett)) {
+        if(value_needs_gc_buffer(arg)) {
             contains_gc_values = true;
             break;
         }
@@ -176,13 +176,20 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
     array_push(sub->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
 
+    // Buffer arguments
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
-        // Get values
-        Value* var = vgen_var(alc, b, arg);
-        array_push(sub->ast, token_make(alc, t_set_var, var->item));
+        if(value_needs_gc_buffer(arg)) {
+            Decl *decl = decl_make(alc, arg->rett, false);
+            array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
+            arg = value_make(alc, v_decl, decl, decl->type);
+        } else {
+            // Get values
+            arg = vgen_var(alc, b, arg);
+            array_push(sub->ast, token_make(alc, t_set_var, arg->item));
+        }
         // Replace args
-        array_set_index(args, i, var);
+        array_set_index(args, i, arg);
     }
 
     // Set disable_gc to previous value
