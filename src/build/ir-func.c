@@ -54,26 +54,22 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     }
 
     // Arg vars
-    // Array *args = vfunc->args->values;
-    // for (int i = 0; i < args->length; i++) {
-    //     FuncArg *arg = array_get_index(args, i);
-    //     Decl* decl = arg->decl;
-    //     char* var = ir_var(func);
-    //     decl->ir_var = var;
-    //     // if(decl->is_mut && !decl->is_gc) {
-    //     //     decl->ir_store_var = ir_alloca(ir, func, decl->type);
-    //     // }
-    // }
+    Array *args = vfunc->args->values;
+    for (int i = 0; i < args->length; i++) {
+        FuncArg *arg = array_get_index(args, i);
+        Decl* decl = arg->decl;
+        char* var = ir_var(func);
+        decl->ir_var = var;
+        if(decl->is_mut) {
+            decl->ir_store_var = ir_alloca(ir, func, decl->type);
+        }
+    }
 
     // Decls
     Scope* scope = vfunc->scope;
     Array* decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
-        if(decl->is_arg) {
-            char *var = ir_var(func);
-            decl->ir_var = var;
-        }
         if(decl->is_mut && !decl->is_gc) {
             decl->ir_store_var = ir_alloca(ir, func, decl->type);
         }
@@ -105,15 +101,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Value *vc = idf->item;
         stack_adr = ir_value(ir, scope, vc);
     }
-    // if(gc_reserve) {
-    //     Global* g = get_volt_global(ir->b, "mem", "stack");
-    //     char *stack_ = ir_global(ir, g);
-    //     char *stack = ir_load(ir, g->type, stack_);
-    //     Class *class = get_volt_class(ir->b, "mem", "Stack");
-    //     ClassProp *prop = map_get(class->props, "stack_adr");
-    //     char *pa = ir_class_pa(ir, class, stack, prop);
-    //     stack_adr = ir_load(ir, prop->type, pa);
-    // }
 
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
@@ -135,41 +122,17 @@ void ir_gen_func(IR *ir, IRFunc *func) {
 
             decl->ir_store_var = var;
         }
-        if (decl->is_arg && decl->is_mut) {
-            ir_store(ir, decl->ir_store_var, decl->ir_var, ir_type(ir, decl->type), decl->type->size);
-
-            // Check if moved
-            // if(decl->is_gc) {
-            //     Type* type_u8 = type_gen_volt(ir->alc, ir->b, "u8");
-            //     char* state_ = ir_ptrv(ir, decl->ir_var, "i8", 0);
-            //     char* state = ir_load(ir, type_u8, state_);
-            //     char* op = ir_op(ir, scope, op_bit_and, state, "1", type_u8);
-            //     char* comp = ir_compare(ir, op_eq, op, "1", "i8", false, false);
-            //     IRBlock *block_if = ir_block_make(ir, ir->func, "if_moved_");
-            //     IRBlock *after = ir_block_make(ir, ir->func, "if_moved_after_");
-            //     ir_cond_jump(ir, comp, block_if, after);
-
-            //     ir->block = block_if;
-            //     Type* type_ptr = type_gen_volt(ir->alc, ir->b, "ptr");
-            //     char* new_ = ir_ptrv(ir, decl->ir_var, "ptr", 0);
-            //     char* new = ir_load(ir, type_ptr, new_);
-            //     ir_store(ir, decl->ir_store_var, new, ir_type(ir, decl->type), decl->type->size);
-            //     ir_jump(ir, after);
-
-            //     ir->block = after;
-            // }
-        }
     }
 
     // Store arg values
-    // for (int i = 0; i < args->length; i++) {
-    //     FuncArg *arg = array_get_index(args, i);
-    //     Decl* decl = arg->decl;
-    //     if(decl->is_mut) {
-    //         // Store passed argument in storage var
-    //         ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
-    //     }
-    // }
+    for (int i = 0; i < args->length; i++) {
+        FuncArg *arg = array_get_index(args, i);
+        Decl* decl = arg->decl;
+        if(decl->is_mut) {
+            // Store passed argument in storage var
+            ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
+        }
+    }
 
     // AST
     ir_write_ast(ir, vfunc->scope);
@@ -307,13 +270,7 @@ void ir_func_return(IR* ir, char* type, char* value) {
         } else {
             Scope* pop = gen_snippet_ast(alc, ir->fc, get_volt_snippet(ir->b, "mem", "pop_no_return"), map_make(alc), vfunc->scope);
             ir_write_ast(ir, pop);
-
-            // Scope *snip_gc = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), vfunc->scope);
-            // ir_write_ast(ir, snip_gc);
         }
-    } else {
-        // Scope *snip_gc = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), vfunc->scope);
-        // ir_write_ast(ir, snip_gc);
     }
     Str* code = ir->block->code;
     str_flat(code, "  ret ");
