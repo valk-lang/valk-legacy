@@ -4,46 +4,50 @@ use os
 
 value gc_item_size ((sizeof(ptr) + sizeof(ptr)))
 
-// Allocating
-fn gc_alloc(size: uint, vtable: u32) ptr {
-    let bm = stack.bucket
-    let br = stack.bumper
-    while(@ptrv(bm.base, uint, bucket_size * 2 + 1) > 150) {
-        bm.create_new_bucket()
-    }
-    let b_index = bm.index
-    let bucket_ = @ptr_of(@ptrv(bm.base, ptr, b_index * 2))
-    while(@ptrv(bucket_, u8) != 0) {
-        b_index++
-        if b_index == bucket_size {
-            bm.create_new_bucket()
-            b_index = 0
-        }
-        bucket_ = @ptr_of(@ptrv(bm.base, ptr, b_index * 2))
-    }
-    let bucket = bucket_
-    let b_index_new = b_index + 1
-    bm.index = b_index_new
-    if b_index_new == bucket_size {
-        bm.create_new_bucket()
-    }
-    @ptrv(bucket, u16, 0) = 0
-    @ptrv(bucket, u8, 2) = 0
-    @ptrv(bucket, u8, 3) = b_index @as u8
-    @ptrv(bucket, u32, 1) = vtable
-
-    let data = br.adr @as ptr
-    let space_left = bump_block_size - (data - br.base)
-    if size > space_left {
-        data = br.alloc_for_size(size)
-    }
-    br.adr += size
-    @ptrv(bucket + 8, ptr) = data
-
-    // print("ITEM: ")
-    // print(bucket.to_hex())
-    // print(" | ")
-    // println(@ptrv(bucket, ptr).to_hex())
-
-    return bucket
+fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
+    return pool.get(vtable)
 }
+
+// Allocating
+// fn gc_alloc_(size: uint, vtable: u32) ptr {
+//     let bm = stack.bucket
+//     let br = stack.bumper
+//     while(@ptrv(bm.base, uint, bucket_size * 2 + 1) > 150) {
+//         bm.create_new_bucket()
+//     }
+//     let b_index = bm.index
+//     let bucket_ = @ptr_of(@ptrv(bm.base, ptr, b_index * 2))
+//     while(@ptrv(bucket_, u8) != 0) {
+//         b_index++
+//         if b_index == bucket_size {
+//             bm.create_new_bucket()
+//             b_index = 0
+//         }
+//         bucket_ = @ptr_of(@ptrv(bm.base, ptr, b_index * 2))
+//     }
+//     let bucket = bucket_
+//     let b_index_new = b_index + 1
+//     bm.index = b_index_new
+//     if b_index_new == bucket_size {
+//         bm.create_new_bucket()
+//     }
+//     @ptrv(bucket, u16, 0) = 0
+//     @ptrv(bucket, u8, 2) = 0
+//     @ptrv(bucket, u8, 3) = b_index @as u8
+//     @ptrv(bucket, u32, 1) = vtable
+
+//     let data = br.adr @as ptr
+//     let space_left = bump_block_size - (data - br.base)
+//     if size > space_left {
+//         data = br.alloc_for_size(size)
+//     }
+//     br.adr += size
+//     @ptrv(bucket + 8, ptr) = data
+
+//     // print("ITEM: ")
+//     // print(bucket.to_hex())
+//     // print(" | ")
+//     // println(@ptrv(bucket, ptr).to_hex())
+
+//     return bucket
+// }

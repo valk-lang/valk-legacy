@@ -43,9 +43,6 @@ struct Stack {
     transfer : ObjectChain
     move_checks : ObjectChain
 
-    bumper: Bumper
-    bucket: BucketMan
-
     age: u8 (33)
 
     run_gc: bool (false)
@@ -62,6 +59,7 @@ struct Stack {
         let move_checks = ObjectChain.new()
 
         let data = alloc(stack_size)
+        // NOTE: Probably not needed
         let stackc = stack_size / sizeof(ptr)
         while stackc > 0 {
             stackc--
@@ -79,13 +77,12 @@ struct Stack {
             unknown: unknown
             transfer: transfer
             move_checks: move_checks
-
-            bumper: Bumper.init()
-            bucket: BucketMan.init()
         }
 
         stack = s;
         disable_gc = false
+
+        GcPool.init()
 
         let gcm = gc_manager()
         gcm.add_stack(s);
@@ -139,6 +136,7 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
+        print(".")
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
@@ -147,9 +145,9 @@ struct Stack {
 
         this.mark_difference_down()
         this.handle_transfer_list()
-        this.bumper.wipe()
-        this.bucket.base = this.bucket.first
-        this.bucket.index = 0
+        // this.bumper.wipe()
+        // this.bucket.base = this.bucket.first
+        // this.bucket.index = 0
 
         // Full clear
         if this.force_full {
@@ -166,14 +164,16 @@ struct Stack {
             }
         }
         if this.clear_unknown {
+            print("f")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
             //
             this.clean_unknown_list()
-            this.bucket.check_freed()
+            // this.bucket.check_freed()
             this.clear_unknown = false
         }
+        GcPool.reset_all()
 
         // Adjust lowest stack point
         if this.lowest_next < this.lowest {
@@ -181,8 +181,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
+            print("b")
             // Increase lowest point
             this.lowest = this.lowest_next
+        } else {
+            print("l")
         }
 
 
@@ -292,6 +295,12 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                print("ts: ")
+                print((func @as ptr).to_hex())
+                print(" | item: ")
+                print(item.to_hex())
+                print(" | state: ")
+                println(@ptrv(item, ptr, 0).to_hex())
                 func(item, state_solid);
             }
             if is_last {
@@ -324,6 +333,8 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                print("tu: ")
+                println((func @as ptr).to_hex())
                 func(item, state_unknown);
             }
             if is_last {
@@ -376,6 +387,8 @@ struct Stack {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), 2)
+                    print("f: ")
+                    println((func @as ptr).to_hex())
                     func(item, age);
                 }
             }
@@ -400,6 +413,8 @@ struct Stack {
                         let vtable = @ptrv(item, u32, 1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), 1)
+                        print("m: ")
+                        println((func @as ptr).to_hex())
                         func(item, age);
                     }
                 }
