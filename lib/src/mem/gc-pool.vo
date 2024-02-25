@@ -120,14 +120,6 @@ struct GcPool {
         @ptrv(res, u8, 3) = index @as u8
         @ptrv(res, u32, 1) = vtable
 
-        // print("ITEM: ")
-        // print(res.to_hex())
-        // print(" | index: ")
-        // print(index.to_str())
-        // print("/")
-        // print(itemc.to_str())
-        // print("\n")
-
         return res + 8
     }
 

@@ -132,15 +132,6 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         // MEMCOPY
         idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "copy"));
         scope_set_idf(class->scope, "MEMCOPY", idf, fc);
-        // BUCKET_SIZE
-        idf = idf_make(b->alc, idf_value_alias, get_volt_value_alias(b, "mem", "bucket_size"));
-        scope_set_idf(class->scope, "BUCKET_SIZE", idf, fc);
-        // GC ITEM SIZE
-        idf = idf_make(b->alc, idf_value_alias, get_volt_value_alias(b, "mem", "gc_item_size"));
-        scope_set_idf(class->scope, "GC_ITEM_SIZE", idf, fc);
-        // Bucket man
-        idf = idf_make(b->alc, idf_class, get_volt_class(b, "mem", "BucketMan"));
-        scope_set_idf(class->scope, "BUCKETMAN_CLASS", idf, fc);
 
         // Transfer
         strcpy(buf, class->name);
