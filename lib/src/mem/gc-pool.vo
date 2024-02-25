@@ -83,6 +83,15 @@ struct GcPool {
         let block = this.current
         let index = this.index
         let itemc = @ptrv(block, uint, 1)
+        let tc = @ptrv(block, uint, 2)
+        while tc > itemc * 7 / 10 {
+            block = this.get_next_block_or_create(block)
+            index = 0
+            itemc = @ptrv(block, uint, 1)
+            tc = @ptrv(block, uint, 2)
+            this.current = block
+            this.blocks_used--
+        } 
         //
         let base = block + sizeof(ptr) * 3
         let item = base + (this.size * index)
@@ -117,7 +126,7 @@ struct GcPool {
         // print(itemc.to_str())
         // print("\n")
 
-        return res
+        return res + 8
     }
 
     static fn reset_all() {

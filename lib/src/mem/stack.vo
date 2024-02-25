@@ -92,6 +92,7 @@ struct Stack {
     // Runtime functions
     ///////////////////////
     static fn link(on: ptr, to: ptr) ptr {
+        print("LINK")
         let to_state = @ptrv(to, u8, 0)
         let on_state = @ptrv(on, u8, 0)
         if on_state == state_global {
@@ -136,7 +137,7 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
-        print(".")
+        // print(".")
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
@@ -164,7 +165,7 @@ struct Stack {
             }
         }
         if this.clear_unknown {
-            print("f")
+            // print("f")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
@@ -181,11 +182,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            print("b")
+            // print("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        } else {
-            print("l")
+        // } else {
+            // print("l")
         }
 
 
@@ -217,18 +218,18 @@ struct Stack {
             let item = @ptrv(item_adr, ptr, 0);
             if item != null {
                 //
-                let state = @ptrv(item, u8, 0)
+                let state = @ptrv(item, u8, -8)
                 if state == state_new {
                     // Transfer new items
-                    transfer.add_item(item)
-                    @ptrv(item, u8, 0) = state_transfer @as u8
-                    @ptrv(item, u8, 1) = state_solid @as u8
+                    transfer.add_item(item - 8)
+                    @ptrv(item, u8, -8) = state_transfer @as u8
+                    @ptrv(item, u8, -7) = state_solid @as u8
                 } 
                 if state == state_transfer {
-                    @ptrv(item, u8, 1) = state_solid @as u8
+                    @ptrv(item, u8, -7) = state_solid @as u8
                 } 
 
-                @ptrv(item, u8, 2) = sub_state_on_stack
+                @ptrv(item, u8, -6) = sub_state_on_stack
             }
         }
 
@@ -240,10 +241,10 @@ struct Stack {
             adr = item_adr
             let item_prev = @ptrv(item_adr, ptr, 1);
             if item_prev != null {
-                if @ptrv(item_prev, u8, 2) != sub_state_on_stack {
-                    if @ptrv(item_prev, u8, 0) == state_solid {
-                        unknown.add_item(item_prev)
-                        @ptrv(item_prev, u8, 0) = state_unknown @as u8
+                if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
+                    if @ptrv(item_prev, u8, -8) == state_solid {
+                        unknown.add_item(item_prev - 8)
+                        @ptrv(item_prev, u8, -8) = state_unknown @as u8
                     }
                 }
                 // Clear previous
@@ -259,7 +260,7 @@ struct Stack {
             let item = @ptrv(item_adr, ptr, 0);
             @ptrv(item_adr, ptr, 1) = item
             if item != null {
-                @ptrv(item, u8, 2) = 0
+                @ptrv(item, u8, -6) = 0
             }
         }
     }
@@ -295,13 +296,13 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                print("ts: ")
-                print((func @as ptr).to_hex())
-                print(" | item: ")
-                print(item.to_hex())
-                print(" | state: ")
-                println(@ptrv(item, ptr, 0).to_hex())
-                func(item, state_solid);
+                // print("ts: ")
+                // print((func @as ptr).to_hex())
+                // print(" | item: ")
+                // print(item.to_hex())
+                // print(" | state: ")
+                // println(@ptrv(item, ptr, 0).to_hex())
+                func(item + 8, state_solid);
             }
             if is_last {
                 break
@@ -333,9 +334,9 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                print("tu: ")
-                println((func @as ptr).to_hex())
-                func(item, state_unknown);
+                // print("tu: ")
+                // println((func @as ptr).to_hex())
+                func(item + 8, state_unknown);
             }
             if is_last {
                 break
@@ -387,9 +388,9 @@ struct Stack {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    print("f: ")
-                    println((func @as ptr).to_hex())
-                    func(item, age);
+                    // print("f: ")
+                    // println((func @as ptr).to_hex())
+                    func(item + 8, age);
                 }
             }
             if is_last {
@@ -408,13 +409,13 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, 0) < state_freed {
-                    if @ptrv(item, u8, 2) != age {
-                        let vtable = @ptrv(item, u32, 1)
+                if @ptrv(item, u8, -8) < state_freed {
+                    if @ptrv(item, u8, -6) != age {
+                        let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), 1)
-                        print("m: ")
-                        println((func @as ptr).to_hex())
+                        // print("m: ")
+                        // println((func @as ptr).to_hex())
                         func(item, age);
                     }
                 }
