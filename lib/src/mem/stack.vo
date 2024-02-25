@@ -143,6 +143,7 @@ struct Stack {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
+            // println(pool_usage.to_str())
 
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -186,7 +187,7 @@ struct Stack {
             // Increase lowest point
             this.lowest = this.lowest_next
         // } else {
-            // print("l")
+        //     print("l")
         }
 
 

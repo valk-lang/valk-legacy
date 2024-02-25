@@ -50,7 +50,9 @@ struct GcPool {
         if itemc > 250 {
             itemc = 250
         }
-        let block = alloc(itemc * size + 3 * sizeof(ptr))
+        let fsize = itemc * size + 3 * sizeof(ptr)
+        let block = alloc(fsize)
+        clear(block, fsize)
         @ptrv(block, ptr, 0) = null
         @ptrv(block, uint, 1) = itemc
         @ptrv(block, uint, 2) = 0
@@ -143,6 +145,22 @@ struct GcPool {
     }
     fn reset() {
         // Clear all un-used blocks after current
+        let block = this.current
+        let prev = block
+        let next = @ptrv(block, ptr)
+        while next != null {
+            let block = next
+            next = @ptrv(block, ptr)
+            if @ptrv(block, uint, 2) == 0 {
+                // Delete block
+                free(block)
+                @ptrv(prev, ptr) = next
+                this.blocks_total--
+            } else {
+                // Keep block
+                prev = block
+            }
+        }
 
         // Set current to first
         this.current = this.first

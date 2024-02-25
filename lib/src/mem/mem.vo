@@ -30,6 +30,20 @@ fn copy(from: ptr, to: ptr, length: uint) {
 	}
 }
 
+fn clear(adr: ptr, length: uint) {
+	let i = 0 @as uint;
+	let chunks = length / sizeof(uint);
+	while i < chunks {
+		@ptrv(adr, uint, i) = 0;
+		i++;
+	}
+	i = i * sizeof(uint);
+	while i < length {
+		@ptrv(adr, u8, i) = 0;
+		i++;
+	}
+}
+
 ////////////////////////////////
 // Debug & compiler functions
 ////////////////////////////////
