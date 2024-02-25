@@ -15,7 +15,8 @@ struct StringConst {
 class String {
     data: ptr
     bytes: uint
-    x: uint (0)
+    // x: uint (0)
+    // y: uint (0)
 
     fn to_uint() uint !not_a_number {
         return 0

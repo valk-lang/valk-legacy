@@ -196,7 +196,7 @@ char *ir_string(IR *ir, VString *str, bool external) {
     str_flat(code, " global ");
     str_add(code, ltype);
     if (!external) {
-        str_flat(code, " { i8 14, i8 0, i8 0, i8 0, i32 ");
+        str_flat(code, " { i8 8, i8 0, i8 0, i8 0, i32 ");
 
         char vt[32];
         itoa(stype->class->gc_vtable_index, vt, 10);

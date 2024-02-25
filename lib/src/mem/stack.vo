@@ -12,10 +12,8 @@ value state_new (0)
 value state_transfer (2)
 value state_solid (4)
 value state_unknown (6)
-value state_freed (8)
-value state_freed2 (10)
-value state_global (12)
-value state_const (14)
+value state_const (8)
+value state_global (10)
 value stack_size (1000000)
 
 value sub_state_keep (5)
@@ -144,8 +142,11 @@ struct Stack {
         }
             // println(pool_usage.to_str())
 
+            // io:print_fake("1" @as ptr)
         this.mark_difference_down()
+            // io:print_fake("2" @as ptr)
         this.handle_transfer_list()
+            // io:print_fake("3" @as ptr)
         // this.bumper.wipe()
         // this.bucket.base = this.bucket.first
         // this.bucket.index = 0
@@ -182,11 +183,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            io:print_fake("b")
+            io:print_fake("b" @as ptr)
             // Increase lowest point
             this.lowest = this.lowest_next
         } else {
-            io:print_fake("l")
+            io:print_fake("l" @as ptr)
         }
 
 
@@ -206,6 +207,7 @@ struct Stack {
         // Mark previous items as: not on stack
         let adr = adr_last;
         // while adr >= stack_adr {
+        //     @ptrv(adr, ptr) = null
         //     adr = adr - sizeof(ptr) * 2
         // }
 
@@ -301,7 +303,7 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                // print("*")
+                // io:print_fake("*" @as ptr)
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
@@ -418,7 +420,7 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, -8) < state_freed {
+                if @ptrv(item, u8, -8) < state_const {
                     if @ptrv(item, u8, -6) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
@@ -442,6 +444,8 @@ struct Stack {
         this.transfer.delete()
         this.unknown.delete()
 
+        GcPool.delete_all()
+        mprint()
         // Stack is deleted by the Gc
         this.stopped = true
     }

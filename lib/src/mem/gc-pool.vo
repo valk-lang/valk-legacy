@@ -20,9 +20,12 @@ struct GcPool {
     first : ptr
     current : ptr
     index : uint (0)
-    blocks_used: uint (0)
-    blocks_total: uint (1)
-    blocks_total_last: uint (1)
+    // blocks_used: uint (0)
+    // blocks_total: uint (1)
+    // blocks_total_last: uint (1)
+    items_used: uint (0)
+    items_total: uint
+    items_total_last: uint
 
     static fn init() {
         pool_8 = CLASS.new(8)
@@ -38,18 +41,19 @@ struct GcPool {
     }
     static fn new(size_: uint) CLASS {
         let size = size_ + 8
-        let block = GcPool.create_block(size, 1)
+        let block = GcPool.create_block(size, 2)
         let pool = CLASS{
             size: size
             first: block
             current: block
+            items_total: @ptrv(block, uint, 1)
+            items_total_last: @ptrv(block, uint, 1)
         }
         return pool
     }
 
     // ptr next, ptr itemc, ptr transferc, {...items...}
-    static fn create_block(size: uint, blockc: uint) ptr {
-        let itemc = blockc * 5
+    static fn create_block(size: uint, itemc: uint) ptr {
         if itemc > 250 {
             itemc = 250
         }
@@ -64,18 +68,19 @@ struct GcPool {
 
         let next = @ptrv(current, ptr)
         if next == null {
-            this.blocks_total++
-            next = GcPool.create_block(this.size, this.blocks_total)
+            // this.blocks_total++
+            next = GcPool.create_block(this.size, this.items_total * 2)
+            this.items_total += @ptrv(next, uint, 1)
             @ptrv(current, ptr) = next
         }
 
-        this.blocks_used++
-        let usage = this.blocks_used * 100 / this.blocks_total_last
-        // io:print_fake(usage.to_str())
-        // io:print_fake(".")
+        // this.blocks_used++
+        // let usage = this.blocks_used * 100 / this.blocks_total_last
+        let usage = this.items_used * 100 / this.items_total_last
+
         if usage > pool_usage {
             pool_usage = usage
-            if usage > 120 {
+            if usage > 60 {
                 stack.run_gc = true
                 stack.bumper_overflow = true
             }
@@ -89,13 +94,13 @@ struct GcPool {
         let index = this.index
         let itemc = @ptrv(block, uint, 1) // Item count
         let tc = @ptrv(block, uint, 2) // Transfer count
-        while tc >= itemc * 7 / 10 {
+        while tc > itemc * 7 / 10 {
             block = this.get_next_block_or_create(block)
             index = 0
             itemc = @ptrv(block, uint, 1)
             tc = @ptrv(block, uint, 2)
             this.current = block
-            this.blocks_used--
+            // this.blocks_used--
         } 
         //
         let base = block + sizeof(ptr) * 3
@@ -111,13 +116,14 @@ struct GcPool {
                 this.current = block
 
                 let tc = @ptrv(block, uint, 2)
-                while tc >= itemc * 7 / 10 {
+                while tc > itemc * 7 / 10 {
                     block = this.get_next_block_or_create(block)
                     index = 0
                     itemc = @ptrv(block, uint, 1)
                     tc = @ptrv(block, uint, 2)
                     this.current = block
-                    this.blocks_used--
+                    // this.blocks_used--
+                    base = block + sizeof(ptr) * 3
                 } 
             }
             item = base + (this.size * index)
@@ -133,6 +139,8 @@ struct GcPool {
         @ptrv(res, u8, 2) = 0
         @ptrv(res, u8, 3) = index @as u8
         @ptrv(res, u32, 1) = vtable
+
+        this.items_used++
 
         return res + 8
     }
@@ -159,9 +167,10 @@ struct GcPool {
             next = @ptrv(block, ptr)
             if @ptrv(block, uint, 2) == 0 {
                 // Delete block
+                this.items_total -= @ptrv(block, uint, 1)
                 free(block)
                 @ptrv(prev, ptr) = next
-                this.blocks_total--
+                // this.blocks_total--
             } else {
                 // Keep block
                 prev = block
@@ -171,9 +180,34 @@ struct GcPool {
         // Set current to first
         this.current = this.first
         this.index = 0
-        this.blocks_used = 0
-        this.blocks_total_last = this.blocks_total
+        // this.blocks_used = 0
+        // this.blocks_total_last = this.blocks_total
+        this.items_used = 0
+        this.items_total_last = this.items_total
         pool_usage = 0
+    }
+
+    static fn delete_all() {
+        pool_8.delete()
+        pool_16.delete()
+        pool_24.delete()
+        pool_32.delete()
+        pool_40.delete()
+        pool_48.delete()
+        pool_56.delete()
+        pool_64.delete()
+        pool_128.delete()
+        pool_256.delete()
+    }
+    fn delete() {
+        let block = this.first
+        while block != null {
+            let next = @ptrv(block, ptr)
+            free(block)
+            block = next
+        }
+
+        free(this)
     }
 }
 
