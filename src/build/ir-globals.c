@@ -128,7 +128,7 @@ void *ir_global(IR *ir, Global *g) {
 char *ir_string(IR *ir, VString *str, bool external) {
     //
     if(array_contains(ir->declared_globals, str, arr_find_adr))
-        return str->ir_object_name;
+        return ir_ptrv(ir, str->ir_object_name, "ptr", 1);
 
     array_push(ir->declared_globals, str);
 
@@ -186,19 +186,20 @@ char *ir_string(IR *ir, VString *str, bool external) {
 
     // Define object global
     str_preserve(code, 512);
-    Type* t = type_gen_volt(ir->alc, ir->b, "String");
-    t->is_pointer = false;
-    char *ltype = ir_type(ir, t);
+    Type* stype = type_gen_volt(ir->alc, ir->b, "String");
+    Type* ctype = type_gen_volt(ir->alc, ir->b, "StringConst");
+    ctype->is_pointer = false;
+    char *ltype = ir_type(ir, ctype);
     str_add(code, object_name);
     str_flat(code, " = ");
     str_add(code, external ? "external" : "dso_local");
     str_flat(code, " global ");
     str_add(code, ltype);
     if (!external) {
-        str_flat(code, " { i8 14, i8 0, i8 0, i8 0, i32 ");
+        str_flat(code, " { i8 8, i8 0, i8 0, i8 0, i32 ");
 
         char vt[32];
-        itoa(t->class->gc_vtable_index, vt, 10);
+        itoa(stype->class->gc_vtable_index, vt, 10);
         str_add(code, vt);
 
         str_flat(code, ", ptr ");
@@ -211,5 +212,5 @@ char *ir_string(IR *ir, VString *str, bool external) {
     }
     str_flat(code, ", align 8\n");
 
-    return object_name;
+    return ir_ptrv(ir, object_name, "ptr", 1);
 }

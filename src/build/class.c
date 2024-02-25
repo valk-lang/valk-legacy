@@ -184,14 +184,6 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = to_state\n");
     str_flat(code, "  @ptrv(this, u8, -7) = 0\n");
-    // str_flat(code, "  let old_data = @ptrv(this, ptr, 1)\n");
-    // str_flat(code, "  print(\"> size: \")\n");
-    // str_flat(code, "  println((SIZE @as uint).to_str())\n");
-    // str_flat(code, "  let new_data = MALLOC(SIZE)\n");
-    // str_flat(code, "  print(\"> Transfer: \")\n");
-    // str_flat(code, "  println(new_data.to_hex())\n");
-    // str_flat(code, "  MEMCOPY(old_data, new_data, SIZE)\n");
-    // str_flat(code, "  @ptrv(this, ptr, 1) = new_data\n");
 
     str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
     str_flat(code, "  let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
@@ -244,9 +236,10 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 6 { return }\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
     str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
     str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+
     str_flat(code, "  GC_MARK_SIZE += SIZE\n");
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -296,18 +289,18 @@ void class_generate_free(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "(age: u8) void {\n");
     // str_flat(code, "  print(\"f\")\n");
     str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 6 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 0\n");
     str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    // str_flat(code, "  let b_index = @ptrv(this, u8, 3)\n");
-    // str_flat(code, "  let b_next_adr = (this @as ptr) + ((BUCKET_SIZE - b_index) @as uint * GC_ITEM_SIZE)\n");
-    // str_flat(code, "  let b_settings = b_next_adr + sizeof(ptr)\n");
-    // str_flat(code, "  let transfer_count = @ptrv(b_settings, u8, 0)\n");
-    // str_flat(code, "  @ptrv(b_settings, u8, 0) = transfer_count - 1\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count - 1\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) < 8 {\n");
+    str_flat(code, "    @ptrv(this, u8, -8) = 0\n");
+
+    str_flat(code, "    let index = @ptrv(this, u8, -5) @as uint\n");
+    str_flat(code, "    let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
+    str_flat(code, "    let transfer_count = @ptrv(base, uint, -1)\n");
+    str_flat(code, "    if transfer_count == 0 {\n");
+    // str_flat(code, "  print(\"STAPHHHH\")\n");
+    str_flat(code, "    }\n");
+    str_flat(code, "    @ptrv(base, uint, -1) = transfer_count - 1\n");
+    str_flat(code, "  }\n");
     // Props
     for(int i = 0; i < props->values->length; i++) {
         ClassProp* p = array_get_index(props->values, i);

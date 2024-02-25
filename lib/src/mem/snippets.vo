@@ -1,44 +1,59 @@
 
 use io;
+use os;
+
+fn stop() {
+    io:print_fake("HEEEEY STOOP\n")
+    os:exit(1)
+}
 
 snippet reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
 
-    let x = amount
-    while x-- > 0 {
-        @ptrv(STACK_ADR, ptr, x * 2) = null
-    }
+    if STACK.disable == false {
+        let x = amount
+        while x-- > 0 {
+            @ptrv(STACK_ADR, ptr, x * 2) = null
+        }
+        if stack.disable {
+            stop()
+        }
 
-    if disable_gc == false {
-        if STACK.stack_adr <= STACK.lowest {
-            if pool_usage > 30 {
-                STACK.run_gc = true
+        if disable_gc == false {
+            if STACK.stack_adr <= STACK.lowest {
+                if pool_usage > 30 {
+                    STACK.run_gc = true
+                }
+            }
+            if STACK.run_gc {
+                STACK.gc()
             }
         }
-        if STACK.run_gc {
-            STACK.gc()
-        }
-    }
 
-    STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
+        STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
+    }
 
 } => (STACK, STACK_ADR)
 
 snippet pop_return(retv: V) {
 
-    STACK_ADR = STACK_ADR
+    if STACK.disable == false {
+        STACK_ADR = STACK_ADR
 
-    if STACK_ADR < STACK.lowest_next {
-        STACK.lowest_next = STACK_ADR
+        if STACK_ADR < STACK.lowest_next {
+            STACK.lowest_next = STACK_ADR
+        }
     }
 }
 
 snippet pop_no_return() {
 
-    STACK_ADR = STACK_ADR
+    if STACK.disable == false {
+        STACK_ADR = STACK_ADR
 
-    if STACK_ADR < STACK.lowest_next {
-        STACK.lowest_next = STACK_ADR
+        if STACK_ADR < STACK.lowest_next {
+            STACK.lowest_next = STACK_ADR
+        }
     }
 }

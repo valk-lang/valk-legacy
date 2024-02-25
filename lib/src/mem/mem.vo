@@ -49,9 +49,9 @@ fn clear(adr: ptr, length: uint) {
 ////////////////////////////////
 
 fn mprint() {
-    print("Alloc: ")
-    print(acount.to_str())
-    print(" | Free: ")
-    print(fcount.to_str())
-    print("\n")
+    io:print_fake("Alloc: " @as ptr)
+	acount.print(10)
+    io:print_fake(" | Free: " @as ptr)
+	fcount.print(10)
+    io:print_fake("\n" @as ptr)
 }

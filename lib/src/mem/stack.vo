@@ -12,10 +12,8 @@ value state_new (0)
 value state_transfer (2)
 value state_solid (4)
 value state_unknown (6)
-value state_freed (8)
-value state_freed2 (10)
-value state_global (12)
-value state_const (14)
+value state_const (8)
+value state_global (10)
 value stack_size (1000000)
 
 value sub_state_keep (5)
@@ -92,7 +90,6 @@ struct Stack {
     // Runtime functions
     ///////////////////////
     static fn link(on: ptr, to: ptr) ptr {
-        print("LINK")
         let to_state = @ptrv(to, u8, 0)
         let on_state = @ptrv(on, u8, 0)
         if on_state == state_global {
@@ -113,15 +110,15 @@ struct Stack {
         return to
     }
     static fn unlink(item: ptr) {
-        let item_state = @ptrv(item, u8, 0)
-        if item_state == state_solid {
-            stack.unknown.add_item(item)
-            @ptrv(item, u8, 0) = state_unknown
-            @ptrv(item, u8, 1) = 0
-        } else if item_state == state_transfer {
-            // Update transfer state
-            @ptrv(item, u8, 1) = state_unknown
-        }
+        // let item_state = @ptrv(item, u8, 0)
+        // if item_state == state_solid {
+        //     stack.unknown.add_item(item)
+        //     @ptrv(item, u8, 0) = state_unknown
+        //     @ptrv(item, u8, 1) = 0
+        // } else if item_state == state_transfer {
+        //     // Update transfer state
+        //     @ptrv(item, u8, 1) = state_unknown
+        // }
     }
 
     ///////////////////////
@@ -137,19 +134,13 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
-        // print(".")
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
-            // println(pool_usage.to_str())
-
         this.mark_difference_down()
         this.handle_transfer_list()
-        // this.bumper.wipe()
-        // this.bucket.base = this.bucket.first
-        // this.bucket.index = 0
 
         // Full clear
         if this.force_full {
@@ -166,13 +157,11 @@ struct Stack {
             }
         }
         if this.clear_unknown {
-            // print("f")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
             //
             this.clean_unknown_list()
-            // this.bucket.check_freed()
             this.clear_unknown = false
         }
         GcPool.reset_all()
@@ -183,11 +172,8 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            // print("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        // } else {
-        //     print("l")
         }
 
 
@@ -207,6 +193,7 @@ struct Stack {
         // Mark previous items as: not on stack
         let adr = adr_last;
         // while adr >= stack_adr {
+        //     @ptrv(adr, ptr) = null
         //     adr = adr - sizeof(ptr) * 2
         // }
 
@@ -230,7 +217,9 @@ struct Stack {
                     @ptrv(item, u8, -7) = state_solid @as u8
                 } 
 
-                @ptrv(item, u8, -6) = sub_state_on_stack
+                if state != state_const {
+                    @ptrv(item, u8, -6) = sub_state_on_stack
+                }
             }
         }
 
@@ -261,7 +250,9 @@ struct Stack {
             let item = @ptrv(item_adr, ptr, 0);
             @ptrv(item_adr, ptr, 1) = item
             if item != null {
-                @ptrv(item, u8, -6) = 0
+                if @ptrv(item, u8, -8) != state_const {
+                    @ptrv(item, u8, -6) = 0
+                }
             }
         }
     }
@@ -293,16 +284,9 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                // print("*")
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // print("ts: ")
-                // print((func @as ptr).to_hex())
-                // print(" | item: ")
-                // print(item.to_hex())
-                // print(" | state: ")
-                // println(@ptrv(item, ptr, 0).to_hex())
                 func(item + 8, state_solid);
             }
             if is_last {
@@ -335,8 +319,6 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // print("tu: ")
-                // println((func @as ptr).to_hex())
                 func(item + 8, state_unknown);
             }
             if is_last {
@@ -389,8 +371,6 @@ struct Stack {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    // print("f: ")
-                    // println((func @as ptr).to_hex())
                     func(item + 8, age);
                 }
             }
@@ -410,13 +390,11 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, -8) < state_freed {
+                if @ptrv(item, u8, -8) < state_const {
                     if @ptrv(item, u8, -6) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), 1)
-                        // print("m: ")
-                        // println((func @as ptr).to_hex())
                         func(item, age);
                     }
                 }
@@ -433,6 +411,9 @@ struct Stack {
         //
         this.transfer.delete()
         this.unknown.delete()
+
+        GcPool.delete_all()
+        mprint()
 
         // Stack is deleted by the Gc
         this.stopped = true
