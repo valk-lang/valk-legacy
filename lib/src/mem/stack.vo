@@ -90,7 +90,6 @@ struct Stack {
     // Runtime functions
     ///////////////////////
     static fn link(on: ptr, to: ptr) ptr {
-        print("LINK")
         let to_state = @ptrv(to, u8, 0)
         let on_state = @ptrv(on, u8, 0)
         if on_state == state_global {
@@ -140,16 +139,8 @@ struct Stack {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
-            // println(pool_usage.to_str())
-
-            // io:print_fake("1" @as ptr)
         this.mark_difference_down()
-            // io:print_fake("2" @as ptr)
         this.handle_transfer_list()
-            // io:print_fake("3" @as ptr)
-        // this.bumper.wipe()
-        // this.bucket.base = this.bucket.first
-        // this.bucket.index = 0
 
         // Full clear
         if this.force_full {
@@ -166,13 +157,11 @@ struct Stack {
             }
         }
         if this.clear_unknown {
-            // print("f")
             //
             gc_mark_size = 0
             gc_transfer_size = 0
             //
             this.clean_unknown_list()
-            // this.bucket.check_freed()
             this.clear_unknown = false
         }
         GcPool.reset_all()
@@ -183,11 +172,8 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            io:print_fake("b" @as ptr)
             // Increase lowest point
             this.lowest = this.lowest_next
-        } else {
-            io:print_fake("l" @as ptr)
         }
 
 
@@ -213,16 +199,12 @@ struct Stack {
 
         // Mark items as: on stack
         // Mark new items as transfer
-        // io:print_fake("1_")
         adr = stack_adr;
         while adr > stack_base {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item = @ptrv(item_adr, ptr, 0);
             if item != null {
-        // io:print_fake(">s:")
-        // io:print_fake(item.to_hex())
-        // io:print_fake("\n")
                 //
                 let state = @ptrv(item, u8, -8)
                 if state == state_new {
@@ -251,7 +233,6 @@ struct Stack {
             if item_prev != null {
                 if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
                     if @ptrv(item_prev, u8, -8) == state_solid {
-                        // io:print_fake("y")
                         unknown.add_item(item_prev - 8)
                         @ptrv(item_prev, u8, -8) = state_unknown @as u8
                     }
@@ -303,16 +284,9 @@ struct Stack {
                 if @ptrv(item, u8, 1) != state_solid {
                     continue
                 }
-                // io:print_fake("*" @as ptr)
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // print("ts: ")
-                // print((func @as ptr).to_hex())
-                // print(" | item: ")
-                // print(item.to_hex())
-                // print(" | state: ")
-                // println(@ptrv(item, ptr, 0).to_hex())
                 func(item + 8, state_solid);
             }
             if is_last {
@@ -345,8 +319,6 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // print("tu: ")
-                // println((func @as ptr).to_hex())
                 func(item + 8, state_unknown);
             }
             if is_last {
@@ -399,8 +371,6 @@ struct Stack {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    // print("f: ")
-                    // println((func @as ptr).to_hex())
                     func(item + 8, age);
                 }
             }
@@ -425,8 +395,6 @@ struct Stack {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), 1)
-                        // print("m: ")
-                        // println((func @as ptr).to_hex())
                         func(item, age);
                     }
                 }
@@ -446,6 +414,7 @@ struct Stack {
 
         GcPool.delete_all()
         mprint()
+
         // Stack is deleted by the Gc
         this.stopped = true
     }

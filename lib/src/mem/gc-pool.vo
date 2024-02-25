@@ -20,9 +20,6 @@ struct GcPool {
     first : ptr
     current : ptr
     index : uint (0)
-    // blocks_used: uint (0)
-    // blocks_total: uint (1)
-    // blocks_total_last: uint (1)
     items_used: uint (0)
     items_total: uint
     items_total_last: uint
@@ -68,14 +65,11 @@ struct GcPool {
 
         let next = @ptrv(current, ptr)
         if next == null {
-            // this.blocks_total++
             next = GcPool.create_block(this.size, this.items_total * 2)
             this.items_total += @ptrv(next, uint, 1)
             @ptrv(current, ptr) = next
         }
 
-        // this.blocks_used++
-        // let usage = this.blocks_used * 100 / this.blocks_total_last
         let usage = this.items_used * 100 / this.items_total_last
 
         if usage > pool_usage {
@@ -100,7 +94,6 @@ struct GcPool {
             itemc = @ptrv(block, uint, 1)
             tc = @ptrv(block, uint, 2)
             this.current = block
-            // this.blocks_used--
         } 
         //
         let base = block + sizeof(ptr) * 3
@@ -122,7 +115,6 @@ struct GcPool {
                     itemc = @ptrv(block, uint, 1)
                     tc = @ptrv(block, uint, 2)
                     this.current = block
-                    // this.blocks_used--
                     base = block + sizeof(ptr) * 3
                 } 
             }
@@ -170,7 +162,6 @@ struct GcPool {
                 this.items_total -= @ptrv(block, uint, 1)
                 free(block)
                 @ptrv(prev, ptr) = next
-                // this.blocks_total--
             } else {
                 // Keep block
                 prev = block
@@ -180,8 +171,6 @@ struct GcPool {
         // Set current to first
         this.current = this.first
         this.index = 0
-        // this.blocks_used = 0
-        // this.blocks_total_last = this.blocks_total
         this.items_used = 0
         this.items_total_last = this.items_total
         pool_usage = 0
