@@ -398,6 +398,15 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 }
 
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
+
+    Type *class_type = type_gen_class(ir->alc, class);
+    if (type_is_gc(class_type)) {
+        Str *code = ir->block->code;
+        str_preserve(code, 512);
+        on = ir_ptrv(ir, on, "ptr", 1);
+        on = ir_load(ir, class_type, on);
+    }
+
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
     str_preserve(code, 512);
@@ -470,11 +479,36 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
 
     // Clear previous GC stack items
     Array* decls = scope_while->decls;
+    int gc_count = 0;
     if (decls) {
+        gc_count = decls->length;
+    }
+
+    if(gc_count > 0) {
+        Idf* idf = map_get(scope_while->identifiers, "STACK_ADR");
+        Value *vc = idf->item;
+
+        int gc_index = 0;
+        char* stack_adr = ir_value(ir, scope_while, vc);
+        Str *code = ir->block->code;
         for (int i = 0; i < decls->length; i++) {
             Decl *decl = array_get_index(decls, i);
             if (decl->is_gc) {
-                ir_store_old(ir, decl->type, decl->ir_store_var, "null");
+                str_preserve(ir->block->code, 256);
+
+                char lindex[10];
+                itoa(gc_index, lindex, 10);
+                gc_index += 2;
+                char *var = ir_var(ir->func);
+                str_flat(code, "  ");
+                str_add(code, var);
+                str_flat(code, " = getelementptr inbounds ptr, ptr ");
+                str_add(code, stack_adr);
+                str_flat(code, ", i32 ");
+                str_add(code, lindex);
+                str_flat(code, "\n");
+
+                decl->ir_store_var = var;
             }
         }
     }

@@ -1,0 +1,70 @@
+
+value bucket_size (250) // must fit u8
+value bucket_total_size ((bucket_size * gc_item_size))
+value bucket_info_size ((sizeof(ptr) + sizeof(uint)))
+
+use io
+
+struct BucketMan {
+    - base : ?ptr (null)
+    - index : uint (0)
+    - first : ?ptr (null)
+    - inactive : ?ptr (null)
+
+    static fn init() BucketMan {
+        let b = BucketMan{}
+        b.create_new_bucket()
+        b.first = b.base
+        b.inactive = null
+        return b
+    }
+
+    fn create_new_bucket() {
+        let current = this.base
+        if current != null {
+            let next = @ptrv(current, ptr, bucket_size * 2)
+            if next != null {
+                this.base = next
+                this.index = 0
+                return
+            }
+        }
+        let bucket = alloc(bucket_total_size + bucket_info_size)
+        if current != null {
+            @ptrv(current, ptr, bucket_size * 2) = bucket
+        }
+        //
+        let i = bucket_size
+        while i-- > 0 {
+            @ptrv(bucket, ptr, i * 2) = null
+        }
+        // Default settings
+        @ptrv(bucket, ptr, bucket_size * 2) = null
+        @ptrv(bucket, uint, bucket_size * 2 + 1) = 0
+        this.base = bucket
+        this.index = 0
+    }
+
+    fn check_freed() {
+        let index = 0
+        let bucket = this.first @as ptr
+        while true {
+            if @ptrv(bucket, u8) == 8 {
+                let data = @ptrv(bucket + 8, ptr)
+                free(data)
+                @ptrv(bucket, u8) = 0
+            }
+            index++
+            if index == bucket_size {
+                let next = @ptrv(bucket + gc_item_size, ptr)
+                if next == null {
+                    break
+                }
+                bucket = next
+                index = 0
+                continue
+            }
+            bucket += gc_item_size
+        }
+    }
+}

@@ -17,6 +17,7 @@ Func *get_volt_func(Build *b, char *namespace, char *name);
 Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn);
 Class *get_volt_class(Build *b, char *namespace, char *name);
 Global *get_volt_global(Build *b, char *namespace, char *name);
+ValueAlias *get_volt_value_alias(Build *b, char *namespace, char *name);
 Snippet *get_volt_snippet(Build *b, char *namespace, char *name);
 
 #endif

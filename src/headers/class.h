@@ -9,6 +9,10 @@ ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value);
 ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Fc* fc, Class* class, Map* generic_types);
+void class_generate_internals(Fc* fc, Build* b, Class* class);
+void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func);
+void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func);
+void class_generate_free(Fc* fc, Build* b, Class* class, Func* func);
 
 struct Class {
     char* name;

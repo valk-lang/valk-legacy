@@ -100,7 +100,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             tok_expect(fc, ")", true, true);
             v = vgen_int(alc, type->size, type_gen_volt(alc, b, "int"));
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
-            v = vgen_int(alc, str_is(tkn, "true"), type_gen_volt(alc, b, "bool"));
+            v = vgen_bool(alc, b, str_is(tkn, "true"));
         } else if (str_is(tkn, "null")) {
             v = value_make(alc, v_null, NULL, type_gen_null(alc, b));
         } else if (str_is(tkn, "atomic")) {
@@ -441,10 +441,6 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
 
                 arg = try_convert(alc, b, arg, arg_type);
                 type_check(fc->chunk_parse, arg_type, arg->rett);
-
-                if (type_is_gc(arg_type)) {
-                    contains_gc_args = true;
-                }
             }
 
             array_push(args, arg);
@@ -521,11 +517,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
         }
     }
 
-    if(contains_gc_args) {
-        fcall = vgen_gc_buffer(alc, b, scope, fcall, args);
-    }
-
-    return fcall;
+    return vgen_gc_buffer(alc, b, scope, fcall, args, true);
 }
 
 Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
@@ -619,7 +611,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
-    return vgen_gc_buffer(alc, b, scope, init, values->values);
+    return vgen_gc_buffer(alc, b, scope, init, values->values, false);
 }
 
 Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {

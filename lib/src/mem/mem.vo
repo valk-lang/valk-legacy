@@ -34,28 +34,6 @@ fn copy(from: ptr, to: ptr, length: uint) {
 // Debug & compiler functions
 ////////////////////////////////
 
-fn gc_bump_alloc(size: uint) ptr {
-    return allocator.alloc(size)
-}
-
-fn gc_class_alloc(size: u16, vtable_index: u16, sub_field_count: u8) ptr {
-    let adr = allocator.alloc(size @as uint)
-    @ptrv(adr, i32, 0) = 0
-    @ptrv(adr, i32, 1) = 0
-    @ptrv(adr, u16, 2) = vtable_index
-    @ptrv(adr, u16, 3) = size
-    @ptrv(adr, u8, byte_fields) = sub_field_count
-    return adr
-}
-// fn gc_initialize_bytes(item: ptr, state: u8, sub_field_count: u8, vtable_index: u16, size: u16) {
-//     @ptrv(item, i32, 0) = 0
-//     @ptrv(item, i32, 1) = 0
-//     @ptrv(item, u16, 2) = vtable_index
-//     @ptrv(item, u16, 3) = size
-//     @ptrv(item, u8, byte_state) = state
-//     @ptrv(item, u8, byte_fields) = sub_field_count
-// }
-
 fn mprint() {
     print("Alloc: ")
     print(acount.to_str())

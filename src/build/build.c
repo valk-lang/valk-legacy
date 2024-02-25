@@ -77,10 +77,10 @@ int cmd_build(int argc, char *argv[]) {
     b->errors = al(alc, sizeof(ErrorCollection));
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
-    b->gc_transfer_funcs = array_make(alc, 20);
-    b->gc_mark_funcs = array_make(alc, 20);
-    b->gc_free_funcs = array_make(alc, 20);
-    b->gc_check_moves = array_make(alc, 20);
+
+    b->gc_transfer_funcs = array_make(alc, 200);
+    b->gc_mark_funcs = array_make(alc, 200);
+    b->gc_free_funcs = array_make(alc, 200);
 
     b->func_main = NULL;
 
@@ -89,7 +89,7 @@ int cmd_build(int argc, char *argv[]) {
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
-    b->verbose = 3;
+    b->verbose = 2;
     b->LOC = 0;
     b->parser_started = false;
 

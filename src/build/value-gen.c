@@ -9,6 +9,10 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     return v;
 }
 
+Value* vgen_bool(Allocator *alc, Build* b, bool value) {
+    return vgen_int(alc, value, type_gen_volt(alc, b, "bool"));
+}
+
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
     VFuncPtr *item = al(alc, sizeof(VFuncPtr));
     item->func = func;
@@ -85,20 +89,17 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Class* cast_as) {
-    Func *func = get_volt_func(b, "mem", "gc_class_alloc");
+Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
+    Func *func = get_volt_func(b, "mem", "gc_alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "u16"));
+    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "uint"));
     array_push(alloc_values, v_size);
-    Value *v_index = vgen_int(alc, cast_as->gc_vtable_index, type_gen_volt(alc, b, "u16"));
+    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_volt(alc, b, "u32"));
     array_push(alloc_values, v_index);
-    Value *v_fields = vgen_int(alc, gc_fields, type_gen_volt(alc, b, "u8"));
-    array_push(alloc_values, v_fields);
     Value *res = vgen_func_call(alc, fptr, alloc_values);
-    // TODO: check if we can remove cast and just change the value return type
-    if(cast_as)
-        res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
+    if(class)
+        res->rett = type_gen_class(alc, class);
     return res;
 }
 Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right) {
@@ -138,29 +139,68 @@ Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett) {
     return value_make(alc, v_gc_link, item, rett);
 }
 
+Value* vgen_var(Allocator* alc, Build* b, Value* value) {
+    VVar* item = al(alc, sizeof(VVar));
+    item->value = value;
+    item->var = NULL;
+    return value_make(alc, v_var, item, value->rett);
+}
 
-Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args) {
-    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
-    Scope *before = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
-    Scope *after = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
-    buf->value = val;
-    buf->before = before;
-    buf->after = after;
-    before->ast = array_make(alc, args->length);
-    after->ast = array_make(alc, args->length);
+Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_values, Type* rett) {
+    VScope* item = al(alc, sizeof(VScope));
+    item->scope = scope;
+    item->phi_values = phi_values;
+    return value_make(alc, v_gc_link, item, rett);
+}
 
+Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack) {
+    bool contains_gc_values = false;
     for (int i = 0; i < args->length; i++) {
-        Value* val = array_get_index(args, i);
-        if(!value_needs_gc_buffer(val))
-            continue;
-        // Create temp decl
-        Decl *decl = decl_make(alc, val->rett, false);
-        array_push(before->ast, tgen_declare(alc, before, decl, val));
-        // Replace args
-        Value *new_value = value_make(alc, v_decl, decl, decl->type);
-        array_set_index(args, i, new_value);
-        // Remove from stack
-        // array_push(after->ast, tgen_assign(alc, new_value, vgen_null(alc, b)));
+        Value* arg = array_get_index(args, i);
+        if(value_needs_gc_buffer(arg)) {
+            contains_gc_values = true;
+            break;
+        }
     }
+    if(!contains_gc_values) {
+        return val;
+    }
+
+    Scope *sub = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
+    sub->ast = array_make(alc, 10);
+
+    // Disable gc
+    Global* g_disable = get_volt_global(b, "mem", "disable_gc");
+    Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
+    Value *var_disable = vgen_var(alc, b, disable);
+    array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
+    array_push(sub->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
+
+    // Buffer arguments
+    for (int i = 0; i < args->length; i++) {
+        Value* arg = array_get_index(args, i);
+        if(value_needs_gc_buffer(arg)) {
+            Decl *decl = decl_make(alc, arg->rett, false);
+            array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
+            arg = value_make(alc, v_decl, decl, decl->type);
+        } else {
+            // Get values
+            arg = vgen_var(alc, b, arg);
+            array_push(sub->ast, token_make(alc, t_set_var, arg->item));
+        }
+        // Replace args
+        array_set_index(args, i, arg);
+    }
+
+    // Set disable_gc to previous value
+    array_push(sub->ast, tgen_assign(alc, disable, var_disable));
+
+    Value *var_result = vgen_var(alc, b, val);
+    array_push(sub->ast, token_make(alc, t_set_var, var_result->item));
+
+    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
+    buf->result = var_result->item;
+    buf->scope = sub;
+
     return value_make(alc, v_gc_buffer, buf, val->rett);
 }

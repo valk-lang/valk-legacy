@@ -109,6 +109,16 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_gc_unlink(ir, ir_val, val->rett->nullable);
             continue;
         }
+        if (tt == t_set_var) {
+            VVar *vv = t->item;
+            vv->var = ir_value(ir, scope, vv->value);
+            continue;
+        }
+        if (tt == t_ast_scope) {
+            Scope *s = t->item;
+            ir_write_ast(ir, s);
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

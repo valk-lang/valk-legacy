@@ -50,7 +50,7 @@ void stage_types_func(Fc* fc, Func* func) {
         Decl *decl = decl_make(b->alc, arg->type, true);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, fc);
-        scope_add_decl(b->alc, func->scope, decl);
+        // scope_add_decl(b->alc, func->scope, decl);
         arg->decl = decl;
         array_push(func->arg_values, NULL);
     }
@@ -83,7 +83,7 @@ void stage_types_func(Fc* fc, Func* func) {
             Decl* decl = decl_make(b->alc, type, true);
             Idf* idf = idf_make(b->alc, idf_decl, decl);
             scope_set_idf(func->scope, name, idf, fc);
-            scope_add_decl(b->alc, func->scope, decl);
+            // scope_add_decl(b->alc, func->scope, decl);
             arg->decl = decl;
 
             tkn = tok(fc, true, true, true);

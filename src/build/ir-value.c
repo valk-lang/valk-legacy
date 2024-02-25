@@ -19,10 +19,6 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return "null";
     }
     if (v->type == v_func_call) {
-        if(type_is_gc(v->rett)){
-            Scope *pop = gen_snippet_ast(ir->alc, ir->fc, get_volt_snippet(ir->b, "mem", "snip_gc"), map_make(ir->alc), scope);
-            ir_write_ast(ir, pop);
-        }
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);
         Array *values = ir_fcall_args(ir, scope, fcall->args);
@@ -31,11 +27,12 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     }
     if (v->type == v_gc_buffer) {
         VGcBuffer* buf = v->item;
-        ir_write_ast(ir, buf->before);
-        Value* bval = buf->value;
-        char* res = ir_value(ir, scope, bval);
-        ir_write_ast(ir, buf->after);
-        return res;
+        ir_write_ast(ir, buf->scope);
+        VVar* var = buf->result;
+        if (!var->var) {
+            build_err(ir->b, "Missing buffer v_var in IR (compiler bug)");
+        }
+        return var->var;
     }
     if (v->type == v_func_ptr) {
         VFuncPtr *fptr = v->item;
@@ -151,7 +148,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
 
         // Alloc memory
         if(class->type == ct_class) {
-            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class->gc_fields, class);
+            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class);
         } else {
             ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
         }
@@ -226,6 +223,14 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         str_flat(code, "\n");
 
         return var;
+    }
+    if (v->type == v_var) {
+        VVar* vv = v->item;
+        char* result = vv->var;
+        if(result == NULL) {
+            build_err(ir->b, "Missing value for v_var (compiler bug)");
+        }
+        return result;
     }
 
     return "???";

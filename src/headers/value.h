@@ -14,6 +14,7 @@ bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
+Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Value *on, Array *args);
 Value *vgen_int(Allocator *alc, long int value, Type *type);
@@ -24,13 +25,15 @@ Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, int gc_fields, Class* cast_as);
+Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
 Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);
 Value* vgen_null(Allocator* alc, Build* b);
 Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett);
-Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args);
+Value* vgen_var(Allocator* alc, Build* b, Value* value);
+Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_values, Type* rett);
+Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack);
 
 struct Value {
     int type;
@@ -58,9 +61,8 @@ struct VNumber {
     double value_float;
 };
 struct VGcBuffer {
-    Value* value;
-    Scope* before;
-    Scope* after;
+    VVar* result;
+    Scope* scope;
 };
 struct VClassPA {
     Value* on;
@@ -91,6 +93,19 @@ struct VString {
     char* ir_object_name;
     char* ir_body_name;
     Fc* fc;
+};
+struct VScope {
+    Scope* scope;
+    Array* phi_values;
+};
+struct VPhiValue {
+    Value* value;
+    IRBlock* block;
+    char* var;
+};
+struct VVar {
+    Value* value;
+    char* var;
 };
 
 #endif

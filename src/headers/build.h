@@ -91,10 +91,10 @@ struct Build {
     Array *pool_str;
     ErrorCollection* errors;
     Array *strings;
+    //
     Array *gc_transfer_funcs;
     Array *gc_mark_funcs;
     Array *gc_free_funcs;
-    Array *gc_check_moves;
     //
     size_t mem_parse;
     size_t mem_objects;

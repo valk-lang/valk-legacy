@@ -88,6 +88,8 @@ enum VALUES {
     v_gc_buffer,
     v_ir_value, // 20
     v_gc_get_table,
+    v_value_scope,
+    v_var,
 };
 
 enum TOKENS {
@@ -101,6 +103,8 @@ enum TOKENS {
     t_continue,
     t_throw,
     t_gc_unlink,
+    t_set_var,
+    t_ast_scope,
 };
 
 enum OPERATORS {

@@ -115,7 +115,7 @@ int func_get_reserve_count(Func* func) {
     Array* decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
-        if(decl->is_gc) {
+        if(decl->is_gc && !decl->is_arg) {
             count++;
         }
     }
