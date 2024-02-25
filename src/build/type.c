@@ -26,12 +26,25 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
     bool is_inline = false;
 
     char* tkn = tok(fc, true, allow_newline, true);
+    int t = fc->chunk_parse->token;
+
+    if(t == tok_at_word) {
+        if (str_is(tkn, "@ignu")) {
+            tok_expect(fc, "(", false, false);
+            Type* type = read_type(fc, alc, scope, false);
+            tok_expect(fc, ")", true, false);
+            type->nullable = false;
+            type->ignore_null = true;
+            return type;
+        }
+    }
+
     if(str_is(tkn, "?")) {
         nullable = true;
         tkn = tok(fc, false, false, true);
     }
 
-    int t = fc->chunk_parse->token;
+    t = fc->chunk_parse->token;
     if(t == tok_id) {
         if (!is_inline && str_is(tkn, "void")) {
             return type_make(alc, type_void);
@@ -215,7 +228,7 @@ Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
-    if (t2->type == type_null && (t1->type == type_ptr || t1->nullable)) {
+    if (t2->type == type_null && (t1->type == type_ptr || t1->nullable || t1->ignore_null)) {
         return true;
     }
     if (t1->type != t2->type) {
@@ -238,7 +251,7 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
         *reason = "different classes";
         return false;
     }
-    if (t2->nullable && !t1->nullable) {
+    if (!t1->ignore_null && t2->nullable && !t1->nullable) {
         *reason = "non-null vs null-able-type";
         return false;
     }

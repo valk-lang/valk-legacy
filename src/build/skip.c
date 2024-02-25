@@ -10,6 +10,13 @@ void skip_type(Fc* fc) {
     Chunk* ch = fc->chunk_parse;
 
     char *tkn = tok(fc, true, true, true);
+    if (str_is(tkn, "@ignu")) {
+        tkn = tok(fc, false, false, true);
+        if (str_is(tkn, "(")) {
+            skip_body(fc);
+            return;
+        }
+    }
     if (str_is(tkn, "?") || str_is(tkn, ".")) {
         tkn = tok(fc, false, false, true);
     }

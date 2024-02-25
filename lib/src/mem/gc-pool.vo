@@ -1,0 +1,165 @@
+
+global pool_8 : @ignu(GcPool)
+global pool_16 : @ignu(GcPool)
+global pool_24 : @ignu(GcPool)
+global pool_32 : @ignu(GcPool)
+global pool_40 : @ignu(GcPool)
+global pool_48 : @ignu(GcPool)
+global pool_56 : @ignu(GcPool)
+global pool_64 : @ignu(GcPool)
+global pool_128 : @ignu(GcPool)
+global pool_256 : @ignu(GcPool)
+
+global pool_usage : uint
+
+struct GcPool {
+    size: uint
+    first : ptr
+    current : ptr
+    index : uint (0)
+    blocks_used: uint (0)
+    blocks_total: uint (1)
+    blocks_total_last: uint (1)
+
+    static fn init() {
+        pool_8 = CLASS.new(8)
+        pool_16 = CLASS.new(16)
+        pool_24 = CLASS.new(24)
+        pool_32 = CLASS.new(32)
+        pool_40 = CLASS.new(40)
+        pool_48 = CLASS.new(48)
+        pool_56 = CLASS.new(56)
+        pool_64 = CLASS.new(64)
+        pool_128 = CLASS.new(128)
+        pool_256 = CLASS.new(256)
+    }
+    static fn new(size_: uint) CLASS {
+        let size = size_ + 8
+        let block = GcPool.create_block(size, 1)
+        let pool = CLASS{
+            size: size
+            first: block
+            current: block
+        }
+        return pool
+    }
+
+    // ptr next, ptr itemc, ptr transferc, {...items...}
+    static fn create_block(size: uint, blockc: uint) ptr {
+        let itemc = blockc * 2
+        if itemc > 250 {
+            itemc = 250
+        }
+        let fsize = itemc * size + 3 * sizeof(ptr)
+        let block = alloc(fsize)
+        clear(block, fsize)
+        @ptrv(block, ptr, 0) = null
+        @ptrv(block, uint, 1) = itemc
+        @ptrv(block, uint, 2) = 0
+        return block
+    }
+
+    fn get_next_block_or_create(current: ptr) ptr {
+
+        let next = @ptrv(current, ptr)
+        if next == null {
+            this.blocks_total++
+            next = GcPool.create_block(this.size, this.blocks_total)
+            @ptrv(current, ptr) = next
+        }
+
+        this.blocks_used++
+        let usage = this.blocks_used * 100 / this.blocks_total_last
+        if usage > pool_usage {
+            pool_usage = usage
+            if usage > 120 {
+                stack.run_gc = true
+                stack.bumper_overflow = true
+            }
+        }
+
+        return next
+    }
+
+    fn get(vtable: u32) ptr {
+        let block = this.current
+        let index = this.index
+        let itemc = @ptrv(block, uint, 1)
+        let tc = @ptrv(block, uint, 2)
+        while tc > itemc * 7 / 10 {
+            block = this.get_next_block_or_create(block)
+            index = 0
+            itemc = @ptrv(block, uint, 1)
+            tc = @ptrv(block, uint, 2)
+            this.current = block
+            this.blocks_used--
+        } 
+        //
+        let base = block + sizeof(ptr) * 3
+        let item = base + (this.size * index)
+        while @ptrv(item, u8) != 0 {
+            index++
+            if index == itemc {
+                block = this.get_next_block_or_create(block)
+                index = 0
+                base = block + sizeof(ptr) * 3
+                itemc = @ptrv(block, uint, 1)
+                this.current = block
+            }
+            item = base + (this.size * index)
+        }
+        let res = item
+        let new_index = index + 1
+        this.index = new_index
+        if new_index == itemc {
+            this.current = this.get_next_block_or_create(block)
+            this.index = 0
+        }
+        @ptrv(res, u16, 0) = 0
+        @ptrv(res, u8, 2) = 0
+        @ptrv(res, u8, 3) = index @as u8
+        @ptrv(res, u32, 1) = vtable
+
+        return res + 8
+    }
+
+    static fn reset_all() {
+        pool_8.reset()
+        pool_16.reset()
+        pool_24.reset()
+        pool_32.reset()
+        pool_40.reset()
+        pool_48.reset()
+        pool_56.reset()
+        pool_64.reset()
+        pool_128.reset()
+        pool_256.reset()
+    }
+    fn reset() {
+        // Clear all un-used blocks after current
+        let block = this.current
+        let prev = block
+        let next = @ptrv(block, ptr)
+        while next != null {
+            let block = next
+            next = @ptrv(block, ptr)
+            if @ptrv(block, uint, 2) == 0 {
+                // Delete block
+                free(block)
+                @ptrv(prev, ptr) = next
+                this.blocks_total--
+            } else {
+                // Keep block
+                prev = block
+            }
+        }
+
+        // Set current to first
+        this.current = this.first
+        this.index = 0
+        this.blocks_used = 0
+        this.blocks_total_last = this.blocks_total
+        pool_usage = 0
+    }
+}
+

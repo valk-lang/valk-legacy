@@ -90,11 +90,24 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
     return res;
 }
 Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
-    Func *func = get_volt_func(b, "mem", "gc_alloc");
+    Value* pool = NULL;
+    if(size <= 64) {
+        int psize = size + (size % 8);
+        char pool_name[32];
+        strcpy(pool_name, "pool_");
+        itoa(psize, pool_name + 5, 10);
+        Global* g = get_volt_global(b, "mem", pool_name);
+        pool = value_make(alc, v_global, g, g->type);
+    }
+    if(!pool){
+        build_err(b, "Cannot find correct pool to allocate class");
+    }
+
+    Func *func = get_volt_func(b, "mem", "gc_alloc_class");
+
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *v_size = vgen_int(alc, size, type_gen_volt(alc, b, "uint"));
-    array_push(alloc_values, v_size);
+    array_push(alloc_values, pool);
     Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_volt(alc, b, "u32"));
     array_push(alloc_values, v_index);
     Value *res = vgen_func_call(alc, fptr, alloc_values);

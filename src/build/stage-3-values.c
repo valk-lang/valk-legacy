@@ -26,7 +26,7 @@ void stage_values(Fc *fc) {
         if(!g->chunk_value) {
             if(!g->type->is_pointer)
                 continue;
-            if(!g->type->nullable) {
+            if(!g->type->nullable && !g->type->ignore_null) {
                 char buf[256];
                 sprintf(b->char_buf, "Globals with a non-null type require a default value (type: %s)", type_to_str(g->type, buf));
                 parse_err(fc->chunk_parse, b->char_buf);

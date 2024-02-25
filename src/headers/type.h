@@ -34,6 +34,7 @@ struct Type {
     bool is_pointer;
     bool is_signed;
     bool func_can_error;
+    bool ignore_null;
 };
 
 #endif
