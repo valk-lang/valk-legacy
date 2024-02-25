@@ -113,15 +113,15 @@ struct Stack {
         return to
     }
     static fn unlink(item: ptr) {
-        let item_state = @ptrv(item, u8, 0)
-        if item_state == state_solid {
-            stack.unknown.add_item(item)
-            @ptrv(item, u8, 0) = state_unknown
-            @ptrv(item, u8, 1) = 0
-        } else if item_state == state_transfer {
-            // Update transfer state
-            @ptrv(item, u8, 1) = state_unknown
-        }
+        // let item_state = @ptrv(item, u8, 0)
+        // if item_state == state_solid {
+        //     stack.unknown.add_item(item)
+        //     @ptrv(item, u8, 0) = state_unknown
+        //     @ptrv(item, u8, 1) = 0
+        // } else if item_state == state_transfer {
+        //     // Update transfer state
+        //     @ptrv(item, u8, 1) = state_unknown
+        // }
     }
 
     ///////////////////////
@@ -137,7 +137,6 @@ struct Stack {
         this.disable = true
         this.run_gc = false
 
-        // print(".")
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
@@ -183,11 +182,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            // print("b")
+            io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        // } else {
-        //     print("l")
+        } else {
+            io:print_fake("l")
         }
 
 
@@ -212,12 +211,16 @@ struct Stack {
 
         // Mark items as: on stack
         // Mark new items as transfer
+        // io:print_fake("1_")
         adr = stack_adr;
         while adr > stack_base {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item = @ptrv(item_adr, ptr, 0);
             if item != null {
+        // io:print_fake(">s:")
+        // io:print_fake(item.to_hex())
+        // io:print_fake("\n")
                 //
                 let state = @ptrv(item, u8, -8)
                 if state == state_new {
@@ -230,7 +233,9 @@ struct Stack {
                     @ptrv(item, u8, -7) = state_solid @as u8
                 } 
 
-                @ptrv(item, u8, -6) = sub_state_on_stack
+                if state != state_const {
+                    @ptrv(item, u8, -6) = sub_state_on_stack
+                }
             }
         }
 
@@ -244,6 +249,7 @@ struct Stack {
             if item_prev != null {
                 if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
                     if @ptrv(item_prev, u8, -8) == state_solid {
+                        // io:print_fake("y")
                         unknown.add_item(item_prev - 8)
                         @ptrv(item_prev, u8, -8) = state_unknown @as u8
                     }
@@ -261,7 +267,9 @@ struct Stack {
             let item = @ptrv(item_adr, ptr, 0);
             @ptrv(item_adr, ptr, 1) = item
             if item != null {
-                @ptrv(item, u8, -6) = 0
+                if @ptrv(item, u8, -8) != state_const {
+                    @ptrv(item, u8, -6) = 0
+                }
             }
         }
     }

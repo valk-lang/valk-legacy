@@ -12,6 +12,9 @@ global pool_256 : @ignu(GcPool)
 
 global pool_usage : uint
 
+use io
+use os
+
 struct GcPool {
     size: uint
     first : ptr
@@ -46,16 +49,14 @@ struct GcPool {
 
     // ptr next, ptr itemc, ptr transferc, {...items...}
     static fn create_block(size: uint, blockc: uint) ptr {
-        let itemc = blockc * 2
+        let itemc = blockc * 5
         if itemc > 250 {
             itemc = 250
         }
         let fsize = itemc * size + 3 * sizeof(ptr)
         let block = alloc(fsize)
         clear(block, fsize)
-        @ptrv(block, ptr, 0) = null
         @ptrv(block, uint, 1) = itemc
-        @ptrv(block, uint, 2) = 0
         return block
     }
 
@@ -70,6 +71,8 @@ struct GcPool {
 
         this.blocks_used++
         let usage = this.blocks_used * 100 / this.blocks_total_last
+        // io:print_fake(usage.to_str())
+        // io:print_fake(".")
         if usage > pool_usage {
             pool_usage = usage
             if usage > 120 {
@@ -84,9 +87,9 @@ struct GcPool {
     fn get(vtable: u32) ptr {
         let block = this.current
         let index = this.index
-        let itemc = @ptrv(block, uint, 1)
-        let tc = @ptrv(block, uint, 2)
-        while tc > itemc * 7 / 10 {
+        let itemc = @ptrv(block, uint, 1) // Item count
+        let tc = @ptrv(block, uint, 2) // Transfer count
+        while tc >= itemc * 7 / 10 {
             block = this.get_next_block_or_create(block)
             index = 0
             itemc = @ptrv(block, uint, 1)
@@ -100,11 +103,22 @@ struct GcPool {
         while @ptrv(item, u8) != 0 {
             index++
             if index == itemc {
+
                 block = this.get_next_block_or_create(block)
                 index = 0
                 base = block + sizeof(ptr) * 3
                 itemc = @ptrv(block, uint, 1)
                 this.current = block
+
+                let tc = @ptrv(block, uint, 2)
+                while tc >= itemc * 7 / 10 {
+                    block = this.get_next_block_or_create(block)
+                    index = 0
+                    itemc = @ptrv(block, uint, 1)
+                    tc = @ptrv(block, uint, 2)
+                    this.current = block
+                    this.blocks_used--
+                } 
             }
             item = base + (this.size * index)
         }
