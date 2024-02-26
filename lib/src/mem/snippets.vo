@@ -22,7 +22,7 @@ snippet reserve(amount: V) {
 
         if disable_gc == false {
             if STACK.stack_adr <= STACK.lowest {
-                if pool_usage > 30 {
+                if pool_usage > 10 {
                     STACK.run_gc = true
                 }
             }

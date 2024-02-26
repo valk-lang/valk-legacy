@@ -138,7 +138,7 @@ struct Stack {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
-        io:print_fake("1")
+        // io:print_fake("1")
         this.mark_difference_down()
         // io:print_fake("2")
         this.handle_transfer_list()
@@ -160,14 +160,14 @@ struct Stack {
         }
         if this.clear_unknown {
             //
-        io:print_fake("f")
+        // io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
             //
             this.clean_unknown_list()
             this.clear_unknown = false
-        } else {
-        io:print_fake("w")
+        // } else {
+        // io:print_fake("w")
         }
         // io:print_fake("4")
         GcPool.reset_all()
@@ -179,8 +179,12 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
+        io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
+        } else {
+        io:print_fake("l")
+
         }
 
 
@@ -188,7 +192,7 @@ struct Stack {
         this.disable = false
         this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         // io:print_fake("<<\n")
-        io:print_fake(".")
+        // io:print_fake(".")
     }
 
     fn mark_difference_down() {
@@ -201,10 +205,10 @@ struct Stack {
 
         // Mark previous items as: not on stack
         let adr = adr_last;
-        // while adr >= stack_adr {
-        //     @ptrv(adr, ptr) = null
-        //     adr = adr - sizeof(ptr) * 2
-        // }
+        while adr >= stack_adr {
+            @ptrv(adr, ptr) = null
+            adr = adr - sizeof(ptr) * 2
+        }
 
         // Mark items as: on stack
         // Mark new items as transfer
