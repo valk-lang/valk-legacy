@@ -12,28 +12,34 @@ void ir_gen_globals(IR* ir) {
 
     bool is_main_fc = fc->contains_main_func;
 
-    int gc_vtables = b->gc_vtables;
-    char gc_vt_count[20];
-    itoa((gc_vtables + 1) * 4, gc_vt_count, 10);
-    char gc_vt_name_buf[256];
-
     if (is_main_fc) {
         str_preserve(code, 500);
         str_flat(code, "@volt_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
         str_flat(code, "@volt_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
 
-        // Gc vtable
+        // VTables
+        int gc_vtables = b->gc_vtables;
+        char gc_vt_count[20];
+        itoa((gc_vtables + 1) * 4, gc_vt_count, 10);
+        char gc_vt_name_buf[256];
+        Array* classes = b->classes;
+
+        // Gen vtable
         str_preserve(code, 500);
         str_flat(code, "@volt_gc_vtable = unnamed_addr constant [");
         str_add(code, gc_vt_count);
         str_flat(code, " x ptr] [\n");
         str_flat(code, "ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
-        for(int i = 0; i < gc_vtables; i++) {
-            str_preserve(code, 500);
-            Func* transfer = array_get_index(b->gc_transfer_funcs, i);
-            Func* mark = array_get_index(b->gc_mark_funcs, i);
-            Func* gc_free = array_get_index(b->gc_free_funcs, i);
+        for(int i = 0; i < classes->length; i++) {
+            Class* class = array_get_index(classes, i);
+            if(class->type != ct_class)
+                continue;
 
+            Func* transfer = map_get(class->funcs, "_v_transfer");
+            Func* mark = map_get(class->funcs, "_v_mark");
+            Func* gc_free = map_get(class->funcs, "_v_free");
+
+            str_preserve(code, 500);
             str_flat(code, ",\n");
             str_flat(code, "ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, transfer, gc_vt_name_buf));

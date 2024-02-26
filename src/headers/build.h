@@ -92,10 +92,6 @@ struct Build {
     ErrorCollection* errors;
     Array *strings;
     //
-    Array *gc_transfer_funcs;
-    Array *gc_mark_funcs;
-    Array *gc_free_funcs;
-    //
     size_t mem_parse;
     size_t mem_objects;
     //

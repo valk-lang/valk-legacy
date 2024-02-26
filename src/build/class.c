@@ -113,7 +113,6 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         char* buf = b->char_buf;
 
         // VTABLE_INDEX
-        class->gc_vtable_index = ++b->gc_vtables;
         printf("Class: %s | vt: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
@@ -164,10 +163,6 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         class_generate_transfer(fc, b, class, transfer);
         class_generate_mark(fc, b, class, mark);
         class_generate_free(fc, b, class, ff);
-
-        array_push(b->gc_transfer_funcs, transfer);
-        array_push(b->gc_mark_funcs, mark);
-        array_push(b->gc_free_funcs, ff);
     }
 }
 
@@ -400,6 +395,11 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
 
     gclass->name = name;
     gclass->ir_name = gen_export_name(gclass->fc->nsc, export_name);
+
+    array_push(b->classes, gclass);
+    if(gclass->type == ct_class) {
+        gclass->gc_vtable_index = ++b->gc_vtables;
+    }
 
     map_set(class->generics, h, gclass);
 

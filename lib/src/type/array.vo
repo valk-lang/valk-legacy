@@ -58,14 +58,14 @@ struct Array[T] {
         let size = this.size
         let new_size = size * 2
         let new_data : ptr = null
-        // if this.is_transfered {
-        //     new_data = mem:alloc(new_size * sizeof(T));
-        //     mem:copy(data, new_data, size * sizeof(T));
-        //     mem:free(data);
-        // } else {
-            new_data = mem:gc_bump_alloc(new_size * sizeof(T));
+        if this.is_transfered {
+            new_data = mem:alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
-        // }
+            free(data)
+        } else {
+            new_data = mem:gc_alloc(new_size * sizeof(T));
+            mem:copy(data, new_data, size * sizeof(T));
+        }
         this.data = new_data
         this.size = new_size
         return new_data
@@ -187,27 +187,29 @@ struct Array[T] {
     // Gc
     ////////////////
 
-    // fn _gc_transfer() {
-    //     this.is_transfered = true
-    //     let new_data = mem:alloc(this.size * sizeof(T))
-    //     let data = this.data
-    //     let x = this.length
-    //     while x-- > 0 {
-    //         let item = @ptrv(data, ptr, x)
-    //         @ptrv(new_data, ptr, x) = mem:Stack.transfer_item(item)
-    //     }
-    //     this.data = new_data
-    // }
-    // fn _gc_mark(age: u8) {
-    //     let data = this.data
-    //     let x = this.length
-    //     while x-- > 0 {
-    //         mem:Stack.mark_stack_item_as_solid_rec(@ptrv(data, T, x), age)
-    //     }
-    // }
-    // fn _gc_free() {
-    //     mem:free(this.data)
-    // }
+    fn _gc_transfer() {
+        this.is_transfered = true
+        let new_data = mem:alloc(this.size * sizeof(T))
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            @ptrv(new_data, T, x) = @ptrv(data, T, x)
+            mem:gc_transfer_item(this, @ptrv(new_data, ptr, x))
+        }
+        this.data = new_data
+    }
+    fn _gc_mark() {
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            mem:gc_mark_item(this, @ptrv(data, T, x))
+        }
+    }
+    fn _gc_free() {
+        if this.is_transfered {
+            mem:free(this.data)
+        }
+    }
 
     ////////////////
     // Internals

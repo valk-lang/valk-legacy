@@ -78,10 +78,6 @@ int cmd_build(int argc, char *argv[]) {
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
 
-    b->gc_transfer_funcs = array_make(alc, 200);
-    b->gc_mark_funcs = array_make(alc, 200);
-    b->gc_free_funcs = array_make(alc, 200);
-
     b->func_main = NULL;
 
     b->ptr_size = 8;

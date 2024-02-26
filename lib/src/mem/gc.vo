@@ -2,8 +2,16 @@
 use io
 use os
 
-value gc_item_size ((sizeof(ptr) + sizeof(ptr)))
-
 fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
     return pool.get(vtable)
+}
+fn gc_alloc(size: uint) ptr {
+    let bumper = stack.bumper
+    let data = bumper.adr
+    let space_left = bump_block_size - (data - bumper.base)
+    if size > space_left {
+        data = bumper.alloc_for_size(size)
+    }
+    bumper.adr = data + size
+    return data
 }

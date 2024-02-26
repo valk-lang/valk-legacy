@@ -39,7 +39,7 @@ struct Stack {
 
     unknown : ObjectChain
     transfer : ObjectChain
-    move_checks : ObjectChain
+    bumper : GcBumper
 
     age: u8 (33)
 
@@ -52,9 +52,6 @@ struct Stack {
     disable: bool (false)
 
     static fn init() {
-        let unknown = ObjectChain.new()
-        let transfer = ObjectChain.new()
-        let move_checks = ObjectChain.new()
 
         let data = alloc(stack_size)
         // NOTE: Probably not needed
@@ -72,9 +69,9 @@ struct Stack {
             lowest: data
             lowest_next: data + (100 * sizeof(ptr))
 
-            unknown: unknown
-            transfer: transfer
-            move_checks: move_checks
+            unknown: ObjectChain.new()
+            transfer: ObjectChain.new()
+            bumper: GcBumper.init()
         }
 
         stack = s;
