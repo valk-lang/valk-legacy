@@ -6,7 +6,7 @@ use net;
 use utils;
 // use fs;
 
-struct Connection {
+class Connection {
     netcon: net:Connection
     fd: i32
     uploads: ?Array[String] (null)
@@ -114,6 +114,13 @@ struct Connection {
             this.out_pos += wbytes;
             // #end
         }
+    }
+
+    fn _gc_transfer() {
+        println("T.HCON")
+    }
+    fn _gc_free() {
+        println("F.HCON")
     }
 }
 

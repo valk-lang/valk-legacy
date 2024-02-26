@@ -7,13 +7,20 @@ use io;
 use fs;
 use mem;
 
-struct ServerData {
+class ServerData {
     socket: net:SocketTCP
     max_connections: uint
     thread_nr: uint (0)
     handler: fn(Request)(Response)
     static_dirs: Array[String] (Array[String].new())
     show_info: bool
+
+    fn _gc_transfer() {
+        println("T.DATA")
+    }
+    fn _gc_free() {
+        println("F.DATA")
+    }
 }
 
 shared server_fd : i32
@@ -22,7 +29,7 @@ fn test(req: Request) Response {
     return Response.html("Hello world!");
 }
 
-struct Server {
+class Server {
     - host: String
     - port: u16
     - socket: net:SocketTCP
@@ -30,6 +37,10 @@ struct Server {
     - handler: fn(Request)(Response)
     // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
+
+    fn _gc_transfer() {
+        println("TRANSFER SERVER")
+    }
 
     fn _gc_free() {
         println("FREEE HTTP SERVER")
@@ -118,7 +129,6 @@ struct Server {
 
     - static fn worker() void {
 
-        print("yolo\n")
         let data = Server.server_data() ! {
             print("failed to get data\n")
             return
@@ -160,7 +170,7 @@ struct Server {
 
                 if fd == sock_fd {
                     // New connection
-                    // print("new connection\n")
+                    println("New connection")
                     let netcon = sock.accept() ! {
                         // print("failed to accept\n")
                         continue
@@ -239,6 +249,8 @@ struct Server {
     }
 
     - static fn respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+
+        println("RESP")
 
         while true {
             let res = http_con.parse_result;

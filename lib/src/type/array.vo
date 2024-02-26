@@ -12,9 +12,11 @@ class Array[T] {
         if start_size < 2 {
             start_size = 2
         }
+        println("CREATE ARRAY")
         return CLASS {
             size: start_size
-            data: mem:gc_alloc(start_size * sizeof(T))
+            // data: mem:gc_alloc(start_size * sizeof(T))
+            data: mem:alloc(start_size * sizeof(T))
         };
     }
 
@@ -58,14 +60,14 @@ class Array[T] {
         let size = this.size
         let new_size = size * 2
         let new_data : ptr = null
-        if this.is_transfered {
+        // if this.is_transfered {
             new_data = mem:alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
             mem:free(data)
-        } else {
-            new_data = mem:gc_alloc(new_size * sizeof(T));
-            mem:copy(data, new_data, size * sizeof(T));
-        }
+        // } else {
+        //     new_data = mem:gc_alloc(new_size * sizeof(T));
+        //     mem:copy(data, new_data, size * sizeof(T));
+        // }
         this.data = new_data
         this.size = new_size
         return new_data
@@ -200,29 +202,37 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        this.is_transfered = true
-        let new_data = mem:alloc(this.size * sizeof(T))
+        println("TRANSFER ARRAY")
+        // this.is_transfered = true
+        // let new_data = mem:alloc(this.size * sizeof(T))
         let data = this.data
         let x = this.length
         while x-- > 0 {
-            @ptrv(new_data, T, x) = @ptrv(data, T, x)
-            mem:gc_transfer_item(this, @ptrv(new_data, ptr, x))
+            // @ptrv(new_data, T, x) = @ptrv(data, T, x)
+            mem:gc_transfer_item(@ptrv(data, T, x))
         }
-        this.data = new_data
+        println("-")
+        // this.data = new_data
     }
     fn _gc_mark() {
-        // println("MARK ARRAY")
+        println("MARK ARRAY")
         let data = this.data
         let x = this.length
         while x-- > 0 {
-            mem:gc_mark_item(this, @ptrv(data, T, x))
+            mem:gc_mark_item(@ptrv(data, T, x))
         }
     }
     fn _gc_free() {
-        // println("FREE ARRAY")
-        if this.is_transfered {
+        println("FREE ARRAY")
+        // if this.is_transfered {
             mem:free(this.data)
-        }
+        // } else {
+        //     let data = this.data
+        //     let x = this.length
+        //     while x-- > 0 {
+        //         // mem:gc_mark_item(this, @ptrv(data, T, x))
+        //     }
+        // }
     }
 
     ////////////////

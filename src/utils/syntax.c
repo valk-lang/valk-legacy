@@ -277,6 +277,11 @@ char* itoa(long int val, char* buf, const int base){
     }
     int i = 0;
     char rev[32];
+    if(val < 0) {
+        val *= -1;
+        i = 1;
+        rev[0] = '0';
+    }
     for (; val; i++, val /= base)
         rev[i] = "0123456789ABCDEF"[val % base];
     buf[i] = 0;

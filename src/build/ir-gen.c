@@ -522,6 +522,8 @@ char* ir_ptrv(IR* ir, char* on, char* type, int index) {
 
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
+    str_preserve(code, 250);
+
     str_flat(code, "  ");
     str_add(code, result);
     str_flat(code, " = getelementptr inbounds ");

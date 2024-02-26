@@ -87,8 +87,8 @@ struct Stack {
     // Runtime functions
     ///////////////////////
     static fn link(on: ptr, to: ptr) ptr {
-        let to_state = @ptrv(to, u8, 0)
-        let on_state = @ptrv(on, u8, 0)
+        let to_state = @ptrv(to, u8, -8)
+        let on_state = @ptrv(on, u8, -8)
         if on_state == state_global {
             // TODO move item to global
             // print("TODO: MOVE TO GLOBAL")
@@ -96,13 +96,14 @@ struct Stack {
         }
         if to_state == state_new {
             // Transfer
+            io:print_fake("|L|")
             stack.transfer.add_item(to)
-            @ptrv(to, u8, 0) = state_transfer
-            @ptrv(to, u8, 1) = state_unknown
+            @ptrv(to, u8, -8) = state_transfer
+            @ptrv(to, u8, -7) = state_unknown
         }
         if on_state == state_solid {
             // Update transfer state (if solid)
-            @ptrv(to, u8, 1) = state_solid
+            @ptrv(to, u8, -7) = state_solid
         }
         return to
     }
@@ -130,14 +131,18 @@ struct Stack {
         }
         this.disable = true
         this.run_gc = false
+        io:print_fake(">>\n")
 
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
+        io:print_fake("1")
         this.mark_difference_down()
+        io:print_fake("2")
         this.handle_transfer_list()
+        io:print_fake("3")
 
         // Full clear
         if this.force_full {
@@ -161,7 +166,9 @@ struct Stack {
             this.clean_unknown_list()
             this.clear_unknown = false
         }
+        io:print_fake("4")
         GcPool.reset_all()
+        io:print_fake("5")
 
         // Adjust lowest stack point
         if this.lowest_next < this.lowest {
@@ -177,6 +184,7 @@ struct Stack {
         this.stack_adr_last = this.stack_adr
         this.disable = false
         this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
+        io:print_fake("<<\n")
     }
 
     fn mark_difference_down() {
@@ -284,6 +292,7 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                io:print_fake((func @as ptr).to_hex())
                 func(item + 8, state_solid);
             }
             if is_last {
@@ -316,7 +325,9 @@ struct Stack {
                 let vtable = @ptrv(item, u32, 1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                io:print_fake((func @as ptr).to_hex())
                 func(item + 8, state_unknown);
+                io:print_fake("-")
             }
             if is_last {
                 break

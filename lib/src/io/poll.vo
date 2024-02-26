@@ -5,7 +5,7 @@ use mem
 use io
 use os
 
-struct Poll[T] {
+class Poll[T] {
     - epoll_fd: i32 (0)
     - epoll_buffer: ptr
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
@@ -15,6 +15,13 @@ struct Poll[T] {
         events: 0
         data: null
     })
+
+    fn _gc_transfer() {
+        println("T.POLL")
+    }
+    fn _gc_free() {
+        println("F.POLL")
+    }
 
     static fn new() CLASS {
 
@@ -72,13 +79,9 @@ struct Poll[T] {
 
         return lsn
     }
-
-    // - fn __before_free() {
-    //     mem:free(this.epoll_buffer)
-    // }
 }
 
-struct Listener[T] {
+class Listener[T] {
     data: T
     ~ epoll_fd: i32 (0)
     ~ fd: i32
@@ -131,6 +134,14 @@ struct Listener[T] {
         evo.data = this
 
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
+    }
+
+    fn _gc_transfer() {
+        println("T.LSN")
+    }
+    fn _gc_free() {
+        println("FREE LSN")
+        // mem:free(this.epoll_buffer)
     }
 }
 

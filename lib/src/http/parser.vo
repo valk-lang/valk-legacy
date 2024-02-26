@@ -9,7 +9,7 @@ use io
 // 	body: String ("")
 // }
 
-struct ParseResult {
+class ParseResult {
 	~ status: uint (0)
 	~ method: String ("")
 	~ path: String ("")
@@ -19,6 +19,13 @@ struct ParseResult {
 	~ fully_parsed: bool (false)
 	~ headers_parsed: bool (false)
 	- stage: uint (0)
+
+    fn _gc_transfer() {
+        println("T.PCON")
+    }
+    fn _gc_free() {
+        println("F.PCON")
+    }
 }
 
 struct Parser {

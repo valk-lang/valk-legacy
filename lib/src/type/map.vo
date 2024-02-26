@@ -1,5 +1,5 @@
 
-struct Map[T] {
+class Map[T] {
 	~ _keys : Array[String] (Array[String].new())
 	~ _values : Array[T] (Array[T].new())
 
@@ -33,6 +33,13 @@ struct Map[T] {
 		this._keys = Array[String].new()
 		this._values = Array[T].new()
 	}
+
+	fn _gc_transfer() {
+        println("T.MAP")
+    }
+    fn _gc_free() {
+        println("F.MAP")
+    }
 
 	// fn __each_init() uint {
 	// 	return 0;

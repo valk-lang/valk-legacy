@@ -176,7 +176,7 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
     Type* type_u8 = type_gen_volt(ir->alc, b, "u8");
     Type* type_ptr = type_gen_volt(ir->alc, b, "ptr");
 
-    char* on_state_var = ir_ptrv(ir, on, "i8", 0);
+    char* on_state_var = ir_ptrv(ir, on, "i8", -8);
     char* on_state = ir_load(ir, type_u8, on_state_var);
 
     IRBlock *current = ir->block;
@@ -190,7 +190,7 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
 
     // To state < solid
     ir->block = block_if;
-    char* to_state_var = ir_ptrv(ir, to, "i8", 0);
+    char* to_state_var = ir_ptrv(ir, to, "i8", -8);
     char* to_state = ir_load(ir, type_u8, to_state_var);
 
     char *comp_to = ir_compare(ir, op_lt, to_state, "4", "i8", false, false);
