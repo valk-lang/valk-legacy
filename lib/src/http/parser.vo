@@ -2,14 +2,14 @@
 use utils
 use io
 
-class ServerRequest {
-	method: String ("")
-	path: String ("")
-	headers: Map[String] (Map[String]{})
-	body: String ("")
-}
+// class ServerRequest {
+// 	method: String ("")
+// 	path: String ("")
+// 	headers: Map[String] (Map[String]{})
+// 	body: String ("")
+// }
 
-class ParseResult {
+struct ParseResult {
 	~ status: uint (0)
 	~ method: String ("")
 	~ path: String ("")
@@ -21,7 +21,7 @@ class ParseResult {
 	- stage: uint (0)
 }
 
-class Parser {
+struct Parser {
 
 	static fn parse_response(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
 		Parser.parse_bytes(bytes, result, only_headers, false) ! { throw invalid }

@@ -6,7 +6,7 @@ use net;
 use utils;
 // use fs;
 
-class Connection {
+struct Connection {
     netcon: net:Connection
     fd: i32
     uploads: ?Array[String] (null)

@@ -5,7 +5,7 @@ header "sys" as sys;
 use io;
 use utils;
 
-class Connection {
+struct Connection {
     ~ fd: i32
     ~ open: bool (true)
     // ~ ssl_enabled: bool = false;

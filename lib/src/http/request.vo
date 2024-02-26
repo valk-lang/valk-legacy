@@ -1,5 +1,5 @@
 
-class Request {
+struct Request {
 	~ http_con: Connection
 	headers: Map[String]
 	method: String

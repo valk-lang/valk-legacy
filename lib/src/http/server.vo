@@ -7,7 +7,7 @@ use io;
 use fs;
 use mem;
 
-class ServerData {
+struct ServerData {
     socket: net:SocketTCP
     max_connections: uint
     thread_nr: uint (0)
@@ -22,14 +22,18 @@ fn test(req: Request) Response {
     return Response.html("Hello world!");
 }
 
-class Server {
+struct Server {
     - host: String
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
     - handler: fn(Request)(Response)
-    - static_dirs: Array[String] (Array[String].new())
+    // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
+
+    fn _gc_free() {
+        println("FREEE HTTP SERVER")
+    }
 
     static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
 
@@ -99,6 +103,10 @@ class Server {
             // let copy = this.server_data();
             let thread = os:Thread.start(Server.worker)
             worker_count--;
+            break
+        }
+        while true {
+        os:sleep_ms(200);
         }
 
         // let copy = this.server_data();

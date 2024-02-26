@@ -4,7 +4,7 @@ header "sys" as sys;
 use mem;
 use os;
 
-class SocketTCP {
+struct SocketTCP {
 	~ host: String
 	~ fd: i32
 	~ port: u16

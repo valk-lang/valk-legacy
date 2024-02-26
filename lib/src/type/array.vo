@@ -211,6 +211,7 @@ class Array[T] {
         this.data = new_data
     }
     fn _gc_mark() {
+        // println("MARK ARRAY")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -218,6 +219,7 @@ class Array[T] {
         }
     }
     fn _gc_free() {
+        // println("FREE ARRAY")
         if this.is_transfered {
             mem:free(this.data)
         }

@@ -2,7 +2,7 @@
 use mem
 use io
 
-class ByteBuffer {
+struct ByteBuffer {
     ~ data: ptr
 	~ size: uint
 	length: uint (0)
