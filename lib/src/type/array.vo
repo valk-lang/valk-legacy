@@ -12,7 +12,7 @@ class Array[T] {
         if start_size < 2 {
             start_size = 2
         }
-        println("CREATE ARRAY")
+        // println("CREATE ARRAY")
         return CLASS {
             size: start_size
             // data: mem:gc_alloc(start_size * sizeof(T))
@@ -202,7 +202,7 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        println("TRANSFER ARRAY")
+        // println("TRANSFER ARRAY")
         // this.is_transfered = true
         // let new_data = mem:alloc(this.size * sizeof(T))
         let data = this.data
@@ -211,11 +211,11 @@ class Array[T] {
             // @ptrv(new_data, T, x) = @ptrv(data, T, x)
             mem:gc_transfer_item(@ptrv(data, T, x))
         }
-        println("-")
+        // println("-")
         // this.data = new_data
     }
     fn _gc_mark() {
-        println("MARK ARRAY")
+        // println("MARK ARRAY")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -223,9 +223,14 @@ class Array[T] {
         }
     }
     fn _gc_free() {
-        println("FREE ARRAY")
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            mem:gc_free_item(@ptrv(data, T, x))
+        }
+        // println("FREE ARRAY")
         // if this.is_transfered {
-            mem:free(this.data)
+        mem:free(data)
         // } else {
         //     let data = this.data
         //     let x = this.length

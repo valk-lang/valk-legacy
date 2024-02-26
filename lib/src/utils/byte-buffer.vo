@@ -2,7 +2,7 @@
 use mem
 use io
 
-struct ByteBuffer {
+class ByteBuffer {
     ~ data: ptr
 	~ size: uint
 	length: uint (0)
@@ -16,6 +16,10 @@ struct ByteBuffer {
 			data: mem:alloc(start_size),
 			size: start_size,
 		};
+	}
+
+	fn _gc_free() void {
+		mem:free(this.data);
 	}
 
 	fn clear() void {
@@ -153,5 +157,4 @@ struct ByteBuffer {
 			this.data = adr;
 		}
 	}
-
 }

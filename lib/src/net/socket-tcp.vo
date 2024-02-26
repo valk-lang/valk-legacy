@@ -12,12 +12,12 @@ class SocketTCP {
 	- addrinfo: sys:cstruct_addrinfo
 	- connection: ?Connection (null)
 
-    fn _gc_transfer() {
-        println("T.TCP")
-    }
-    fn _gc_free() {
-        println("F.TCP")
-    }
+    // fn _gc_transfer() {
+    //     println("T.TCP")
+    // }
+    // fn _gc_free() {
+    //     println("F.TCP")
+    // }
 
 	static fn new(host: String, port: u16, blocking: bool (true)) SocketTCP !os_socket_create !invalid_host {
 

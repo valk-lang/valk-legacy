@@ -34,12 +34,15 @@ class Map[T] {
 		this._values = Array[T].new()
 	}
 
-	fn _gc_transfer() {
-        println("T.MAP")
-    }
-    fn _gc_free() {
-        println("F.MAP")
-    }
+	// fn _gc_transfer() {
+    //     println("T.MAP")
+    // }
+	// fn _gc_mark() {
+    //     println("M.MAP")
+    // }
+    // fn _gc_free() {
+    //     println("F.MAP")
+    // }
 
 	// fn __each_init() uint {
 	// 	return 0;

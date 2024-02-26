@@ -20,12 +20,12 @@ class ParseResult {
 	~ headers_parsed: bool (false)
 	- stage: uint (0)
 
-    fn _gc_transfer() {
-        println("T.PCON")
-    }
-    fn _gc_free() {
-        println("F.PCON")
-    }
+    // fn _gc_transfer() {
+    //     println("T.PCON")
+    // }
+    // fn _gc_free() {
+    //     println("F.PCON")
+    // }
 }
 
 struct Parser {

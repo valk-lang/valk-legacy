@@ -15,12 +15,12 @@ class ServerData {
     static_dirs: Array[String] (Array[String].new())
     show_info: bool
 
-    fn _gc_transfer() {
-        println("T.DATA")
-    }
-    fn _gc_free() {
-        println("F.DATA")
-    }
+    // fn _gc_transfer() {
+    //     println("T.DATA")
+    // }
+    // fn _gc_free() {
+    //     println("F.DATA")
+    // }
 }
 
 shared server_fd : i32
@@ -250,7 +250,7 @@ class Server {
 
     - static fn respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
-        println("RESP")
+        // println("RESP")
 
         while true {
             let res = http_con.parse_result;

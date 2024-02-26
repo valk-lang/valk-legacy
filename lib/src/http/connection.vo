@@ -9,7 +9,7 @@ use utils;
 class Connection {
     netcon: net:Connection
     fd: i32
-    uploads: ?Array[String] (null)
+    // uploads: ?Array[String] (null)
     read_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     parse_result: ParseResult (ParseResult{})
 
@@ -17,6 +17,16 @@ class Connection {
     // out_file: ?fs:FileStream = null;
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
+
+    // fn _gc_transfer() {
+    //     println("T.HCON")
+    // }
+    // fn _gc_mark() {
+    //     println("M.HCON")
+    // }
+    // fn _gc_free() {
+    //     println("F.HCON")
+    // }
 
     fn reset_parser() void {
 
@@ -55,7 +65,7 @@ class Connection {
     // }
 
     fn respond(resp: Response) void {
-        let filepath = resp.filepath;
+        // let filepath = resp.filepath;
         // if isset(filepath) {
         // 	let stream = fs:open(filepath + "", true, false) !! {
         // 		this.respond(Response.error(404));
@@ -114,13 +124,6 @@ class Connection {
             this.out_pos += wbytes;
             // #end
         }
-    }
-
-    fn _gc_transfer() {
-        println("T.HCON")
-    }
-    fn _gc_free() {
-        println("F.HCON")
     }
 }
 
