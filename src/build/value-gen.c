@@ -98,6 +98,12 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
         itoa(psize, pool_name + 5, 10);
         Global* g = get_volt_global(b, "mem", pool_name);
         pool = value_make(alc, v_global, g, g->type);
+    } else if(size <= 128) {
+        Global* g = get_volt_global(b, "mem", "pool_128");
+        pool = value_make(alc, v_global, g, g->type);
+    } else if(size <= 256) {
+        Global* g = get_volt_global(b, "mem", "pool_256");
+        pool = value_make(alc, v_global, g, g->type);
     }
     if(!pool){
         build_err(b, "Cannot find correct pool to allocate class");

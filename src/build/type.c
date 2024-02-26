@@ -293,7 +293,7 @@ char* type_to_str_export(Type* t, char* res) {
 
     strcpy(res, "");
     if (t->nullable) {
-        strcat(res, "NULL");
+        strcat(res, "NULL_");
     }
     if (t->type == type_void) {
         strcpy(res, "void");

@@ -105,17 +105,16 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
 
     Allocator *alc = b->alc;
 
-    // POOL_GLOBAL
-    Idf *idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
-    scope_set_idf(class->scope, "STACK", idf, fc);
-
-    if (class->type == ct_class) {
+    if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
+        // STACK
+        // Idf *idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
+        // scope_set_idf(class->scope, "STACK", idf, fc);
 
         // VTABLE_INDEX
         printf("Class: %s | vt: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
         //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
+        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, fc);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
@@ -135,7 +134,11 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         // Transfer
         strcpy(buf, class->name);
         strcat(buf, "__v_transfer");
-        Func *transfer = func_make(b->alc, class->fc, class->scope, dups(alc, buf), NULL);
+        char* name = dups(alc, buf);
+        strcpy(buf, class->ir_name);
+        strcat(buf, "__v_transfer");
+        char* export_name = dups(alc, buf);
+        Func *transfer = func_make(b->alc, class->fc, class->scope, name, export_name);
         transfer->class = class;
         transfer->is_static = false;
         array_push(fc->funcs, transfer);
@@ -144,7 +147,11 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         // Mark
         strcpy(buf, class->name);
         strcat(buf, "__v_mark");
-        Func *mark = func_make(b->alc, class->fc, class->scope, dups(alc, buf), NULL);
+        name = dups(alc, buf);
+        strcpy(buf, class->ir_name);
+        strcat(buf, "__v_mark");
+        export_name = dups(alc, buf);
+        Func *mark = func_make(b->alc, class->fc, class->scope, name, export_name);
         mark->class = class;
         mark->is_static = false;
         array_push(fc->funcs, mark);
@@ -153,7 +160,11 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         // Free
         strcpy(buf, class->name);
         strcat(buf, "__v_free");
-        Func *ff = func_make(b->alc, class->fc, class->scope, dups(alc, buf), NULL);
+        name = dups(alc, buf);
+        strcpy(buf, class->ir_name);
+        strcat(buf, "__v_free");
+        export_name = dups(alc, buf);
+        Func *ff = func_make(b->alc, class->fc, class->scope, name, export_name);
         ff->class = class;
         ff->is_static = false;
         array_push(fc->funcs, ff);
@@ -213,6 +224,12 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
             str_flat(code, "}\n");
         }
     }
+
+    Func* hook = map_get(class->funcs, "_gc_transfer");
+    if(hook) {
+        str_flat(code, "  this._gc_transfer()\n");
+    }
+
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
@@ -263,6 +280,12 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
             str_flat(code, "}\n");
         }
     }
+
+    Func* hook = map_get(class->funcs, "_gc_mark");
+    if(hook) {
+        str_flat(code, "  this._gc_mark()\n");
+    }
+
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
@@ -323,6 +346,12 @@ void class_generate_free(Fc* fc, Build* b, Class* class, Func* func) {
             str_flat(code, "}\n");
         }
     }
+
+    Func* hook = map_get(class->funcs, "_gc_free");
+    if(hook) {
+        str_flat(code, "  this._gc_free()\n");
+    }
+
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
@@ -372,7 +401,7 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
 
     // Export name
     str_clear(hash);
-    str_add(hash, class->name);
+    str_add(hash, class->ir_name);
     str_flat(hash, "__");
     for (int i = 0; i < types->length; i++) {
         if(i > 0)
@@ -390,11 +419,11 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     gclass->scope = scope_sub_make(b->alc, sc_default, class->fc->scope, NULL);
     gclass->type = class->type;
     gclass->b = class->b;
-    gclass->fc = class->fc;
+    gclass->fc = fc;
     gclass->packed = class->packed;
 
     gclass->name = name;
-    gclass->ir_name = gen_export_name(gclass->fc->nsc, export_name);
+    gclass->ir_name = export_name;
 
     array_push(b->classes, gclass);
     if(gclass->type == ct_class) {

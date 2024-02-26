@@ -15,3 +15,21 @@ fn gc_alloc(size: uint) ptr {
     bumper.adr = data + size
     return data
 }
+
+fn gc_transfer_item(parent: ptr, item: ptr) {
+    if @ptrv(item, u8, -8) > 2 { return }
+    @ptrv(item, u8, -8) = @ptrv(parent, u8, -8)
+    // let index = @ptrv(this, u8, -5) @as uint
+    // let base = (this @as ptr) - (index * (SIZE + 8)) - 8
+    // let transfer_count = @ptrv(base, uint, -1)
+    // @ptrv(base, uint, -1) = transfer_count + 1
+    // GC_TRANSFER_SIZE += SIZE
+}
+fn gc_mark_item(parent: ptr, item: ptr) {
+    let age = @ptrv(parent, u8, -6)
+    let item_age = @ptrv(item, u8, -6)
+    if @ptrv(item, u8, -8) > 8 { return }
+    if item_age == age { return }
+    @ptrv(item, u8, -6) = age
+    // GC_MARK_SIZE += SIZE
+}

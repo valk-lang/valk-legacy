@@ -2,7 +2,7 @@
 use mem
 use io
 
-struct Array[T] {
+class Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
@@ -14,7 +14,7 @@ struct Array[T] {
         }
         return CLASS {
             size: start_size
-            data: mem:gc_bump_alloc(start_size * sizeof(T))
+            data: mem:gc_alloc(start_size * sizeof(T))
         };
     }
 
@@ -61,7 +61,7 @@ struct Array[T] {
         if this.is_transfered {
             new_data = mem:alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
-            free(data)
+            mem:free(data)
         } else {
             new_data = mem:gc_alloc(new_size * sizeof(T));
             mem:copy(data, new_data, size * sizeof(T));
@@ -144,6 +144,18 @@ struct Array[T] {
             index++
         }
         throw not_found
+    }
+
+    fn clear() {
+        let index : uint = 0
+        let adr = this.data
+        let len = this.length
+        while index < len {
+            let item = @ptrv(adr, T, index)
+            @gc_unlink(item)
+            index++
+        }
+        this.length = 0
     }
 
     // fn sort() {
