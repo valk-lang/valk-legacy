@@ -21,9 +21,6 @@ fn gc_transfer_item(item: ptr) {
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(void), 0)
-    // print("t:")
-    // println((func @as ptr).to_hex())
-    // println(item.to_hex())
     func(item, state_solid);
 }
 fn gc_mark_item(item: ptr) {
@@ -31,9 +28,6 @@ fn gc_mark_item(item: ptr) {
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(void), 1)
-    // print("m:")
-    // println((func @as ptr).to_hex())
-    // println(item.to_hex())
     func(item, stack.age);
 }
 fn gc_free_item(item: ptr) {
@@ -41,8 +35,5 @@ fn gc_free_item(item: ptr) {
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(void), 2)
-    // print("m:")
-    // println((func @as ptr).to_hex())
-    // println(item.to_hex())
     func(item, stack.age);
 }

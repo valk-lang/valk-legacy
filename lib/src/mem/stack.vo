@@ -222,7 +222,7 @@ struct Stack {
                 let state = @ptrv(item, u8, -8)
                 if state == state_new {
                     // Transfer new items
-                    transfer.add_item(item - 8)
+                    transfer.add_item(item)
                     @ptrv(item, u8, -8) = state_transfer @as u8
                     @ptrv(item, u8, -7) = state_solid @as u8
                 } 
@@ -246,7 +246,7 @@ struct Stack {
             if item_prev != null {
                 if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
                     if @ptrv(item_prev, u8, -8) == state_solid {
-                        unknown.add_item(item_prev - 8)
+                        unknown.add_item(item_prev)
                         @ptrv(item_prev, u8, -8) = state_unknown @as u8
                     }
                 }
@@ -291,17 +291,17 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 0) != state_transfer {
+                if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
-                if @ptrv(item, u8, 1) != state_solid {
+                if @ptrv(item, u8, -7) != state_solid {
                     continue
                 }
-                let vtable = @ptrv(item, u32, 1)
+                let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
                 // io:print_fake((func @as ptr).to_hex())
-                func(item + 8, state_solid);
+                func(item, state_solid);
             }
             if is_last {
                 break
@@ -327,14 +327,14 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 0) != state_transfer {
+                if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
-                let vtable = @ptrv(item, u32, 1)
+                let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
                 io:print_fake((func @as ptr).to_hex())
-                func(item + 8, state_unknown);
+                func(item, state_unknown);
                 io:print_fake("-")
             }
             if is_last {
@@ -379,15 +379,15 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, 0) > state_unknown {
+                if @ptrv(item, u8, -8) > state_unknown {
                     // Ignore freed, globals, consts
                     continue;
                 }
-                if @ptrv(item, u8, 2) != age {
-                    let vtable = @ptrv(item, u32, 1)
+                if @ptrv(item, u8, -6) != age {
+                    let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    func(item + 8, age);
+                    func(item, age);
                 }
             }
             if is_last {
