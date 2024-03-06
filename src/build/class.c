@@ -175,7 +175,6 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     // str_flat(code, "  println((this @as ptr).to_hex())\n");
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
-    str_flat(code, "  @ptrv(this, u8, -7) = 0\n");
 
     str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
     str_flat(code, "  let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
