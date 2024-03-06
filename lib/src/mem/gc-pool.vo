@@ -1,15 +1,6 @@
 
-global pool_8 : @ignu(GcPool)
-global pool_16 : @ignu(GcPool)
-global pool_24 : @ignu(GcPool)
-global pool_32 : @ignu(GcPool)
-global pool_40 : @ignu(GcPool)
-global pool_48 : @ignu(GcPool)
-global pool_56 : @ignu(GcPool)
-global pool_64 : @ignu(GcPool)
-global pool_128 : @ignu(GcPool)
-global pool_256 : @ignu(GcPool)
-
+global pools : ptr (null)
+global pool_count : uint
 global pool_usage : uint
 
 use io
@@ -23,20 +14,25 @@ struct GcPool {
     items_used: uint (0)
     items_total: uint
     items_total_last: uint
+    items_use_gc_free: bool
 
     static fn init() {
-        pool_8 = CLASS.new(8)
-        pool_16 = CLASS.new(16)
-        pool_24 = CLASS.new(24)
-        pool_32 = CLASS.new(32)
-        pool_40 = CLASS.new(40)
-        pool_48 = CLASS.new(48)
-        pool_56 = CLASS.new(56)
-        pool_64 = CLASS.new(64)
-        pool_128 = CLASS.new(128)
-        pool_256 = CLASS.new(256)
+        pools = alloc(20 * sizeof(ptr))
+        let size : uint = 8
+        let index : uint = 0
+        while size <= 64 {
+            @ptrv(pools, ptr, index++) = CLASS.new(size, false)
+            @ptrv(pools, ptr, index++) = CLASS.new(size, true)
+            size += 8
+        }
+        @ptrv(pools, ptr, index++) = CLASS.new(128, false)
+        @ptrv(pools, ptr, index++) = CLASS.new(128, true)
+        @ptrv(pools, ptr, index++) = CLASS.new(256, false)
+        @ptrv(pools, ptr, index++) = CLASS.new(256, true)
+
+        pool_count = index
     }
-    static fn new(size_: uint) CLASS {
+    static fn new(size_: uint, items_use_gc_free: bool) CLASS {
         let size = size_ + 8
         let block = GcPool.create_block(size, 2)
         let pool = CLASS{
@@ -45,6 +41,7 @@ struct GcPool {
             current: block
             items_total: @ptrv(block, uint, 1)
             items_total_last: @ptrv(block, uint, 1)
+            items_use_gc_free: items_use_gc_free
         }
         return pool
     }
@@ -137,17 +134,55 @@ struct GcPool {
         return res + 8
     }
 
+    static fn free_unused_all() {
+        let pc = pool_count
+        while pc-- > 0 {
+            let pool = @ptrv(pools, GcPool, pc)
+            if pool.items_use_gc_free {
+                pool.free_unused()
+            }
+        }
+    }
+    fn free_unused() {
+        let current = this.current
+        let block = this.first
+        let size = this.size
+        while block != null {
+            let b = block
+            let itemc_ = @ptrv(b, uint, 1)
+            if b == current {
+                itemc_ = this.index
+            }
+            let itemc = itemc_
+            let base = b + sizeof(ptr) * 3
+            let i : uint = 0
+            while i < itemc {
+                let item = base + (size * i++)
+                let state = @ptrv(item, u8, 0)
+                if state == state_new {
+                    let vtable = @ptrv(item, u32, 1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, ?fn(ptr)(void), 2)
+                    if func != null {
+                        func(item);
+                    }
+                }
+            }
+            // 
+            if b == current {
+                break
+            }
+            // Next block
+            block = @ptrv(b, ptr)
+        }
+    }
+
     static fn reset_all() {
-        pool_8.reset()
-        pool_16.reset()
-        pool_24.reset()
-        pool_32.reset()
-        pool_40.reset()
-        pool_48.reset()
-        pool_56.reset()
-        pool_64.reset()
-        pool_128.reset()
-        pool_256.reset()
+        let pc = pool_count
+        while pc-- > 0 {
+            let pool = @ptrv(pools, GcPool, pc)
+            pool.reset()
+        }
     }
     fn reset() {
         // Clear all un-used blocks after current
@@ -177,16 +212,11 @@ struct GcPool {
     }
 
     static fn clean_old_all(age: u8) {
-        pool_8.clean_old_age(age)
-        pool_16.clean_old_age(age)
-        pool_24.clean_old_age(age)
-        pool_32.clean_old_age(age)
-        pool_40.clean_old_age(age)
-        pool_48.clean_old_age(age)
-        pool_56.clean_old_age(age)
-        pool_64.clean_old_age(age)
-        pool_128.clean_old_age(age)
-        pool_256.clean_old_age(age)
+        let pc = pool_count
+        while pc-- > 0 {
+            let pool = @ptrv(pools, GcPool, pc)
+            pool.clean_old_age(age)
+        }
     }
     fn clean_old_age(age: u8) {
         let block = this.first
@@ -221,16 +251,11 @@ struct GcPool {
     }
 
     static fn delete_all() {
-        pool_8.delete()
-        pool_16.delete()
-        pool_24.delete()
-        pool_32.delete()
-        pool_40.delete()
-        pool_48.delete()
-        pool_56.delete()
-        pool_64.delete()
-        pool_128.delete()
-        pool_256.delete()
+        let pc = pool_count
+        while pc-- > 0 {
+            let pool = @ptrv(pools, GcPool, pc)
+            pool.delete()
+        }
     }
     fn delete() {
         let block = this.first

@@ -116,6 +116,7 @@ struct Stack {
         }
         this.mark_difference_down()
         this.handle_transfer_list()
+        GcPool.free_unused_all()
 
         // Full clear
         if this.force_full {
