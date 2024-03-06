@@ -189,13 +189,13 @@ struct GcPool {
         pool_256.clean_old_age(age)
     }
     fn clean_old_age(age: u8) {
-        let block = this.current
+        let block = this.first
         let size = this.size
         while block != null {
             let b = block
             let itemc = @ptrv(b, uint, 1)
             let base = b + sizeof(ptr) * 3
-            let transferc = @ptrv(b, uint, 2)
+            let removed_count : uint = 0 
             while itemc-- > 0 {
                 let item = base + (size * itemc)
                 let state = @ptrv(item, u8, 0)
@@ -210,11 +210,13 @@ struct GcPool {
                         func(item);
                     }
                     @ptrv(item, u8, 0) = 0 // reset state
-                    transferc--
+                    removed_count++
                 }
             }
-            @ptrv(b, uint, 2) = transferc // Update transfer count
-            block = @ptrv(b, ptr) // Next block
+            // Adjust transfer count
+            @ptrv(b, uint, 2) -= removed_count
+            // Next block
+            block = @ptrv(b, ptr)
         }
     }
 
