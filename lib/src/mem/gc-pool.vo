@@ -29,6 +29,8 @@ struct GcPool {
         @ptrv(pools, ptr, index++) = CLASS.new(128, true)
         @ptrv(pools, ptr, index++) = CLASS.new(256, false)
         @ptrv(pools, ptr, index++) = CLASS.new(256, true)
+        @ptrv(pools, ptr, index++) = CLASS.new(512, false)
+        @ptrv(pools, ptr, index++) = CLASS.new(512, true)
 
         pool_count = index
     }
