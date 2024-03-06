@@ -9,10 +9,10 @@ snippet reserve(amount: V) {
     if disable_gc == false {
         let x = amount
         while x-- > 0 {
-            @ptrv(STACK_ADR, ptr, x * 2) = null
+            @ptrv(STACK_ADR, ptr, x) = null
         }
 
-        STACK_ADR = STACK_ADR + (amount * sizeof(ptr) * 2);
+        STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
     }
 
 } => (STACK, STACK_ADR)
