@@ -165,9 +165,7 @@ struct GcPool {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, ?fn(ptr)(void), 2)
-                    if func != null {
-                        func(item);
-                    }
+                    func(item);
                 }
             }
             // 
@@ -223,6 +221,7 @@ struct GcPool {
     fn clean_old_age(age: u8) {
         let block = this.first
         let size = this.size
+        let call_gc_free = this.items_use_gc_free
         while block != null {
             let b = block
             let itemc = @ptrv(b, uint, 1)
@@ -235,10 +234,10 @@ struct GcPool {
                     continue
                 }
                 if @ptrv(item, u8, 2) != age {
-                    let vtable = @ptrv(item, u32, 1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, ?fn(ptr)(void), 2)
-                    if func != null {
+                    if call_gc_free {
+                        let vtable = @ptrv(item, u32, 1)
+                        let table = @gc_get_vtable(vtable)
+                        let func = @ptrv(table, ?fn(ptr)(void), 2)
                         func(item);
                     }
                     @ptrv(item, u8, 0) = 0 // reset state
