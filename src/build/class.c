@@ -237,9 +237,6 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
     str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
     str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    str_flat(code, "  if state == 6 {\n");
-    str_flat(code, "    @ptrv(this, u8, -8) = 4\n");
-    str_flat(code, "  }\n");
 
     str_flat(code, "  GC_MARK_SIZE += SIZE\n");
     // Props
@@ -337,7 +334,7 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gclass = class_make(b->alc, b, ct_struct);
+    gclass = class_make(b->alc, b, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
     gclass->scope = scope_sub_make(b->alc, sc_default, class->fc->scope, NULL);
     gclass->type = class->type;

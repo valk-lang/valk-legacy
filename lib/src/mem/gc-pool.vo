@@ -17,7 +17,7 @@ struct GcPool {
     items_use_gc_free: bool
 
     static fn init() {
-        pools = alloc(20 * sizeof(ptr))
+        pools = alloc(50 * sizeof(ptr))
         let size : uint = 8
         let index : uint = 0
         while size <= 64 {
@@ -126,7 +126,8 @@ struct GcPool {
             this.current = this.get_next_block_or_create(block)
             this.index = 0
         }
-        @ptrv(res, u16, 0) = 0
+        @ptrv(res, u8, 0) = 0
+        @ptrv(res, u8, 1) = 0
         @ptrv(res, u8, 2) = 0
         @ptrv(res, u8, 3) = index @as u8
         @ptrv(res, u32, 1) = vtable
@@ -146,11 +147,20 @@ struct GcPool {
         }
     }
     fn free_unused() {
+                    //         io:print_fake("_")
+                    // io:print_fake(this.index.to_str())
+                    // io:print_fake("\n")
+                    // io:print_fake("Current:")
+                    // io:print_fake(this.current.to_hex())
+                    // io:print_fake("\n")
         let current = this.current
         let block = this.first
         let size = this.size
         while block != null {
             let b = block
+                    // io:print_fake("B:")
+                    // io:print_fake(b.to_hex())
+                    // io:print_fake("\n")
             let itemc_ = @ptrv(b, uint, 1)
             if b == current {
                 itemc_ = this.index
@@ -161,12 +171,24 @@ struct GcPool {
             while i < itemc {
                 let item = base + (size * i++)
                 let state = @ptrv(item, u8, 0)
-                if state == state_new {
+                    // io:print_fake("|")
+                    // io:print_fake(i.to_str())
+                    // io:print_fake("/")
+                    // io:print_fake(itemc.to_str())
+                    // io:print_fake("|")
+                    // io:print_fake(size.to_str())
+                    // io:print_fake("|")
+                    // io:print_fake(item.to_hex())
+                    // io:print_fake("|")
+                    // io:print_fake(@ptrv(item, ptr).to_hex())
+
+                if state == state_unused {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, ?fn(ptr)(void), 2)
-                    func(item);
+                    func(item + 8);
                 }
+                    // io:print_fake("\n")
             }
             // 
             if b == current {
@@ -238,9 +260,9 @@ struct GcPool {
                         let vtable = @ptrv(item, u32, 1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, ?fn(ptr)(void), 2)
-                        func(item);
+                        func(item + 8);
                     }
-                    @ptrv(item, u8, 0) = 0 // reset state
+                    @ptrv(item, u8, 0) = state_unused
                     removed_count++
                 }
             }

@@ -6,7 +6,7 @@ class Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
-    - is_transfered: bool (false) 
+    // - is_transfered: bool (false) 
 
     static fn new(start_size: uint (2)) CLASS {
         if start_size < 2 {
@@ -190,16 +190,11 @@ class Array[T] {
 
     fn _gc_transfer() {
         // println("TRANSFER ARRAY")
-        // this.is_transfered = true
-        // let new_data = mem:alloc(this.size * sizeof(T))
         let data = this.data
         let x = this.length
         while x-- > 0 {
-            // @ptrv(new_data, T, x) = @ptrv(data, T, x)
             mem:gc_transfer_item(@ptrv(data, T, x))
         }
-        // println("-")
-        // this.data = new_data
     }
     fn _gc_mark() {
         // println("MARK ARRAY")
@@ -210,21 +205,10 @@ class Array[T] {
         }
     }
     fn _gc_free() {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:gc_free_item(@ptrv(data, T, x))
-        }
-        // println("FREE ARRAY")
-        // if this.is_transfered {
-        mem:free(data)
-        // } else {
-        //     let data = this.data
-        //     let x = this.length
-        //     while x-- > 0 {
-        //         // mem:gc_mark_item(this, @ptrv(data, T, x))
-        //     }
-        // }
+        io:print_fake("FREE ARR DATA: ")
+        this.data.print()
+        mem:free(this.data)
+        io:print_fake("<\n")
     }
 
     ////////////////

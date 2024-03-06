@@ -8,7 +8,7 @@ global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
 
-value state_new (0)
+value state_unused (0)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
@@ -89,7 +89,7 @@ struct Stack {
             // print("TODO: MOVE TO GLOBAL")
             return to
         }
-        if to_state == state_new {
+        if to_state == state_unused {
             // Transfer
             // io:print_fake("|L|")
             stack.transfer.add_item(to)
@@ -116,7 +116,9 @@ struct Stack {
         }
         this.mark_difference_down()
         this.handle_transfer_list()
+            // io:print_fake("1")
         GcPool.free_unused_all()
+            // io:print_fake("2")
 
         // Full clear
         if this.force_full {
@@ -145,11 +147,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            // io:print_fake("b")
+            io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
         } else {
-            // io:print_fake("l")
+            io:print_fake("l")
         }
 
 
@@ -175,7 +177,10 @@ struct Stack {
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state == state_new {
+                if state == state_unused {
+                    // io:print_fake("S: ")
+                    // io:print_fake(item.to_hex())
+                    // io:print_fake("\n")
                     // Transfer new items
                     transfer.add_item(item)
                     @ptrv(item, u8, -8) = state_transfer @as u8
@@ -260,6 +265,8 @@ struct Stack {
         this.stack_adr = this.stack_base
         this.gc()
         //
+        io:print_fake("END\n")
+        disable_gc = true
         this.transfer.delete()
 
         GcPool.delete_all()
@@ -276,7 +283,7 @@ struct Stack {
         let stack_adr = this.stack_adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
-            print(item.to_hex())
+            item.print()
             print("\n")
             item_adr = item_adr + sizeof(ptr)
         }

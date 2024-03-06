@@ -109,7 +109,10 @@ void stage_props_class(Fc* fc, Class *class) {
             parse_err(fc->chunk_parse, b->char_buf);
         }
 
-        Func *func = func_make(b->alc, fc, class->scope, name, NULL);
+        char export_name[512];
+        sprintf(export_name, "%s__%s", class->ir_name, name);
+
+        Func *func = func_make(b->alc, fc, class->scope, name, dups(b->alc, export_name));
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;

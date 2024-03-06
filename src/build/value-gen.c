@@ -105,6 +105,7 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     }
     if(index > -1) {
         if(map_get(class->funcs, "_gc_free")) {
+            printf("HAS GCF: %s\n", class->ir_name);
             index++;
         }
         Global *g_pools = get_volt_global(b, "mem", "pools");
