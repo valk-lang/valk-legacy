@@ -37,7 +37,7 @@ void ir_gen_globals(IR* ir) {
 
             Func* transfer = map_get(class->funcs, "_v_transfer");
             Func* mark = map_get(class->funcs, "_v_mark");
-            Func* gc_free = map_get(class->funcs, "_v_free");
+            Func* gc_free = map_get(class->funcs, "_gc_free");
 
             str_preserve(code, 500);
             str_flat(code, ",\n");

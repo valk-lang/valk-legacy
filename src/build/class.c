@@ -157,23 +157,9 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         array_push(fc->funcs, mark);
         map_set_force_new(class->funcs, "_v_mark", mark);
 
-        // Free
-        strcpy(buf, class->name);
-        strcat(buf, "__v_free");
-        name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_free");
-        export_name = dups(alc, buf);
-        Func *ff = func_make(b->alc, class->fc, class->scope, name, export_name);
-        ff->class = class;
-        ff->is_static = false;
-        array_push(fc->funcs, ff);
-        map_set_force_new(class->funcs, "_v_free", ff);
-
         // AST
         class_generate_transfer(fc, b, class, transfer);
         class_generate_mark(fc, b, class, mark);
-        class_generate_free(fc, b, class, ff);
     }
 }
 
@@ -288,69 +274,6 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     Func* hook = map_get(class->funcs, "_gc_mark");
     if(hook) {
         str_flat(code, "  this._gc_mark()\n");
-    }
-
-    str_flat(code, "}\n");
-
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(chunk, content, code->length);
-
-    *fc->chunk_parse = *chunk;
-    *fc->chunk_parse_prev = *chunk;
-    parse_handle_func_args(fc, func);
-}
-
-void class_generate_free(Fc* fc, Build* b, Class* class, Func* func) {
-
-    Map* props = class->props;
-
-    Str* code = b->str_buf;
-    str_clear(code);
-
-    str_flat(code, "(age: u8) void {\n");
-    // str_flat(code, "  print(\"f\")\n");
-    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) < 8 {\n");
-    str_flat(code, "    @ptrv(this, u8, -8) = 0\n");
-
-    str_flat(code, "    let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "    let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
-    str_flat(code, "    let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "    @ptrv(base, uint, -1) = transfer_count - 1\n");
-    str_flat(code, "  }\n");
-    // Props
-    for(int i = 0; i < props->values->length; i++) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        char var[32];
-        strcpy(var, "prop_");
-        itoa(i, var + 5, 10);
-
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if ");
-            str_add(code, var);
-            str_flat(code, " != null {\n");
-        }
-        str_flat(code, "  ");
-        str_add(code, var);
-        str_flat(code, "._v_free(age)\n");
-        if(p->type->nullable) {
-            str_flat(code, "}\n");
-        }
-    }
-
-    Func* hook = map_get(class->funcs, "_gc_free");
-    if(hook) {
-        str_flat(code, "  this._gc_free()\n");
     }
 
     str_flat(code, "}\n");

@@ -176,6 +176,48 @@ struct GcPool {
         pool_usage = 0
     }
 
+    static fn clean_old_all(age: u8) {
+        pool_8.clean_old_age(age)
+        pool_16.clean_old_age(age)
+        pool_24.clean_old_age(age)
+        pool_32.clean_old_age(age)
+        pool_40.clean_old_age(age)
+        pool_48.clean_old_age(age)
+        pool_56.clean_old_age(age)
+        pool_64.clean_old_age(age)
+        pool_128.clean_old_age(age)
+        pool_256.clean_old_age(age)
+    }
+    fn clean_old_age(age: u8) {
+        let block = this.current
+        let size = this.size
+        while block != null {
+            let b = block
+            let itemc = @ptrv(b, uint, 1)
+            let base = b + sizeof(ptr) * 3
+            let transferc = @ptrv(b, uint, 2)
+            while itemc-- > 0 {
+                let item = base + (size * itemc)
+                let state = @ptrv(item, u8, 0)
+                if state != state_solid {
+                    continue
+                }
+                if @ptrv(item, u8, 2) != age {
+                    let vtable = @ptrv(item, u32, 1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, ?fn(ptr)(void), 2)
+                    if func != null {
+                        func(item);
+                    }
+                    @ptrv(item, u8, 0) = 0 // reset state
+                    transferc--
+                }
+            }
+            @ptrv(b, uint, 2) = transferc // Update transfer count
+            block = @ptrv(b, ptr) // Next block
+        }
+    }
+
     static fn delete_all() {
         pool_8.delete()
         pool_16.delete()

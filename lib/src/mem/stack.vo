@@ -99,7 +99,7 @@ struct Stack {
             // io:print_fake("|L|")
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer
-            @ptrv(to, u8, -7) = state_unknown
+            @ptrv(to, u8, -7) = state_solid
         }
         if on_state == state_solid {
             // Update transfer state (if solid)
@@ -160,11 +160,14 @@ struct Stack {
         }
         if this.clear_unknown {
             //
-        // io:print_fake("f")
+        io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
             //
-            this.clean_unknown_list()
+            this.update_age()
+            this.mark_stack_as_solid()
+            GcPool.clean_old_all(this.age)
+            // this.clean_unknown_list()
             this.clear_unknown = false
         // } else {
         // io:print_fake("w")
@@ -226,48 +229,48 @@ struct Stack {
                     @ptrv(item, u8, -8) = state_transfer @as u8
                     @ptrv(item, u8, -7) = state_solid @as u8
                 } 
-                if state == state_transfer {
-                    @ptrv(item, u8, -7) = state_solid @as u8
-                } 
+                // if state == state_transfer {
+                //     @ptrv(item, u8, -7) = state_solid @as u8
+                // } 
 
-                if state != state_const {
-                    @ptrv(item, u8, -6) = sub_state_on_stack
-                }
+                // if state != state_const {
+                //     @ptrv(item, u8, -6) = sub_state_on_stack
+                // }
             }
         }
 
         // Previous items that are not on stack: add them to unknown
         // Set previous to null
-        adr = adr_last;
-        while adr > stack_base {
-            let item_adr = adr - sizeof(ptr) * 2
-            adr = item_adr
-            let item_prev = @ptrv(item_adr, ptr, 1);
-            if item_prev != null {
-                if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
-                    if @ptrv(item_prev, u8, -8) == state_solid {
-                        unknown.add_item(item_prev)
-                        @ptrv(item_prev, u8, -8) = state_unknown @as u8
-                    }
-                }
-                // Clear previous
-                @ptrv(item_adr, ptr, 1) = null
-            }
-        }
+        // adr = adr_last;
+        // while adr > stack_base {
+        //     let item_adr = adr - sizeof(ptr) * 2
+        //     adr = item_adr
+        //     let item_prev = @ptrv(item_adr, ptr, 1);
+        //     if item_prev != null {
+        //         if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
+        //             if @ptrv(item_prev, u8, -8) == state_solid {
+        //                 unknown.add_item(item_prev)
+        //                 @ptrv(item_prev, u8, -8) = state_unknown @as u8
+        //             }
+        //         }
+        //         // Clear previous
+        //         @ptrv(item_adr, ptr, 1) = null
+        //     }
+        // }
 
-        // Set previous to current
-        adr = stack_adr;
-        while adr > stack_base {
-            let item_adr = adr - sizeof(ptr) * 2
-            adr = item_adr
-            let item = @ptrv(item_adr, ptr, 0);
-            @ptrv(item_adr, ptr, 1) = item
-            if item != null {
-                if @ptrv(item, u8, -8) != state_const {
-                    @ptrv(item, u8, -6) = 0
-                }
-            }
-        }
+        // // Set previous to current
+        // adr = stack_adr;
+        // while adr > stack_base {
+        //     let item_adr = adr - sizeof(ptr) * 2
+        //     adr = item_adr
+        //     let item = @ptrv(item_adr, ptr, 0);
+        //     @ptrv(item_adr, ptr, 1) = item
+        //     if item != null {
+        //         if @ptrv(item, u8, -8) != state_const {
+        //             @ptrv(item, u8, -6) = 0
+        //         }
+        //     }
+        // }
     }
 
     fn handle_transfer_list() {
@@ -294,9 +297,9 @@ struct Stack {
                 if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
-                if @ptrv(item, u8, -7) != state_solid {
-                    continue
-                }
+                // if @ptrv(item, u8, -7) != state_solid {
+                //     continue
+                // }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
@@ -313,91 +316,89 @@ struct Stack {
         }
 
         // Mark unknown
-        next_list = first_list
-        while true {
-            let list = next_list
-            let index = 0
-            let is_last = list == last_list
-            let until_ = chain_size
-            if is_last {
-                until_ = last_index
-            }
-            let until = until_
-            while index < until {
-                let item = @ptrv(list, ptr, index)
-                index++
-                // Item logic
-                if @ptrv(item, u8, -8) != state_transfer {
-                    continue
-                }
-                let vtable = @ptrv(item, u32, -1)
-                let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                io:print_fake((func @as ptr).to_hex())
-                func(item, state_unknown);
-                io:print_fake("-")
-            }
-            if is_last {
-                break
-            }
-            next_list = @ptrv(list, ptr, chain_size)
-            if next_list == null {
-                break
-            }
-        }
+        // next_list = first_list
+        // while true {
+        //     let list = next_list
+        //     let index = 0
+        //     let is_last = list == last_list
+        //     let until_ = chain_size
+        //     if is_last {
+        //         until_ = last_index
+        //     }
+        //     let until = until_
+        //     while index < until {
+        //         let item = @ptrv(list, ptr, index)
+        //         index++
+        //         // Item logic
+        //         if @ptrv(item, u8, -8) != state_transfer {
+        //             continue
+        //         }
+        //         let vtable = @ptrv(item, u32, -1)
+        //         let table = @gc_get_vtable(vtable)
+        //         let func = @ptrv(table, fn(ptr, u8)(void), 0)
+        //         io:print_fake((func @as ptr).to_hex())
+        //         func(item, state_unknown);
+        //         io:print_fake("-")
+        //     }
+        //     if is_last {
+        //         break
+        //     }
+        //     next_list = @ptrv(list, ptr, chain_size)
+        //     if next_list == null {
+        //         break
+        //     }
+        // }
 
         chain.wipe()
     }
 
-    fn clean_unknown_list() {
-        // Update age
-        let new_age = 64 @as u8
+    fn update_age() {
+        let age : u8 = 64
         if this.age == 64 {
-            new_age = 66
+            age = 66
         }
-        let age = new_age
         this.age = age
-
-        //
-        this.mark_stack_as_solid()
-
-        let chain = this.unknown
-        let last_list = chain.olist_last
-        let last_index = chain.index
-        let next_list = chain.olist_first
-
-        while true {
-            let list = next_list
-            let index = 0
-            let is_last = list == last_list
-            let until_ = chain_size
-            if is_last {
-                until_ = last_index
-            }
-            let until = until_
-            while index < until {
-                let item = @ptrv(list, ptr, index)
-                index++
-                // Item logic
-                if @ptrv(item, u8, -8) > state_unknown {
-                    // Ignore freed, globals, consts
-                    continue;
-                }
-                if @ptrv(item, u8, -6) != age {
-                    let vtable = @ptrv(item, u32, -1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    func(item, age);
-                }
-            }
-            if is_last {
-                break
-            }
-            next_list = @ptrv(list, ptr, chain_size)
-        }
-
-        chain.wipe()
     }
+
+    // fn clean_unknown_list() {
+
+    //     let chain = this.unknown
+    //     let last_list = chain.olist_last
+    //     let last_index = chain.index
+    //     let next_list = chain.olist_first
+
+    //     while true {
+    //         let list = next_list
+    //         let index = 0
+    //         let is_last = list == last_list
+    //         let until_ = chain_size
+    //         if is_last {
+    //             until_ = last_index
+    //         }
+    //         let until = until_
+    //         while index < until {
+    //             let item = @ptrv(list, ptr, index)
+    //             index++
+    //             // Item logic
+    //             if @ptrv(item, u8, -8) > state_unknown {
+    //                 // Ignore freed, globals, consts
+    //                 continue;
+    //             }
+    //             if @ptrv(item, u8, -6) != age {
+    //                 let vtable = @ptrv(item, u32, -1)
+    //                 let table = @gc_get_vtable(vtable)
+    //                 let func = @ptrv(table, fn(ptr, u8)(void), 2)
+    //                 func(item, age);
+    //             }
+    //         }
+    //         if is_last {
+    //             break
+    //         }
+    //         next_list = @ptrv(list, ptr, chain_size)
+    //     }
+
+    //     chain.wipe()
+    // }
 
     fn mark_stack_as_solid() {
         let item_adr = this.stack_base
