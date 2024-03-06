@@ -49,7 +49,6 @@ struct Stack {
 
     force_full: bool (false)
     stopped: bool (false)
-    disable: bool (false)
 
     static fn init() {
 
@@ -107,13 +106,10 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        if this.disable {
-            return
-        }
         if disable_gc {
             return
         }
-        this.disable = true
+        disable_gc = true
         this.run_gc = false
         // io:print_fake(">>\n")
 
@@ -166,18 +162,18 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-        io:print_fake("b")
+        // io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
         } else {
-        io:print_fake("l")
+        // io:print_fake("l")
 
         }
 
 
         this.stack_adr_last = this.stack_adr
-        this.disable = false
         this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
+        disable_gc = false
         // io:print_fake("<<\n")
         // io:print_fake(".")
     }
