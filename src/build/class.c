@@ -15,6 +15,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->size = -1;
     c->gc_fields = 0;
     c->gc_vtable_index = 0;
+    c->pool_index = -1;
     //
     c->packed = false;
     c->is_signed = true;
@@ -107,6 +108,7 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
 
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
+        class->pool_index = get_class_pool_index(class);
         // STACK
         // Idf *idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
         // scope_set_idf(class->scope, "STACK", idf, fc);
@@ -116,6 +118,15 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         //
         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "pools"));
+        scope_set_idf(class->scope, "POOLS", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
+        scope_set_idf(class->scope, "POOL_INDEX", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_class, get_volt_class(b, "mem", "GcPool"));
+        scope_set_idf(class->scope, "POOL_CLASS", idf, fc);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, fc);
@@ -176,10 +187,13 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    if (class->pool_index > -1) {
+        str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+        str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
+        str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+        str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+        str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    }
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
     // Props
@@ -391,4 +405,26 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     //
     build_return_str_buf(b, hash);
     return gclass;
+}
+
+
+int get_class_pool_index(Class* class) {
+    int size = class->size;
+    int index = -1;
+    if(size <= 64) {
+        int psize = size + (size % 8);
+        index = ((psize / 8) - 1) * 2;
+    } else if(size <= 128) {
+        index = (64 / 8) * 2;
+    } else if(size <= 256) {
+        index = (64 / 8 + 1) * 2;
+    } else if(size <= 512) {
+        index = (64 / 8 + 2) * 2;
+    }
+    if(index > -1) {
+        if(map_get(class->funcs, "_gc_free")) {
+            index++;
+        }
+    }
+    return index;
 }

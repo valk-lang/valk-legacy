@@ -37,7 +37,7 @@ struct GcPool {
     }
     static fn new(size_: uint, items_use_gc_free: bool) CLASS {
         let size = size_ + 8
-        let block = GcPool.create_block(size, 2)
+        let block = GcPool.create_block(size, 10)
         let pool = CLASS{
             size: size
             first: block
@@ -47,7 +47,7 @@ struct GcPool {
             items_use_gc_free: items_use_gc_free
         }
         if items_use_gc_free {
-            pool.state_used = 1
+            pool.state_used = state_used
         }
         return pool
     }
@@ -60,7 +60,9 @@ struct GcPool {
         let fsize = itemc * size + 3 * sizeof(ptr)
         let block = alloc(fsize)
         clear(block, fsize)
+        // @ptrv(block, ptr, 0) = null
         @ptrv(block, uint, 1) = itemc
+        // @ptrv(block, uint, 2) = 0
         return block
     }
 
@@ -87,12 +89,12 @@ struct GcPool {
     }
 
     fn get(vtable: u32) ptr {
+        let size = this.size
         let block = this.current
         let index = this.index
         let itemc = @ptrv(block, uint, 1) // Item count
         let tc = @ptrv(block, uint, 2) // Transfer count
         while tc > itemc * 7 / 10 {
-            break
             block = this.get_next_block_or_create(block)
             index = 0
             itemc = @ptrv(block, uint, 1)
@@ -101,7 +103,7 @@ struct GcPool {
         } 
         //
         let base = block + sizeof(ptr) * 3
-        let item = base + (this.size * index)
+        let item = base + (size * index)
         while @ptrv(item, u8) != 0 {
             index++
             if index == itemc {
@@ -114,7 +116,6 @@ struct GcPool {
 
                 let tc = @ptrv(block, uint, 2)
                 while tc > itemc * 7 / 10 {
-                    break
                     block = this.get_next_block_or_create(block)
                     index = 0
                     itemc = @ptrv(block, uint, 1)
@@ -123,7 +124,7 @@ struct GcPool {
                     base = block + sizeof(ptr) * 3
                 } 
             }
-            item = base + (this.size * index)
+            item = base + (size * index)
         }
         let res = item
         let new_index = index + 1
@@ -153,20 +154,11 @@ struct GcPool {
         }
     }
     fn free_unused() {
-                    //         io:print_fake("_")
-                    // io:print_fake(this.index.to_str())
-                    // io:print_fake("\n")
-                    // io:print_fake("Current:")
-                    // io:print_fake(this.current.to_hex())
-                    // io:print_fake("\n")
         let current = this.current
         let block = this.first
         let size = this.size
         while block != null {
             let b = block
-                    // io:print_fake("B:")
-                    // io:print_fake(b.to_hex())
-                    // io:print_fake("\n")
             let itemc_ = @ptrv(b, uint, 1)
             if b == current {
                 itemc_ = this.index
@@ -177,16 +169,6 @@ struct GcPool {
             while i < itemc {
                 let item = base + (size * i++)
                 let state = @ptrv(item, u8, 0)
-                    // io:print_fake("|")
-                    // io:print_fake(i.to_str())
-                    // io:print_fake("/")
-                    // io:print_fake(itemc.to_str())
-                    // io:print_fake("|")
-                    // io:print_fake(size.to_str())
-                    // io:print_fake("|")
-                    // io:print_fake(item.to_hex())
-                    // io:print_fake("|")
-                    // io:print_fake(@ptrv(item, ptr).to_hex())
 
                 if state == state_used {
                     let vtable = @ptrv(item, u32, 1)
@@ -196,7 +178,6 @@ struct GcPool {
 
                     @ptrv(item, u8, 0) = state_unused
                 }
-                    // io:print_fake("\n")
             }
             // 
             if b == current {
@@ -220,6 +201,7 @@ struct GcPool {
         let prev = block
         let next = @ptrv(block, ptr)
         while next != null {
+            break
             let block = next
             next = @ptrv(block, ptr)
             if @ptrv(block, uint, 2) == 0 {
@@ -257,6 +239,7 @@ struct GcPool {
             let itemc = @ptrv(b, uint, 1)
             let base = b + sizeof(ptr) * 3
             let removed_count : uint = 0 
+            // Loop items
             while itemc-- > 0 {
                 let item = base + (size * itemc)
                 let state = @ptrv(item, u8, 0)
@@ -275,7 +258,19 @@ struct GcPool {
                 }
             }
             // Adjust transfer count
-            @ptrv(b, uint, 2) -= removed_count
+            let tc = @ptrv(b, uint, 2)
+            @ptrv(b, uint, 2) = tc - removed_count
+            // if @ptrv(b, uint, 2) > @ptrv(b, uint, 1) {
+            //     io:print_fake("OY:-")
+            //     removed_count.print(10)
+            //     io:print_fake(" | ")
+            //     tc.print(10)
+            //     io:print_fake(" | ")
+            //     @ptrv(b, uint, 2).print(10)
+            //     io:print_fake("/")
+            //     @ptrv(b, uint, 1).print(10)
+            //     io:print_fake("\n")
+            // }
             // Next block
             block = @ptrv(b, ptr)
         }

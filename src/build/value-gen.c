@@ -92,22 +92,8 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
 Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     //
     Value* pool = NULL;
-    int index = -1;
-    if(size <= 64) {
-        int psize = size + (size % 8);
-        index = ((psize / 8) - 1) * 2;
-    } else if(size <= 128) {
-        index = (64 / 8) * 2;
-    } else if(size <= 256) {
-        index = (64 / 8 + 1) * 2;
-    } else if(size <= 512) {
-        index = (64 / 8 + 2) * 2;
-    }
+    int index = class->pool_index;
     if(index > -1) {
-        if(map_get(class->funcs, "_gc_free")) {
-            printf("HAS GCF: %s\n", class->ir_name);
-            index++;
-        }
         Global *g_pools = get_volt_global(b, "mem", "pools");
         Value *pools = value_make(alc, v_global, g_pools, g_pools->type);
         pool = vgen_ptrv(alc, b, pools, type_gen_class(alc, get_volt_class(b, "mem", "GcPool")), vgen_int(alc, index, type_gen_volt(alc, b, "i32")));
