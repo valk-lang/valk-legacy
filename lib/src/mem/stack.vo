@@ -9,6 +9,7 @@ global gc_transfer_size : uint;
 global gc_mark_size : uint;
 
 value state_unused (0)
+value state_used (1)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
@@ -89,7 +90,7 @@ struct Stack {
             // print("TODO: MOVE TO GLOBAL")
             return to
         }
-        if to_state == state_unused {
+        if to_state <= state_used {
             // Transfer
             // io:print_fake("|L|")
             stack.transfer.add_item(to)
@@ -177,7 +178,7 @@ struct Stack {
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state == state_unused {
+                if state <= state_used {
                     // io:print_fake("S: ")
                     // io:print_fake(item.to_hex())
                     // io:print_fake("\n")

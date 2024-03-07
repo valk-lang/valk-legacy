@@ -14,6 +14,7 @@ struct GcPool {
     items_used: uint (0)
     items_total: uint
     items_total_last: uint
+    state_used: u8 (0)
     items_use_gc_free: bool
 
     static fn init() {
@@ -44,6 +45,9 @@ struct GcPool {
             items_total: @ptrv(block, uint, 1)
             items_total_last: @ptrv(block, uint, 1)
             items_use_gc_free: items_use_gc_free
+        }
+        if items_use_gc_free {
+            pool.state_used = 1
         }
         return pool
     }
@@ -126,7 +130,7 @@ struct GcPool {
             this.current = this.get_next_block_or_create(block)
             this.index = 0
         }
-        @ptrv(res, u8, 0) = 0
+        @ptrv(res, u8, 0) = this.state_used
         @ptrv(res, u8, 1) = 0
         @ptrv(res, u8, 2) = 0
         @ptrv(res, u8, 3) = index @as u8
@@ -182,11 +186,13 @@ struct GcPool {
                     // io:print_fake("|")
                     // io:print_fake(@ptrv(item, ptr).to_hex())
 
-                if state == state_unused {
+                if state == state_used {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, ?fn(ptr)(void), 2)
                     func(item + 8);
+
+                    @ptrv(item, u8, 0) = state_unused
                 }
                     // io:print_fake("\n")
             }
