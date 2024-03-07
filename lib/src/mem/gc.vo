@@ -30,10 +30,3 @@ fn gc_mark_item(item: ptr) {
     let func = @ptrv(table, fn(ptr, u8)(void), 1)
     func(item, stack.age);
 }
-fn gc_free_item(item: ptr) {
-    if item == null {return}
-    let vtable = @ptrv(item, u32, -1)
-    let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), 2)
-    func(item, stack.age);
-}

@@ -12,14 +12,23 @@ class ByteBuffer {
 		if start_size < 10 {
 			start_size = 10;
 		}
-		return CLASS {
+		let res = CLASS {
 			data: mem:alloc(start_size),
 			size: start_size,
 		};
+        // io:print_fake("BB: ")
+        // (res @as ptr).print()
+        // io:print_fake("<\n")
+		return res
 	}
 
 	fn _gc_free() void {
+        // io:print_fake("FREE BB: ")
+        // (this @as ptr).print()
+        // io:print_fake(" | ")
+        // this.data.print()
 		mem:free(this.data);
+        // io:print_fake("<\n")
 	}
 
 	fn clear() void {
@@ -152,7 +161,14 @@ class ByteBuffer {
 		if(new_size != size){
 			let adr : ptr = mem:alloc(new_size);
 			mem:copy(this.data, adr, this.length);
+        	// io:print_fake("UPDATE BB: ")
+        	// (this @as ptr).print()
+        	// io:print_fake(" | ")
+        	// this.data.print()
+        	// io:print_fake(" -> ")
+        	// adr.print()
 			mem:free(this.data);
+        	// io:print_fake("<\n")
 			this.size = new_size;
 			this.data = adr;
 		}

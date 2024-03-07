@@ -16,15 +16,15 @@ class Poll[T] {
         data: null
     })
 
-    fn _gc_transfer() {
-        println("T.POLL")
-    }
-    fn _gc_mark() {
-        println("M.POLL")
-    }
-    fn _gc_free() {
-        println("F.POLL")
-    }
+    // fn _gc_transfer() {
+    //     println("T.POLL")
+    // }
+    // fn _gc_mark() {
+    //     println("M.POLL")
+    // }
+    // fn _gc_free() {
+    //     println("F.POLL")
+    // }
 
     static fn new() CLASS {
 
@@ -42,7 +42,12 @@ class Poll[T] {
 
     fn wait(timeout: i32 (-1)) Array[Listener[T]] {
 
+        // io:print_fake("> EV ARRAY\n")
+        // io:print_fake("LSN ARRAY: ")
+        // (this.listeners @as ptr).print()
+        // io:print_fake("\n")
         let events = Array[Listener[T]].new()
+        // io:print_fake("> EV ARRAY +\n")
 
         let ebuf = this.epoll_buffer
         let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 10, timeout)
@@ -149,8 +154,8 @@ class Listener[T] {
     // fn _gc_mark() {
     //     println("M.LSN")
     // }
-    fn _gc_free() {
-        println("FREE LSN")
-    }
+    // fn _gc_free() {
+    //     println("FREE LSN")
+    // }
 }
 

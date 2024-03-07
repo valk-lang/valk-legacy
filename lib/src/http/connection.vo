@@ -19,13 +19,19 @@ class Connection {
     out_pos: uint (0)
 
     // fn _gc_transfer() {
-    //     println("T.HCON")
+    //     io:print_fake("T.HCON: ")
+    //     (this @as ptr).print()
+    //     io:print_fake("\n")
     // }
     // fn _gc_mark() {
-    //     println("M.HCON")
+    //     io:print_fake("M.HCON: ")
+    //     (this @as ptr).print()
+    //     io:print_fake("\n")
     // }
     // fn _gc_free() {
-    //     println("F.HCON")
+    //     io:print_fake("F.HCON: ")
+    //     (this @as ptr).print()
+    //     io:print_fake("\n")
     // }
 
     fn reset_parser() void {

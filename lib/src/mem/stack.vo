@@ -130,7 +130,7 @@ struct Stack {
         }
         if this.clear_unknown {
             //
-            io:print_fake("f")
+            // io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
             //
@@ -150,8 +150,8 @@ struct Stack {
             io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        } else {
-            io:print_fake("l")
+        // } else {
+            // io:print_fake("l")
         }
 
 

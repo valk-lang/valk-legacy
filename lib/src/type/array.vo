@@ -29,7 +29,7 @@ class Array[T] {
             data = this.increase_size()
         }
 
-        @ptrv(data, T, length) = item
+        @ptrv(data, T, length) = @gc_link(this, item)
         this.length = length + 1
 
         return length
@@ -51,7 +51,7 @@ class Array[T] {
             to_pos--
         }
 
-        @ptrv(data, T, 0) = item
+        @ptrv(data, T, 0) = @gc_link(this, item)
         this.length = length + 1
     }
 
@@ -189,7 +189,11 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        // println("TRANSFER ARRAY")
+        // io:print_fake("T.ARRAY: ")
+        // (this @as ptr).print()
+        // io:print_fake(" | ")
+        // this.length.print(10)
+        // io:print_fake("\n")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -197,7 +201,7 @@ class Array[T] {
         }
     }
     fn _gc_mark() {
-        // println("MARK ARRAY")
+        // io:print_fake("M.ARRAY:\n")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -205,10 +209,10 @@ class Array[T] {
         }
     }
     fn _gc_free() {
-        io:print_fake("FREE ARR DATA: ")
-        this.data.print()
+        // io:print_fake("FREE ARR DATA: ")
+        // this.data.print()
         mem:free(this.data)
-        io:print_fake("<\n")
+        // io:print_fake("<\n")
     }
 
     ////////////////
