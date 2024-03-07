@@ -22,6 +22,9 @@ class String {
     fn to_lower() String {
         return this
     }
+    fn _gc_free() {
+        mem:free(this.data)
+    }
 
     static fn make_empty(length: uint) String {
         let d = mem:alloc(length + 1)

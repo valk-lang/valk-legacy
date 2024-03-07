@@ -92,6 +92,7 @@ struct GcPool {
         let itemc = @ptrv(block, uint, 1) // Item count
         let tc = @ptrv(block, uint, 2) // Transfer count
         while tc > itemc * 7 / 10 {
+            break
             block = this.get_next_block_or_create(block)
             index = 0
             itemc = @ptrv(block, uint, 1)
@@ -113,6 +114,7 @@ struct GcPool {
 
                 let tc = @ptrv(block, uint, 2)
                 while tc > itemc * 7 / 10 {
+                    break
                     block = this.get_next_block_or_create(block)
                     index = 0
                     itemc = @ptrv(block, uint, 1)
