@@ -7,6 +7,7 @@ global stack : ?Stack;
 global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
+global gctick : uint
 
 value state_unused (0)
 value state_used (1)
@@ -90,9 +91,8 @@ struct Stack {
             // print("TODO: MOVE TO GLOBAL")
             return to
         }
-        if to_state <= state_used {
+        if to_state < state_transfer {
             // Transfer
-            // io:print_fake("|L|")
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer
         }
@@ -108,7 +108,7 @@ struct Stack {
         }
         disable_gc = true
         this.run_gc = false
-        // io:print_fake(">>\n")
+        gctick++
 
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
@@ -117,9 +117,7 @@ struct Stack {
         }
         this.mark_difference_down()
         this.handle_transfer_list()
-            // io:print_fake("1")
         GcPool.free_unused_all()
-            // io:print_fake("2")
 
         // Full clear
         if this.force_full {
@@ -131,7 +129,6 @@ struct Stack {
         }
         if this.clear_unknown {
             //
-            // io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
             //
@@ -148,7 +145,7 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            io:print_fake("b")
+            // io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
         // } else {
@@ -159,7 +156,6 @@ struct Stack {
         this.stack_adr_last = this.stack_adr
         this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
         disable_gc = false
-        // io:print_fake(".")
     }
 
     fn mark_difference_down() {
@@ -179,9 +175,6 @@ struct Stack {
                 //
                 let state = @ptrv(item, u8, -8)
                 if state <= state_used {
-                    // io:print_fake("S: ")
-                    // io:print_fake(item.to_hex())
-                    // io:print_fake("\n")
                     // Transfer new items
                     transfer.add_item(item)
                     @ptrv(item, u8, -8) = state_transfer @as u8
@@ -217,7 +210,6 @@ struct Stack {
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // io:print_fake((func @as ptr).to_hex())
                 func(item, state_solid);
             }
             if is_last {
@@ -266,7 +258,6 @@ struct Stack {
         this.stack_adr = this.stack_base
         this.gc()
         //
-        io:print_fake("END\n")
         disable_gc = true
         this.transfer.delete()
 

@@ -258,19 +258,7 @@ struct GcPool {
                 }
             }
             // Adjust transfer count
-            let tc = @ptrv(b, uint, 2)
-            @ptrv(b, uint, 2) = tc - removed_count
-            // if @ptrv(b, uint, 2) > @ptrv(b, uint, 1) {
-            //     io:print_fake("OY:-")
-            //     removed_count.print(10)
-            //     io:print_fake(" | ")
-            //     tc.print(10)
-            //     io:print_fake(" | ")
-            //     @ptrv(b, uint, 2).print(10)
-            //     io:print_fake("/")
-            //     @ptrv(b, uint, 1).print(10)
-            //     io:print_fake("\n")
-            // }
+            @ptrv(b, uint, 2) -= removed_count
             // Next block
             block = @ptrv(b, ptr)
         }

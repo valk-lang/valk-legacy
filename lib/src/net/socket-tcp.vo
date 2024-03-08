@@ -30,8 +30,6 @@ class SocketTCP {
 		if blocking == false {
             flags = flags | sys:SOCK_NONBLOCK
         }
-        print("Socket flags: ")
-        println(flags.to_str())
     	let fd = sys:socket(sys:AF_INET, flags, 0);
 		// #else
 

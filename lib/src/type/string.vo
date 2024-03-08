@@ -1,6 +1,7 @@
 
 use mem;
 use io;
+use os;
 
 struct StringConst {
     v1: u8 (0)
@@ -29,10 +30,11 @@ class String {
     static fn make_empty(length: uint) String {
         let d = mem:alloc(length + 1)
         @ptrv(d, u8, length) = 0
-        return String {
+        let str = String {
             data: d
             bytes: length
-        };
+        }
+        return str
     }
 
     static fn make_from_ptr(data: ptr, length: uint) String {

@@ -3,6 +3,22 @@ use io
 use os
 
 fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
+
+    if disable_gc == false {
+        let s = stack
+        if s.stack_adr < s.lowest_next {
+            s.lowest_next = s.stack_adr
+        }
+        if s.stack_adr <= s.lowest {
+            if pool_usage > 10 {
+                s.run_gc = true
+            }
+        }
+        if s.run_gc {
+            s.gc()
+        }
+    }
+
     return pool.get(vtable)
 }
 fn gc_alloc(size: uint) ptr {

@@ -18,22 +18,6 @@ class Connection {
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
 
-    // fn _gc_transfer() {
-    //     io:print_fake("T.HCON: ")
-    //     (this @as ptr).print()
-    //     io:print_fake("\n")
-    // }
-    // fn _gc_mark() {
-    //     io:print_fake("M.HCON: ")
-    //     (this @as ptr).print()
-    //     io:print_fake("\n")
-    // }
-    // fn _gc_free() {
-    //     io:print_fake("F.HCON: ")
-    //     (this @as ptr).print()
-    //     io:print_fake("\n")
-    // }
-
     fn reset_parser() void {
 
         this.parse_result = ParseResult{};

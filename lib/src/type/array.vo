@@ -189,11 +189,6 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        // io:print_fake("T.ARRAY: ")
-        // (this @as ptr).print()
-        // io:print_fake(" | ")
-        // this.length.print(10)
-        // io:print_fake("\n")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -201,23 +196,14 @@ class Array[T] {
         }
     }
     fn _gc_mark() {
-        // io:print_fake("-")
         let data = this.data
         let x = this.length
         while x-- > 0 {
-            let item = @ptrv(data, ptr, x)
-            // io:print_fake(".")
-            // item.print()
-            mem:gc_mark_item(item)
-            // mem:gc_mark_item(@ptrv(data, T, x))
+            mem:gc_mark_item(@ptrv(data, T, x))
         }
-        // io:print_fake("_")
     }
     fn _gc_free() {
-        // io:print_fake("FREE ARR DATA: ")
-        // this.data.print()
         mem:free(this.data)
-        // io:print_fake("<\n")
     }
 
     ////////////////

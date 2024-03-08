@@ -150,17 +150,14 @@ class Server {
         sock_lsn.detect_read_request(true);
 
         while true {
-        // io:print_fake("> WAIT\n")
             let events = poll.wait();
             let event_count = events.length;
             let i : uint = 0;
-        // io:print_fake("> WAIT DONE\n")
 
             while i < event_count {
                 let lsn = events.get(i) ! { break }
                 let fd = lsn.fd;
                 i++;
-        // io:print_fake("> EVENT\n")
 
                 if fd == sock_fd {
                     // New connection
@@ -179,14 +176,10 @@ class Server {
                         netcon: netcon,
                         fd: fd,
                     };
-        io:print_fake("NEW.HCON: ")
-        (http_con @as ptr).print()
-        io:print_fake("\n")
 
                     let lsn = poll.create_listener(fd, http_con);
                     lsn.detect_read_request(true);
                     lsn.detect_write_request(false);
-        // io:print_fake("<<\n")
                     continue;
                 }
 
@@ -248,9 +241,8 @@ class Server {
 
     - static fn respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
-        // println("RESP")
-
         while true {
+
             let res = http_con.parse_result;
             let read_buf = http_con.read_buf;
             while true {
