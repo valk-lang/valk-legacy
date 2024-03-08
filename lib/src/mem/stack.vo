@@ -7,17 +7,17 @@ global stack : ?Stack;
 global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
+global gctick : uint
 
-value state_new (0)
+value state_unused (0)
+value state_used (1)
 value state_transfer (2)
 value state_solid (4)
-value state_unknown (6)
 value state_const (8)
 value state_global (10)
 value stack_size (1000000)
 
 value sub_state_keep (5)
-value sub_state_unknown (6)
 value sub_state_on_stack (7)
 
 value byte_state (0)
@@ -37,7 +37,6 @@ struct Stack {
     lowest: ptr
     lowest_next : ptr
 
-    unknown : ObjectChain
     transfer : ObjectChain
     bumper : GcBumper
 
@@ -49,7 +48,6 @@ struct Stack {
 
     force_full: bool (false)
     stopped: bool (false)
-    disable: bool (false)
 
     static fn init() {
 
@@ -69,7 +67,6 @@ struct Stack {
             lowest: data
             lowest_next: data + (100 * sizeof(ptr))
 
-            unknown: ObjectChain.new()
             transfer: ObjectChain.new()
             bumper: GcBumper.init()
         }
@@ -94,84 +91,53 @@ struct Stack {
             // print("TODO: MOVE TO GLOBAL")
             return to
         }
-        if to_state == state_new {
+        if to_state < state_transfer {
             // Transfer
-            // io:print_fake("|L|")
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer
-            @ptrv(to, u8, -7) = state_unknown
-        }
-        if on_state == state_solid {
-            // Update transfer state (if solid)
-            @ptrv(to, u8, -7) = state_solid
         }
         return to
-    }
-    static fn unlink(item: ptr) {
-        // let item_state = @ptrv(item, u8, 0)
-        // if item_state == state_solid {
-        //     stack.unknown.add_item(item)
-        //     @ptrv(item, u8, 0) = state_unknown
-        //     @ptrv(item, u8, 1) = 0
-        // } else if item_state == state_transfer {
-        //     // Update transfer state
-        //     @ptrv(item, u8, 1) = state_unknown
-        // }
     }
 
     ///////////////////////
     // Gc
     ///////////////////////
     fn gc() {
-        if this.disable {
-            return
-        }
         if disable_gc {
             return
         }
-        this.disable = true
+        disable_gc = true
         this.run_gc = false
-        // io:print_fake(">>\n")
+        gctick++
 
         let trigger_type : u8 = trigger_lowest
         if this.bumper_overflow {
             this.bumper_overflow = false
             trigger_type = trigger_buffer_size
         }
-        // io:print_fake("1")
         this.mark_difference_down()
-        // io:print_fake("2")
         this.handle_transfer_list()
-        // io:print_fake("3")
+        GcPool.free_unused_all()
 
         // Full clear
         if this.force_full {
             this.clear_unknown = true
             this.force_full = false
         }
-        if gc_transfer_size > (gc_mark_size >> 2) {
-            if this.lowest_next < this.lowest {
-                // When reaching a new low, do a full clear
-                this.clear_unknown = true
-            } else if this.unknown.itemc > 0 {
-                // Do a full clear if we have single unknown item
-                this.clear_unknown = true
-            }
+        if gc_transfer_size > (gc_mark_size >> 1) {
+            this.clear_unknown = true
         }
         if this.clear_unknown {
             //
-        // io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
             //
-            this.clean_unknown_list()
+            this.update_age()
+            this.mark_stack_as_solid()
+            GcPool.clean_old_all(this.age)
             this.clear_unknown = false
-        // } else {
-        // io:print_fake("w")
         }
-        // io:print_fake("4")
         GcPool.reset_all()
-        // io:print_fake("5")
 
         // Adjust lowest stack point
         if this.lowest_next < this.lowest {
@@ -179,93 +145,40 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-        io:print_fake("b")
+            // io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        } else {
-        io:print_fake("l")
-
+        // } else {
+            // io:print_fake("l")
         }
 
 
         this.stack_adr_last = this.stack_adr
-        this.disable = false
         this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
-        // io:print_fake("<<\n")
-        // io:print_fake(".")
+        disable_gc = false
     }
 
     fn mark_difference_down() {
         let transfer = this.transfer
-        let unknown = this.unknown
 
         let stack_base = this.stack_base
         let stack_adr = this.stack_adr
         let adr_last = this.stack_adr_last
 
-        // Mark previous items as: not on stack
-        let adr = adr_last;
-        while adr >= stack_adr {
-            @ptrv(adr, ptr) = null
-            adr = adr - sizeof(ptr) * 2
-        }
-
-        // Mark items as: on stack
         // Mark new items as transfer
-        adr = stack_adr;
+        let adr = stack_adr;
         while adr > stack_base {
-            let item_adr = adr - sizeof(ptr) * 2
+            let item_adr = adr - sizeof(ptr)
             adr = item_adr
             let item = @ptrv(item_adr, ptr, 0);
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state == state_new {
+                if state <= state_used {
                     // Transfer new items
                     transfer.add_item(item)
                     @ptrv(item, u8, -8) = state_transfer @as u8
-                    @ptrv(item, u8, -7) = state_solid @as u8
                 } 
-                if state == state_transfer {
-                    @ptrv(item, u8, -7) = state_solid @as u8
-                } 
-
-                if state != state_const {
-                    @ptrv(item, u8, -6) = sub_state_on_stack
-                }
-            }
-        }
-
-        // Previous items that are not on stack: add them to unknown
-        // Set previous to null
-        adr = adr_last;
-        while adr > stack_base {
-            let item_adr = adr - sizeof(ptr) * 2
-            adr = item_adr
-            let item_prev = @ptrv(item_adr, ptr, 1);
-            if item_prev != null {
-                if @ptrv(item_prev, u8, -6) != sub_state_on_stack {
-                    if @ptrv(item_prev, u8, -8) == state_solid {
-                        unknown.add_item(item_prev)
-                        @ptrv(item_prev, u8, -8) = state_unknown @as u8
-                    }
-                }
-                // Clear previous
-                @ptrv(item_adr, ptr, 1) = null
-            }
-        }
-
-        // Set previous to current
-        adr = stack_adr;
-        while adr > stack_base {
-            let item_adr = adr - sizeof(ptr) * 2
-            adr = item_adr
-            let item = @ptrv(item_adr, ptr, 0);
-            @ptrv(item_adr, ptr, 1) = item
-            if item != null {
-                if @ptrv(item, u8, -8) != state_const {
-                    @ptrv(item, u8, -6) = 0
-                }
             }
         }
     }
@@ -294,48 +207,10 @@ struct Stack {
                 if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
-                if @ptrv(item, u8, -7) != state_solid {
-                    continue
-                }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                // io:print_fake((func @as ptr).to_hex())
                 func(item, state_solid);
-            }
-            if is_last {
-                break
-            }
-            next_list = @ptrv(list, ptr, chain_size)
-            if next_list == null {
-                break
-            }
-        }
-
-        // Mark unknown
-        next_list = first_list
-        while true {
-            let list = next_list
-            let index = 0
-            let is_last = list == last_list
-            let until_ = chain_size
-            if is_last {
-                until_ = last_index
-            }
-            let until = until_
-            while index < until {
-                let item = @ptrv(list, ptr, index)
-                index++
-                // Item logic
-                if @ptrv(item, u8, -8) != state_transfer {
-                    continue
-                }
-                let vtable = @ptrv(item, u32, -1)
-                let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), 0)
-                io:print_fake((func @as ptr).to_hex())
-                func(item, state_unknown);
-                io:print_fake("-")
             }
             if is_last {
                 break
@@ -349,54 +224,12 @@ struct Stack {
         chain.wipe()
     }
 
-    fn clean_unknown_list() {
-        // Update age
-        let new_age = 64 @as u8
+    fn update_age() {
+        let age : u8 = 64
         if this.age == 64 {
-            new_age = 66
+            age = 66
         }
-        let age = new_age
         this.age = age
-
-        //
-        this.mark_stack_as_solid()
-
-        let chain = this.unknown
-        let last_list = chain.olist_last
-        let last_index = chain.index
-        let next_list = chain.olist_first
-
-        while true {
-            let list = next_list
-            let index = 0
-            let is_last = list == last_list
-            let until_ = chain_size
-            if is_last {
-                until_ = last_index
-            }
-            let until = until_
-            while index < until {
-                let item = @ptrv(list, ptr, index)
-                index++
-                // Item logic
-                if @ptrv(item, u8, -8) > state_unknown {
-                    // Ignore freed, globals, consts
-                    continue;
-                }
-                if @ptrv(item, u8, -6) != age {
-                    let vtable = @ptrv(item, u32, -1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), 2)
-                    func(item, age);
-                }
-            }
-            if is_last {
-                break
-            }
-            next_list = @ptrv(list, ptr, chain_size)
-        }
-
-        chain.wipe()
     }
 
     fn mark_stack_as_solid() {
@@ -415,7 +248,7 @@ struct Stack {
                     }
                 }
             }
-            item_adr = item_adr + sizeof(ptr) * 2
+            item_adr = item_adr + sizeof(ptr)
         }
     }
 
@@ -425,8 +258,8 @@ struct Stack {
         this.stack_adr = this.stack_base
         this.gc()
         //
+        disable_gc = true
         this.transfer.delete()
-        this.unknown.delete()
 
         GcPool.delete_all()
         mprint()
@@ -439,12 +272,12 @@ struct Stack {
     fn print_stack() {
         print("---------\n")
         let item_adr = this.stack_base
-        let stack_adr = this.stack_adr + (sizeof(ptr) * 4)
+        let stack_adr = this.stack_adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
-            print(item.to_hex())
+            item.print()
             print("\n")
-            item_adr = item_adr + sizeof(ptr) * 2
+            item_adr = item_adr + sizeof(ptr)
         }
         print("---------\n")
     }

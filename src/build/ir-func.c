@@ -110,7 +110,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
 
             char lindex[10];
             itoa(gc_index, lindex, 10);
-            gc_index += 2;
+            gc_index++;
             char *var = ir_var(ir->func);
             str_flat(code, "  ");
             str_add(code, var);

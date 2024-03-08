@@ -50,7 +50,6 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
                 loop->decls = decls;
             }
             array_push(decls, decl);
-            return;
         }
     }
     while(scope && scope->type != sc_func) {

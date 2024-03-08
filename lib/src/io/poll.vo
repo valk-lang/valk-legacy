@@ -16,21 +16,15 @@ class Poll[T] {
         data: null
     })
 
-    // fn _gc_transfer() {
-    //     println("T.POLL")
-    // }
-    // fn _gc_free() {
-    //     println("F.POLL")
-    // }
-
     static fn new() CLASS {
 
         let fd = sys:epoll_create(1)
-        return CLASS {
+        let poll = CLASS {
             epoll_fd: fd
             epoll_buffer: mem:alloc(40 * sizeof(inline sys:cstruct_epoll_event))
             lsn_by_index: null
         }
+        return poll
     }
 
     fn wait(timeout: i32 (-1)) Array[Listener[T]] {
@@ -135,16 +129,5 @@ class Listener[T] {
 
         let res = sys:epoll_ctl(this.epoll_fd, sys:EPOLL_CTL_MOD, this.fd, evo)
     }
-
-    // fn _gc_transfer() {
-    //     println("T.LSN")
-    // }
-    // fn _gc_mark() {
-    //     println("M.LSN")
-    // }
-    // fn _gc_free() {
-    //     println("FREE LSN")
-    //     // mem:free(this.epoll_buffer)
-    // }
 }
 

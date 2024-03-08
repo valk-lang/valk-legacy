@@ -19,20 +19,13 @@ class ParseResult {
 	~ fully_parsed: bool (false)
 	~ headers_parsed: bool (false)
 	- stage: uint (0)
-
-    // fn _gc_transfer() {
-    //     println("T.PCON")
-    // }
-    // fn _gc_free() {
-    //     println("F.PCON")
-    // }
 }
 
 struct Parser {
 
-	static fn parse_response(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
-		Parser.parse_bytes(bytes, result, only_headers, false) ! { throw invalid }
-	}
+	// static fn parse_response(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
+	// 	Parser.parse_bytes(bytes, result, only_headers, false) ! { throw invalid }
+	// }
 	static fn parse_request(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
 		Parser.parse_bytes(bytes, result, only_headers, true) ! { throw invalid }
 	}

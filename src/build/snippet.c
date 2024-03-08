@@ -14,7 +14,7 @@ Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* 
     *fc->chunk_parse = ch;
 
     Array* exports = snip->exports;
-    if(exports) {
+    if(exports && scope_parent) {
         for(int i = 0; i < exports->length; i++) {
             char *name = array_get_index(exports, i);
             Idf* idf = map_get(sub->identifiers, name);
@@ -27,4 +27,12 @@ Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* 
     }
 
     return sub;
+}
+
+void read_snippet_ast(Allocator* alc, Fc* fc, Scope* scope, Snippet* snip) {
+    Chunk ch;
+    ch = *fc->chunk_parse;
+    *fc->chunk_parse = *snip->chunk;
+    read_ast(fc, scope, false);
+    *fc->chunk_parse = ch;
 }

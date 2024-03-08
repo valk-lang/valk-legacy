@@ -102,7 +102,6 @@ enum TOKENS {
     t_break,
     t_continue,
     t_throw,
-    t_gc_unlink,
     t_set_var,
     t_ast_scope,
 };

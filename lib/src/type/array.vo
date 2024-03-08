@@ -6,7 +6,7 @@ class Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
-    - is_transfered: bool (false) 
+    // - is_transfered: bool (false) 
 
     static fn new(start_size: uint (2)) CLASS {
         if start_size < 2 {
@@ -29,7 +29,7 @@ class Array[T] {
             data = this.increase_size()
         }
 
-        @ptrv(data, T, length) = item
+        @ptrv(data, T, length) = @gc_link(this, item)
         this.length = length + 1
 
         return length
@@ -51,7 +51,7 @@ class Array[T] {
             to_pos--
         }
 
-        @ptrv(data, T, 0) = item
+        @ptrv(data, T, 0) = @gc_link(this, item)
         this.length = length + 1
     }
 
@@ -85,7 +85,6 @@ class Array[T] {
             throw out_of_range;
         }
         let data = this.data;
-        @gc_unlink(@ptrv(data, T, index))
         @ptrv(data, T, index) = @gc_link(this, value)
     }
 
@@ -94,8 +93,6 @@ class Array[T] {
         if index >= len { return }
         let data = this.data;
         let after_count = len - (index + 1);
-
-        @gc_unlink(@ptrv(data, T, index))
 
         if after_count > 0 {
             mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T));
@@ -112,9 +109,7 @@ class Array[T] {
 
     fn pop() T !empty {
         if this.length > 0 {
-            let value = @ptrv(this.data, T, this.length - 1);
-            @gc_unlink(value)
-            return value
+            return @ptrv(this.data, T, this.length - 1);
         }
         throw empty
     }
@@ -149,14 +144,6 @@ class Array[T] {
     }
 
     fn clear() {
-        let index : uint = 0
-        let adr = this.data
-        let len = this.length
-        while index < len {
-            let item = @ptrv(adr, T, index)
-            @gc_unlink(item)
-            index++
-        }
         this.length = 0
     }
 
@@ -202,20 +189,13 @@ class Array[T] {
     ////////////////
 
     fn _gc_transfer() {
-        // println("TRANSFER ARRAY")
-        // this.is_transfered = true
-        // let new_data = mem:alloc(this.size * sizeof(T))
         let data = this.data
         let x = this.length
         while x-- > 0 {
-            // @ptrv(new_data, T, x) = @ptrv(data, T, x)
             mem:gc_transfer_item(@ptrv(data, T, x))
         }
-        // println("-")
-        // this.data = new_data
     }
     fn _gc_mark() {
-        // println("MARK ARRAY")
         let data = this.data
         let x = this.length
         while x-- > 0 {
@@ -223,21 +203,7 @@ class Array[T] {
         }
     }
     fn _gc_free() {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:gc_free_item(@ptrv(data, T, x))
-        }
-        // println("FREE ARRAY")
-        // if this.is_transfered {
-        mem:free(data)
-        // } else {
-        //     let data = this.data
-        //     let x = this.length
-        //     while x-- > 0 {
-        //         // mem:gc_mark_item(this, @ptrv(data, T, x))
-        //     }
-        // }
+        mem:free(this.data)
     }
 
     ////////////////

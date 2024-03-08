@@ -12,7 +12,7 @@ class ServerData {
     max_connections: uint
     thread_nr: uint (0)
     handler: fn(Request)(Response)
-    static_dirs: Array[String] (Array[String].new())
+    // static_dirs: Array[String] (Array[String].new())
     show_info: bool
 
     // fn _gc_transfer() {
@@ -114,10 +114,6 @@ class Server {
             // let copy = this.server_data();
             let thread = os:Thread.start(Server.worker)
             worker_count--;
-            break
-        }
-        while true {
-        os:sleep_ms(200);
         }
 
         // let copy = this.server_data();
@@ -159,12 +155,7 @@ class Server {
             let i : uint = 0;
 
             while i < event_count {
-                let lsn_ = events.get(i) ! { break }
-                if (@ptrv(lsn_, ptr) & 1) == 1 {
-                    lsn_ = (@ptrv(lsn_, ptr) @as ptr - 1) @as io:Listener[?Connection]
-                    lsn_.update_epoll()
-                }
-                let lsn = lsn_
+                let lsn = events.get(i) ! { break }
                 let fd = lsn.fd;
                 i++;
 
@@ -250,9 +241,8 @@ class Server {
 
     - static fn respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
-        // println("RESP")
-
         while true {
+
             let res = http_con.parse_result;
             let read_buf = http_con.read_buf;
             while true {

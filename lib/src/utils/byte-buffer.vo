@@ -12,10 +12,11 @@ class ByteBuffer {
 		if start_size < 10 {
 			start_size = 10;
 		}
-		return CLASS {
+		let res = CLASS {
 			data: mem:alloc(start_size),
 			size: start_size,
 		};
+		return res
 	}
 
 	fn _gc_free() void {

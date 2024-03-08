@@ -223,15 +223,6 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
                 *fc->chunk_parse = ch;
                 continue;
             }
-            if (str_is(tkn, "@gc_unlink")){
-                tok_expect(fc, "(", false, false);
-                Value *val = read_value(alc, fc, scope, true, 0);
-                tok_expect(fc, ")", true, true);
-                if (type_is_gc(val->rett)) {
-                    array_push(scope->ast, token_make(alc, t_gc_unlink, val));
-                }
-                continue;
-            }
         }
 
         tok_back(fc);

@@ -16,6 +16,12 @@ fn free(adr: ptr) {
 	sys:free(adr);
 }
 
+fn calloc(size: uint) ptr {
+	let adr = alloc(size);
+	clear(adr, size)
+	return adr
+}
+
 fn copy(from: ptr, to: ptr, length: uint) {
 	let i = 0 @as uint;
 	let chunks = length / sizeof(uint);

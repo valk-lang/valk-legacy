@@ -103,12 +103,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_func_return_nothing(ir);
             continue;
         }
-        if (tt == t_gc_unlink) {
-            Value* val = t->item;
-            char* ir_val = ir_value(ir, scope, val);
-            ir_gc_unlink(ir, ir_val, val->rett->nullable);
-            continue;
-        }
         if (tt == t_set_var) {
             VVar *vv = t->item;
             vv->var = ir_value(ir, scope, vv->value);
@@ -122,52 +116,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         die("Unhandled IR token (compiler bug)");
     }
-}
-
-char* ir_gc_unlink(IR* ir, char* val, bool nullable) {
-    Build* b = ir->b;
-
-    Type* type_u8 = type_gen_volt(ir->alc, b, "u8");
-    Type* type_ptr = type_gen_volt(ir->alc, b, "ptr");
-
-    IRBlock *after = ir_block_make(ir, ir->func, "unlink_after_");
-    IRBlock *block_if_min = ir_block_make(ir, ir->func, "unlink_min_state_");
-    IRBlock *block_if_max = ir_block_make(ir, ir->func, "unlink_max_state_");
-
-    if(nullable) {
-        IRBlock *block_not_null = ir_block_make(ir, ir->func, "unlink_not_null_");
-
-        char* is_null = ir_compare(ir, op_ne, val, "null", "ptr", false, false);
-        ir_cond_jump(ir, is_null, block_not_null, after);
-
-        ir->block = block_not_null;
-    }
-
-    char* val_state_var = ir_ptrv(ir, val, "i8", 0);
-    char* val_state = ir_load(ir, type_u8, val_state_var);
-
-    char* above_new = ir_compare(ir, op_gt, val_state, "0", "i8", false, false);
-    ir_cond_jump(ir, above_new, block_if_min, after);
-
-    ir->block = block_if_min;
-    char* below_unknown = ir_compare(ir, op_gt, val_state, "6", "i8", false, false);
-    ir_cond_jump(ir, below_unknown, block_if_max, after);
-
-    ir->block = block_if_max;
-    Func *func = get_volt_class_func(b, "mem", "Stack", "unlink");
-    Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
-    //
-    Array* types = array_make(ir->alc, 2);
-    array_push(types, type_ptr);
-    Array* values = array_make(ir->alc, 2);
-    array_push(values, val);
-    Array* args = ir_fcall_ir_args(ir, values, types);
-    //
-    char* link = ir_value(ir, NULL, fptr);
-    char* link_rett = ir_func_call(ir, link, args, "ptr", 0, 0);
-    ir_jump(ir, after);
-
-    ir->block = after;
 }
 
 char* ir_gc_link(IR* ir, char* on, char* to) {

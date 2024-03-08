@@ -3,4 +3,8 @@ pointer ptr math {
     fn to_hex() String {
         return (this @as uint).to_hex()
     }
+
+    fn print() {
+        (this @as uint).print(16)
+    }
 }

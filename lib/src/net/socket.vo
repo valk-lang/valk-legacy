@@ -8,13 +8,6 @@ class Socket {
 		return SocketTCP.new(host, port, blocking) ! { throw init_error }
 	}
 
-	fn _gc_transfer() {
-        println("T.SOCK")
-    }
-    fn _gc_free() {
-        println("F.SOCK")
-    }
-
 	static fn close(fd: i32) void {
 		// #if OS == win
         // sys.closesocket(fd @as sys.SOCKET);

@@ -18,16 +18,6 @@ class Connection {
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
 
-    // fn _gc_transfer() {
-    //     println("T.HCON")
-    // }
-    // fn _gc_mark() {
-    //     println("M.HCON")
-    // }
-    // fn _gc_free() {
-    //     println("F.HCON")
-    // }
-
     fn reset_parser() void {
 
         this.parse_result = ParseResult{};

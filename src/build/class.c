@@ -15,6 +15,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->size = -1;
     c->gc_fields = 0;
     c->gc_vtable_index = 0;
+    c->pool_index = -1;
     //
     c->packed = false;
     c->is_signed = true;
@@ -107,6 +108,7 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
 
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
+        class->pool_index = get_class_pool_index(class);
         // STACK
         // Idf *idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
         // scope_set_idf(class->scope, "STACK", idf, fc);
@@ -116,6 +118,15 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         //
         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "pools"));
+        scope_set_idf(class->scope, "POOLS", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
+        scope_set_idf(class->scope, "POOL_INDEX", idf, fc);
+        //
+        idf = idf_make(b->alc, idf_class, get_volt_class(b, "mem", "GcPool"));
+        scope_set_idf(class->scope, "POOL_CLASS", idf, fc);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, fc);
@@ -157,23 +168,9 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         array_push(fc->funcs, mark);
         map_set_force_new(class->funcs, "_v_mark", mark);
 
-        // Free
-        strcpy(buf, class->name);
-        strcat(buf, "__v_free");
-        name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_free");
-        export_name = dups(alc, buf);
-        Func *ff = func_make(b->alc, class->fc, class->scope, name, export_name);
-        ff->class = class;
-        ff->is_static = false;
-        array_push(fc->funcs, ff);
-        map_set_force_new(class->funcs, "_v_free", ff);
-
         // AST
         class_generate_transfer(fc, b, class, transfer);
         class_generate_mark(fc, b, class, mark);
-        class_generate_free(fc, b, class, ff);
     }
 }
 
@@ -189,12 +186,14 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     // str_flat(code, "  println((this @as ptr).to_hex())\n");
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
-    str_flat(code, "  @ptrv(this, u8, -7) = 0\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    if (class->pool_index > -1) {
+        str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+        str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
+        str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+        str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+        str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    }
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
     // Props
@@ -252,9 +251,6 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
     str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
     str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    str_flat(code, "  if state == 6 {\n");
-    str_flat(code, "    @ptrv(this, u8, -8) = 4\n");
-    str_flat(code, "  }\n");
 
     str_flat(code, "  GC_MARK_SIZE += SIZE\n");
     // Props
@@ -288,69 +284,6 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     Func* hook = map_get(class->funcs, "_gc_mark");
     if(hook) {
         str_flat(code, "  this._gc_mark()\n");
-    }
-
-    str_flat(code, "}\n");
-
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(chunk, content, code->length);
-
-    *fc->chunk_parse = *chunk;
-    *fc->chunk_parse_prev = *chunk;
-    parse_handle_func_args(fc, func);
-}
-
-void class_generate_free(Fc* fc, Build* b, Class* class, Func* func) {
-
-    Map* props = class->props;
-
-    Str* code = b->str_buf;
-    str_clear(code);
-
-    str_flat(code, "(age: u8) void {\n");
-    // str_flat(code, "  print(\"f\")\n");
-    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) < 8 {\n");
-    str_flat(code, "    @ptrv(this, u8, -8) = 0\n");
-
-    str_flat(code, "    let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "    let base = (this @as ptr) - (index * (SIZE + 8)) - 8\n");
-    str_flat(code, "    let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "    @ptrv(base, uint, -1) = transfer_count - 1\n");
-    str_flat(code, "  }\n");
-    // Props
-    for(int i = 0; i < props->values->length; i++) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        char var[32];
-        strcpy(var, "prop_");
-        itoa(i, var + 5, 10);
-
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if ");
-            str_add(code, var);
-            str_flat(code, " != null {\n");
-        }
-        str_flat(code, "  ");
-        str_add(code, var);
-        str_flat(code, "._v_free(age)\n");
-        if(p->type->nullable) {
-            str_flat(code, "}\n");
-        }
-    }
-
-    Func* hook = map_get(class->funcs, "_gc_free");
-    if(hook) {
-        str_flat(code, "  this._gc_free()\n");
     }
 
     str_flat(code, "}\n");
@@ -415,7 +348,7 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gclass = class_make(b->alc, b, ct_struct);
+    gclass = class_make(b->alc, b, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
     gclass->scope = scope_sub_make(b->alc, sc_default, class->fc->scope, NULL);
     gclass->type = class->type;
@@ -472,4 +405,26 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     //
     build_return_str_buf(b, hash);
     return gclass;
+}
+
+
+int get_class_pool_index(Class* class) {
+    int size = class->size;
+    int index = -1;
+    if(size <= 64) {
+        int psize = size + (size % 8);
+        index = ((psize / 8) - 1) * 2;
+    } else if(size <= 128) {
+        index = (64 / 8) * 2;
+    } else if(size <= 256) {
+        index = (64 / 8 + 1) * 2;
+    } else if(size <= 512) {
+        index = (64 / 8 + 2) * 2;
+    }
+    if(index > -1) {
+        if(map_get(class->funcs, "_gc_free")) {
+            index++;
+        }
+    }
+    return index;
 }

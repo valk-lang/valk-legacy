@@ -13,6 +13,7 @@ void class_generate_internals(Fc* fc, Build* b, Class* class);
 void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func);
 void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func);
 void class_generate_free(Fc* fc, Build* b, Class* class, Func* func);
+int get_class_pool_index(Class* class);
 
 struct Class {
     char* name;
@@ -30,6 +31,7 @@ struct Class {
     int size;
     int gc_fields;
     int gc_vtable_index;
+    int pool_index;
     bool packed;
     bool is_signed;
     bool allow_math;
