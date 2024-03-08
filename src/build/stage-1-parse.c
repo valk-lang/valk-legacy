@@ -12,6 +12,7 @@ void stage_1_snippet(Fc* fc);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
+    Parser* p = b->parser;
 
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);

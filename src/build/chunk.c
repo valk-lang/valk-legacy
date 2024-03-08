@@ -3,16 +3,11 @@
 
 Chunk *chunk_make(Allocator *alc, Build *b, Fc *fc) {
     Chunk *ch = al(alc, sizeof(Chunk));
-    ch->b = b;
     ch->fc = fc;
-    ch->alc = alc;
-    ch->parent = NULL;
     ch->tokens = NULL;
     ch->content = NULL;
     ch->length = 0;
     ch->i = 0;
-    ch->line = 0;
-    ch->col = 0;
     return ch;
 }
 

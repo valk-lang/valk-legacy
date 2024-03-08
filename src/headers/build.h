@@ -21,12 +21,6 @@ Nsc *get_volt_nsc(Build *b, char *name);
 
 Fc *fc_make(Nsc *nsc, char *path);
 
-// Chunks
-Chunk *chunk_make(Allocator *alc, Build *b, Fc *fc);
-Chunk *chunk_clone(Allocator *alc, Chunk *ch);
-void chunk_set_content(Chunk *chunk, char *content, int length);
-void chunk_lex_start(Chunk *chunk);
-void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col, int *err_col_end);
 // Stage functions
 void build_set_stages(Build *b);
 void stage_add_item(Stage *stage, void *item);
@@ -92,6 +86,8 @@ struct Build {
     ErrorCollection* errors;
     Array *strings;
     //
+    Parser *parser;
+    //
     size_t mem_parse;
     size_t mem_objects;
     //
@@ -112,32 +108,19 @@ struct Fc {
     char *path_cache;
     //
     Allocator *alc;
-    Allocator *alc_ast;
     Nsc *nsc;
     Scope *scope;
     //
     Chunk *content;
-    Chunk *chunk_parse;
-    Chunk *chunk_parse_prev;
-    //
-    Array *funcs;
-    Array *classes;
-    Array *aliasses;
-    Array *globals;
-    //
-    char *hash;
     //
     bool is_header;
-    bool ir_changed;
-    bool contains_main_func;
 };
 struct Nsc {
+    Pkc *pkc;
     char *name;
     char *dir;
-    char *path_o;
-    Pkc *pkc;
     Scope *scope;
-    Array *fcs;
+    Unit *unit;
 };
 struct Pkc {
     Build *b;
@@ -148,20 +131,6 @@ struct Pkc {
     Map *pkc_by_name;
     Array *header_dirs;
     Map *headers_by_fn;
-};
-struct Chunk {
-    Build *b;
-    Fc *fc;
-    Allocator *alc;
-    Chunk *parent;
-    char *tokens;
-    char *content;
-    int length;
-    int i;
-    int line;
-    int col;
-    int scope_end_i;
-    char token;
 };
 struct Stage {
     Array *items;

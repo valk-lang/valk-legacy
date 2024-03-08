@@ -16,15 +16,6 @@ Fc *fc_make(Nsc *nsc, char *path) {
     fc->scope = scope_make(alc, sc_default, nsc->scope);
     fc->is_header = is_header;
 
-    fc->funcs = array_make(alc, 8);
-    fc->classes = array_make(alc, 4);
-    fc->aliasses = array_make(alc, 8);
-    fc->globals = array_make(alc, 8);
-
-    fc->hash = NULL;
-
-    fc->ir_changed = false;
-
     // Paths
     char *path_ir = al(alc, VOLT_PATH_MAX);
     char *path_cache = al(alc, VOLT_PATH_MAX);

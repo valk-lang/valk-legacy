@@ -78,6 +78,8 @@ int cmd_build(int argc, char *argv[]) {
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
 
+    b->parser = parser_make(alc, b);
+
     b->func_main = NULL;
 
     b->ptr_size = 8;

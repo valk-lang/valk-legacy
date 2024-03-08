@@ -7,11 +7,27 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->name = name;
     nsc->dir = dir;
     nsc->scope = scope_make(alc, sc_default, NULL);
-    nsc->fcs = array_make(alc, 20);
 
     char *path_o = al(alc, VOLT_PATH_MAX);
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    nsc->path_o = path_o;
+    char *path_ir = al(alc, VOLT_PATH_MAX);
+    sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+
+    Unit* u = al(alc, sizeof(Unit));
+    u->b = pkc->b;
+    //
+    u->path_o = path_o;
+    u->path_ir = path_ir;
+    u->hash = NULL;
+    //
+    u->funcs = array_make(alc, 50);
+    u->classes = array_make(alc, 50);
+    u->aliasses = array_make(alc, 20);
+    u->globals = array_make(alc, 20);
+
+    u->ir_changed = false;
+
+    nsc->unit = u;
 
     return nsc;
 }

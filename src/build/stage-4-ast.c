@@ -1,53 +1,62 @@
 
 #include "../all.h"
 
-void stage_ast(Fc *fc);
+void stage_ast(Unit *u);
 
-void stage_4_ast(Fc *fc) {
-    if (fc->is_header)
-        return;
+void stage_4_ast(Unit *u) {
 
-    Build *b = fc->b;
+    Build *b = u->b;
 
-    if (b->verbose > 2)
-        printf("Stage 4 | Parse AST: %s\n", fc->path);
-
-    fc->alc_ast = b->alc_ast;
-
-    if(fc->contains_main_func)
+    if(u->contains_main_func)
         return;
 
     usize start = microtime();
-    stage_ast(fc);
+
+    stage_ast(u);
+
     b->time_parse += microtime() - start;
 
-    stage_4_ir(fc);
+    stage_4_ir(u);
 }
 
-void stage_4_ast_main(Fc *fc) {
+void stage_4_ast_main(Unit *u) {
 
-    Build *b = fc->b;
+    Build *b = u->b;
 
     usize start = microtime();
-    stage_ast(fc);
+    stage_ast(u);
     b->time_parse += microtime() - start;
 
-    stage_4_ir(fc);
+    stage_4_ir(u);
 }
 
-void stage_ast(Fc *fc) {
-    Array *funcs = fc->funcs;
+void stage_ast(Unit *u) {
+    Build* b = u->b;
+    Parser *p = b->parser;
+    //
+    Array *funcs = u->funcs;
     for (int i = 0; i < funcs->length; i++) {
+
         Func *func = array_get_index(funcs, i);
-        *fc->chunk_parse = *func->chunk_body;
-        read_ast(fc, func->scope, false);
+
+        if (u->b->verbose > 2)
+            printf("Stage 4 | Parse AST: %s\n", func->name);
+
+        parser_set_chunk(p, func->chunk_body, false);
+
+        p->func = func;
+        p->class = func->class;
+        p->scope = func->scope;
+        p->loop_scope = NULL;
+        read_ast(p, false);
     }
 }
 
-void read_ast(Fc *fc, Scope *scope, bool single_line) {
-    Allocator *alc = fc->alc_ast;
-    Build *b = fc->b;
-    Chunk *chunk = fc->chunk_parse;
+void read_ast(Parser *p, bool single_line) {
+    //
+    Build* b = p->b;
+    Allocator *alc = b->alc_ast;
+    Scope* scope = p->scope;
 
     if (!scope->ast)
         scope->ast = array_make(alc, 50);
@@ -59,8 +68,8 @@ void read_ast(Fc *fc, Scope *scope, bool single_line) {
         if (single_line && first)
             return;
 
-        char *tkn = tok(fc, true, true, true);
-        int t = chunk->token;
+        int t = tok(p, true, true, true);
+        char* tkn = p->data;
 
         if (tkn[0] == ';')
             continue;
