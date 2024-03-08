@@ -201,7 +201,6 @@ struct GcPool {
         let prev = block
         let next = @ptrv(block, ptr)
         while next != null {
-            break
             let block = next
             next = @ptrv(block, ptr)
             if @ptrv(block, uint, 2) == 0 {
