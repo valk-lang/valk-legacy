@@ -161,7 +161,6 @@ class Server {
 
                 if fd == sock_fd {
                     // New connection
-                    println("New connection")
                     let netcon = sock.accept() ! {
                         // print("failed to accept\n")
                         continue

@@ -131,6 +131,7 @@ struct Stack {
             //
             gc_mark_size = 0
             gc_transfer_size = 0
+            // io:print_fake("f")
             //
             this.update_age()
             this.mark_stack_as_solid()
@@ -149,7 +150,7 @@ struct Stack {
             // Increase lowest point
             this.lowest = this.lowest_next
         // } else {
-            // io:print_fake("l")
+        //     io:print_fake("l")
         }
 
 

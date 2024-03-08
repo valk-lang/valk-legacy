@@ -612,11 +612,11 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, scope, init, values->values, false);
-    // if(class->type == ct_class) {
-    //     Scope *gcscope = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-    //     Token *t = token_make(alc, t_ast_scope, gcscope);
-    //     array_shift(scope->ast, t);
-    // }
+    if(class->type == ct_class) {
+        Scope *gcscope = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        Token *t = token_make(alc, t_ast_scope, gcscope);
+        array_shift(scope->ast, t);
+    }
 
     return buffer;
 }
