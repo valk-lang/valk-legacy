@@ -21,6 +21,14 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
     bracket_table['['] = ']';
     bracket_table['{'] = '}';
     bracket_table['<'] = '}';
+    char bracket_token[256];
+    bracket_token['('] = tok_bracket_open;
+    bracket_token['['] = tok_sq_bracket_open;
+    bracket_token['{'] = tok_curly_open;
+    bracket_token['<'] = tok_ltcurly_open;
+    bracket_token[')'] = tok_bracket_close;
+    bracket_token[']'] = tok_sq_bracket_close;
+    bracket_token['}'] = tok_curly_close;
 
     int cc_depth = 0;
 
@@ -128,49 +136,51 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95) {
 
             tokens[o++] = tok_id;
-            tokens[o++] = tok_data_with_pos;
-            *(void **)((intptr_t)tokens + o) = content + i - 1;
-            o += sizeof(void*);
+            tokens[o++] = tok_data_pos_with_chars;
             *(int *)((intptr_t)tokens + o) = line;
             o += sizeof(int);
             *(int *)((intptr_t)tokens + o) = col;
             o += sizeof(int);
+            tokens[o++] = ch;
 
             char ch = content[i];
             while ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || (ch >= 48 && ch <= 57) || ch == 95) {
+                tokens[o++] = ch;
                 ch = content[++i];
             }
+            tokens[o++] = 0;
             continue;
         }
         // Number
         if (ch >= 48 && ch <= 57) {
             tokens[o++] = tok_number;
-            tokens[o++] = tok_data;
-            *(void **)((intptr_t)tokens + o) = content + i - 1;
-            o += sizeof(void*);
+            tokens[o++] = tok_data_chars;
+            tokens[o++] = ch;
 
             // 0-9
             char ch = content[i];
             while (ch >= 48 && ch <= 57) {
+                tokens[o++] = ch;
                 ch = content[++i];
             }
+            tokens[o++] = 0;
             continue;
         }
         // Strings
         if (ch == '"') {
             int start = i;
             tokens[o++] = tok_string;
-            tokens[o++] = tok_data;
-            *(void **)((intptr_t)tokens + o) = content + i;
-            o += sizeof(void*);
+            tokens[o++] = tok_data_chars;
 
             char ch = content[i];
             while (ch != '"') {
+                tokens[o++] = ch;
                 if (ch == '\\') {
                     ch = content[++i];
+                    tokens[o++] = ch;
                 }
                 if (ch == 0) {
-                    lex_err(chunk, start, "Missing string closing tag '\"', compiler reached end of file");
+                    lex_err(b, chunk, start, "Missing string closing tag '\"', compiler reached end of file");
                 }
                 ch = content[++i];
                 // Extend memory if needed
@@ -180,6 +190,7 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
                     tokens = str_buf->data;
                 }
             }
+            tokens[o++] = 0;
             i++;
             continue;
         }
@@ -190,7 +201,7 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
                 ch = backslash_char(ch);
             }
             if (content[i++] != '\'') {
-                lex_err(chunk, i, "Missing character closing tag ('), found '%c'", content[i - 1]);
+                lex_err(b, chunk, i, "Missing character closing tag ('), found '%c'", content[i - 1]);
             }
             tokens[o++] = tok_char;
             tokens[o++] = tok_data_i8;
@@ -199,11 +210,9 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         }
         // Scopes
         if (ch == '(' || ch == '[' || ch == '{' || (ch == '<' && content[i] == '{')) {
-            tokens[o++] = tok_scope_open;
-            tokens[o++] = tok_data_with_i32;
+            tokens[o++] = bracket_token[ch];
+            tokens[o++] = tok_data_i32;
 
-            *(void **)((intptr_t)tokens + o) = content + i - 1;
-            o += sizeof(void*);
             int index = o;
             o += sizeof(int);
 
@@ -218,14 +227,12 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         if (ch == ')' || ch == ']' || ch == '}') {
             depth--;
             if (depth < 0) {
-                lex_err(chunk, "Unexpected closing tag '%c'", ch);
+                lex_err(b, chunk, "Unexpected closing tag '%c'", ch);
             }
             if (closer_chars[depth] != ch) {
-                lex_err(chunk, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
+                lex_err(b, chunk, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
             }
-            tokens[o++] = tok_scope_close;
-            tokens[o++] = tok_data_i8;
-            tokens[o++] = ch;
+            tokens[o++] = bracket_token[ch];
             int offset = closer_indexes[depth];
             *(int *)(&tokens[offset]) = o;
             continue;
@@ -334,11 +341,11 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             continue;
         }
 
-        lex_err(chunk, i, "Unexpected character '%c' (byte:%d, pos:%d)", ch, ch, i);
+        lex_err(b, chunk, i, "Unexpected character '%c' (byte:%d, pos:%d)", ch, ch, i);
     }
 
     if (depth > 0) {
-        lex_err(chunk, i, "Missing closing tag '%c'", closer_chars[depth - 1]);
+        lex_err(b, chunk, i, "Missing closing tag '%c'", closer_chars[depth - 1]);
     }
 
     tokens[o++] = tok_eof;

@@ -3,31 +3,42 @@
 
 char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
     Chunk* ch = p->chunk;
+    char *tokens = ch->tokens;
     int i = ch->i;
-    char t = ch->tokens[i++];
+    char t = tokens[i++];
     if(t == tok_space) {
         if (!allow_space)
             return tok_none;
-        t = ch->tokens[i++];
+        t = tokens[i++];
     }
     if(t == tok_newline) {
         if (!allow_newline || !allow_space)
             return tok_none;
-        t = ch->tokens[i++];
+        t = tokens[i++];
     }
-    char td = ch->tokens[i];
+    char td = tokens[i];
     if(td > 240) {
         i++;
         // Data token
         if(td == tok_data) {
-            p->data = *(void **)(ch->tokens + i);
+            p->data = *(void **)(tokens + i);
             i += sizeof(void *);
         } else if(td == tok_data_i32) {
-            p->data_i32 = *(int *)(ch->tokens + i);
+            p->data_i32 = *(int *)(tokens + i);
             i += 4;
         } else if(td == tok_data_i8) {
-            p->data_i8 = *(char *)(ch->tokens + i);
+            p->data_i8 = *(char *)(tokens + i);
             i++;
+        } else if(td == tok_data_pos_with_chars) {
+            p->line = *(int*)(tokens + i);
+            i += sizeof(int);
+            p->col = *(int*)(tokens + i);
+            i += sizeof(int);
+            p->data = (tokens + i);
+            while(tokens[i++] != 0) {}
+        } else if(td == tok_data_chars) {
+            p->data = (tokens + i);
+            while(tokens[i++] != 0) {}
         }
     }
     if(update) {
@@ -54,6 +65,9 @@ void tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space,
     if(!str_is(tkn, expect_1) && !str_is(tkn, expect_2)) {
         parse_err(p, start, "Expected '%s' or '%s' here, instead of '%s'", expect_1, expect_2, tkn);
     }
+}
+
+char *tok_to_str(Allocator* alc, int t) {
 }
 
 // char tok_read_byte(Fc* fc, int offset) {

@@ -1,99 +1,102 @@
 
 #include "../all.h"
 
-void stage_parse(Fc *fc);
-void stage_1_func(Fc* fc, int act);
-void stage_1_header(Fc* fc);
-void stage_1_class(Fc* fc, int type, int act);
-void stage_1_use(Fc* fc);
-void stage_1_global(Fc* fc, bool shared);
-void stage_1_value_alias(Fc* fc);
-void stage_1_snippet(Fc* fc);
+void stage_parse(Parser* p, Unit* u);
+void stage_1_func(Parser* p, Unit* u, int act);
+void stage_1_header(Parser* p, Unit* u);
+void stage_1_class(Parser* p, Unit* u, int type, int act);
+void stage_1_use(Parser* p, Unit* u);
+void stage_1_global(Parser* p, Unit* u, bool shared);
+void stage_1_value_alias(Parser* p, Unit* u);
+void stage_1_snippet(Parser* p, Unit* u);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
     Parser* p = b->parser;
+    Unit* u = fc->nsc->unit;
 
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);
 
+    *p->chunk = *fc->content;
+
     usize start = microtime();
-    stage_parse(fc);
+    stage_parse(p, u);
     b->time_parse += microtime() - start;
 
     stage_add_item(b->stage_2_alias, fc);
 }
 
-void stage_parse(Fc *fc) {
-    Build* b = fc->b;
-    Chunk* chunk = fc->chunk_parse;
+void stage_parse(Parser* p, Unit* u) {
 
     while(true) {
 
-        char* tkn = tok(fc, true, true, true);
-        if (tkn[0] == 0)
+        int t = tok(p, true, true, true);
+        if (t == tok_eof)
             break;
 
         int act = act_public;
 
-        if(str_is(tkn, ";")) {
+        if (t == tok_semi) {
             continue;
         }
-        if(str_is(tkn, "fn")) {
-            stage_1_func(fc, act);
-            continue;
-        }
-        if(str_is(tkn, "struct")) {
-            stage_1_class(fc, ct_struct, act);
-            continue;
-        }
-        if(str_is(tkn, "class")) {
-            stage_1_class(fc, ct_class, act);
-            continue;
-        }
-        if(str_is(tkn, "pointer")) {
-            stage_1_class(fc, ct_ptr, act);
-            continue;
-        }
-        if(str_is(tkn, "integer")) {
-            stage_1_class(fc, ct_int, act);
-            continue;
-        }
-        if(str_is(tkn, "float")) {
-            stage_1_class(fc, ct_float, act);
-            continue;
-        }
-        if(str_is(tkn, "boolean")) {
-            stage_1_class(fc, ct_bool, act);
-            continue;
-        }
-        if(str_is(tkn, "header")) {
-            stage_1_header(fc);
-            continue;
-        }
-        if(str_is(tkn, "use")) {
-            stage_1_use(fc);
-            continue;
-        }
-        if(str_is(tkn, "shared")) {
-            stage_1_global(fc, true);
-            continue;
-        }
-        if(str_is(tkn, "global")) {
-            stage_1_global(fc, false);
-            continue;
-        }
-        if(str_is(tkn, "value")) {
-            stage_1_value_alias(fc);
-            continue;
-        }
-        if(str_is(tkn, "snippet")) {
-            stage_1_snippet(fc);
-            continue;
+        if (t == tok_id) {
+            char* tkn = tok_str(p);
+            if (str_is(tkn, "fn")) {
+                stage_1_func(fc, act);
+                continue;
+            }
+            if (str_is(tkn, "struct")) {
+                stage_1_class(fc, ct_struct, act);
+                continue;
+            }
+            if (str_is(tkn, "class")) {
+                stage_1_class(fc, ct_class, act);
+                continue;
+            }
+            if (str_is(tkn, "pointer")) {
+                stage_1_class(fc, ct_ptr, act);
+                continue;
+            }
+            if (str_is(tkn, "integer")) {
+                stage_1_class(fc, ct_int, act);
+                continue;
+            }
+            if (str_is(tkn, "float")) {
+                stage_1_class(fc, ct_float, act);
+                continue;
+            }
+            if (str_is(tkn, "boolean")) {
+                stage_1_class(fc, ct_bool, act);
+                continue;
+            }
+            if (str_is(tkn, "header")) {
+                stage_1_header(fc);
+                continue;
+            }
+            if (str_is(tkn, "use")) {
+                stage_1_use(fc);
+                continue;
+            }
+            if (str_is(tkn, "shared")) {
+                stage_1_global(fc, true);
+                continue;
+            }
+            if (str_is(tkn, "global")) {
+                stage_1_global(fc, false);
+                continue;
+            }
+            if (str_is(tkn, "value")) {
+                stage_1_value_alias(fc);
+                continue;
+            }
+            if (str_is(tkn, "snippet")) {
+                stage_1_snippet(fc);
+                continue;
+            }
         }
 
-        sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
-        parse_err(chunk, b->char_buf);
+        parse_err(p, -1, "Unexpected token: '%s'", tkn);
     }
 }
 

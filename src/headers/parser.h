@@ -24,6 +24,10 @@ struct Parser {
     int data_i32;
     char data_i8;
     //
+    int line;
+    int col;
+    int scope_end_i;
+    //
     int chunk_index;
     bool has_data;
 };

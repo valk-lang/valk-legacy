@@ -10,8 +10,13 @@ enum LEX_TOKENS {
     tok_number,
     tok_string,
     tok_char,
-    tok_scope_open,
-    tok_scope_close,
+    tok_bracket_open,
+    tok_bracket_close,
+    tok_sq_bracket_open,
+    tok_sq_bracket_close,
+    tok_curly_open,
+    tok_curly_close,
+    tok_ltcurly_open,
     // Operators
     tok_plus,
     tok_sub,
@@ -59,8 +64,8 @@ enum LEX_TOKENS {
     tok_data = 241,
     tok_data_i32 = 242,
     tok_data_i8 = 243,
-    tok_data_with_pos = 244,
-    tok_data_with_i32 = 245,
+    tok_data_chars = 244,
+    tok_data_pos_with_chars = 245,
 };
 
 enum ACCESS {

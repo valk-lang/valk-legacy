@@ -69,5 +69,6 @@
 #include "headers/parser.h"
 #include "headers/unit.h"
 #include "headers/chunk.h"
+#include "headers/error.h"
 
 #endif
