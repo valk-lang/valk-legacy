@@ -10,6 +10,7 @@ enum LEX_TOKENS {
     tok_number,
     tok_string,
     tok_char,
+    // Brackets
     tok_bracket_open,
     tok_bracket_close,
     tok_sq_bracket_open,
@@ -61,11 +62,8 @@ enum LEX_TOKENS {
     tok_triple_sub,
 
     // Data tokens
-    tok_data = 241,
-    tok_data_i32 = 242,
-    tok_data_i8 = 243,
-    tok_data_chars = 244,
-    tok_data_pos_with_chars = 245,
+    tok_data_pos = 241,
+    tok_data_scope_end = 242,
 };
 
 enum ACCESS {

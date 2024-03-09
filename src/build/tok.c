@@ -20,27 +20,21 @@ char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
     if(td > 240) {
         i++;
         // Data token
-        if(td == tok_data) {
-            p->data = *(void **)(tokens + i);
-            i += sizeof(void *);
-        } else if(td == tok_data_i32) {
-            p->data_i32 = *(int *)(tokens + i);
-            i += 4;
-        } else if(td == tok_data_i8) {
-            p->data_i8 = *(char *)(tokens + i);
-            i++;
-        } else if(td == tok_data_pos_with_chars) {
+        if(td == tok_data_pos) {
             p->line = *(int*)(tokens + i);
             i += sizeof(int);
             p->col = *(int*)(tokens + i);
             i += sizeof(int);
-            p->data = (tokens + i);
-            while(tokens[i++] != 0) {}
-        } else if(td == tok_data_chars) {
-            p->data = (tokens + i);
-            while(tokens[i++] != 0) {}
+        } else if(td == tok_data_scope_end) {
+            p->scope_end_i = *(int*)(tokens + i);
+            i += sizeof(int);
         }
     }
+    // Token chars
+    p->tkn = (tokens + i);
+    while(tokens[i++] != 0) {}
+
+    //
     if(update) {
         ch->i = i;
     }
@@ -51,8 +45,7 @@ char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
 void tok_expect(Parser* p, char* expect, bool allow_space, bool allow_newline) {
     int start = p->chunk->i;
     char t = tok(p, allow_space, allow_newline, true);
-    char* tkn = parser_data_str(p);
-
+    char* tkn = p->tkn;
     if(!str_is(tkn, expect)) {
         parse_err(p, start, "Expected '%s' here, instead of '%s'", expect, tkn);
     }
@@ -60,14 +53,10 @@ void tok_expect(Parser* p, char* expect, bool allow_space, bool allow_newline) {
 void tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
     int start = p->chunk->i;
     char t = tok(p, allow_space, allow_newline, true);
-    char* tkn = parser_data_str(p);
-
+    char* tkn = p->tkn;
     if(!str_is(tkn, expect_1) && !str_is(tkn, expect_2)) {
         parse_err(p, start, "Expected '%s' or '%s' here, instead of '%s'", expect_1, expect_2, tkn);
     }
-}
-
-char *tok_to_str(Allocator* alc, int t) {
 }
 
 // char tok_read_byte(Fc* fc, int offset) {

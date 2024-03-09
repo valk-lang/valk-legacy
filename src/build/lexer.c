@@ -136,7 +136,7 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95) {
 
             tokens[o++] = tok_id;
-            tokens[o++] = tok_data_pos_with_chars;
+            tokens[o++] = tok_data_pos;
             *(int *)((intptr_t)tokens + o) = line;
             o += sizeof(int);
             *(int *)((intptr_t)tokens + o) = col;
@@ -154,7 +154,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         // Number
         if (ch >= 48 && ch <= 57) {
             tokens[o++] = tok_number;
-            tokens[o++] = tok_data_chars;
             tokens[o++] = ch;
 
             // 0-9
@@ -170,7 +169,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         if (ch == '"') {
             int start = i;
             tokens[o++] = tok_string;
-            tokens[o++] = tok_data_chars;
 
             char ch = content[i];
             while (ch != '"') {
@@ -204,21 +202,24 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
                 lex_err(b, chunk, i, "Missing character closing tag ('), found '%c'", content[i - 1]);
             }
             tokens[o++] = tok_char;
-            tokens[o++] = tok_data_i8;
             tokens[o++] = ch;
+            tokens[o++] = 0;
             continue;
         }
         // Scopes
         if (ch == '(' || ch == '[' || ch == '{' || (ch == '<' && content[i] == '{')) {
             tokens[o++] = bracket_token[ch];
-            tokens[o++] = tok_data_i32;
+            tokens[o++] = tok_data_scope_end;
 
             int index = o;
             o += sizeof(int);
 
+            tokens[o++] = ch;
             if (ch == '<') {
-                i++;
+                tokens[o++] = content[i++];
             }
+            tokens[o++] = 0;
+
             closer_chars[depth] = bracket_table[ch];
             closer_indexes[depth] = index;
             depth++;
@@ -233,6 +234,8 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
                 lex_err(b, chunk, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
             }
             tokens[o++] = bracket_token[ch];
+            tokens[o++] = ch;
+            tokens[o++] = 0;
             int offset = closer_indexes[depth];
             *(int *)(&tokens[offset]) = o;
             continue;
@@ -240,6 +243,8 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         // =
         char op = -1;
         char next = content[i];
+        int i_start = i - 1;
+
         if (ch == '=') {
             op = tok_eq;
             if(next == '=') {
@@ -338,6 +343,10 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
 
         if(op > -1) {
             tokens[o++] = op;
+            while(i_start < i) {
+                tokens[o++] = content[i_start++];
+            }
+            tokens[o++] = 0;
             continue;
         }
 

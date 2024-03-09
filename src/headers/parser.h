@@ -20,9 +20,7 @@ struct Parser {
     Scope* scope;
     Scope* loop_scope;
     //
-    void* data;
-    int data_i32;
-    char data_i8;
+    char* tkn;
     //
     int line;
     int col;
