@@ -19,7 +19,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
 
     return sc;
 }
-Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end) {
+Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
     Scope* sub = scope_make(alc, type, parent);
     sub->rett = parent->rett;
     return sub;

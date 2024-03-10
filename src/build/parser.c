@@ -4,13 +4,16 @@
 Parser* parser_make(Allocator* alc, Build* b) {
     Parser* p = al(alc, sizeof(Parser));
     p->b = b;
+    p->tkn = NULL;
+
     p->chunks = al(alc, 20 * sizeof(Chunk));
     p->chunk = chunk_make(alc, b, NULL);
+    p->scope_end = NULL;
+
     p->func = NULL;
     p->class = NULL;
     p->scope = NULL;
     p->loop_scope = NULL;
-    p->tkn = NULL;
 
     p->line = 0;
     p->col = 0;

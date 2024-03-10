@@ -7,7 +7,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
 
     if (v->type == v_string) {
         VString* str = v->item;
-        return ir_string(ir, str, str->fc != ir->fc);
+        return ir_string(ir, str);
     }
     if (v->type == v_number) {
         VNumber* item = v->item;

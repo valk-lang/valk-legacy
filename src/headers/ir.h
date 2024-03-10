@@ -42,7 +42,7 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
-char *ir_string(IR *ir, VString *str, bool external);
+char *ir_string(IR *ir, VString *str);
 char* ir_load(IR* ir, Type* type, char* var);
 void ir_store(IR *ir, char *var, char *val, char* type, int type_size);
 void ir_store_old(IR *ir, Type *type, char *var, char *val);

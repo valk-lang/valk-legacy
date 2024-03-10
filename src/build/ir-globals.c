@@ -131,7 +131,7 @@ void *ir_global(IR *ir, Global *g) {
     return ir_name;
 }
 
-char *ir_string(IR *ir, VString *str, bool external) {
+char *ir_string(IR *ir, VString *str) {
     //
     if(array_contains(ir->declared_globals, str, arr_find_adr))
         return ir_ptrv(ir, str->ir_object_name, "ptr", 1);
@@ -153,6 +153,8 @@ char *ir_string(IR *ir, VString *str, bool external) {
     itoa(blen, blen_str, 10);
     char len_str[32];
     itoa(len, len_str, 10);
+
+    bool external = false;
 
     if (!external) {
 

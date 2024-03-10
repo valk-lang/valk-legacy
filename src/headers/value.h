@@ -7,7 +7,7 @@
 Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio);
 bool value_is_assignable(Value *v);
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_);
-Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);
+Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int op);
 void value_is_mutable(Value* v);
 Value* try_convert(Allocator* alc, Build* b, Value* val, Type* type);
 bool try_convert_number(Value* val, Type* type);
@@ -92,7 +92,6 @@ struct VString {
     char* body;
     char* ir_object_name;
     char* ir_body_name;
-    Fc* fc;
 };
 struct VScope {
     Scope* scope;

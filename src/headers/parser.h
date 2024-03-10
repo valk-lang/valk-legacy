@@ -12,6 +12,7 @@ struct Parser {
     Build* b;
     Chunk* chunks;
     Chunk* chunk;
+    Chunk* scope_end;
     //
     Func* func;
     Class* class;

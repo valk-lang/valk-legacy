@@ -68,12 +68,13 @@ void read_ast(Parser *p, bool single_line) {
         if (single_line && first)
             return;
 
+        int before_i = p->chunk->i;
         int t = tok(p, true, true, true);
-        char* tkn = p->data;
+        char* tkn = p->tkn;
 
         if (tkn[0] == ';')
             continue;
-        if (t == tok_scope_close)
+        if (t == tok_curly_close)
             break;
 
         first = true;
@@ -81,80 +82,82 @@ void read_ast(Parser *p, bool single_line) {
 
         if (t == tok_id) {
             if (str_is(tkn, "let")){
-                char* name = tok(fc, true, false, true);
-                if(!is_valid_varname(tkn)) {
-                    parse_err(p, -1, "Invalid variable name: '%s'", name)
+                t = tok(p, true, false, true);
+                char* name = p->tkn;
+                if(t != tok_id) {
+                    parse_err(p, -1, "Invalid variable name: '%s'", name);
                 }
-                char* tkn = tok(fc, true, true, true);
+                t = tok(p, true, false, true);
                 Type* type = NULL;
-                if(str_is(tkn, ":")) {
-                    type = read_type(fc, alc, scope, true);
-                    tkn = tok(fc, true, true, true);
+                if(t == tok_colon) {
+                    type = read_type(p, alc, scope, true);
+                    t = tok(p, true, false, true);
                 }
-                if(!str_is(tkn, "=")) {
-                    parse_err(p, -1, "Expected '=' here, found: '%s'", tkn)
+                if(t != tok_eq) {
+                    parse_err(p, -1, "Expected '=' here, found: '%s'", p->tkn);
                 }
 
-                Value* val = read_value(alc, fc, scope, true, 0);
+                Value* val = read_value(alc, p, scope, true, 0);
                 if(type) {
                     val = try_convert(alc, b, val, type);
-                    type_check(fc->chunk_parse, type, val->rett);
+                    type_check(p, type, val->rett);
                 } else {
                     type = val->rett;
                 }
 
                 Decl* decl = decl_make(alc, type, false);
                 Idf *idf = idf_make(b->alc, idf_decl, decl);
-                scope_set_idf(scope, name, idf, fc);
+                scope_set_idf(scope, name, idf, p);
 
                 array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                 continue;
             }
             if (str_is(tkn, "if")){
-                token_if(alc, fc, scope);
+                token_if(alc, p);
                 continue;
             }
             if (str_is(tkn, "while")){
-                token_while(alc, fc, scope);
+                token_while(alc, p);
                 continue;
             }
             if (str_is(tkn, "break") || str_is(tkn, "continue")){
-                if(!scope->loop_scope) {
-                    parse_err(p, -1, "Using 'break' without being inside a loop")
+                if(!p->loop_scope) {
+                    parse_err(p, -1, "Using 'break' without being inside a loop");
                 }
-                array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, scope->loop_scope));
+                array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, p->loop_scope));
                 scope->did_return = true;
-                if(!scope->chunk_end) {
+                if(!p->scope_end) {
                     parse_err(p, -1, "Missing scope end position (compiler bug)");
                 }
-                *fc->chunk_parse = *scope->chunk_end;
+                *p->chunk = *p->scope_end;
                 break;
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
                 if(scope->rett && !type_is_void(scope->rett)) {
-                    val = read_value(alc, fc, scope, false, 0);
+                    val = read_value(alc, p, scope, false, 0);
                     val = try_convert(alc, b, val, scope->rett);
-                    type_check(fc->chunk_parse, scope->rett, val->rett);
+                    type_check(p, scope->rett, val->rett);
                 } else {
-                    char* tkn = tok(fc, true, false, true);
-                    if(tkn[0] != 0 && !str_is(tkn, "}")) {
-                        parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type")
+                    int t = tok(p, true, false, true);
+                    if(t != tok_none && t != tok_semi && t != tok_curly_close) {
+                        parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
                     }
                 }
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
-                if(!scope->chunk_end) {
+                if(!p->scope_end) {
                     parse_err(p, -1, "Missing scope end position (compiler bug)");
                 }
-                *fc->chunk_parse = *scope->chunk_end;
+                *p->chunk = *p->scope_end;
                 break;
             }
             if (str_is(tkn, "throw")){
-                char* name = tok(fc, true, false, true);
-                if(!is_valid_varname(tkn)) {
-                    parse_err(p, -1, "Invalid error name: '%s'", name)
+                int t = tok(p, true, false, true);
+                if(t != tok_id) {
+                    parse_err(p, -1, "Invalid error name: '%s'", p->tkn);
                 }
+                char* name = p->tkn;
                 Func* func = p->func;
                 Scope* fscope = func->scope;
                 FuncError* err = NULL;
@@ -165,107 +168,105 @@ void read_ast(Parser *p, bool single_line) {
                     parse_err(p, -1, "Function has no error defined named: '%s'", name);
                 }
 
-                array_push(scope->ast, tgen_throw(alc, b, fc, err, name));
+                array_push(scope->ast, tgen_throw(alc, b, err, name));
                 scope->did_return = true;
                 continue;
             }
         }
         if (t == tok_at_word) {
             if (str_is(tkn, "@cache_value")){
-                tok_expect(fc, "(", false, false);
-                Value* v = read_value(alc, fc, scope, true, 0);
-                tok_expect(fc, ")", true, true);
-                tok_expect(fc, "as", true, false);
-                char* name = tok(fc, true, false, true);
-                if(!is_valid_varname(tkn)) {
-                    parse_err(p, -1, "Invalid variable name: '%s'", name)
+                tok_expect(p, "(", false, false);
+                Value* v = read_value(alc, p, true, 0);
+                tok_expect(p, ")", true, true);
+                tok_expect(p, "as", true, false);
+                t = tok(p, true, false, true);
+                if(t != tok_id) {
+                    parse_err(p, -1, "Invalid variable name: '%s'", p->tkn);
                 }
+                char* name = p->tkn;
                 Value* vc = vgen_ir_cached(alc, v);
                 Idf* idf = idf_make(alc, idf_cached_value, vc);
-                scope_set_idf(scope, name, idf, fc);
+                scope_set_idf(scope, name, idf, p);
                 array_push(scope->ast, token_make(alc, t_statement, vc));
                 continue;
             }
             if (str_is(tkn, "@snippet")){
-                tok_expect(fc, "(", false, false);
-                char* name = tok(fc, true, false, true);
+                tok_expect(p, "(", false, false);
+                t = tok(p, true, false, true);
+                char* name = p->tkn;
 
                 Id id;
-                Idf* idf = idf_by_id(fc, scope, read_id(fc, name, &id), true);
+                Idf* idf = idf_by_id(p, scope, read_id(p, name, &id), true);
 
                 if(idf->type != idf_snippet) {
-                    parse_err(p, -1, "Invalid snippet name: '%s'", name)
+                    parse_err(p, -1, "Invalid snippet name: '%s'", name);
                 }
                 Snippet* snip = idf->item;
                 Array *args = snip->args;
                 Map *idfs = map_make(alc);
                 for(int i = 0; i < args->length; i++) {
-                    tok_expect(fc, ",", true, true);
+                    tok_expect(p, ",", true, true);
                     SnipArg* arg = array_get_index(args, i);
                     if(arg->type == snip_value) {
-                        Value* v = read_value(alc, fc, scope, true, 0);
+                        Value* v = read_value(alc, p, true, 0);
                         Idf* idf = idf_make(alc, idf_value, v);
                         map_set(idfs, arg->name, idf);
                     } else {
                         die("TODO: snippet pass types");
                     }
                 }
-                tok_expect(fc, ")", true, true);
+                tok_expect(p, ")", true, true);
 
                 Scope* sub = scope_sub_make(alc, sc_default, scope, NULL);
-                sub->prio_idf_scope = snip->fc_scope;
+                sub->idf_parent = snip->fc_scope;
                 sub->identifiers = idfs;
 
                 Chunk ch;
-                ch = *fc->chunk_parse;
-                *fc->chunk_parse = *snip->chunk;
-                read_ast(fc, sub, false);
-                *fc->chunk_parse = ch;
+                ch = *p->chunk;
+                *p->chunk = *snip->chunk;
+                read_ast(p, false);
+                *p->chunk = ch;
                 continue;
             }
         }
 
-        tok_back(fc);
+        p->chunk->i = before_i;
 
-        Value* left = read_value(alc, fc, scope, true, 0);
+        Value* left = read_value(alc, p, true, 0);
 
-        tok_skip_whitespace(fc);
-        t = tok_id_next(fc);
-        if((t == tok_op1 || t == tok_op2)) {
-            tkn = tok(fc, true, true, true);
-            if(str_in(tkn, ",=,+=,-=,*=,/=,")) {
-                if (!value_is_assignable(left)) {
-                    parse_err(chunk, "Cannot assign to left side");
-                }
-                value_is_mutable(left);
-
-                Value *right = read_value(alc, fc, scope, true, 0);
-                if(type_is_void(right->rett)) {
-                    parse_err(chunk, "Trying to assign a void value");
-                }
-
-                int op = op_eq;
-                if(str_is(tkn, "=")){
-                } else if(str_is(tkn, "+=")){
-                    op = op_add;
-                } else if(str_is(tkn, "-=")){
-                    op = op_sub;
-                } else if(str_is(tkn, "*=")){
-                    op = op_mul;
-                } else if(str_is(tkn, "/=")){
-                    op = op_div;
-                }
-                if(op != op_eq) {
-                    right = value_handle_op(alc, fc, scope, left, right, op);
-                }
-
-                right = try_convert(alc, b, right, left->rett);
-                type_check(chunk, left->rett, right->rett);
-
-                array_push(scope->ast, tgen_assign(alc, left, right));
-                continue;
+        t = tok(p, true, false, false);
+        if (t >= tok_eq && t <= tok_div_eq) {
+            tok(p, true, false, false);
+            if (!value_is_assignable(left)) {
+                parse_err(p, -1, "Cannot assign to left side");
             }
-            tok_back(fc);
+            value_is_mutable(left);
+
+            Value *right = read_value(alc, p, true, 0);
+            if (type_is_void(right->rett)) {
+                parse_err(p, -1, "Trying to assign a void value");
+            }
+
+            int op = op_eq;
+            if (t == tok_eq) {
+            } else if (t == tok_plus_eq) {
+                op = op_add;
+            } else if (t == tok_sub_eq) {
+                op = op_sub;
+            } else if (t == tok_mul_eq) {
+                op = op_mul;
+            } else if (t == tok_div_eq) {
+                op = op_div;
+            }
+            if (op != op_eq) {
+                right = value_handle_op(alc, p, left, right, op);
+            }
+
+            right = try_convert(alc, b, right, left->rett);
+            type_check(p, left->rett, right->rett);
+
+            array_push(scope->ast, tgen_assign(alc, left, right));
+            continue;
         }
 
         //
@@ -273,6 +274,6 @@ void read_ast(Parser *p, bool single_line) {
     }
 
     if(scope->must_return && !scope->did_return) {
-        parse_err(p, -1, "Missing return statement")
+        parse_err(p, -1, "Missing return statement");
     }
 }

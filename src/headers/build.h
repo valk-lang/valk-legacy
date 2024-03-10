@@ -25,21 +25,21 @@ void stage_add_item(Stage *stage, void *item);
 void build_run_stages(Build *b);
 // Stages
 void stage_1_parse(Fc *fc);
-void stage_2_alias(Fc *fc);
-void stage_2_props(Fc *fc);
+void stage_2_alias(Unit *u);
+void stage_2_props(Unit *u);
 void stage_2_update_classes(Build* b);
-void stage_2_types(Fc *fc);
-void stage_3_values(Fc *fc);
-void stage_4_ast(Fc *fc);
-void stage_4_ir(Fc *fc);
-void stage_4_ast_main(Fc *fc);
+void stage_2_types(Unit *u);
+void stage_3_values(Unit *u);
+void stage_4_ast(Unit *u);
+void stage_4_ir(Unit *u);
+void stage_4_ast_main(Unit *u);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
 // Sub stages
-void stage_props_class(Fc* fc, Class *class);
-void stage_types_func(Fc* fc, Func *func);
-void stage_types_class(Fc* fc, Class* class);
-void read_ast(Fc *fc, Scope *scope, bool single_line);
+void stage_props_class(Parser* p, Class *class);
+void stage_types_func(Parser* p, Func *func);
+void stage_types_class(Parser* p, Class* class);
+void read_ast(Parser *p, bool single_line);
 //
 
 struct Build {

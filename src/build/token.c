@@ -8,56 +8,66 @@ Token *token_make(Allocator *alc, int type, void *item) {
     return t;
 }
 
-void token_if(Allocator* alc, Fc* fc, Scope* scope) {
-    Build* b = fc->b;
+void token_if(Allocator* alc, Parser* p) {
+    Build* b = p->b;
 
-    Value *cond = read_value(alc, fc, scope, false, 0);
+    Value *cond = read_value(alc, p, false, 0);
     if (!type_is_bool(cond->rett)) {
         char buf[256];
-        sprintf(b->char_buf, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
     }
 
-    char* tkn = tok(fc, true, true, true);
+    int t = tok(p, true, true, true);
     int scope_end_i = 0;
     bool single = false;
     Chunk* chunk_end = NULL;
-    if (str_is(tkn, "{")) {
-        chunk_end = chunk_clone(alc, fc->chunk_parse);
-        chunk_end->i = chunk_end->scope_end_i;
-    } else if (str_is(tkn, ":")) {
+    if (t == tok_curly_open) {
+        chunk_end = chunk_clone(alc, p->chunk);
+        chunk_end->i = p->scope_end_i;
+    } else if (t == tok_colon) {
         single = true;
     } else {
-        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn)
+        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", p->tkn);
     }
 
-    Scope *scope_if = scope_sub_make(alc, sc_default, scope, chunk_end);
-    Scope *scope_else = scope_sub_make(alc, sc_default, scope, NULL);
+    Scope* scope = p->scope;
+    Scope* se = p->scope_end;
+    Scope *scope_if = scope_sub_make(alc, sc_default, scope);
+    Scope *scope_else = scope_sub_make(alc, sc_default, scope);
 
-    read_ast(fc, scope_if, single);
+    p->scope = scope_if;
+    p->scope_end = chunk_end;
+    read_ast(p, single);
+    p->scope = scope;
+    p->scope_end = se;
 
-    tkn = tok(fc, true, true, true);
-    if(str_is(tkn, "else")) {
-        tkn = tok(fc, true, true, true);
-        if(str_is(tkn, "if")) {
+    t = tok(p, true, true, false);
+    if(str_is(p->tkn, "else")) {
+        tok(p, true, true, true);
+        t = tok(p, true, true, true);
+        if(str_is(p->tkn, "if")) {
             // else if
-            token_if(alc, fc, scope_else);
+            p->scope = scope_else;
+            token_if(alc, p);
+            p->scope = scope;
         } else {
             // else
             bool single = false;
-            if (str_is(tkn, "{")) {
-                chunk_end = chunk_clone(alc, fc->chunk_parse);
-                chunk_end->i = chunk_end->scope_end_i;
-                scope_else->chunk_end = chunk_end;
-            } else if (str_is(tkn, ":")) {
+            chunk_end = NULL;
+            if (t == tok_curly_open) {
+                chunk_end = chunk_clone(alc, p->chunk);
+                chunk_end->i = p->scope_end_i;
+            } else if (t == tok_colon) {
                 single = true;
             } else {
-                parse_err(p, -1, "Expected '{' or ':' after 'else', but found: '%s'", tkn)
+                parse_err(p, -1, "Expected '{' or ':' after 'else', but found: '%s'", p->tkn);
             }
-            read_ast(fc, scope_else, single);
+            p->scope = scope_if;
+            p->scope_end = chunk_end;
+            read_ast(p, scope_else, single);
+            p->scope = scope;
+            p->scope_end = se;
         }
-    } else {
-        tok_back(fc);
     }
 
     if (!scope->ast)
@@ -65,36 +75,45 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
     array_push(scope->ast, tgen_if(alc, cond, scope_if, scope_else));
 }
 
-void token_while(Allocator* alc, Fc* fc, Scope* scope) {
-    Build* b = fc->b;
+void token_while(Allocator* alc, Parser* p) {
+    // Scope* scope = p->scope;
 
-    Value *cond = read_value(alc, fc, scope, false, 0);
+    Value *cond = read_value(alc, p, false, 0);
     if (!type_is_bool(cond->rett)) {
         char buf[256];
-        sprintf(b->char_buf, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
     }
 
-    char* tkn = tok(fc, true, true, true);
+    int t = tok(p, true, true, true);
     bool single = false;
 
     Chunk* chunk_end = NULL;
-    if (str_is(tkn, "{")) {
-        chunk_end = chunk_clone(alc, fc->chunk_parse);
-        chunk_end->i = chunk_end->scope_end_i;
-    } else if (str_is(tkn, ":")) {
+    if (t == tok_curly_open) {
+        chunk_end = chunk_clone(alc, p->chunk);
+        chunk_end->i = p->scope_end_i;
+    } else if (t == tok_colon) {
         single = true;
     } else {
-        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn)
+        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", p->tkn);
     }
 
-    Scope *scope_while = scope_sub_make(alc, sc_loop, scope, chunk_end);
-    scope_while->loop_scope = scope_while;
+    Scope *scope = p->scope;
+    Scope* se = p->scope_end;
+    Scope *ls = p->loop_scope;
+    Scope *scope_while = scope_sub_make(alc, sc_loop, scope);
 
-    read_ast(fc, scope_while, single);
+    p->scope = scope_while;
+    p->scope_end = chunk_end;
+    p->loop_scope = scope_while;
+    read_ast(p, single);
+    p->scope = scope;
+    p->scope_end = se;
+    p->loop_scope = ls;
 
     // Gc reserve
+    // TODO: DELETE THIS???
     if(scope_while->decls) {
+        Build* b = p->b;
         Array* decls = scope_while->decls;
         int gc_count = decls->length;
         Scope* wrap = scope_sub_make(alc, sc_default, scope, chunk_end);
@@ -104,13 +123,13 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
         Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
         Idf *idf = idf_make(alc, idf_value, amount);
         map_set(idfs, "amount", idf);
-        Scope *gc_reserve = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "reserve"), idfs, scope_while);
+        Scope *gc_reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "reserve"), idfs, scope_while);
 
         array_shift(scope_while->ast, token_make(alc, t_ast_scope, gc_reserve));
 
         // Pop
         if (!scope_while->did_return) {
-            Scope *pop = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), scope_while);
+            Scope *pop = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), scope_while);
             array_push(scope_while->ast, token_make(alc, t_ast_scope, pop));
         }
     }

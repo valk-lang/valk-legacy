@@ -79,7 +79,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         str->body = body;
         str->ir_object_name = object_name;
         str->ir_body_name = body_name;
-        str->fc = fc;
 
         array_push(b->strings, str);
 
@@ -636,9 +635,9 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
     return vgen_ptrv(alc, fc->b, on, type, index);
 }
 
-Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op) {
+Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int op) {
     // Check type
-    Build* b = fc->b;
+    Build* b = p->b;
     Type* lt = left->rett;
     Type* rt = right->rett;
 
@@ -666,14 +665,14 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
         if(is_float) {
             // combo = pre_calc_float(alc, fc->b, left, right, op);
         } else {
-            combo = pre_calc_int(alc, fc->b, left, right, op);
+            combo = pre_calc_int(alc, b, left, right, op);
         }
         if(combo)
             return combo;
     }
 
     // Try match types
-    match_value_types(alc, fc->b, &left, &right);
+    match_value_types(alc, b, &left, &right);
 
     Type* t1 = left->rett;
     Type* t2 = right->rett;
