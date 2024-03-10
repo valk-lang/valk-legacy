@@ -67,3 +67,8 @@ void tok_skip_whitespace(Parser* p) {
         ch->i++;
     }
 }
+
+bool tok_next_is_whitespace(Parser* p) {
+    int t = p->chunk->tokens[p->chunk->i];
+    return t == tok_space || t == tok_newline;
+}

@@ -17,9 +17,10 @@ Type* type_make(Allocator* alc, int type) {
     return t;
 }
 
-Type* read_type(Parser* p, Allocator* alc, Scope* scope, bool allow_newline) {
+Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
     //
     Build* b = p->b;
+    Scope* scope = p->scope;
 
     Type *type = NULL;
     bool nullable = false;

@@ -333,6 +333,7 @@ void stage_1_value_alias(Parser *p, Unit *u) {
     Chunk *chunk = chunk_clone(b->alc, p->chunk);
     ValueAlias *va = al(b->alc, sizeof(ValueAlias));
     va->chunk = chunk;
+    va->scope = p->scope;
 
     skip_body(p);
 
