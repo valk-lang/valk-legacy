@@ -102,7 +102,7 @@ int class_determine_size(Build* b, Class* class) {
     return size;
 }
 
-void class_generate_internals(Fc* fc, Build* b, Class* class) {
+void class_generate_internals(Parser* p, Build* b, Class* class) {
 
     Allocator *alc = b->alc;
 
@@ -117,30 +117,30 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         printf("Class: %s | vt: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
         //
         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
-        scope_set_idf(class->scope, "VTABLE_INDEX", idf, fc);
+        scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "pools"));
-        scope_set_idf(class->scope, "POOLS", idf, fc);
+        scope_set_idf(class->scope, "POOLS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
-        scope_set_idf(class->scope, "POOL_INDEX", idf, fc);
+        scope_set_idf(class->scope, "POOL_INDEX", idf, p);
         //
         idf = idf_make(b->alc, idf_class, get_volt_class(b, "mem", "GcPool"));
-        scope_set_idf(class->scope, "POOL_CLASS", idf, fc);
+        scope_set_idf(class->scope, "POOL_CLASS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
-        scope_set_idf(class->scope, "SIZE", idf, fc);
+        scope_set_idf(class->scope, "SIZE", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_transfer_size"));
-        scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, fc);
+        scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_mark_size"));
-        scope_set_idf(class->scope, "GC_MARK_SIZE", idf, fc);
+        scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
         // MALLOC
         idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "alloc"));
-        scope_set_idf(class->scope, "MALLOC", idf, fc);
+        scope_set_idf(class->scope, "MALLOC", idf, p);
         // MEMCOPY
         idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "copy"));
-        scope_set_idf(class->scope, "MEMCOPY", idf, fc);
+        scope_set_idf(class->scope, "MEMCOPY", idf, p);
 
         // Transfer
         strcpy(buf, class->name);
@@ -149,10 +149,9 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         strcpy(buf, class->ir_name);
         strcat(buf, "__v_transfer");
         char* export_name = dups(alc, buf);
-        Func *transfer = func_make(b->alc, class->fc, class->scope, name, export_name);
+        Func *transfer = func_make(b->alc, class->unit, class->scope, name, export_name);
         transfer->class = class;
         transfer->is_static = false;
-        array_push(fc->funcs, transfer);
         map_set_force_new(class->funcs, "_v_transfer", transfer);
 
         // Mark
@@ -162,15 +161,14 @@ void class_generate_internals(Fc* fc, Build* b, Class* class) {
         strcpy(buf, class->ir_name);
         strcat(buf, "__v_mark");
         export_name = dups(alc, buf);
-        Func *mark = func_make(b->alc, class->fc, class->scope, name, export_name);
+        Func *mark = func_make(b->alc, class->unit, class->scope, name, export_name);
         mark->class = class;
         mark->is_static = false;
-        array_push(fc->funcs, mark);
         map_set_force_new(class->funcs, "_v_mark", mark);
 
         // AST
-        class_generate_transfer(fc, b, class, transfer);
-        class_generate_mark(fc, b, class, mark);
+        class_generate_transfer(p, b, class, transfer);
+        class_generate_mark(p, b, class, mark);
     }
 }
 

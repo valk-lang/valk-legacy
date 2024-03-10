@@ -298,6 +298,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared){
     g->value = NULL;
     g->chunk_type = NULL;
     g->chunk_value = NULL;
+    g->declared_scope = p->scope;
     g->is_shared = shared;
     g->is_mut = true;
 

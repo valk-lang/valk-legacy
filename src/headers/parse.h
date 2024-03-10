@@ -33,6 +33,7 @@ struct Global {
     Value* value;
     Chunk *chunk_type;
     Chunk *chunk_value;
+    Scope *declared_scope;
     bool is_shared;
     bool is_mut;
 };

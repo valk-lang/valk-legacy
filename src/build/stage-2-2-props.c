@@ -104,12 +104,10 @@ void stage_props_class(Parser* p, Class *class) {
         char export_name[512];
         sprintf(export_name, "%s__%s", class->ir_name, name);
 
-        Unit* u = class->unit;
-        Func *func = func_make(b->alc, u, class->scope, name, dups(b->alc, export_name));
+        Func *func = func_make(b->alc, class->unit, class->scope, name, dups(b->alc, export_name));
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;
-        array_push(u->funcs, func);
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

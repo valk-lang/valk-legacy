@@ -1,47 +1,45 @@
 
 #include "../all.h"
 
-void stage_types(Fc *fc);
-void stage_types_global(Fc* fc, Global* g);
+void stage_types_global(Parser* p, Global* g);
 
-void stage_2_types(Fc* fc) {
-    Build* b = fc->b;
+void stage_2_types(Unit* u) {
+    Build* b = u->b;
+    Parser* p = b->parser;
 
     if (b->verbose > 2)
-        printf("Stage 2 | Scan types: %s\n", fc->path);
+        printf("Stage 2 | Scan types: %s\n", u->nsc->name);
 
     usize start = microtime();
-    stage_types(fc);
-    b->time_parse += microtime() - start;
 
-    stage_add_item(b->stage_3_values, fc);
-}
-
-void stage_types(Fc *fc) {
-    Array* funcs = fc->funcs;
+    Array* funcs = u->funcs;
     for(int i = 0; i < funcs->length; i++) {
         Func* func = array_get_index(funcs, i);
-        stage_types_func(fc, func);
+        stage_types_func(p, func);
     }
-    Array* classes = fc->classes;
+    Array* classes = u->classes;
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
-        stage_types_class(fc, class);
+        stage_types_class(p, class);
     }
-    Array* globals = fc->globals;
+    Array* globals = u->globals;
     for(int i = 0; i < globals->length; i++) {
         Global* g = array_get_index(globals, i);
-        stage_types_global(fc, g);
+        stage_types_global(p, g);
     }
+
+    b->time_parse += microtime() - start;
+
+    stage_add_item(b->stage_3_values, u);
 }
 
-void stage_types_func(Fc* fc, Func* func) {
+void stage_types_func(Parser* p, Func* func) {
 
     if(func->types_parsed)
         return;
     func->types_parsed = true;
 
-    Build *b = fc->b;
+    Build *b = p->b;
 
     if(func->class && !func->is_static) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
@@ -49,28 +47,27 @@ void stage_types_func(Fc* fc, Func* func) {
         array_push(func->arg_types, arg->type);
         Decl *decl = decl_make(b->alc, arg->type, true);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
-        scope_set_idf(func->scope, "this", idf, fc);
-        // scope_add_decl(b->alc, func->scope, decl);
+        scope_set_idf(func->scope, "this", idf, p);
         arg->decl = decl;
         array_push(func->arg_values, NULL);
     }
 
     if(func->chunk_args) {
-        *fc->chunk_parse = *func->chunk_args;
-        char* tkn = tok(fc, true, true, true);
-        while(!str_is(tkn, ")")) {
-            char* name = tkn;
+        *p->chunk = *func->chunk_args;
+        int t = tok(p, true, true, true);
+        while(t != tok_bracket_close) {
+            char* name = p->tkn;
             if(!is_valid_varname(name)) {
-                parse_err(p, -1, "Invalid function argument name: '%s'", name)
+                parse_err(p, -1, "Invalid function argument name: '%s'", name);
             }
             if(map_contains(func->args, name)) {
-                parse_err(p, -1, "Duplicate argument name: '%s'", name)
+                parse_err(p, -1, "Duplicate argument name: '%s'", name);
             }
 
-            tok_expect(fc, ":", true, false);
-            Type* type = read_type(fc, fc->alc, func->scope, false);
+            tok_expect(p, ":", true, false);
+            Type* type = read_type(p, b->alc, func->scope, false);
             if(type->type == type_void) {
-                parse_err(p, -1, "You cannot use void types for arguments")
+                parse_err(p, -1, "You cannot use void types for arguments");
             }
 
             FuncArg* arg = func_arg_make(b->alc, type);
@@ -79,62 +76,60 @@ void stage_types_func(Fc* fc, Func* func) {
 
             Decl* decl = decl_make(b->alc, type, true);
             Idf* idf = idf_make(b->alc, idf_decl, decl);
-            scope_set_idf(func->scope, name, idf, fc);
-            // scope_add_decl(b->alc, func->scope, decl);
+            scope_set_idf(func->scope, name, idf, p);
             arg->decl = decl;
 
-            tkn = tok(fc, true, true, true);
-            if(str_is(tkn, "(")) {
-                arg->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
+            t = tok(p, true, true, true);
+            if(t == tok_bracket_open) {
+                arg->chunk_value = chunk_clone(b->alc, p->chunk);
                 array_push(func->arg_values, arg->chunk_value);
-                skip_body(fc);
-                tkn = tok(fc, true, true, true);
+                skip_body(p);
+                t = tok(p, true, true, true);
             } else {
                 array_push(func->arg_values, NULL);
             }
 
-            if(str_is(tkn, ",")) {
-                tkn = tok(fc, true, true, true);
+            if(t == tok_comma) {
+                t = tok(p, true, true, true);
                 continue;
             }
-            if(!str_is(tkn, ")")) {
-                sprintf(b->char_buf, "Unexpected token: '%s', expected ')'", tkn);
-                parse_err(fc->chunk_parse, b->char_buf);
+            if(t != tok_bracket_close) {
+                parse_err(p, -1, "Unexpected token: '%s', expected ')'", p->tkn);
             }
         }
     }
     if(func->chunk_rett) {
-        *fc->chunk_parse = *func->chunk_rett;
-        Type *type = read_type(fc, fc->alc, func->scope, false);
+        *p->chunk = *func->chunk_rett;
+        Type *type = read_type(p, b->alc, func->scope, false);
         func->rett = type;
         func->scope->must_return = !type_is_void(type);
         func->scope->rett = type;
     } else {
-        func->rett = type_gen_void(fc->alc);
+        func->rett = type_gen_void(b->alc);
     }
 }
 
-void stage_types_class(Fc* fc, Class* class) {
+void stage_types_class(Parser* p, Class* class) {
 
-    Build *b = fc->b;
+    Build *b = p->b;
 
     Array* props = class->props->values;
     for(int i = 0; i < props->length; i++) {
         ClassProp *prop = array_get_index(props, i);
         if (prop->chunk_type) {
-            *fc->chunk_parse = *prop->chunk_type;
-            Type *type = read_type(fc, fc->alc, class->scope, false);
+            *p->chunk = *prop->chunk_type;
+            Type *type = read_type(p, b->alc, class->scope, false);
             prop->type = type;
         }
     }
 }
 
-void stage_types_global(Fc* fc, Global* g) {
+void stage_types_global(Parser* p, Global* g) {
 
-    Build *b = fc->b;
+    Build *b = p->b;
 
-    *fc->chunk_parse = *g->chunk_type;
-    Type *type = read_type(fc, fc->alc, fc->scope, false);
+    *p->chunk = *g->chunk_type;
+    Type *type = read_type(p, b->alc, g->declared_scope, false);
     g->type = type;
 
     if (g->is_shared && type_is_gc(type)) {
