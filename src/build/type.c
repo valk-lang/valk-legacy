@@ -17,61 +17,57 @@ Type* type_make(Allocator* alc, int type) {
     return t;
 }
 
-Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
+Type* read_type(Parser* p, Allocator* alc, Scope* scope, bool allow_newline) {
     //
-    Build* b = fc->b;
+    Build* b = p->b;
 
     Type *type = NULL;
     bool nullable = false;
     bool is_inline = false;
 
-    char* tkn = tok(fc, true, allow_newline, true);
-    int t = fc->chunk_parse->token;
+    int t = tok(p, true, allow_newline, true);
 
     if(t == tok_at_word) {
-        if (str_is(tkn, "@ignu")) {
-            tok_expect(fc, "(", false, false);
-            Type* type = read_type(fc, alc, scope, false);
-            tok_expect(fc, ")", true, false);
+        if (str_is(p->tkn, "@ignu")) {
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, alc, scope, false);
+            tok_expect(p, ")", true, false);
             type->nullable = false;
             type->ignore_null = true;
             return type;
         }
     }
 
-    if(str_is(tkn, "?")) {
+    if(t == tok_qmark) {
         nullable = true;
-        tkn = tok(fc, false, false, true);
+        t = tok(p, false, false, true);
     }
 
-    t = fc->chunk_parse->token;
     if(t == tok_id) {
+        char* tkn = p->tkn;
         if (!is_inline && str_is(tkn, "void")) {
             return type_make(alc, type_void);
         }
         if (str_is(tkn, "fn")) {
-            tok_expect(fc, "(", false, false);
+            tok_expect(p, "(", false, false);
+            // Args
             Array* args = array_make(alc, 4);
-            tok_skip_space(fc);
-            while (tok_id_next(fc) != tok_scope_close) {
-                Type* type = read_type(fc, alc, scope, false);
+            while (tok(p, true, false, false) != tok_bracket_close) {
+                Type* type = read_type(p, alc, scope, false);
                 array_push(args, type);
-                tok_skip_space(fc);
-                if (tok_id_next(fc) != tok_scope_close) {
-                    tok_expect(fc, ",", true, false);
-                    tok_skip_space(fc);
+                if (tok(p, true, false, false) != tok_bracket_close) {
+                    tok_expect(p, ",", true, false);
                 }
             }
-            tok_expect(fc, ")", false, false);
-            tok_expect(fc, "(", false, false);
-            tok_skip_space(fc);
+            tok_expect(p, ")", false, false);
+            tok_expect(p, "(", false, false);
             Type* rett;
-            if (tok_id_next(fc) != tok_scope_close) {
-                rett = read_type(fc, alc, scope, false);
+            if (tok(p, true, false, false) != tok_bracket_close) {
+                rett = read_type(p, alc, scope, false);
             } else {
                 rett = type_gen_void(alc);
             }
-            tok_expect(fc, ")", false, false);
+            tok_expect(p, ")", false, false);
             //
             Type *t = type_make(alc, type_func);
             t->func_rett = rett;
@@ -84,38 +80,37 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
 
         if (str_is(tkn, "inline")) {
             is_inline = true;
-            tkn = tok(fc, true, false, true);
-            t = fc->chunk_parse->token;
+            t = tok(p, true, false, true);
         }
 
         if (t == tok_id) {
             // Identifier
             Id id;
-            read_id(fc, tkn, &id);
-            Idf *idf = idf_by_id(fc, scope, &id, false);
+            read_id(p, tkn, &id);
+            Idf *idf = idf_by_id(p, scope, &id, false);
             if (!idf) {
-                id.ns ? sprintf(b->char_buf, "Unknown type: '%s:%s'", id.ns, id.name)
-                      : parse_err(p, -1, "Unknown type: '%s'", id.name)
+                id.ns ? parse_err(p, -1, "Unknown type: '%s:%s'", id.ns, id.name)
+                      : parse_err(p, -1, "Unknown type: '%s'", id.name);
             }
             if (idf->type == idf_class) {
                 Class *class = idf->item;
 
                 if (class->is_generic_base) {
-                    tok_expect(fc, "[", false, false);
+                    tok_expect(p, "[", false, false);
                     Array *names = class->generic_names;
                     Map *generic_types = map_make(alc);
                     for (int i = 0; i < names->length; i++) {
                         char *name = array_get_index(names, i);
-                        Type *type = read_type(fc, alc, scope, false);
+                        Type *type = read_type(p, alc, scope, false);
                         map_set(generic_types, name, type);
                         if (i + 1 < names->length) {
-                            tok_expect(fc, ",", true, false);
+                            tok_expect(p, ",", true, false);
                         } else {
-                            tok_expect(fc, "]", true, false);
+                            tok_expect(p, "]", true, false);
                             break;
                         }
                     }
-                    class = get_generic_class(fc, class, generic_types);
+                    class = get_generic_class(p, class, generic_types);
                 }
 
                 type = type_gen_class(alc, class);
@@ -136,15 +131,14 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         if (nullable) {
             if (!type->is_pointer) {
                 char buf[256];
-                sprintf(b->char_buf, "This type cannot be null: '?%s'", type_to_str(type, buf));
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "This type cannot be null: '?%s'", type_to_str(type, buf));
             }
             type->nullable = true;
         }
         return type;
     }
 
-    parse_err(p, -1, "Invalid type: '%s'", tkn)
+    parse_err(p, -1, "Invalid type: '%s'", p->tkn);
     return NULL;
 }
 Type* type_clone(Allocator* alc, Type* type) {

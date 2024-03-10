@@ -5,6 +5,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     Scope* sc = al(alc, sizeof(Scope));
     sc->type = type;
     sc->parent = parent;
+    sc->idf_parent = parent;
 
     sc->identifiers = map_make(alc);
     sc->type_identifiers = NULL;

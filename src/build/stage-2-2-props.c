@@ -1,118 +1,117 @@
 
 #include "../all.h"
 
-void stage_props(Fc *fc);
-void stage_props_class(Fc* fc, Class *class);
+void stage_props(Unit *u);
+void stage_props_class(Unit* u, Class *class);
 
-void stage_2_props(Fc* fc) {
-    Build* b = fc->b;
+void stage_2_props(Unit* u) {
+    Build* b = u->b;
 
     if (b->verbose > 2)
-        printf("Stage 2 | Scan properties: %s\n", fc->path);
+        printf("Stage 2 | Scan properties: %s\n", u->nsc->name);
 
     usize start = microtime();
-    stage_props(fc);
+    stage_props(u);
     b->time_parse += microtime() - start;
 
-    stage_add_item(b->stage_2_types, fc);
+    stage_add_item(b->stage_2_types, u);
 }
 
-void stage_props(Fc *fc) {
-    Array* classes = fc->classes;
+void stage_props(Unit *u) {
+    Array* classes = u->classes;
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
-        stage_props_class(fc, class);
+        stage_props_class(u->b->parser, class);
     }
 }
 
-void stage_props_class(Fc* fc, Class *class) {
+void stage_props_class(Parser* p, Class *class) {
 
     if (class->is_generic_base)
         return;
 
-    Build *b = fc->b;
-    *fc->chunk_parse = *class->body;
+    Build *b = p->b;
+    *p->chunk = *class->body;
 
     while(true) {
-        char *tkn = tok(fc, true, true, true);
+        int t = tok(p, true, true, true);
 
-        int t = fc->chunk_parse->token;
-        if(t == tok_scope_close)
+        if(t == tok_curly_close)
             break;
 
         int act = act_public;
-        if(str_is(tkn, "-")) {
+        if(t == tok_sub) {
             act = act_private_fc;
-            tkn = tok(fc, true, false, true);
-        } else if(str_is(tkn, "~")) {
+            t = tok(p, true, false, true);
+        } else if(t == tok_tilde) {
             act = act_readonly_fc;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, true);
         }
-        t = fc->chunk_parse->token;
-        char* next = tok(fc, true, false, true);
+        char* name = p->tkn;
+        int next = tok(p, true, false, true);
 
-        if(str_is(next, ":")) {
-            char* name = tkn;
+        if(next == tok_colon) {
             if(class->type != ct_class && class->type != ct_struct) {
-                parse_err(p, -1, "You cannot define properties on this type")
+                parse_err(p, -1, "You cannot define properties on this type");
             }
             if(t != tok_id) {
-                parse_err(p, -1, "Invalid property name: '%s'", name)
+                parse_err(p, -1, "Invalid property name: '%s'", name);
             }
             if(map_contains(class->props, name) || map_contains(class->funcs, name)) {
-                parse_err(p, -1, "Property name is already used for another property or function: '%s'", name)
+                parse_err(p, -1, "Property name is already used for another property or function: '%s'", name);
             }
             ClassProp* prop = al(b->alc, sizeof(ClassProp));
-            prop->chunk_type = chunk_clone(b->alc, fc->chunk_parse);
+            prop->chunk_type = chunk_clone(b->alc, p->chunk);
             prop->chunk_value = NULL;
             prop->index = class->props->values->length;
             map_set_force_new(class->props, name, prop);
 
-            prop->type = read_type(fc, fc->alc, class->scope, false);
+            prop->type = read_type(p, b->alc, class->scope, false);
 
-            tok_skip_whitespace(fc);
-            if(tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {
-                tkn = tok(fc, true, true, true);
-                prop->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
-                skip_body(fc);
+            t = tok(p, true, false, false);
+            if(t == tok_bracket_open) {
+                tok(p, true, false, true);
+                prop->chunk_value = chunk_clone(b->alc, p->chunk);
+                skip_body(p);
             }
             continue;
         }
 
         bool is_static = false;
         bool is_inline = false;
+        char* tkn = name;
         if(str_is(tkn, "static")) {
             is_static = true;
-            tkn = next;
-            next = tok(fc, true, false, true);
+            tkn = p->tkn;
+            next = tok(p, true, false, true);
         }
         if(str_is(tkn, "inline")) {
             is_inline = true;
-            tkn = next;
-            next = tok(fc, true, false, true);
+            tkn = p->tkn;
+            next = tok(p, true, false, true);
         }
         if(!str_is(tkn, "fn")) {
-            parse_err(p, -1, "Expected 'fn' here, found '%s' instead", tkn)
+            parse_err(p, -1, "Expected 'fn' here, found '%s' instead", tkn);
         }
-        char* name = next;
-        t = fc->chunk_parse->token;
-        if (t != tok_id) {
-            parse_err(p, -1, "Invalid property name: '%s'", name)
+        char* name = p->tkn;
+        if (next != tok_id) {
+            parse_err(p, -1, "Invalid property name: '%s'", name);
         }
         if (map_contains(class->props, name) || map_contains(class->funcs, name)) {
-            parse_err(p, -1, "Function name is already used for another property or function: '%s'", name)
+            parse_err(p, -1, "Function name is already used for another property or function: '%s'", name);
         }
 
         char export_name[512];
         sprintf(export_name, "%s__%s", class->ir_name, name);
 
-        Func *func = func_make(b->alc, fc, class->scope, name, dups(b->alc, export_name));
+        Unit* u = class->unit;
+        Func *func = func_make(b->alc, u, class->scope, name, dups(b->alc, export_name));
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;
-        array_push(fc->funcs, func);
+        array_push(u->funcs, func);
         map_set_force_new(class->funcs, name, func);
 
-        parse_handle_func_args(fc, func);
+        parse_handle_func_args(p, func);
     }
 }

@@ -11,6 +11,7 @@ Scope* scope_sub_make(Allocator* alc, int type, Scope* parent, Chunk* chunk_end)
 
 struct Scope {
     Scope* parent;
+    Scope* idf_parent;
     Map* identifiers;
     Map* type_identifiers;
     Array* ast;

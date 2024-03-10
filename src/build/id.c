@@ -27,19 +27,21 @@ char* gen_export_name(Nsc* nsc, char* suffix) {
     return dups(b->alc, name);
 }
 
-Id* read_id(Fc* fc, char* first_part, Id* buf) {
+Id *read_id(Parser *p, char *first_part, Id *buf) {
 
     char* ns = NULL;
     char* name = first_part;
-    Build* b = fc->b;
+    Build* b = p->b;
 
-    if(tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
-        ns = name;
-        tok(fc, false, false, true);
-        name = tok(fc, false, false, true);
-        if(!is_valid_varname(name)) {
-            parse_err(p, -1, "Invalid name syntax")
+    int t = tok(p, false, false, false);
+    if(t == tok_colon) {
+        tok(p, false, false, true);
+        t = tok(p, false, false, true);
+        if(t != tok_id) {
+            parse_err(p, -1, "Invalid name syntax");
         }
+        ns = name;
+        name = p->tkn;
     }
 
     buf->name = name;
@@ -48,17 +50,16 @@ Id* read_id(Fc* fc, char* first_part, Id* buf) {
     return buf;
 }
 
-Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
+Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
     //
-    Build* b = fc->b;
+    Build* b = p->b;
     char* ns = id->ns;
     char* name = id->name;
 
     if(ns) {
         Idf* idf = scope_find_idf(scope, ns, true);
         if(!idf || idf->type != idf_scope) {
-            sprintf(b->char_buf, "Unknown namespace: '%s' (try adding 'use %s' to your file)", ns, ns);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Unknown namespace: '%s' (try adding 'use %s' to your file)", ns, ns);
         }
         scope = idf->item;
     }
@@ -66,18 +67,18 @@ Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
     Idf* idf = scope_find_idf(scope, name, true);
     if(!idf && !ns) {
         if(str_is(name, "String") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "int") || str_is(name, "uint") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "u8") || str_is(name, "Array") || str_is(name, "Map")) {
-            Nsc* ns = get_volt_nsc(fc->b, "type");
+            Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         }
         if(str_is(name, "print") || str_is(name, "println")) {
-            Nsc* ns = get_volt_nsc(fc->b, "io");
+            Nsc* ns = get_volt_nsc(p->b, "io");
             idf = scope_find_idf(ns->scope, name, true);
         }
     }
 
     if(!idf && must_exist) {
-        if(ns) sprintf(b->char_buf, "Unknown identifier: '%s:%s'", ns, name);
-        else parse_err(p, -1, "Unknown identifier: '%s'", name)
+        if(ns) parse_err(p, -1, "Unknown identifier: '%s:%s'", ns, name);
+        else parse_err(p, -1, "Unknown identifier: '%s'", name);
     }
 
     return idf;
@@ -89,13 +90,7 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
         if(!idf) {
             if(!recursive)
                 break;
-            if(scope->prio_idf_scope) {
-                idf = scope_find_idf(scope->prio_idf_scope, name, true);
-                if(idf)
-                    return idf;
-                // break;
-            }
-            scope = scope->parent;
+            scope = scope->idf_parent;
             continue;
         }
         return idf;

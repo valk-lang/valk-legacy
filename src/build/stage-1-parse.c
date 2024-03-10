@@ -25,7 +25,7 @@ void stage_1_parse(Fc* fc) {
     stage_parse(p, u);
     b->time_parse += microtime() - start;
 
-    stage_add_item(b->stage_2_alias, fc);
+    stage_add_item(b->stage_2_alias, u);
 }
 
 void stage_parse(Parser* p, Unit* u) {
