@@ -103,8 +103,6 @@ struct Build {
 struct Fc {
     Build *b;
     char *path;
-    char *path_ir;
-    char *path_cache;
     //
     Allocator *alc;
     Nsc *nsc;

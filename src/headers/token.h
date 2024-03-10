@@ -5,8 +5,8 @@
 #include "typedefs.h"
 
 Token *token_make(Allocator *alc, int type, void *item);
-void token_if(Allocator* alc, Fc* fc);
-void token_while(Allocator* alc, Fc* fc);
+void token_if(Allocator* alc, Parser* p);
+void token_while(Allocator* alc, Parser* p);
 // Generate
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Value *value);

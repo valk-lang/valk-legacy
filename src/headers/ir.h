@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 // Core
-IR* ir_make(Fc* fc);
+IR* ir_make(Unit* u);
 void ir_gen_globals(IR* ir);
 void ir_gen_functions(IR* ir);
 void ir_gen_final(IR* ir);

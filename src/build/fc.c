@@ -16,16 +16,6 @@ Fc *fc_make(Nsc *nsc, char *path) {
     fc->scope = scope_make(alc, sc_default, nsc->scope);
     fc->is_header = is_header;
 
-    // Paths
-    char *path_ir = al(alc, VOLT_PATH_MAX);
-    char *path_cache = al(alc, VOLT_PATH_MAX);
-    char *fn = get_path_basename(alc, path);
-    fn = strip_ext(alc, fn);
-    sprintf(path_ir, "%s%s_%s_%s.ir", b->cache_dir, nsc->name, fn, nsc->pkc->name);
-    sprintf(path_cache, "%s%s_%s_%s.json", b->cache_dir, nsc->name, fn, nsc->pkc->name);
-    fc->path_ir = path_ir;
-    fc->path_cache = path_cache;
-
     // Load content
     if (!file_exists(path)) {
         sprintf(b->char_buf, "File not found: '%s'", path);
