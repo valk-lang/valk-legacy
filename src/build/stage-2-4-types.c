@@ -61,19 +61,16 @@ void stage_types_func(Fc* fc, Func* func) {
         while(!str_is(tkn, ")")) {
             char* name = tkn;
             if(!is_valid_varname(name)) {
-                sprintf(b->char_buf, "Invalid function argument name: '%s'", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Invalid function argument name: '%s'", name)
             }
             if(map_contains(func->args, name)) {
-                sprintf(b->char_buf, "Duplicate argument name: '%s'", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Duplicate argument name: '%s'", name)
             }
 
             tok_expect(fc, ":", true, false);
             Type* type = read_type(fc, fc->alc, func->scope, false);
             if(type->type == type_void) {
-                sprintf(b->char_buf, "You cannot use void types for arguments");
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "You cannot use void types for arguments")
             }
 
             FuncArg* arg = func_arg_make(b->alc, type);
@@ -141,6 +138,6 @@ void stage_types_global(Fc* fc, Global* g) {
     g->type = type;
 
     if (g->is_shared && type_is_gc(type)) {
-        parse_err(fc->chunk_parse, "The compiler currently does not yet support classes in shared globals");
+        parse_err(p, -1, "The compiler currently does not yet support classes in shared globals");
     }
 }

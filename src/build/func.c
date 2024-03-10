@@ -1,12 +1,12 @@
 
 #include "../all.h"
 
-Func* func_make(Allocator* alc, Fc* fc, Scope* parent, char* name, char* export_name) {
+Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name) {
     Func* f = al(alc, sizeof(Func));
     f->name = name;
     f->export_name = export_name;
-    f->b = fc->b;
-    f->fc = fc;
+    f->b = u->b;
+    f->unit = u;
     f->scope = scope_make(alc, sc_func, parent);
     f->scope_gc_pop = NULL;
     f->chunk_args = NULL;
@@ -23,11 +23,10 @@ Func* func_make(Allocator* alc, Fc* fc, Scope* parent, char* name, char* export_
     f->can_error = false;
     f->types_parsed = false;
 
-    f->scope->func = f;
+    if (!export_name)
+        f->export_name = gen_export_name(u->nsc, name);
 
-    if(!f->export_name) {
-        f->export_name = gen_export_name(fc->nsc, name);
-    }
+    array_push(u->funcs, f);
 
     return f;
 }
@@ -40,12 +39,12 @@ FuncArg* func_arg_make(Allocator* alc, Type* type) {
     return a;
 }
 
-void parse_handle_func_args(Fc* fc, Func* func) {
-    Build* b = fc->b;
+void parse_handle_func_args(Parser* p, Func* func) {
+    Build* b = p->b;
 
-    tok_expect(fc, "(", true, false);
-    func->chunk_args = chunk_clone(fc->alc, fc->chunk_parse);
-    skip_body(fc);
+    tok_expect(p, "(", true, false);
+    func->chunk_args = chunk_clone(b->alc, p->chunk);
+    skip_body(p);
 
     if(fc->is_header) {
         func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
@@ -70,8 +69,7 @@ void parse_handle_func_args(Fc* fc, Func* func) {
     while(str_is(tkn, "!")) {
         char *name = tok(fc, false, false, true);
         if(!is_valid_varname(name)) {
-            sprintf(b->char_buf, "Invalid error name: '%s'", name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Invalid error name: '%s'", name)
         }
         // Get error value
         FuncError* err = NULL;

@@ -7,6 +7,7 @@
 
 struct Unit {
     Build *b;
+    Nsc *nsc;
     //
     char *path_o;
     char *path_ir;

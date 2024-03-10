@@ -28,8 +28,7 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
     } else if (str_is(tkn, ":")) {
         single = true;
     } else {
-        sprintf(b->char_buf, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn)
     }
 
     Scope *scope_if = scope_sub_make(alc, sc_default, scope, chunk_end);
@@ -53,8 +52,7 @@ void token_if(Allocator* alc, Fc* fc, Scope* scope) {
             } else if (str_is(tkn, ":")) {
                 single = true;
             } else {
-                sprintf(b->char_buf, "Expected '{' or ':' after 'else', but found: '%s'", tkn);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Expected '{' or ':' after 'else', but found: '%s'", tkn)
             }
             read_ast(fc, scope_else, single);
         }
@@ -87,8 +85,7 @@ void token_while(Allocator* alc, Fc* fc, Scope* scope) {
     } else if (str_is(tkn, ":")) {
         single = true;
     } else {
-        sprintf(b->char_buf, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Expected '{' or ':' after the if-condition value, but found: '%s'", tkn)
     }
 
     Scope *scope_while = scope_sub_make(alc, sc_loop, scope, chunk_end);

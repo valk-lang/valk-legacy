@@ -133,9 +133,9 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         //     }
         // }
         // ID: a-zA-Z_
-        if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95) {
+        if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95 || (ch == '@' && is_valid_varname_first_char(content[i]))) {
 
-            tokens[o++] = tok_id;
+            tokens[o++] = ch == '@' ? tok_at_word : tok_id;
             tokens[o++] = tok_data_pos;
             *(int *)((intptr_t)tokens + o) = line;
             o += sizeof(int);
@@ -249,6 +249,9 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             op = tok_eq;
             if(next == '=') {
                 op = tok_eqeq;
+                i++;
+            } else if(next == '>') {
+                op = tok_eqgt;
                 i++;
             }
         } else if (ch == '+') {

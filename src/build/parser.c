@@ -10,13 +10,15 @@ Parser* parser_make(Allocator* alc, Build* b) {
     p->class = NULL;
     p->scope = NULL;
     p->loop_scope = NULL;
+    p->tkn = NULL;
 
-    p->data = NULL;
-    p->data_i32 = 0;
-    p->data_i8 = 0;
-    p->has_data = false;
+    p->line = 0;
+    p->col = 0;
+    p->scope_end_i = 0;
 
     p->chunk_index = 0;
+
+    p->in_header = false;
 
     return p;
 }
@@ -40,10 +42,4 @@ void parser_pop_chunk(Parser* p) {
     }
     *p->chunk = p->chunks[ci];
     p->chunk_index--;
-}
-
-char* parser_data_str(Parser* p) {
-    if (!p->has_data)
-        return NULL;
-    return p->data;
 }

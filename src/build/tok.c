@@ -50,13 +50,14 @@ void tok_expect(Parser* p, char* expect, bool allow_space, bool allow_newline) {
         parse_err(p, start, "Expected '%s' here, instead of '%s'", expect, tkn);
     }
 }
-void tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
+int tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
     int start = p->chunk->i;
     char t = tok(p, allow_space, allow_newline, true);
     char* tkn = p->tkn;
     if(!str_is(tkn, expect_1) && !str_is(tkn, expect_2)) {
         parse_err(p, start, "Expected '%s' or '%s' here, instead of '%s'", expect_1, expect_2, tkn);
     }
+    return t;
 }
 
 // char tok_read_byte(Fc* fc, int offset) {
@@ -74,13 +75,13 @@ void tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space,
 //         return ch->tokens[ch->i + 2];
 //     return t;
 // }
-// void tok_skip_whitespace(Fc* fc) {
-//     Chunk* ch = fc->chunk_parse;
-//     int t = ch->tokens[ch->i];
-//     if(t == tok_space || t == tok_newline) {
-//         ch->i += 2;
-//     }
-// }
+void tok_skip_whitespace(Parser* p) {
+    Chunk* ch = p->chunk;
+    int t = ch->tokens[ch->i];
+    while(t == tok_space || t == tok_newline) {
+        ch->i++;
+    }
+}
 // void tok_skip_space(Fc* fc) {
 //     Chunk* ch = fc->chunk_parse;
 //     int t = ch->tokens[ch->i];

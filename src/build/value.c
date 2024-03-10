@@ -27,8 +27,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             tok_expect(fc, "(", false, false);
             Value *from = read_value(alc, fc, scope, true, 0);
             if (!value_is_assignable(from)) {
-                sprintf(b->char_buf, "Value in @ptr_of must be an assign-able value. e.g. a variable");
-                parse_err(chunk, b->char_buf);
+                parse_err(p, -1, "Value in @ptr_of must be an assign-able value. e.g. a variable")
             }
             tok_expect(fc, ")", true, true);
             if (from->type == v_decl) {
@@ -116,12 +115,10 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             Value* right = vop->right;
             int op = vop->op;
             if(op != op_add && op != op_sub && op != op_mul && op != op_div){
-                sprintf(b->char_buf, "Atomic only allows: + - * /");
-                parse_err(chunk, b->char_buf);
+                parse_err(p, -1, "Atomic only allows: + - * /")
             }
             if(!value_is_assignable(left)) {
-                sprintf(b->char_buf, "Left value must be an assignable value. e.g. a variable");
-                parse_err(chunk, b->char_buf);
+                parse_err(p, -1, "Left value must be an assignable value. e.g. a variable")
             }
             v = value_make(alc, v_atomic, vop, val->rett);
         } else {
@@ -137,8 +134,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
             negative = true;
             tkn = tok(fc, true, false, true);
             if(fc->chunk_parse->token != tok_number) {
-                sprintf(b->char_buf, "Invalid negative number: '%s'", tkn);
-                parse_err(chunk, b->char_buf);
+                parse_err(p, -1, "Invalid negative number: '%s'", tkn)
             }
         }
         char* num = tkn;
@@ -167,8 +163,7 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
     }
 
     if(!v) {
-        sprintf(b->char_buf, "Unknown value: '%s'", tkn);
-        parse_err(chunk, b->char_buf);
+        parse_err(p, -1, "Unknown value: '%s'", tkn)
     }
 
     ///////////////////////
@@ -196,12 +191,10 @@ Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int 
                 // Check functions
                 Func* func = map_get(class->funcs, prop_name);
                 if (!func) {
-                    sprintf(b->char_buf, "Class '%s' has no property/function named: '%s'", class->name, prop_name);
-                    parse_err(chunk, b->char_buf);
+                    parse_err(p, -1, "Class '%s' has no property/function named: '%s'", class->name, prop_name)
                 }
                 if(func->is_static) {
-                    sprintf(b->char_buf, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name)
                 }
                 v = vgen_func_ptr(alc, func, v);
             }
@@ -404,7 +397,7 @@ Value* value_handle_idf(Allocator *alc, Fc *fc, Scope *scope, Idf *idf) {
 Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     Type* ont = on->rett;
     if (ont->type != type_func) {
-        parse_err(fc->chunk_parse, "Function call on non-function type");
+        parse_err(p, -1, "Function call on non-function type");
     }
     
     Build* b = fc->b;
@@ -450,14 +443,12 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
                 continue;
             if (str_is(tkn, ")"))
                 break;
-            sprintf(b->char_buf, "Unexpected token in function arguments: '%s'\n", tkn);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Unexpected token in function arguments: '%s'\n", tkn)
         }
     }
 
     if(args->length > func_args->length) {
-        sprintf(b->char_buf, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset)
     }
 
     // Add default values
@@ -486,8 +477,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
     }
 
     if(args->length < func_args->length) {
-        sprintf(b->char_buf, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset)
     }
 
     Value* fcall = vgen_func_call(alc, on, args);
@@ -506,7 +496,7 @@ Value *value_func_call(Allocator *alc, Fc *fc, Scope *scope, Value *on) {
             f->err_scope = err_scope;
 
             if(!err_scope->did_return) {
-                parse_err(fc->chunk_parse, "Expected scope to contain one of the following tokens: return, throw, break, continue");
+                parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
             }
 
         } else if(str_is(tkn, "?")) {
@@ -548,8 +538,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
         char *name = tok(fc, false, false, true);
         Func* func = map_get(class->funcs, name);
         if(!func) {
-            sprintf(b->char_buf, "Class '%s' has no function named: '%s'\n", class->name, name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Class '%s' has no function named: '%s'\n", class->name, name)
         }
         return vgen_func_ptr(alc, func, NULL);
     }
@@ -566,12 +555,10 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
     while(!str_is(name, "}")) {
         ClassProp* prop = map_get(class->props, name);
         if(!prop) {
-            sprintf(b->char_buf, "Class '%s' has no property named: '%s'\n", class->name, name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Class '%s' has no property named: '%s'\n", class->name, name)
         }
         if(map_contains(values, name)) {
-            sprintf(b->char_buf, "Setting same property twice: '%s'\n", name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Setting same property twice: '%s'\n", name)
         }
         tok_expect(fc, ":", true, false);
         Value* val = read_value(alc, fc, scope, true, 0);
@@ -592,8 +579,7 @@ Value* value_handle_class(Allocator *alc, Fc* fc, Scope* scope, Class* class) {
             if(prop->skip_default_value)
                 continue;
             if(!prop->chunk_value) {
-                sprintf(b->char_buf, "Missing property value for: '%s'\n", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Missing property value for: '%s'\n", name)
             }
             Chunk backup;
             backup = *fc->chunk_parse;
@@ -626,13 +612,13 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
     // On
     Value *on = read_value(alc, fc, scope, true, 0);
     if (!on->rett->is_pointer) {
-        parse_err(fc->chunk_parse, "First argument of '@ptrv' must be a value of type 'ptr'");
+        parse_err(p, -1, "First argument of '@ptrv' must be a value of type 'ptr'");
     }
     // Type
     tok_expect(fc, ",", true, true);
     Type *type = read_type(fc, alc, scope, true);
     if (type->type == type_void) {
-        parse_err(fc->chunk_parse, "You cannot use 'void' type in @ptrv");
+        parse_err(p, -1, "You cannot use 'void' type in @ptrv");
     }
     // Index
     char* tkn = tok(fc, true, true, true);
@@ -640,7 +626,7 @@ Value* value_handle_ptrv(Allocator *alc, Fc* fc, Scope* scope) {
     if(str_is(tkn, ",")) {
         index = read_value(alc, fc, scope, true, 0);
         if (index->rett->type != type_int) {
-            parse_err(fc->chunk_parse, "@ptrv index must be of type integer");
+            parse_err(p, -1, "@ptrv index must be of type integer");
         }
     } else {
         tok_back(fc);
@@ -657,7 +643,7 @@ Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value*
     Type* rt = right->rett;
 
     if(!lt->class || !lt->class->allow_math) {
-        parse_err(fc->chunk_parse, "You cannot use operators on these values");
+        parse_err(p, -1, "You cannot use operators on these values");
     }
     bool is_ptr = false;
     bool is_signed = lt->is_signed || rt->is_signed;

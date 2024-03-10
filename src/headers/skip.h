@@ -6,6 +6,6 @@
 
 void skip_body(Fc* fc);
 void skip_type(Fc* fc);
-void skip_value(Fc* fc);
+// void skip_value(Fc* fc);
 
 #endif

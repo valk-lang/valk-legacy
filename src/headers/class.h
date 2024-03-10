@@ -19,7 +19,7 @@ struct Class {
     char* name;
     char* ir_name;
     Build* b;
-    Fc* fc;
+    Unit* unit;
     Chunk* body;
     Scope* scope;
     Map* props;

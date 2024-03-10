@@ -70,5 +70,6 @@
 #include "headers/unit.h"
 #include "headers/chunk.h"
 #include "headers/error.h"
+#include "headers/scope.h"
 
 #endif

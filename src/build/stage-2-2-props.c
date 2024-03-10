@@ -54,16 +54,13 @@ void stage_props_class(Fc* fc, Class *class) {
         if(str_is(next, ":")) {
             char* name = tkn;
             if(class->type != ct_class && class->type != ct_struct) {
-                sprintf(b->char_buf, "You cannot define properties on this type");
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "You cannot define properties on this type")
             }
             if(t != tok_id) {
-                sprintf(b->char_buf, "Invalid property name: '%s'", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Invalid property name: '%s'", name)
             }
             if(map_contains(class->props, name) || map_contains(class->funcs, name)) {
-                sprintf(b->char_buf, "Property name is already used for another property or function: '%s'", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Property name is already used for another property or function: '%s'", name)
             }
             ClassProp* prop = al(b->alc, sizeof(ClassProp));
             prop->chunk_type = chunk_clone(b->alc, fc->chunk_parse);
@@ -95,18 +92,15 @@ void stage_props_class(Fc* fc, Class *class) {
             next = tok(fc, true, false, true);
         }
         if(!str_is(tkn, "fn")) {
-            sprintf(b->char_buf, "Expected 'fn' here, found '%s' instead", tkn);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Expected 'fn' here, found '%s' instead", tkn)
         }
         char* name = next;
         t = fc->chunk_parse->token;
         if (t != tok_id) {
-            sprintf(b->char_buf, "Invalid property name: '%s'", name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Invalid property name: '%s'", name)
         }
         if (map_contains(class->props, name) || map_contains(class->funcs, name)) {
-            sprintf(b->char_buf, "Function name is already used for another property or function: '%s'", name);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Function name is already used for another property or function: '%s'", name)
         }
 
         char export_name[512];

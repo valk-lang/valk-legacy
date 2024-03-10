@@ -10,6 +10,7 @@ enum LEX_TOKENS {
     tok_number,
     tok_string,
     tok_char,
+    tok_at_word,
     // Brackets
     tok_bracket_open,
     tok_bracket_close,
@@ -60,6 +61,7 @@ enum LEX_TOKENS {
     tok_comma,
     tok_hashtag,
     tok_triple_sub,
+    tok_eqgt,
 
     // Data tokens
     tok_data_pos = 241,

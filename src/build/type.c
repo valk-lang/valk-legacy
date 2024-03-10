@@ -95,8 +95,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
             Idf *idf = idf_by_id(fc, scope, &id, false);
             if (!idf) {
                 id.ns ? sprintf(b->char_buf, "Unknown type: '%s:%s'", id.ns, id.name)
-                      : sprintf(b->char_buf, "Unknown type: '%s'", id.name);
-                parse_err(fc->chunk_parse, b->char_buf);
+                      : parse_err(p, -1, "Unknown type: '%s'", id.name)
             }
             if (idf->type == idf_class) {
                 Class *class = idf->item;
@@ -145,8 +144,7 @@ Type* read_type(Fc* fc, Allocator* alc, Scope* scope, bool allow_newline) {
         return type;
     }
 
-    sprintf(b->char_buf, "Invalid type: '%s'", tkn);
-    parse_err(fc->chunk_parse, b->char_buf);
+    parse_err(p, -1, "Invalid type: '%s'", tkn)
     return NULL;
 }
 Type* type_clone(Allocator* alc, Type* type) {

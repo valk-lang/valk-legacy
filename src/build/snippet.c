@@ -19,8 +19,7 @@ Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* 
             char *name = array_get_index(exports, i);
             Idf* idf = map_get(sub->identifiers, name);
             if(!idf) {
-                sprintf(fc->b->char_buf, "Export variable not found in snippet: '%s'", name);
-                parse_err(fc->chunk_parse, fc->b->char_buf);
+                parse_err(p, -1, "Export variable not found in snippet: '%s'", name)
             }
             scope_set_idf(scope_parent, name, idf, fc);
         }

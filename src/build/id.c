@@ -38,8 +38,7 @@ Id* read_id(Fc* fc, char* first_part, Id* buf) {
         tok(fc, false, false, true);
         name = tok(fc, false, false, true);
         if(!is_valid_varname(name)) {
-            sprintf(b->char_buf, "Invalid name syntax");
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Invalid name syntax")
         }
     }
 
@@ -78,8 +77,7 @@ Idf* idf_by_id(Fc* fc, Scope* scope, Id* id, bool must_exist) {
 
     if(!idf && must_exist) {
         if(ns) sprintf(b->char_buf, "Unknown identifier: '%s:%s'", ns, name);
-        else sprintf(b->char_buf, "Unknown identifier: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+        else parse_err(p, -1, "Unknown identifier: '%s'", name)
     }
 
     return idf;

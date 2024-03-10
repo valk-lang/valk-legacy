@@ -386,8 +386,7 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
     // Class size
     int size = class_determine_size(b, gclass);
     if(size == -1) {
-        sprintf(b->char_buf, "Cannot determine size of class: '%s'\n", gclass->name);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Cannot determine size of class: '%s'\n", gclass->name)
     }
     // Internals
     class_generate_internals(fc, b, gclass);

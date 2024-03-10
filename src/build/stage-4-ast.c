@@ -83,8 +83,7 @@ void read_ast(Parser *p, bool single_line) {
             if (str_is(tkn, "let")){
                 char* name = tok(fc, true, false, true);
                 if(!is_valid_varname(tkn)) {
-                    sprintf(b->char_buf, "Invalid variable name: '%s'", name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Invalid variable name: '%s'", name)
                 }
                 char* tkn = tok(fc, true, true, true);
                 Type* type = NULL;
@@ -93,8 +92,7 @@ void read_ast(Parser *p, bool single_line) {
                     tkn = tok(fc, true, true, true);
                 }
                 if(!str_is(tkn, "=")) {
-                    sprintf(b->char_buf, "Expected '=' here, found: '%s'", tkn);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Expected '=' here, found: '%s'", tkn)
                 }
 
                 Value* val = read_value(alc, fc, scope, true, 0);
@@ -122,14 +120,12 @@ void read_ast(Parser *p, bool single_line) {
             }
             if (str_is(tkn, "break") || str_is(tkn, "continue")){
                 if(!scope->loop_scope) {
-                    sprintf(fc->b->char_buf, "Using 'break' without being inside a loop");
-                    parse_err(fc->chunk_parse, fc->b->char_buf);
+                    parse_err(p, -1, "Using 'break' without being inside a loop")
                 }
                 array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, scope->loop_scope));
                 scope->did_return = true;
                 if(!scope->chunk_end) {
-                    sprintf(fc->b->char_buf, "Missing scope end position (compiler bug)");
-                    parse_err(fc->chunk_parse, fc->b->char_buf);
+                    parse_err(p, -1, "Missing scope end position (compiler bug)");
                 }
                 *fc->chunk_parse = *scope->chunk_end;
                 break;
@@ -143,15 +139,13 @@ void read_ast(Parser *p, bool single_line) {
                 } else {
                     char* tkn = tok(fc, true, false, true);
                     if(tkn[0] != 0 && !str_is(tkn, "}")) {
-                        sprintf(fc->b->char_buf, "Return statement should not return a value if the function has a 'void' return type");
-                        parse_err(fc->chunk_parse, fc->b->char_buf);
+                        parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type")
                     }
                 }
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
                 if(!scope->chunk_end) {
-                    sprintf(fc->b->char_buf, "Missing scope end position (compiler bug)");
-                    parse_err(fc->chunk_parse, fc->b->char_buf);
+                    parse_err(p, -1, "Missing scope end position (compiler bug)");
                 }
                 *fc->chunk_parse = *scope->chunk_end;
                 break;
@@ -159,17 +153,16 @@ void read_ast(Parser *p, bool single_line) {
             if (str_is(tkn, "throw")){
                 char* name = tok(fc, true, false, true);
                 if(!is_valid_varname(tkn)) {
-                    sprintf(b->char_buf, "Invalid error name: '%s'", name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Invalid error name: '%s'", name)
                 }
-                Scope* fscope = scope_get_func(scope, true, fc);
+                Func* func = p->func;
+                Scope* fscope = func->scope;
                 FuncError* err = NULL;
-                if (fscope->func->errors) {
-                    err = map_get(fscope->func->errors, name);
+                if (func->errors) {
+                    err = map_get(func->errors, name);
                 }
                 if(!err) {
-                    sprintf(b->char_buf, "Function has no error defined named: '%s'", name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Function has no error defined named: '%s'", name);
                 }
 
                 array_push(scope->ast, tgen_throw(alc, b, fc, err, name));
@@ -185,8 +178,7 @@ void read_ast(Parser *p, bool single_line) {
                 tok_expect(fc, "as", true, false);
                 char* name = tok(fc, true, false, true);
                 if(!is_valid_varname(tkn)) {
-                    sprintf(b->char_buf, "Invalid variable name: '%s'", name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Invalid variable name: '%s'", name)
                 }
                 Value* vc = vgen_ir_cached(alc, v);
                 Idf* idf = idf_make(alc, idf_cached_value, vc);
@@ -202,8 +194,7 @@ void read_ast(Parser *p, bool single_line) {
                 Idf* idf = idf_by_id(fc, scope, read_id(fc, name, &id), true);
 
                 if(idf->type != idf_snippet) {
-                    sprintf(b->char_buf, "Invalid snippet name: '%s'", name);
-                    parse_err(fc->chunk_parse, b->char_buf);
+                    parse_err(p, -1, "Invalid snippet name: '%s'", name)
                 }
                 Snippet* snip = idf->item;
                 Array *args = snip->args;
@@ -282,7 +273,6 @@ void read_ast(Parser *p, bool single_line) {
     }
 
     if(scope->must_return && !scope->did_return) {
-        sprintf(b->char_buf, "Missing return statement");
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Missing return statement")
     }
 }
