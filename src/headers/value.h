@@ -4,7 +4,7 @@
 
 #include "typedefs.h"
 
-Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio);
+Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio);
 bool value_is_assignable(Value *v);
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_);
 Value* value_handle_op(Allocator *alc, Fc *fc, Scope *scope, Value *left, Value* right, int op);

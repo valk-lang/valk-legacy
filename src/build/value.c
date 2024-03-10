@@ -9,7 +9,7 @@ Value* value_handle_compare(Allocator *alc, Fc *fc, Scope *scope, Value *left, V
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 
-Value* read_value(Allocator* alc, Fc* fc, Scope* scope, bool allow_newline, int prio) {
+Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     Build *b = fc->b;
     Chunk *chunk = fc->chunk_parse;
 
