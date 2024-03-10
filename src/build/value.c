@@ -409,33 +409,27 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     int offset = arg_i;
     bool contains_gc_args = false;
 
-    tok_skip_whitespace(fc);
-    if (tok_id_next(fc) == tok_scope_close) {
-        char *tkn = tok(fc, true, true, true);
-    } else {
-        // Read argument values
-        while (true) {
-            Value *arg = read_value(alc, fc, scope, true, 0);
-            Type *arg_type = array_get_index(func_args, arg_i++);
-            if (arg_type) {
-
-                arg = try_convert(alc, b, arg, arg_type);
-                type_check(fc->chunk_parse, arg_type, arg->rett);
-            }
-
-            array_push(args, arg);
-
-            char *tkn = tok(fc, true, true, true);
-            if (str_is(tkn, ","))
-                continue;
-            if (str_is(tkn, ")"))
-                break;
-            parse_err(p, -1, "Unexpected token in function arguments: '%s'\n", tkn)
+    // Read argument values
+    while (tok(p, true, true, false) != tok_bracket_close) {
+        Value *arg = read_value(alc, p, true, 0);
+        Type *arg_type = array_get_index(func_args, arg_i++);
+        if (arg_type) {
+            arg = try_convert(alc, b, arg, arg_type);
+            type_check(p, arg_type, arg->rett);
         }
+
+        array_push(args, arg);
+
+        int t = tok(p, true, true, true);
+        if (t == tok_comma)
+            continue;
+        if (t == tok_bracket_close)
+            break;
+        parse_err(p, -1, "Unexpected token in function arguments: '%s'\n", p->tkn);
     }
 
     if(args->length > func_args->length) {
-        parse_err(p, -1, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset)
+        parse_err(p, -1, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
     // Add default values
@@ -447,115 +441,139 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             if(!arg_type || !default_value_ch)
                 break;
             Chunk ch;
-            ch = *fc->chunk_parse;
-            *fc->chunk_parse = *default_value_ch;
-            Scope* prio = scope->prio_idf_scope;
-            scope->prio_idf_scope = default_value_ch->fc->scope;
+            ch = *p->chunk;
+            *p->chunk = *default_value_ch;
+            Scope* scope = p->scope;
+            p->scope = default_value_ch->fc->scope;
             //
-            Value* arg = read_value(b->alc, fc, scope, true, 0);
+            Value* arg = read_value(b->alc, p, true, 0);
             arg = try_convert(alc, b, arg, arg_type);
-            type_check(fc->chunk_parse, arg_type, arg->rett);
+            type_check(p, arg_type, arg->rett);
             //
-            scope->prio_idf_scope = prio;
-            *fc->chunk_parse = ch;
+            p->scope = scope;
+            *p->chunk = ch;
             array_push(args, arg);
             index++;
         }
     }
 
     if(args->length < func_args->length) {
-        parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset)
+        parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
     Value* fcall = vgen_func_call(alc, on, args);
 
     if(ont->func_errors) {
         VFuncCall* f = fcall->item;
-        char* tkn = tok_expect_two(fc, "!", "?", true, false);
+        int t = tok_expect_two(p, "!", "?", true, false);
 
-        if(str_is(tkn, "!")) {
-            tok_expect(fc, "{", true, false);
-            Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
-            chunk_end->i = chunk_end->scope_end_i;
-            Scope* err_scope = scope_sub_make(alc, sc_default, scope, chunk_end);
+        if(t == tok_not) {
 
-            read_ast(fc, err_scope, false);
+            t = tok(p, true, true, true);
+            bool single = false;
+
+            Chunk* chunk_end = NULL;
+            if (t == tok_curly_open) {
+                chunk_end = chunk_clone(alc, p->chunk);
+                chunk_end->i = p->scope_end_i;
+            } else if (t == tok_colon) {
+                single = true;
+            } else {
+                parse_err(p, -1, "Expected '{' or ':' after '!', but found: '%s'", p->tkn);
+            }
+
+            Scope *scope = p->scope;
+            Scope *se = p->scope_end;
+            Scope* err_scope = scope_sub_make(alc, sc_default, scope);
             f->err_scope = err_scope;
+
+            p->scope = err_scope;
+            p->scope_end = chunk_end;
+            read_ast(p, single);
+            p->scope = scope;
+            p->scope_end = se;
 
             if(!err_scope->did_return) {
                 parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
             }
 
-        } else if(str_is(tkn, "?")) {
-            Value* errv = read_value(alc, fc, scope, false, 0);
+        } else if(t == tok_qmark) {
+            Value* errv = read_value(alc, p, false, 0);
             errv = try_convert(alc, b, errv, fcall->rett);
-            type_check(fc->chunk_parse, fcall->rett, errv->rett);
+            type_check(p, fcall->rett, errv->rett);
             f->err_value = errv;
         }
     }
 
-    return vgen_gc_buffer(alc, b, scope, fcall, args, true);
+    return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
 }
 
 Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
-    Build* b = fc->b;
-    Chunk* ch = fc->chunk_parse;
+    Build* b = p->b;
+    Chunk* ch = p->chunk;
 
     if(class->is_generic_base) {
-        tok_expect(fc, "[", false, false);
+        tok_expect(p, "[", false, false);
         Array* names = class->generic_names;
         Map* generic_types = map_make(alc);
         for (int i = 0; i < names->length; i++) {
             char* name = array_get_index(names, i);
-            Type* type = read_type(fc, alc, scope, false);
+            Type* type = read_type(p, alc, false);
             map_set(generic_types, name, type);
             if(i + 1 < names->length) {
-                tok_expect(fc, ",", true, false);
+                tok_expect(p, ",", true, false);
             } else {
-                tok_expect(fc, "]", true, false);
+                tok_expect(p, "]", true, false);
                 break;
             }
         }
-        class = get_generic_class(fc, class, generic_types);
+        class = get_generic_class(p, class, generic_types);
     }
 
-    if(tok_read_byte(fc, 0) == tok_char && tok_read_byte(fc, 1) == '.') {
+    int t = tok(p, false, false, false);
+    if(t == tok_dot) {
         // Static functions
-        tok(fc, false, false, true);
-        char *name = tok(fc, false, false, true);
+        tok(p, false, false, true);
+        t = tok(p, false, false, true);
+        char* name = p->tkn;
         Func* func = map_get(class->funcs, name);
         if(!func) {
-            parse_err(p, -1, "Class '%s' has no function named: '%s'\n", class->name, name)
+            parse_err(p, -1, "Class '%s' has no function named: '%s'", class->name, name);
         }
         return vgen_func_ptr(alc, func, NULL);
     }
     // Class init
-    char* tkn = tok(fc, true, true, true);
-    if(!str_is(tkn, "{")) {
-        tok_back(fc);
+    t = tok(p, true, false, false);
+    if(t != tok_curly_open) {
         return NULL;
     }
+    t = tok(p, true, false, true);
     int propc = class->props->values->length;
     Map* values = map_make(alc);
     // Read values
-    char* name = tok(fc, true, true, true);
-    while(!str_is(name, "}")) {
+    t = tok(p, true, true, true);
+    while(t != tok_curly_close) {
+        char* name = p->tkn;
         ClassProp* prop = map_get(class->props, name);
         if(!prop) {
-            parse_err(p, -1, "Class '%s' has no property named: '%s'\n", class->name, name)
+            parse_err(p, -1, "Class '%s' has no property named: '%s'", class->name, name);
         }
         if(map_contains(values, name)) {
-            parse_err(p, -1, "Setting same property twice: '%s'\n", name)
+            parse_err(p, -1, "Setting same property twice: '%s'", name);
         }
-        tok_expect(fc, ":", true, false);
-        Value* val = read_value(alc, fc, scope, true, 0);
+        tok_expect(p, ":", true, false);
+        Value* val = read_value(alc, p, true, 0);
         val = try_convert(alc, b, val, prop->type);
-        type_check(fc->chunk_parse, prop->type, val->rett);
+        type_check(p, prop->type, val->rett);
         map_set_force_new(values, name, val);
-        name = tok(fc, true, true, true);
-        if(str_is(name, ",")) {
-            name = tok(fc, true, true, true);
+        t = tok(p, true, true, true);
+        if(t == tok_comma) {
+            t = tok(t, true, true, true);
+            continue;
+        } else if(t == tok_curly_close) {
+            break;
         }
+        parse_err(p, -1, "Unexpected token: '%s'", p->tkn);
     }
     // Default values
     Array* props = class->props->values;
@@ -566,61 +584,61 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
             if(prop->skip_default_value)
                 continue;
             if(!prop->chunk_value) {
-                parse_err(p, -1, "Missing property value for: '%s'\n", name)
+                parse_err(p, -1, "Missing property value for: '%s'", name);
             }
-            Chunk backup;
-            backup = *fc->chunk_parse;
-            *fc->chunk_parse = *prop->chunk_value;
-            Scope* prio = scope->prio_idf_scope;
-            scope->prio_idf_scope = class->scope;
-            Value* val = read_value(alc, fc, scope, true, 0);
-            scope->prio_idf_scope = prio;
+
+            Chunk backup = *p->chunk;
+            *p->chunk = *prop->chunk_value;
+            Scope* scope = p->scope;
+            p->scope = class->scope;
+            Value* val = read_value(alc, p, true, 0);
+            p->scope = scope;
+            *p->chunk = backup;
 
             val = try_convert(alc, b, val, prop->type);
-            type_check(fc->chunk_parse, prop->type, val->rett);
-            *fc->chunk_parse = backup;
+            type_check(p, prop->type, val->rett);
+
             map_set_force_new(values, name, val);
         }
     }
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
-    Value* buffer = vgen_gc_buffer(alc, b, scope, init, values->values, false);
+    Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
     if(class->type == ct_class) {
-        Scope *gcscope = gen_snippet_ast(alc, fc, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), p->scope);
         Token *t = token_make(alc, t_ast_scope, gcscope);
-        array_shift(scope->ast, t);
+        array_shift(p->scope->ast, t);
     }
 
     return buffer;
 }
 
 Value* value_handle_ptrv(Allocator *alc, Parser* p) {
-    tok_expect(fc, "(", false, false);
+    tok_expect(p, "(", false, false);
     // On
-    Value *on = read_value(alc, fc, scope, true, 0);
+    Value *on = read_value(alc, p, true, 0);
     if (!on->rett->is_pointer) {
         parse_err(p, -1, "First argument of '@ptrv' must be a value of type 'ptr'");
     }
     // Type
-    tok_expect(fc, ",", true, true);
-    Type *type = read_type(fc, alc, scope, true);
+    tok_expect(p, ",", true, true);
+    Type *type = read_type(p, alc, true);
     if (type->type == type_void) {
         parse_err(p, -1, "You cannot use 'void' type in @ptrv");
     }
     // Index
-    char* tkn = tok(fc, true, true, true);
+    int t = tok(p, true, true, false);
     Value *index = NULL;
-    if(str_is(tkn, ",")) {
-        index = read_value(alc, fc, scope, true, 0);
+    if(t == tok_comma) {
+        tok(p, true, true, true);
+        index = read_value(alc, p, true, 0);
         if (index->rett->type != type_int) {
             parse_err(p, -1, "@ptrv index must be of type integer");
         }
-    } else {
-        tok_back(fc);
     }
-    tok_expect(fc, ")", true, true);
+    tok_expect(p, ")", true, true);
 
-    return vgen_ptrv(alc, fc->b, on, type, index);
+    return vgen_ptrv(alc, p->b, on, type, index);
 }
 
 Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int op) {
@@ -668,8 +686,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     if(!type_compat(t1, t2, &reason)){
         char t1b[256];
         char t2b[256];
-        sprintf(b->char_buf, "Operator values are not compatible: %s %s %s", type_to_str(lt, t1b), op_to_str(op), type_to_str(rt, t2b));
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Operator values are not compatible: %s %s %s", type_to_str(lt, t1b), op_to_str(op), type_to_str(rt, t2b));
     }
 
     Value* v = vgen_op(alc, op, left, right, t1);
@@ -721,7 +738,7 @@ Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
 }
 
 Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right, int op) {
-    Build* b = fc->b;
+    Build* b = p->b;
     Type* lt = left->rett;
     Type* rt = right->rett;
 
@@ -743,7 +760,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
             } else if (right->type == v_number && left->type != v_number) {
                 try_convert_number(right, lt);
             }
-            match_value_types(alc, fc->b, &left, &right);
+            match_value_types(alc, b, &left, &right);
         }
     }
 
@@ -753,8 +770,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
     if(!type_compat(t1, t2, &reason)){
         char t1b[256];
         char t2b[256];
-        sprintf(b->char_buf, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
     }
 
     return vgen_comp(alc, op, left, right, type_gen_volt(alc, b, "bool"));
