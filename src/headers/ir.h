@@ -60,9 +60,10 @@ char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* tha
 
 // Structs
 struct IR {
-    Fc *fc;
+    Unit *unit;
     Build *b;
     Allocator* alc;
+    Parser* parser;
     //
     char* char_buf;
     Str* str_buf;

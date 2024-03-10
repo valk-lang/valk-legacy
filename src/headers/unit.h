@@ -11,6 +11,7 @@ struct Unit {
     //
     char *path_o;
     char *path_ir;
+    char *path_cache;
     char *hash;
     //
     Array *funcs;

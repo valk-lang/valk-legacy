@@ -10,6 +10,8 @@ void parser_pop_chunk(Parser* p);
 
 struct Parser {
     Build* b;
+    // State
+    Unit* unit;
     Chunk* chunks;
     Chunk* chunk;
     Chunk* scope_end;

@@ -24,6 +24,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->generic_names = NULL;
     c->generic_types = NULL;
     c->is_generic_base = false;
+    c->in_header = false;
     //
     return c;
 }
@@ -172,7 +173,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
     }
 }
 
-void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
+void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
 
     Map* props = class->props;
 
@@ -233,11 +234,10 @@ void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func) {
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(chunk, content, code->length);
 
-    *fc->chunk_parse = *chunk;
-    *fc->chunk_parse_prev = *chunk;
-    parse_handle_func_args(fc, func);
+    *p->chunk = *chunk;
+    parse_handle_func_args(p, func);
 }
-void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
+void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
 
     Map* props = class->props;
 
@@ -290,13 +290,12 @@ void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func) {
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(chunk, content, code->length);
 
-    *fc->chunk_parse = *chunk;
-    *fc->chunk_parse_prev = *chunk;
-    parse_handle_func_args(fc, func);
+    *p->chunk = *chunk;
+    parse_handle_func_args(p, func);
 }
 
-Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
-    Build* b = fc->b;
+Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
+    Build* b = p->b;
     //
     Str* hash = build_get_str_buf(b);
     Array* names = generic_types->keys;
@@ -348,10 +347,10 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
 
     gclass = class_make(b->alc, b, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
-    gclass->scope = scope_sub_make(b->alc, sc_default, class->fc->scope, NULL);
+    gclass->scope = scope_sub_make(b->alc, sc_default, class->scope->parent);
     gclass->type = class->type;
     gclass->b = class->b;
-    gclass->fc = fc;
+    gclass->unit = p->unit;
     gclass->packed = class->packed;
 
     gclass->name = name;
@@ -369,36 +368,36 @@ Class* get_generic_class(Fc* fc, Class* class, Map* generic_types) {
         char* name = array_get_index(names, i);
         Type* type = array_get_index(types, i);
         Idf* idf = idf_make(b->alc, idf_type, type);
-        scope_set_idf(gclass->scope, name, idf, fc);
+        scope_set_idf(gclass->scope, name, idf, p);
     }
     // Set CLASS identifier
     Idf* idf = idf_make(b->alc, idf_class, gclass);
-    scope_set_idf(gclass->scope, "CLASS", idf, fc);
+    scope_set_idf(gclass->scope, "CLASS", idf, p);
 
     // Save chunk for parser
     Chunk ch;
-    ch = *fc->chunk_parse;
+    ch = *p->chunk;
 
     // Stage 2
-    stage_props_class(fc, gclass);
+    stage_props_class(p, gclass);
     // Class size
     int size = class_determine_size(b, gclass);
     if(size == -1) {
-        parse_err(p, -1, "Cannot determine size of class: '%s'\n", gclass->name)
+        parse_err(p, -1, "Cannot determine size of class: '%s'\n", gclass->name);
     }
     // Internals
-    class_generate_internals(fc, b, gclass);
+    class_generate_internals(p, b, gclass);
 
     // Types
-    stage_types_class(fc, gclass);
+    stage_types_class(p, gclass);
     Array* funcs = gclass->funcs->values;
     for (int i = 0; i < funcs->length; i++) {
         Func* func = array_get_index(funcs, i);
-        stage_types_func(fc, func);
+        stage_types_func(p, func);
     }
 
     // Restore chunk
-    *fc->chunk_parse = ch;
+    *p->chunk = ch;
     //
     build_return_str_buf(b, hash);
     return gclass;

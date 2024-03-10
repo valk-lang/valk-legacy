@@ -20,10 +20,14 @@ void stage_1_parse(Fc* fc) {
 
     *p->chunk = *fc->content;
     p->in_header = fc->is_header;
+    p->unit = p;
 
     usize start = microtime();
     stage_parse(p, u);
     b->time_parse += microtime() - start;
+
+    p->in_header = false;
+    p->unit = NULL;
 
     stage_add_item(b->stage_2_alias, u);
 }
@@ -113,6 +117,8 @@ void stage_1_func(Parser *p, Unit *u, int act) {
     }
 
     Func* func = func_make(b->alc, u, p->scope, name, NULL);
+    func->in_header = p->in_header;
+
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);
 
@@ -166,6 +172,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
     class->scope = scope_sub_make(b->alc, sc_default, p->scope, NULL);
+    class->in_header = p->in_header;
 
     t = tok(p, false, false, false);
     if(t == tok_sq_bracket_open) {

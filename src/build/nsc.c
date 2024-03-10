@@ -12,6 +12,8 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
     char *path_ir = al(alc, VOLT_PATH_MAX);
     sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+    char *path_cache = al(alc, VOLT_PATH_MAX);
+    sprintf(path_ir, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
 
     Unit* u = al(alc, sizeof(Unit));
     u->b = pkc->b;
@@ -19,6 +21,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     //
     u->path_o = path_o;
     u->path_ir = path_ir;
+    u->path_cache = path_cache;
     u->hash = NULL;
     //
     u->funcs = array_make(alc, 50);
@@ -29,6 +32,8 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->ir_changed = false;
 
     nsc->unit = u;
+
+    array_push(pkc->b->units, u);
 
     return nsc;
 }

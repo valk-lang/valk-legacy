@@ -79,6 +79,7 @@ struct Build {
     Nsc *nsc_main;
     Func *func_main;
     //
+    Array *units;
     Array *classes;
     Array *pool_str;
     ErrorCollection* errors;

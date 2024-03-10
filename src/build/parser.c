@@ -4,6 +4,7 @@
 Parser* parser_make(Allocator* alc, Build* b) {
     Parser* p = al(alc, sizeof(Parser));
     p->b = b;
+    p->unit = NULL;
     p->tkn = NULL;
 
     p->chunks = al(alc, 20 * sizeof(Chunk));

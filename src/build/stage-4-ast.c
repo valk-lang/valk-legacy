@@ -33,6 +33,7 @@ void stage_4_ast_main(Unit *u) {
 void stage_ast(Unit *u) {
     Build* b = u->b;
     Parser *p = b->parser;
+    p->unit = u;
     //
     Array *funcs = u->funcs;
     for (int i = 0; i < funcs->length; i++) {
@@ -50,6 +51,8 @@ void stage_ast(Unit *u) {
         p->loop_scope = NULL;
         read_ast(p, false);
     }
+
+    p->unit = NULL;
 }
 
 void read_ast(Parser *p, bool single_line) {

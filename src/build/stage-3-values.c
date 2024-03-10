@@ -6,6 +6,7 @@ void stage_values(Parser* p, Unit* u);
 void stage_3_values(Unit* u) {
     Build* b = u->b;
     Parser* p = b->parser;
+    p->unit = u;
 
     if (b->verbose > 2)
         printf("Stage 3 | Scan values: %s\n", u->nsc->name);
@@ -14,6 +15,7 @@ void stage_3_values(Unit* u) {
     stage_values(p, u);
     b->time_parse += microtime() - start;
 
+    p->unit = NULL;
     stage_add_item(b->stage_4_ast, u);
 }
 

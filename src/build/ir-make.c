@@ -1,13 +1,14 @@
 
 #include "../all.h"
 
-IR* ir_make(Fc* fc) {
+IR* ir_make(Unit* u, Parser* p) {
     //
-    Build* b = fc->b;
-    Allocator* alc = fc->alc_ast;
+    Build* b = u->b;
+    Allocator* alc = b->alc_ast;
 
     IR* ir = al(alc, sizeof(IR));
-    ir->fc = fc;
+    ir->unit = u;
+    ir->parser = p;
     ir->b = b;
     ir->alc = alc;
     ir->char_buf = b->char_buf;

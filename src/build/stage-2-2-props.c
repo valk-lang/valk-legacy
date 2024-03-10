@@ -18,11 +18,16 @@ void stage_2_props(Unit* u) {
 }
 
 void stage_props(Unit *u) {
+    Parser* p = u->b->parser;
+    p->unit = u;
+    //
     Array* classes = u->classes;
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
-        stage_props_class(u->b->parser, class);
+        stage_props_class(p, class);
     }
+    //
+    p->unit = NULL;
 }
 
 void stage_props_class(Parser* p, Class *class) {
@@ -108,6 +113,7 @@ void stage_props_class(Parser* p, Class *class) {
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;
+        func->in_header = class->in_header;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

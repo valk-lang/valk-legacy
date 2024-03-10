@@ -12,6 +12,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
+    f->body_end = NULL;
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
@@ -22,6 +23,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->is_static = false;
     f->can_error = false;
     f->types_parsed = false;
+    f->in_header = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -46,34 +48,33 @@ void parse_handle_func_args(Parser* p, Func* func) {
     func->chunk_args = chunk_clone(b->alc, p->chunk);
     skip_body(p);
 
-    if(fc->is_header) {
-        func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_type(fc);
+    if(func->in_header) {
+        func->chunk_rett = chunk_clone(b->alc, p->chunk);
+        skip_type(p);
     } else {
-        char *tkn = tok(fc, true, true, true);
-        if (!str_is(tkn, "{") && !str_is(tkn, "!")) {
+        int t = tok(p, true, true, false);
+        if (t != tok_curly_open && t != tok_not) {
             // Has return type
-            tok_back(fc);
-            func->chunk_rett = chunk_clone(fc->alc, fc->chunk_parse);
-            skip_type(fc);
-        } else {
-            tok_back(fc);
+            func->chunk_rett = chunk_clone(b->alc, p->chunk);
+            skip_type(p);
         }
     }
 
-    char *tkn = tok(fc, true, true, true);
+    int t = tok(p, true, true, false);
     Map *errors = NULL;
-    if (str_is(tkn, "!")) {
+    if (t == tok_not) {
         errors = map_make(b->alc);
     }
-    while(str_is(tkn, "!")) {
-        char *name = tok(fc, false, false, true);
-        if(!is_valid_varname(name)) {
-            parse_err(p, -1, "Invalid error name: '%s'", name)
+    while(t == tok_not) {
+        tok(p, true, true, true);
+        t = tok(p, false, false, true);
+        if(t != tok_id) {
+            parse_err(p, -1, "Invalid error name: '%s'", p->tkn);
         }
         // Get error value
+        char* name = p->tkn;
         FuncError* err = NULL;
-        if(fc->is_header) {
+        if(func->in_header) {
             build_err(b, "TODO: header errors");
         } else {
             err = map_get(b->errors->errors, name);
@@ -86,22 +87,21 @@ void parse_handle_func_args(Parser* p, Func* func) {
         }
         Idf* idf = idf_make(b->alc, idf_error, err);
         map_set(errors, name, err);
-        scope_set_idf(func->scope, name, idf, fc);
+        scope_set_idf(func->scope, name, idf, p);
 
-        tkn = tok(fc, true, true, true);
+        t = tok(p, true, true, false);
     }
     func->errors = errors;
-    tok_back(fc);
 
-    if(!fc->is_header) {
-        tok_expect(fc, "{", true, true);
+    if(!func->in_header) {
+        tok_expect(p, "{", true, true);
 
-        Chunk *chunk_end = chunk_clone(fc->alc, fc->chunk_parse);
-        chunk_end->i = chunk_end->scope_end_i;
-        func->scope->chunk_end = chunk_end;
+        Chunk *chunk_end = chunk_clone(b->alc, p->chunk);
+        chunk_end->i = p->scope_end_i;
+        func->body_end = chunk_end;
 
-        func->chunk_body = chunk_clone(fc->alc, fc->chunk_parse);
-        skip_body(fc);
+        func->chunk_body = chunk_clone(b->alc, p->chunk);
+        skip_body(p);
     }
 }
 

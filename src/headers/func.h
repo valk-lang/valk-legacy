@@ -6,7 +6,7 @@
 
 Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
-void parse_handle_func_args(Fc* fc, Func* func);
+void parse_handle_func_args(Parser* p, Func* func);
 int func_get_reserve_count(Func* func);
 
 struct Func {
@@ -20,6 +20,7 @@ struct Func {
     Chunk* chunk_args;
     Chunk* chunk_rett;
     Chunk* chunk_body;
+    Chunk* body_end;
     //
     Map* args;
     Array* arg_types;
@@ -33,6 +34,7 @@ struct Func {
     bool is_inline;
     bool can_error;
     bool types_parsed;
+    bool in_header;
 };
 struct FuncArg {
     Type* type;

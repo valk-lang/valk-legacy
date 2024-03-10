@@ -35,6 +35,7 @@ struct Class {
     bool is_signed;
     bool allow_math;
     bool is_generic_base;
+    bool in_header;
 };
 struct ClassProp {
     Type* type;
