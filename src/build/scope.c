@@ -37,40 +37,27 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p) {
 }
 
 void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
-    // if(decl->is_gc) {
-    //     Scope *loop = scope;
-    //     while (loop && (loop->type != sc_loop && loop->type != sc_if)) {
-    //         loop = loop->parent;
-    //     }
-    //     if (loop) {
-    //         Array* decls = loop->decls;
-    //         if(!decls) {
-    //             decls = array_make(alc, 4);
-    //             loop->decls = decls;
-    //         }
-    //         array_push(decls, decl);
-    //     }
-    // }
-    if(decl->is_gc) {
-        while (scope && scope->type == sc_default) {
-            scope = scope->parent;
-        }
-    } else {
-        while (scope && scope->type != sc_func) {
-            scope = scope->parent;
-        }
+    Scope* closest = scope;
+    while (closest && closest->type == sc_default) {
+        closest = closest->parent;
+    }
+    while (scope && scope->type != sc_func) {
+        scope = scope->parent;
     }
     if(!scope) {
         printf("Declaring a variable outside a function (compiler bug)\n");
         exit(1);
     }
-    Array* decls = scope->decls;
-    if(!decls) {
-        decls = array_make(alc, 4);
-        scope->decls = decls;
+    // Closest scope, e.g. if / while
+    if(decl->is_gc && closest != scope) {
+        if (!closest->decls)
+            closest->decls = array_make(alc, 4);
+        array_push(closest->decls, decl);
+        closest->has_gc_decls = true;
+        closest->gc_decl_count++;
     }
-    array_push(decls, decl);
-    //
+    // Func scope
+    array_push(scope->decls, decl);
     if(decl->is_gc) {
         scope->has_gc_decls = true;
         scope->gc_decl_count++;

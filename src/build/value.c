@@ -603,7 +603,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
-    if(class->type == ct_class && buffer->type == v_gc_buffer && p->scope->ast) {
+    if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }
     // if(class->type == ct_class && p->scope->ast) {

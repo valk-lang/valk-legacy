@@ -30,3 +30,57 @@ fn gc_mark_item(item: ptr) {
     let func = @ptrv(table, fn(ptr, u8)(void), 1)
     func(item, stack.age);
 }
+
+fn reserve_(amount: uint, stack_adr: ptr) {
+    if disable_gc == false {
+        // let x = amount
+        // while x-- > 0 {
+        //     @ptrv(stack_adr, ptr, x) = null
+        // }
+
+        if stack.lowest_reached {
+            stack.lowest_reached = false
+            if pool_usage > 10 {
+                stack.run_gc = true
+            }
+        }
+        if stack.run_gc {
+            stack.gc()
+        }
+
+        stack.stack_adr = stack_adr + (amount * sizeof(ptr));
+    }
+}
+
+fn run_gc_check_() {
+    // if disable_gc == false {
+    //     let s = stack
+    //     if s.stack_adr < s.lowest_next {
+    //         s.lowest_next = s.stack_adr
+    //     }
+    //     if s.stack_adr <= s.lowest {
+    //         if pool_usage > 10 {
+    //             s.run_gc = true
+    //         }
+    //     }
+    //     if s.run_gc {
+    //         s.gc()
+    //     }
+    // }
+}
+
+fn scope_end_(amount: uint, stack_adr: ptr) {
+    if disable_gc == false {
+
+        stack.stack_adr = stack_adr
+
+        let x = amount
+        while x-- > 0 {
+            @ptrv(stack_adr, ptr, x) = null
+        }
+
+        if stack_adr <= stack.lowest {
+            stack.lowest_reached = true 
+        }
+    }
+}
