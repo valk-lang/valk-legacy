@@ -155,6 +155,12 @@ void read_ast(Parser *p, bool single_line) {
                         parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
                     }
                 }
+                if(val) {
+                    // Important for GC
+                    val = vgen_var(alc, b, val);
+                    array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                }
+
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
                 if(!p->scope_end) {
