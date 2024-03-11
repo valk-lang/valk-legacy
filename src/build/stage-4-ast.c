@@ -344,7 +344,7 @@ void read_ast(Parser *p, bool single_line) {
         }
 
 
-        if ((scope->type == sc_loop || (scope->type == sc_func && !scope->did_return))) {
+        if (scope->type == sc_loop || scope->type == sc_func) {
         // if (scope->gc_check) {
             Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), start);
             array_shift(start->ast, token_make(alc, t_ast_scope, gcscope));

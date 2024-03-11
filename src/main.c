@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 void help() {
     //
     printf("-------------------------\n");
-    printf(" Volt v0.0.1\n");
+    printf(" ⚡ Volt v0.0.1\n");
     printf("-------------------------\n\n");
 
     printf(" volt build -h       Build volt code to an executable\n");
