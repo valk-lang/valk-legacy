@@ -17,7 +17,7 @@ snippet reserve(amount: V) {
 
 } => (STACK, STACK_ADR)
 
-snippet run_gc_check(retv: V) {
+snippet run_gc_check() {
     if disable_gc == false {
         let s = stack
         if s.stack_adr < s.lowest_next {
@@ -30,6 +30,18 @@ snippet run_gc_check(retv: V) {
         }
         if s.run_gc {
             s.gc()
+        }
+    }
+}
+
+snippet scope_end(amount: V) {
+    if disable_gc == false {
+
+        STACK_ADR = STACK_ADR
+
+        let x = amount
+        while x-- > 0 {
+            @ptrv(STACK_ADR, ptr, x) = null
         }
     }
 }

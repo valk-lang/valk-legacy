@@ -152,6 +152,7 @@ enum TOKENS {
     t_throw,
     t_set_var,
     t_ast_scope,
+    t_set_decl_store_var,
 };
 
 enum OPERATORS {
@@ -179,6 +180,7 @@ enum SCOPES {
     sc_default,
     sc_func,
     sc_loop,
+    sc_if,
 };
 
 enum SNIPPET_ARG_TYPES {

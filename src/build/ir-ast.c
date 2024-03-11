@@ -113,6 +113,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_write_ast(ir, s);
             continue;
         }
+        if (tt == t_set_decl_store_var) {
+            TDeclare* item = t->item;
+            Decl* decl = item->decl;
+            decl->ir_store_var = ir_assign_value(ir, scope, item->value);
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

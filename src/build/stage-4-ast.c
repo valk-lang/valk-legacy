@@ -287,4 +287,58 @@ void read_ast(Parser *p, bool single_line) {
     if(scope->must_return && !scope->did_return) {
         parse_err(p, -1, "Missing return statement");
     }
+
+    if (scope->has_gc_decls) {
+
+        int gc_count = scope->gc_decl_count;
+
+        Scope* start = scope_sub_make(alc, sc_default, scope);
+        start->ast = array_make(alc, 10);
+        array_shift(scope->ast, token_make(alc, t_ast_scope, start));
+
+        // START
+        Map *idfs = map_make(alc);
+        Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
+        Idf *idf = idf_make(alc, idf_value, amount);
+        map_set(idfs, "amount", idf);
+
+        Scope *reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "reserve"), idfs, scope);
+
+        idf = map_get(reserve->identifiers, "STACK_ADR");
+        Value *stack_adr = idf->item;
+        array_push(start->ast, token_make(alc, t_ast_scope, reserve));
+
+        Array* decls = scope->decls;
+        for(int i = 0; i < decls->length; i++) {
+            Decl* decl = array_get_index(decls, i);
+            if(!decl->is_gc)
+                continue;
+            Value* offset = vgen_ptrv(alc, b, stack_adr, type_gen_volt(alc, b, "ptr"), vgen_int(alc, i, type_gen_volt(alc, b, "i32")));
+            TDeclare* item = al(alc, sizeof(TDeclare));
+            item->decl = decl;
+            item->value = offset;
+            array_push(start->ast, token_make(alc, t_set_decl_store_var, item));
+            array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+        }
+
+        // END
+        int last_token_index = scope->ast->length - 1;
+        Scope *scope_end = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "scope_end"), idfs, scope);
+        array_push(scope->ast, token_make(alc, t_ast_scope, scope_end));
+
+        if(!scope->did_return) {
+            Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+            Token *t = token_make(alc, t_ast_scope, gcscope);
+            array_push(scope->ast, t);
+        }
+
+        if(scope->did_return) {
+            // Swap return token
+            int last_index = scope->ast->length - 1;
+            void* a = array_get_index(scope->ast, last_token_index);
+            void* b = array_get_index(scope->ast, last_index);
+            array_set_index(scope->ast, last_token_index, b);
+            array_set_index(scope->ast, last_index, a);
+        }
+    }
 }

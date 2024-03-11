@@ -18,8 +18,11 @@ struct Scope {
     Type* rett;
     Array* decls;
     int type;
+    int gc_decl_count;
     bool must_return;
     bool did_return;
+    bool gc_check;
+    bool has_gc_decls;
 };
 
 #endif
