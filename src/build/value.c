@@ -130,16 +130,17 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         bool negative = false;
         if(t == tok_sub) {
             negative = true;
-            t = tok(p, true, false, true);
+            t = tok(p, false, false, true);
             if(t != tok_number) {
                 parse_err(p, -1, "Invalid negative number syntax: '%s'", p->tkn);
             }
         }
-        char* num = tkn;
+        char* num = p->tkn;
         long int iv = 0;
         iv = atol(num);
-        if (negative)
+        if (negative){
             iv *= -1;
+        }
         v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
     } else if(t == tok_plusplus || t == tok_subsub) {
         bool incr = t == tok_plusplus;

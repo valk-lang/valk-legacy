@@ -194,9 +194,9 @@ struct Stack {
         // Mark solid
         while true {
             let list = next_list
-            let index = 0
+            let index : uint = 0
             let is_last = list == last_list
-            let until_ = chain_size
+            let until_ : uint = chain_size
             if is_last {
                 until_ = last_index
             }
