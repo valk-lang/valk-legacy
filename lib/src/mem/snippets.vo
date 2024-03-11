@@ -2,10 +2,19 @@
 use io;
 use os;
 
-snippet stack_reserve(amount: V) {
+snippet stack_cache() {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
+}
 
+snippet stack_reserve(amount: V) {
+
+    // if disable_gc == false {
+    //     let x = amount
+    //     while x-- > 0 {
+    //         @ptrv(STACK_ADR, ptr, x) = null
+    //     }
+    // }
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
 
 } => (STACK, STACK_ADR)
@@ -13,8 +22,12 @@ snippet stack_reserve(amount: V) {
 snippet run_gc_check() {
     if disable_gc == false {
         let s = stack
-        if s.lowest_reached {
-            s.lowest_reached = false
+        let sa = s.stack_adr
+        if sa < s.lowest_next {
+            s.lowest_next = sa
+        }
+        if sa <= s.lowest {
+            // s.lowest_reached = false
             if pool_usage > 10 {
                 s.run_gc = true
             }
@@ -29,10 +42,4 @@ snippet stack_reduce() {
 
     STACK_ADR = STACK_ADR
 
-    if STACK_ADR <= STACK.lowest {
-        STACK.lowest_reached = true 
-    }
-    if STACK_ADR < STACK.lowest_next {
-        STACK.lowest_next = STACK_ADR
-    }
 }

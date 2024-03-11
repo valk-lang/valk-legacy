@@ -606,11 +606,11 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }
-    // if(class->type == ct_class && p->scope->ast) {
-    //     Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), p->scope);
-    //     Token *t = token_make(alc, t_ast_scope, gcscope);
-    //     array_shift(p->scope->ast, t);
-    // }
+    if(class->type == ct_class && p->scope->ast) {
+        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), p->scope);
+        Token *t = token_make(alc, t_ast_scope, gcscope);
+        array_shift(p->scope->ast, t);
+    }
 
     return buffer;
 }

@@ -79,7 +79,7 @@ struct GcPool {
 
         if usage > pool_usage {
             pool_usage = usage
-            if usage > 60 {
+            if usage > 80 {
                 stack.run_gc = true
                 stack.bumper_overflow = true
             }

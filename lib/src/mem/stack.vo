@@ -147,11 +147,11 @@ struct Stack {
             this.lowest = this.lowest_next
         }
         if trigger_type == trigger_buffer_size {
-            // io:print_fake("b")
+            io:print_fake("b")
             // Increase lowest point
             this.lowest = this.lowest_next
-        // } else {
-        //     io:print_fake("l")
+        } else {
+            io:print_fake("l")
         }
 
 
