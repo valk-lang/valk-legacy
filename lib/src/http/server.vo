@@ -111,6 +111,7 @@ class Server {
         print("start threads\n")
         worker_count--;
         while worker_count > 0 {
+            break;
             // let copy = this.server_data();
             let thread = os:Thread.start(Server.worker)
             worker_count--;

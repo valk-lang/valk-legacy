@@ -314,14 +314,14 @@ void read_ast(Parser *p, bool single_line) {
             Idf *idf = idf_make(alc, idf_value, amount);
             map_set(idfs, "amount", idf);
 
-            // Stack reserve
-            Scope *reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_cache"), idfs, start);
-            array_push(start->ast, token_make(alc, t_ast_scope, reserve));
-
-            idf = map_get(reserve->identifiers, "STACK_ADR");
-            Value *stack_adr = idf->item;
-
             if (scope->type == sc_func) {
+                // Stack reserve
+                Scope *cache = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_cache"), idfs, start);
+                array_push(start->ast, token_make(alc, t_ast_scope, cache));
+
+                idf = map_get(cache->identifiers, "STACK_ADR");
+                Value *stack_adr = idf->item;
+
                 Scope *reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_reserve"), idfs, start);
                 array_push(start->ast, token_make(alc, t_ast_scope, reserve));
 
@@ -348,7 +348,7 @@ void read_ast(Parser *p, bool single_line) {
                 Array *decls = scope->decls;
                 for (int i = 0; i < decls->length; i++) {
                     Decl *decl = array_get_index(decls, i);
-                    array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+                    // array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
                 }
             }
         }
