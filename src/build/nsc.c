@@ -13,7 +13,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     char *path_ir = al(alc, VOLT_PATH_MAX);
     sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
     char *path_cache = al(alc, VOLT_PATH_MAX);
-    sprintf(path_ir, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+    sprintf(path_cache, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
 
     Unit* u = al(alc, sizeof(Unit));
     u->b = pkc->b;

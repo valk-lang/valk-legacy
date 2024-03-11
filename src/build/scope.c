@@ -56,4 +56,3 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
     }
     array_push(scope->decls, decl);
 }
-

@@ -7,11 +7,21 @@ Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scop
     sub->identifiers = idfs;
     sub->ast = array_make(alc, 20);
 
-    Chunk ch;
-    ch = *p->chunk;
+    Map *pidfs = scope_parent->identifiers;
+    for (int i = 0; i < pidfs->values->length; i++) {
+        char *key = array_get_index(pidfs->keys, i);
+        if (!map_contains(idfs, key)) {
+            map_set(idfs, key, array_get_index(pidfs->values, i));
+        }
+    }
+
+    Scope* scope = p->scope;
+    Chunk ch = *p->chunk;
     *p->chunk = *snip->chunk;
+    p->scope = sub;
     read_ast(p, false);
     *p->chunk = ch;
+    p->scope = scope;
 
     Array* exports = snip->exports;
     if(exports && scope_parent) {

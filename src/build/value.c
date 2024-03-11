@@ -410,22 +410,26 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     bool contains_gc_args = false;
 
     // Read argument values
-    while (tok(p, true, true, false) != tok_bracket_close) {
-        Value *arg = read_value(alc, p, true, 0);
-        Type *arg_type = array_get_index(func_args, arg_i++);
-        if (arg_type) {
-            arg = try_convert(alc, b, arg, arg_type);
-            type_check(p, arg_type, arg->rett);
+    if (tok(p, true, true, false) == tok_bracket_close) {
+        tok(p, true, true, true);
+    } else {
+        while (true) {
+            Value *arg = read_value(alc, p, true, 0);
+            Type *arg_type = array_get_index(func_args, arg_i++);
+            if (arg_type) {
+                arg = try_convert(alc, b, arg, arg_type);
+                type_check(p, arg_type, arg->rett);
+            }
+
+            array_push(args, arg);
+
+            char t = tok(p, true, true, true);
+            if (t == tok_comma)
+                continue;
+            if (t == tok_bracket_close)
+                break;
+            parse_err(p, -1, "Unexpected token in function arguments: '%s'\n", p->tkn);
         }
-
-        array_push(args, arg);
-
-        char t = tok(p, true, true, true);
-        if (t == tok_comma)
-            continue;
-        if (t == tok_bracket_close)
-            break;
-        parse_err(p, -1, "Unexpected token in function arguments: '%s'\n", p->tkn);
     }
 
     if(args->length > func_args->length) {
@@ -569,11 +573,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         t = tok(p, true, true, true);
         if(t == tok_comma) {
             t = tok(p, true, true, true);
-            continue;
-        } else if(t == tok_curly_close) {
-            break;
         }
-        parse_err(p, -1, "Unexpected token: '%s'", p->tkn);
     }
     // Default values
     Array* props = class->props->values;
@@ -587,13 +587,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);
             }
 
-            Chunk backup = *p->chunk;
-            *p->chunk = *prop->chunk_value;
-            Scope* scope = p->scope;
-            p->scope = class->scope;
-            Value* val = read_value(alc, p, true, 0);
-            p->scope = scope;
-            *p->chunk = backup;
+            Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope);
 
             val = try_convert(alc, b, val, prop->type);
             type_check(p, prop->type, val->rett);
@@ -604,7 +598,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
 
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
-    if(class->type == ct_class) {
+    if(class->type == ct_class && p->scope->ast) {
         Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), p->scope);
         Token *t = token_make(alc, t_ast_scope, gcscope);
         array_shift(p->scope->ast, t);

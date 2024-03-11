@@ -21,11 +21,6 @@ void stage_2_update_classes(Build* b) {
     }
 
     b->time_parse += microtime() - start;
-
-    Array* units = b->units;
-    for(int i = 0; i < units->length; i++) {
-        stage_add_item(b->stage_2_types, array_get_index(units, i));
-    }
 }
 
 void stage_determine_class_sizes(Build* b, Array* classes) {

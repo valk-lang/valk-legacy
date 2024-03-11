@@ -114,7 +114,7 @@ void stage_1_func(Parser *p, Unit *u, int act) {
 
     char t = tok(p, true, false, true);
     char* name = p->tkn;
-    if(!is_valid_varname(name)) {
+    if(t != tok_id) {
         parse_err(p, -1, "Invalid function name: '%s'", name);
     }
 

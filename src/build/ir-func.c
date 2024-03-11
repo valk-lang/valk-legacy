@@ -9,6 +9,9 @@ void ir_gen_functions(IR* ir) {
 
     for (int i = 0; i < funcs->length; i++) {
         Func* vfunc = array_get_index(funcs, i);
+        if(vfunc->in_header)
+            continue;
+
         IRFunc* func = al(ir->alc, sizeof(IRFunc));
         func->ir = ir;
         func->func = vfunc;

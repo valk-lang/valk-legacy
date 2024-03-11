@@ -47,3 +47,19 @@ void parser_pop_chunk(Parser* p) {
     *p->chunk = p->chunks[ci];
     p->chunk_index--;
 }
+
+Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope) {
+
+    Scope *sub = scope_sub_make(alc, sc_default, p->scope);
+    if (idf_scope)
+        sub->idf_parent = idf_scope;
+
+    Chunk backup = *p->chunk;
+    *p->chunk = *chunk;
+    Scope *scope = p->scope;
+    p->scope = sub;
+    Value *val = read_value(alc, p, true, 0);
+    p->scope = scope;
+    *p->chunk = backup;
+    return val;
+}

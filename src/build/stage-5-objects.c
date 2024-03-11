@@ -40,7 +40,7 @@ void stage_5_objects(Build* b) {
         // Build o file if needed
         if(u->ir_changed || !file_exists(u->path_o)) {
             Array *ir_files = array_make(b->alc, 2);
-            array_push(o_files, u->path_o);
+            array_push(ir_files, u->path_ir);
             stage_build_o_file(b, u, ir_files);
         }
     }

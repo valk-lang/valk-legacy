@@ -40,6 +40,9 @@ void stage_ast(Unit *u) {
 
         Func *func = array_get_index(funcs, i);
 
+        if (func->in_header)
+            continue;
+
         if (u->b->verbose > 2)
             printf("Stage 4 | Parse AST: %s\n", func->name);
 
@@ -49,10 +52,12 @@ void stage_ast(Unit *u) {
         p->class = func->class;
         p->scope = func->scope;
         p->loop_scope = NULL;
+        p->scope_end = func->body_end; 
         read_ast(p, false);
         p->scope = NULL;
         p->func = NULL;
         p->class = NULL;
+        p->scope_end = NULL;
     }
 
     p->unit = NULL;
@@ -242,7 +247,7 @@ void read_ast(Parser *p, bool single_line) {
 
         t = tok(p, true, false, false);
         if (t >= tok_eq && t <= tok_div_eq) {
-            tok(p, true, false, false);
+            tok(p, true, false, true);
             if (!value_is_assignable(left)) {
                 parse_err(p, -1, "Cannot assign to left side");
             }

@@ -46,7 +46,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
 
     if(t == tok_id) {
         char* tkn = p->tkn;
-        if (!is_inline && str_is(tkn, "void")) {
+        if (str_is(tkn, "void")) {
             return type_make(alc, type_void);
         }
         if (str_is(tkn, "fn")) {
@@ -82,6 +82,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
         if (str_is(tkn, "inline")) {
             is_inline = true;
             t = tok(p, true, false, true);
+            tkn = p->tkn;
         }
 
         if (t == tok_id) {
