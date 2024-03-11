@@ -348,17 +348,16 @@ void read_ast(Parser *p, bool single_line) {
                 Array *decls = scope->decls;
                 for (int i = 0; i < decls->length; i++) {
                     Decl *decl = array_get_index(decls, i);
-                    // array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+                    array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
                 }
             }
         }
 
-
         // if (scope->type == sc_loop || scope->type == sc_func) {
-        if (scope->gc_check) {
-            // Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), start);
-            // array_shift(start->ast, token_make(alc, t_ast_scope, gcscope));
-        }
+        // if (scope->gc_check) {
+        //     Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), start);
+        //     array_shift(start->ast, token_make(alc, t_ast_scope, gcscope));
+        // }
 
         if(scope->did_return) {
             // Swap return token
@@ -369,8 +368,8 @@ void read_ast(Parser *p, bool single_line) {
             array_set_index(scope->ast, last_index, a);
         }
     }
-    // if(scope->gc_check){
-    //     Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-    //     array_shift(scope->ast, token_make(alc, t_ast_scope, gcscope));
-    // }
+    if(scope->gc_check){
+        // Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        // array_shift(scope->ast, token_make(alc, t_ast_scope, gcscope));
+    }
 }
