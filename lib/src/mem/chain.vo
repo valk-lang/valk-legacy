@@ -4,7 +4,7 @@ value chain_size (1000)
 struct ObjectChain {
     olist_first : ptr
     olist_last : ptr
-    index : int (0)
+    index : uint (0)
     itemc : uint (0)
 
     static fn new() ObjectChain {

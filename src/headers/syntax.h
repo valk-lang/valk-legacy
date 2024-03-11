@@ -6,6 +6,7 @@
 
 bool is_alpha_char(char c);
 bool is_valid_varname_char(char c);
+bool is_valid_varname_first_char(char c);
 bool is_number(char c);
 bool is_hex_char(char c);
 bool is_whitespace(char c);

@@ -44,7 +44,7 @@ void pkc_set_dir(Pkc* pkc, char* dir) {
     if(b->parser_started) b->time_parse -= time;
 }
 
-Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk) {
+Pkc* pkc_load_pkc(Pkc* pkc, char* name, Parser* p) {
     Pkc* sub = map_get(pkc->pkc_by_name, name);
     if(sub)
         return sub;
@@ -58,8 +58,7 @@ Pkc* pkc_load_pkc(Pkc* pkc, char* name, Chunk* parsing_chunk) {
         strcat(dir, "lib/");
     } else {
         if(!pkc->config || !cfg_has_package(pkc->config, name)) {
-            sprintf(b->char_buf, "Package '%s' not found", name);
-            if(parsing_chunk) parse_err(parsing_chunk, b->char_buf);
+            if(p) parse_err(p, -1, "Package '%s' not found", name);
             else build_err(b, b->char_buf);
         }
         dir = cfg_get_pkg_dir(pkc->config, name, b->alc);
@@ -87,7 +86,7 @@ Pkc* pkc_load_from_dir(Build* b, char* dir, char* name_suggestion) {
     return pkc;
 }
 
-Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
+Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p) {
     Build *b = pkc->b;
     if(pkc->headers_by_fn) {
         Fc *hfc = map_get(pkc->headers_by_fn, fn);
@@ -97,8 +96,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
 
     if(!pkc->header_dirs) {
         if (!pkc->config) {
-            sprintf(b->char_buf, "Trying to load header '%s' from a package without a config", fn);
-            parse_err(chunk, b->char_buf);
+            parse_err(p, -1, "Trying to load header '%s' from a package without a config", fn);
         }
 
         pkc->header_dirs = cfg_get_header_dirs(pkc->config, b->alc, pkc->dir);
@@ -106,8 +104,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
     }
     Array* dirs = pkc->header_dirs;
     if(dirs->length == 0) {
-        sprintf(b->char_buf, "Package config has no header directories defined in 'headers.dirs' | config: '%s'", pkc->config->path);
-        parse_err(chunk, b->char_buf);
+        parse_err(p, -1, "Package config has no header directories defined in 'headers.dirs' | config: '%s'", pkc->config->path);
     }
 
     char path[VOLT_PATH_MAX];
@@ -121,8 +118,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Chunk* chunk) {
         }
     }
 
-    sprintf(b->char_buf, "Header '%s' not found in header directories from config: '%s'", fn, pkc->config->path);
-    parse_err(chunk, b->char_buf);
+    parse_err(p, -1, "Header '%s' not found in header directories from config: '%s'", fn, pkc->config->path);
     return NULL;
 }
 

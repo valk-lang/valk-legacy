@@ -79,7 +79,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_break) {
             Scope* loop_scope = t->item;
-            IRBlock* after = loop_scope->ir_after_block;
+            IRBlock* after = ir->block_after;
             if(!after) {
                 die("Missing IR after block for 'break' (compiler bug)");
             }
@@ -88,7 +88,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_continue) {
             Scope* loop_scope = t->item;
-            IRBlock* cond = loop_scope->ir_cond_block;
+            IRBlock* cond = ir->block_cond;
             if(!cond) {
                 die("Missing IR condition block for 'break' (compiler bug)");
             }
@@ -98,7 +98,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_throw) {
             TThrow* tt = t->item;
             ir_store_old(ir, type_gen_volt(alc, ir->b, "i32"), "@volt_err_code", ir_int(ir, tt->err->value));
-            char *msg = ir_string(ir, tt->msg, tt->msg->fc != ir->fc);
+            char *msg = ir_string(ir, tt->msg);
             ir_store_old(ir, type_gen_volt(alc, ir->b, "ptr"), "@volt_err_msg", msg);
             ir_func_return_nothing(ir);
             continue;

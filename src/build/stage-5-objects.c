@@ -18,9 +18,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/lto.h>
 
-void stage_5_pkc(Build* b, Pkc* pkc, Array* o_files);
-void stage_5_nsc(Build* b, Nsc* nsc, Array* ir_files, bool* changed);
-void stage_build_o_file(Build* b, Nsc* nsc, Array* ir_files);
+void stage_build_o_file(Build* b, Unit* u, Array* ir_files);
 void stage_set_target(Build* b, CompileData* data);
 void llvm_build_o_file(void* data);
 void stage_5_optimize(LLVMModuleRef mod);
@@ -33,10 +31,18 @@ void stage_5_objects(Build* b) {
     usize start = microtime();
 
     Array *o_files = array_make(b->alc, 100);
-    Array *pkcs = b->pkcs;
-    for (int i = 0; i < pkcs->length; i++) {
-        Pkc *pkc = array_get_index(pkcs, i);
-        stage_5_pkc(b, pkc, o_files);
+    Array *units = b->units;
+    for (int i = 0; i < units->length; i++) {
+
+        Unit *u = array_get_index(units, i);
+        array_push(o_files, u->path_o);
+
+        // Build o file if needed
+        if(u->ir_changed || !file_exists(u->path_o)) {
+            Array *ir_files = array_make(b->alc, 2);
+            array_push(ir_files, u->path_ir);
+            stage_build_o_file(b, u, ir_files);
+        }
     }
 
     b->time_llvm += microtime() - start;
@@ -44,57 +50,23 @@ void stage_5_objects(Build* b) {
     stage_6_link(b, o_files);
 }
 
-void stage_5_pkc(Build* b, Pkc* pkc, Array* o_files) {
-    //
-    Array *nscs = pkc->namespaces->values;
-    for (int i = 0; i < nscs->length; i++) {
-        Nsc *nsc = array_get_index(nscs, i);
+void stage_build_o_file(Build* b, Unit* u, Array* ir_files) {
 
-        Array *ir_files = array_make(b->alc, nsc->fcs->length + 1);
-        bool changed = false;
-
-        stage_5_nsc(b, nsc, ir_files, &changed);
-        array_push(o_files, nsc->path_o);
-
-        if(changed) {
-            stage_build_o_file(b, nsc, ir_files);
-        }
-    }
-}
-
-void stage_5_nsc(Build* b, Nsc* nsc, Array* ir_files, bool* changed) {
-    Array *fcs = nsc->fcs;
-    for (int i = 0; i < fcs->length; i++) {
-        Fc *fc = array_get_index(fcs, i);
-        if(fc->is_header)
-            continue;
-        if(fc->ir_changed) {
-            *changed = true;
-        }
-        array_push(ir_files, fc->path_ir);
-    }
-}
-
-void stage_build_o_file(Build* b, Nsc* nsc, Array* ir_files) {
     if(b->verbose > 1)
-        printf("⚙ Compile o file: %s\n", nsc->path_o);
+        printf("⚙ Compile o file: %s\n", u->path_o);
 
     struct CompileData *data = al(b->alc, sizeof(struct CompileData));
     data->b = b;
     data->ir_files = ir_files;
-    data->path_o = nsc->path_o;
+    data->path_o = u->path_o;
     stage_set_target(b, data);
 
     llvm_build_o_file(data);
 
     // Update cache
     usize start = microtime();
-    Array* fcs = nsc->fcs;
-    for(int i = 0; i < fcs->length; i++) {
-        Fc* fc = array_get_index(fcs, i);
-        if(fc->ir_changed && fc->hash)
-            write_file(fc->path_cache, fc->hash, false);
-    }
+    if (u->hash)
+        write_file(u->path_cache, u->hash, false);
     b->time_io += microtime() - start;
 }
 

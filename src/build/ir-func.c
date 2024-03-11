@@ -5,10 +5,13 @@ void ir_gen_func(IR *ir, IRFunc *func);
 
 void ir_gen_functions(IR* ir) {
     //
-    Array* funcs = ir->fc->funcs;
+    Array* funcs = ir->unit->funcs;
 
     for (int i = 0; i < funcs->length; i++) {
         Func* vfunc = array_get_index(funcs, i);
+        if(vfunc->in_header)
+            continue;
+
         IRFunc* func = al(ir->alc, sizeof(IRFunc));
         func->ir = ir;
         func->func = vfunc;
@@ -49,8 +52,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
         Idf *idf = idf_make(alc, idf_value, amount);
         map_set(idfs, "amount", idf);
-        Fc* fc = ir->fc;
-        gc_reserve = gen_snippet_ast(alc, ir->fc, get_volt_snippet(ir->b, "mem", "reserve"), idfs, vfunc->scope);
+        gc_reserve = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "reserve"), idfs, vfunc->scope);
     }
 
     // Arg vars
@@ -196,7 +198,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
 void ir_define_ext_func(IR* ir, Func* func) {
     if (!func)
         return;
-    if (func->fc == ir->fc)
+    if (func->unit == ir->unit)
         return;
     if(!array_contains(ir->declared_funcs, func, arr_find_adr)) {
         Str *code = ir->code_extern;
@@ -265,10 +267,10 @@ void ir_func_return(IR* ir, char* type, char* value) {
             Idf *idf = idf_make(alc, idf_value, retv);
             map_set(idfs, "retv", idf);
 
-            Scope* pop = gen_snippet_ast(alc, ir->fc, get_volt_snippet(ir->b, "mem", "pop_return"), idfs, vfunc->scope);
+            Scope* pop = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "pop_return"), idfs, vfunc->scope);
             ir_write_ast(ir, pop);
         } else {
-            Scope* pop = gen_snippet_ast(alc, ir->fc, get_volt_snippet(ir->b, "mem", "pop_no_return"), map_make(alc), vfunc->scope);
+            Scope* pop = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "pop_no_return"), map_make(alc), vfunc->scope);
             ir_write_ast(ir, pop);
         }
     }

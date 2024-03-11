@@ -14,15 +14,13 @@ void stage_2_update_classes(Build* b) {
 
     for (int i = 0; i < b->classes->length; i++) {
         Class *class = array_get_index(b->classes, i);
-        class_generate_internals(class->fc, b, class);
+        Parser* p = b->parser;
+        p->unit = class->unit;
+        class_generate_internals(p, b, class);
+        p->unit = NULL;
     }
 
     b->time_parse += microtime() - start;
-
-    Array* fcs = b->fc_by_path->values;
-    for(int i = 0; i < fcs->length; i++) {
-        stage_add_item(b->stage_2_types, array_get_index(fcs, i));
-    }
 }
 
 void stage_determine_class_sizes(Build* b, Array* classes) {

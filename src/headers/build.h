@@ -5,49 +5,41 @@
 #include "typedefs.h"
 
 int cmd_build(int argc, char *argv[]);
-void build_err(Build *b, char *msg);
-void parse_err(Chunk *chunk, char *msg);
 Str* build_get_str_buf(Build* b);
 void build_return_str_buf(Build* b, Str* buf);
 
 Pkc *pkc_make(Allocator *alc, Build *b, char *name_suggestion);
 void pkc_set_dir(Pkc *pkc, char *dir);
-Pkc *pkc_load_pkc(Pkc *pkc, char *name, Chunk *parsing_chunk);
-Fc *pkc_load_header(Pkc *pkc, char *fn, Chunk *chunk);
+Pkc *pkc_load_pkc(Pkc *pkc, char *name, Parser* p);
+Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p);
 
 Nsc *nsc_make(Allocator *alc, Pkc *pkc, char *name, char *dir);
-Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Chunk* chunk);
+Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Parser* p);
 Nsc *get_volt_nsc(Build *b, char *name);
 
 Fc *fc_make(Nsc *nsc, char *path);
 
-// Chunks
-Chunk *chunk_make(Allocator *alc, Build *b, Fc *fc);
-Chunk *chunk_clone(Allocator *alc, Chunk *ch);
-void chunk_set_content(Chunk *chunk, char *content, int length);
-void chunk_lex_start(Chunk *chunk);
-void chunk_lex(Chunk *chunk, int err_token_i, int *err_content_i, int *err_line, int *err_col, int *err_col_end);
 // Stage functions
 void build_set_stages(Build *b);
 void stage_add_item(Stage *stage, void *item);
 void build_run_stages(Build *b);
 // Stages
 void stage_1_parse(Fc *fc);
-void stage_2_alias(Fc *fc);
-void stage_2_props(Fc *fc);
+void stage_2_alias(Unit *u);
+void stage_2_props(Unit *u);
 void stage_2_update_classes(Build* b);
-void stage_2_types(Fc *fc);
-void stage_3_values(Fc *fc);
-void stage_4_ast(Fc *fc);
-void stage_4_ir(Fc *fc);
-void stage_4_ast_main(Fc *fc);
+void stage_2_types(Unit *u);
+void stage_3_values(Unit *u);
+void stage_4_ast(Unit *u);
+void stage_4_ir(Unit *u);
+void stage_4_ast_main(Unit *u);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
 // Sub stages
-void stage_props_class(Fc* fc, Class *class);
-void stage_types_func(Fc* fc, Func *func);
-void stage_types_class(Fc* fc, Class* class);
-void read_ast(Fc *fc, Scope *scope, bool single_line);
+void stage_props_class(Parser* p, Class *class);
+void stage_types_func(Parser* p, Func *func);
+void stage_types_class(Parser* p, Class* class);
+void read_ast(Parser *p, bool single_line);
 //
 
 struct Build {
@@ -87,10 +79,13 @@ struct Build {
     Nsc *nsc_main;
     Func *func_main;
     //
+    Array *units;
     Array *classes;
     Array *pool_str;
     ErrorCollection* errors;
     Array *strings;
+    //
+    Parser *parser;
     //
     size_t mem_parse;
     size_t mem_objects;
@@ -108,36 +103,21 @@ struct Build {
 struct Fc {
     Build *b;
     char *path;
-    char *path_ir;
-    char *path_cache;
     //
     Allocator *alc;
-    Allocator *alc_ast;
     Nsc *nsc;
     Scope *scope;
     //
     Chunk *content;
-    Chunk *chunk_parse;
-    Chunk *chunk_parse_prev;
-    //
-    Array *funcs;
-    Array *classes;
-    Array *aliasses;
-    Array *globals;
-    //
-    char *hash;
     //
     bool is_header;
-    bool ir_changed;
-    bool contains_main_func;
 };
 struct Nsc {
+    Pkc *pkc;
     char *name;
     char *dir;
-    char *path_o;
-    Pkc *pkc;
     Scope *scope;
-    Array *fcs;
+    Unit *unit;
 };
 struct Pkc {
     Build *b;
@@ -148,20 +128,6 @@ struct Pkc {
     Map *pkc_by_name;
     Array *header_dirs;
     Map *headers_by_fn;
-};
-struct Chunk {
-    Build *b;
-    Fc *fc;
-    Allocator *alc;
-    Chunk *parent;
-    char *tokens;
-    char *content;
-    int length;
-    int i;
-    int line;
-    int col;
-    int scope_end_i;
-    char token;
 };
 struct Stage {
     Array *items;

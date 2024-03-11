@@ -1,181 +1,195 @@
 
 #include "../all.h"
 
-void stage_parse(Fc *fc);
-void stage_1_func(Fc* fc, int act);
-void stage_1_header(Fc* fc);
-void stage_1_class(Fc* fc, int type, int act);
-void stage_1_use(Fc* fc);
-void stage_1_global(Fc* fc, bool shared);
-void stage_1_value_alias(Fc* fc);
-void stage_1_snippet(Fc* fc);
+void stage_parse(Parser* p, Unit* u);
+void stage_1_func(Parser* p, Unit* u, int act);
+void stage_1_header(Parser* p, Unit* u);
+void stage_1_class(Parser* p, Unit* u, int type, int act);
+void stage_1_use(Parser* p, Unit* u);
+void stage_1_global(Parser* p, Unit* u, bool shared);
+void stage_1_value_alias(Parser* p, Unit* u);
+void stage_1_snippet(Parser* p, Unit* u);
 
 void stage_1_parse(Fc* fc) {
     Build* b = fc->b;
+    Parser* p = b->parser;
+    Unit* u = fc->nsc->unit;
 
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);
 
+    *p->chunk = *fc->content;
+    p->in_header = fc->is_header;
+    p->unit = u;
+    p->scope = fc->scope;
+
     usize start = microtime();
-    stage_parse(fc);
+    stage_parse(p, u);
     b->time_parse += microtime() - start;
 
-    stage_add_item(b->stage_2_alias, fc);
+    p->in_header = false;
+    p->unit = NULL;
+    p->scope = NULL;
 }
 
-void stage_parse(Fc *fc) {
-    Build* b = fc->b;
-    Chunk* chunk = fc->chunk_parse;
+void stage_parse(Parser* p, Unit* u) {
 
     while(true) {
 
-        char* tkn = tok(fc, true, true, true);
-        if (tkn[0] == 0)
+        char t = tok(p, true, true, true);
+
+        if (t == tok_eof) {
             break;
+        }
 
         int act = act_public;
 
-        if(str_is(tkn, ";")) {
-            continue;
-        }
-        if(str_is(tkn, "fn")) {
-            stage_1_func(fc, act);
-            continue;
-        }
-        if(str_is(tkn, "struct")) {
-            stage_1_class(fc, ct_struct, act);
-            continue;
-        }
-        if(str_is(tkn, "class")) {
-            stage_1_class(fc, ct_class, act);
-            continue;
-        }
-        if(str_is(tkn, "pointer")) {
-            stage_1_class(fc, ct_ptr, act);
-            continue;
-        }
-        if(str_is(tkn, "integer")) {
-            stage_1_class(fc, ct_int, act);
-            continue;
-        }
-        if(str_is(tkn, "float")) {
-            stage_1_class(fc, ct_float, act);
-            continue;
-        }
-        if(str_is(tkn, "boolean")) {
-            stage_1_class(fc, ct_bool, act);
-            continue;
-        }
-        if(str_is(tkn, "header")) {
-            stage_1_header(fc);
-            continue;
-        }
-        if(str_is(tkn, "use")) {
-            stage_1_use(fc);
-            continue;
-        }
-        if(str_is(tkn, "shared")) {
-            stage_1_global(fc, true);
-            continue;
-        }
-        if(str_is(tkn, "global")) {
-            stage_1_global(fc, false);
-            continue;
-        }
-        if(str_is(tkn, "value")) {
-            stage_1_value_alias(fc);
-            continue;
-        }
-        if(str_is(tkn, "snippet")) {
-            stage_1_snippet(fc);
+        if (t == tok_semi) {
             continue;
         }
 
-        sprintf(b->char_buf, "Unexpected token: '%s'", tkn);
-        parse_err(chunk, b->char_buf);
+        char* tkn = p->tkn;
+
+        if (t == tok_id) {
+            if (str_is(tkn, "fn")) {
+                stage_1_func(p, u, act);
+                continue;
+            }
+            if (str_is(tkn, "struct")) {
+                stage_1_class(p, u, ct_struct, act);
+                continue;
+            }
+            if (str_is(tkn, "class")) {
+                stage_1_class(p, u, ct_class, act);
+                continue;
+            }
+            if (str_is(tkn, "pointer")) {
+                stage_1_class(p, u, ct_ptr, act);
+                continue;
+            }
+            if (str_is(tkn, "integer")) {
+                stage_1_class(p, u, ct_int, act);
+                continue;
+            }
+            if (str_is(tkn, "float")) {
+                stage_1_class(p, u, ct_float, act);
+                continue;
+            }
+            if (str_is(tkn, "boolean")) {
+                stage_1_class(p, u, ct_bool, act);
+                continue;
+            }
+            if (str_is(tkn, "header")) {
+                stage_1_header(p, u);
+                continue;
+            }
+            if (str_is(tkn, "use")) {
+                stage_1_use(p, u);
+                continue;
+            }
+            if (str_is(tkn, "shared")) {
+                stage_1_global(p, u, true);
+                continue;
+            }
+            if (str_is(tkn, "global")) {
+                stage_1_global(p, u, false);
+                continue;
+            }
+            if (str_is(tkn, "value")) {
+                stage_1_value_alias(p, u);
+                continue;
+            }
+            if (str_is(tkn, "snippet")) {
+                stage_1_snippet(p, u);
+                continue;
+            }
+        }
+
+        parse_err(p, -1, "Unexpected token: '%s'", tkn);
     }
 }
 
-void stage_1_func(Fc* fc, int act) {
-    Build* b = fc->b;
+void stage_1_func(Parser *p, Unit *u, int act) {
+    Build* b = p->b;
 
-    char* name = tok(fc, true, false, true);
-    if(!is_valid_varname(name)) {
-        sprintf(b->char_buf, "Invalid function name: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid function name: '%s'", name);
     }
 
-    Func* func = func_make(b->alc, fc, fc->scope, name, NULL);
+    Func* func = func_make(b->alc, u, p->scope, name, NULL);
+    func->in_header = p->in_header;
+
     Idf* idf = idf_make(b->alc, idf_func, func);
-    scope_set_idf(fc->nsc->scope, name, idf, fc);
-    array_push(fc->funcs, func);
+    scope_set_idf(p->scope->parent, name, idf, p);
 
     if (str_is(name, "main")) {
         b->func_main = func;
         func->export_name = "main";
-        fc->contains_main_func = true;
+        u->contains_main_func = true;
     }
-    if (fc->is_header) {
+    if (p->in_header) {
         func->export_name = name;
     }
 
-    parse_handle_func_args(fc, func);
+    parse_handle_func_args(p, func);
 }
 
-void stage_1_header(Fc* fc){
-    Build* b = fc->b;
+void stage_1_header(Parser *p, Unit *u){
+    Build* b = p->b;
     
-    char* fn = tok(fc, true, false, true);
-    int t = fc->chunk_parse->token;
+    char t = tok(p, true, false, true);
     if(t != tok_string) {
-        parse_err(fc->chunk_parse, "Expected a header name here wrapped in double-quotes");
+        parse_err(p, -1, "Expected a header name here wrapped in double-quotes");
     }
 
-    Pkc *pkc = fc->nsc->pkc;
-    Fc *hfc = pkc_load_header(pkc, fn, fc->chunk_parse);
+    char* fn = p->tkn;
+    Pkc *pkc = u->nsc->pkc;
+    Fc *hfc = pkc_load_header(pkc, fn, p);
 
-    tok_expect(fc, "as", true, false);
+    tok_expect(p, "as", true, false);
 
-    char* name = tok(fc, true, false, true);
+    t = tok(p, true, false, true);
+    char* name = p->tkn;
     if(!is_valid_varname(name)) {
-        sprintf(b->char_buf, "Invalid name: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+        parse_err(p, -1, "Invalid name: '%s'", name);
     }
 
     Idf* idf = idf_make(b->alc, idf_scope, hfc->scope);
-    scope_set_idf(fc->scope, name, idf, fc);
+    scope_set_idf(p->scope, name, idf, p);
 }
 
-void stage_1_class(Fc *fc, int type, int act) {
-    Build* b = fc->b;
-    
-    char* name = tok(fc, true, false, true);
-    if(!is_valid_varname(name)) {
-        sprintf(b->char_buf, "Invalid type name: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+void stage_1_class(Parser* p, Unit* u, int type, int act) {
+    Build* b = p->b;
+
+    char t = tok(p, true, false, true);
+    char *name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid type name: '%s'", name);
     }
 
     Class* class = class_make(b->alc, b, type);
-    class->fc = fc;
+    class->unit = u;
     class->name = name;
-    class->ir_name = gen_export_name(fc->nsc, name);
-    class->scope = scope_sub_make(b->alc, sc_default, fc->scope, NULL);
+    class->ir_name = gen_export_name(u->nsc, name);
+    class->scope = scope_sub_make(b->alc, sc_default, p->scope);
+    class->in_header = p->in_header;
 
-    if(str_is(tok(fc, false, false, false), "[")) {
-        char* tkn = tok(fc, false, false, true);
+    t = tok(p, false, false, false);
+    if(t == tok_sq_bracket_open) {
+        tok(p, false, false, true);
         Array* generic_names = array_make(b->alc, 2);
         while (true) {
-            tkn = tok(fc, true, false, true);
-            if(!is_valid_varname(tkn)){
-                sprintf(b->char_buf, "Invalid generic type name: '%s'", tkn);
-                parse_err(fc->chunk_parse, b->char_buf);
+            t = tok(p, true, false, true);
+            if(t != tok_id){
+                parse_err(p, -1, "Invalid generic type name: '%s'", p->tkn);
             }
-            if (array_contains(generic_names, tkn, arr_find_str)) {
-                sprintf(b->char_buf, "Duplicate generic type name: '%s'", tkn);
-                parse_err(fc->chunk_parse, b->char_buf);
+            if (array_contains(generic_names, p->tkn, arr_find_str)) {
+                parse_err(p, -1, "Duplicate generic type name: '%s'", p->tkn);
             }
-            array_push(generic_names, tkn);
-            if (str_is(tok_expect_two(fc, ",", "]", true, false), "]"))
+            array_push(generic_names, p->tkn);
+            if (tok_expect_two(p, ",", "]", true, false) == tok_sq_bracket_close)
                 break;
         }
         class->generics = map_make(b->alc);
@@ -183,15 +197,15 @@ void stage_1_class(Fc *fc, int type, int act) {
         class->is_generic_base = true;
     }
 
-    Scope* nsc_scope = fc->nsc->scope;
+    Scope* nsc_scope = u->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);
-    scope_set_idf(nsc_scope, name, idf, fc);
-    array_push(fc->classes, class);
+    scope_set_idf(nsc_scope, name, idf, p);
+    array_push(u->classes, class);
     if(!nsc_scope->type_identifiers)
         nsc_scope->type_identifiers = map_make(b->alc);
     map_set_force_new(nsc_scope->type_identifiers, name, idf);
     if(!class->is_generic_base) {
-        scope_set_idf(class->scope, "CLASS", idf, fc);
+        scope_set_idf(class->scope, "CLASS", idf, p);
         array_push(b->classes, class);
         if(class->type == ct_class) {
             class->gc_vtable_index = ++b->gc_vtables;
@@ -202,211 +216,211 @@ void stage_1_class(Fc *fc, int type, int act) {
     if(type == ct_int) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        char* tkn = tok(fc, true, false, true);
-        if(is_valid_number(tkn)) {
-            int size = atoi(tkn);
+        char t = tok(p, true, false, false);
+        if(t == tok_number) {
+            tok(p, true, false, true);
+            int size = atoi(p->tkn);
             if (size != 1 && size != 2 && size != 4 && size != 8) {
-                sprintf(b->char_buf, "Invalid integer size: '%d'", size);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Invalid integer size: '%d'", size);
             }
             class->size = size;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, false);
         }
-        if(str_is(tkn, "unsigned")) {
+        if(t == tok_id && str_is(p->tkn, "unsigned")) {
+            tok(p, true, false, true);
             class->is_signed = false;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, false);
         }
-        tok_back(fc);
     } else if(type == ct_float) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        char* tkn = tok(fc, true, false, true);
-        if(is_valid_number(tkn)) {
-            int size = atoi(tkn);
+        char t = tok(p, true, false, false);
+        if(t == tok_number) {
+            tok(p, true, false, true);
+            int size = atoi(p->tkn);
             if (size != 4 && size != 8) {
-                sprintf(b->char_buf, "Invalid float size: '%d'", size);
-                parse_err(fc->chunk_parse, b->char_buf);
+                parse_err(p, -1, "Invalid float size: '%d'", size);
             }
             class->size = size;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, false);
         }
-        tok_back(fc);
     } else if(type == ct_ptr) {
         class->size = b->ptr_size;
-        char* tkn = tok(fc, true, false, true);
-        if(str_is(tkn, "math")) {
+        char t = tok(p, true, false, false);
+        if(t == tok_id && str_is(p->tkn, "math")) {
+            tok(p, true, false, true);
             class->allow_math = true;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, false);
         }
-        tok_back(fc);
     } else if(type == ct_bool) {
         class->size = 1;
     } else if(type == ct_struct) {
-        char* tkn = tok(fc, true, false, true);
-        if(str_is(tkn, "packed")) {
+        char t = tok(p, true, false, false);
+        if(t == tok_id && str_is(p->tkn, "packed")) {
+            tok(p, true, false, true);
             class->packed = true;
-            tkn = tok(fc, true, false, true);
+            t = tok(p, true, false, false);
         }
-        tok_back(fc);
     }
 
-    tok_expect(fc, "{", true, true);
+    tok_expect(p, "{", true, true);
 
-    class->body = chunk_clone(b->alc, fc->chunk_parse);
+    class->body = chunk_clone(b->alc, p->chunk);
 
-    skip_body(fc);
+    skip_body(p);
 }
 
-void stage_1_use(Fc* fc){
+void stage_1_use(Parser *p, Unit *u){
 
     char* pk = NULL;
-    char* ns = tok(fc, true, false, true);
-    if(tok_id_next(fc) == tok_char && tok_read_byte(fc, 1) == ':') {
+    char t = tok(p, true, false, true);
+    char* ns = p->tkn;
+    int next = tok(p, false, false, false);
+    if(next == tok_colon) {
+        next = tok(p, false, false, true);
         pk = ns;
-        tok(fc, false, false, true);
-        ns = tok(fc, false, false, true);
+        t = tok(p, false, false, true);
+        ns = p->tkn;
     }
 
-    Pkc* pkc = fc->nsc->pkc;
+    Pkc* pkc = u->nsc->pkc;
     if(pk) {
-        pkc = pkc_load_pkc(pkc, pk, fc->chunk_parse);
+        pkc = pkc_load_pkc(pkc, pk, p);
     }
 
-    Nsc* nsc = nsc_load(pkc, ns, true, fc->chunk_parse);
+    Nsc* nsc = nsc_load(pkc, ns, true, p);
 
-    Build *b = fc->b;
+    Build *b = p->b;
     Idf* idf = idf_make(b->alc, idf_scope, nsc->scope);
-    scope_set_idf(fc->scope, ns, idf, fc);
+    scope_set_idf(p->scope, ns, idf, p);
 }
 
-void stage_1_global(Fc* fc, bool shared){
+void stage_1_global(Parser *p, Unit *u, bool shared){
 
-    Build *b = fc->b;
-    char* name = tok(fc, true, false, true);
+    Build *b = p->b;
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
 
-    Global* g = al(fc->alc, sizeof(Global));
+    Global* g = al(b->alc, sizeof(Global));
     g->name = name;
-    g->export_name = gen_export_name(fc->nsc, name);
+    g->export_name = gen_export_name(u->nsc, name);
     g->type = NULL;
     g->value = NULL;
     g->chunk_type = NULL;
     g->chunk_value = NULL;
+    g->declared_scope = p->scope;
     g->is_shared = shared;
     g->is_mut = true;
 
     Idf* idf = idf_make(b->alc, idf_global, g);
-    scope_set_idf(fc->nsc->scope, name, idf, fc);
-    array_push(fc->globals, g);
+    scope_set_idf(u->nsc->scope, name, idf, p);
+    array_push(u->globals, g);
 
-    tok_expect(fc, ":", true, false);
+    tok_expect(p, ":", true, false);
 
-    g->chunk_type = chunk_clone(fc->alc, fc->chunk_parse);
+    g->chunk_type = chunk_clone(b->alc, p->chunk);
 
-    skip_type(fc);
+    skip_type(p);
 
-    tok_skip_whitespace(fc);
-    if (tok_read_byte(fc, 0) == tok_scope_open && tok_read_byte(fc, 1 + sizeof(int)) == '(') {
-        char *tkn = tok(fc, true, true, true);
-        g->chunk_value = chunk_clone(b->alc, fc->chunk_parse);
-        skip_body(fc);
+    t = tok(p, true, false, false);
+    if (t == tok_bracket_open) {
+        t = tok(p, true, false, true);
+        g->chunk_value = chunk_clone(b->alc, p->chunk);
+        skip_body(p);
     }
 }
 
-void stage_1_value_alias(Fc* fc) {
-    Build *b = fc->b;
-    char* name = tok(fc, true, false, true);
-    if(!is_valid_varname(name)) {
-        sprintf(b->char_buf, "Invalid value alias name: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+void stage_1_value_alias(Parser *p, Unit *u) {
+    Build *b = u->b;
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid value alias name: '%s'", name);
     }
 
-    tok_expect(fc, "(", true, false);
+    tok_expect(p, "(", true, false);
 
-    Chunk *chunk = chunk_clone(fc->alc, fc->chunk_parse);
-    ValueAlias *va = al(fc->alc, sizeof(ValueAlias));
+    Chunk *chunk = chunk_clone(b->alc, p->chunk);
+    ValueAlias *va = al(b->alc, sizeof(ValueAlias));
     va->chunk = chunk;
-    va->fc = fc;
+    va->scope = p->scope;
 
-    skip_body(fc);
+    skip_body(p);
 
     Idf* idf = idf_make(b->alc, idf_value_alias, va);
-    scope_set_idf(fc->nsc->scope, name, idf, fc);
+    scope_set_idf(u->nsc->scope, name, idf, p);
 }
 
-void stage_1_snippet(Fc* fc) {
-    Build *b = fc->b;
-    Allocator *alc = fc->alc;
+void stage_1_snippet(Parser *p, Unit *u) {
+    Build *b = p->b;
+    Allocator *alc = b->alc;
 
-    char* name = tok(fc, true, false, true);
-    if(!is_valid_varname(name)) {
-        sprintf(b->char_buf, "Invalid snippet name: '%s'", name);
-        parse_err(fc->chunk_parse, b->char_buf);
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid snippet name: '%s'", name);
     }
 
-    tok_expect(fc, "(", false, false);
+    tok_expect(p, "(", false, false);
     Array* args = array_make(alc, 4);
-    char* tkn = tok(fc, true, true, true);
-    while(!str_is(tkn, ")")) {
-        if(!is_valid_varname(tkn)) {
-            sprintf(b->char_buf, "Invalid snippet argument name: '%s'", name);
-            parse_err(fc->chunk_parse, b->char_buf);
+    t = tok(p, true, true, true);
+    while(t != tok_bracket_close) {
+        char* name = p->tkn;
+        if(t != tok_id) {
+            parse_err(p, -1, "Invalid snippet argument name: '%s'", name);
         }
-        char* fn = tkn;
-        tok_expect(fc, ":", true, false);
-        tkn = tok(fc, true, true, true);
+        tok_expect(p, ":", true, false);
+        t = tok(p, true, true, true);
         int type = -1;
-        if(str_is(tkn, "V")) {
+        if(str_is(p->tkn, "V")) {
             type = snip_value;
-        } else if(str_is(tkn, "T")) {
+        } else if(str_is(p->tkn, "T")) {
             type = snip_type;
         } else {
-            sprintf(b->char_buf, "Expect 'V' (value) or 'T' (type), Found: '%s'", tkn);
-            parse_err(fc->chunk_parse, b->char_buf);
+            parse_err(p, -1, "Expect 'V' (value) or 'T' (type), Found: '%s'", p->tkn);
         }
 
         SnipArg* sa = al(alc, sizeof(SnipArg));
-        sa->name = fn;
+        sa->name = name;
         sa->type = type;
         array_push(args, sa);
 
-        tkn = tok_expect_two(fc, ",", ")", true, true);
-        if(str_is(tkn, ",")) {
-            tkn = tok(fc, true, true, true);
+        t = tok_expect_two(p, ",", ")", true, true);
+        if(t == tok_comma) {
+            t = tok(p, true, true, true);
         }
     }
-    tok_expect(fc, "{", true, true);
+    tok_expect(p, "{", true, true);
 
     Snippet* snip = al(alc, sizeof(Snippet));
-    snip->chunk = chunk_clone(alc, fc->chunk_parse);
+    snip->chunk = chunk_clone(alc, p->chunk);
     snip->args = args;
-    snip->fc_scope = fc->scope;
+    snip->fc_scope = p->scope;
     snip->exports = NULL;
 
     Idf* idf = idf_make(alc, idf_snippet, snip);
-    scope_set_idf(fc->nsc->scope, name, idf, fc);
+    scope_set_idf(u->nsc->scope, name, idf, p);
 
-    skip_body(fc);
+    skip_body(p);
 
-    tkn = tok(fc, true, true, true);
+    t = tok(p, true, true, false);
 
-    if(str_is(tkn, "=>")) {
-        tok_expect(fc, "(", true, true);
+    if(t == tok_eqgt) {
+        tok(p, true, true, true);
+        tok_expect(p, "(", true, true);
         Array* exports = array_make(alc, 4);
-        tkn = tok(fc, true, true, true);
-        while(!str_is(tkn, ")")) {
-            if(!is_valid_varname(tkn)) {
-                sprintf(b->char_buf, "Invalid snippet argument name: '%s'", name);
-                parse_err(fc->chunk_parse, b->char_buf);
+        t = tok(p, true, true, true);
+        while(t != tok_bracket_close) {
+            char* name = p->tkn;
+            if(t != tok_id) {
+                parse_err(p, -1, "Invalid snippet argument name: '%s'", name);
             }
-            array_push(exports, tkn);
-            tkn = tok_expect_two(fc, ",", ")", true, true);
-            if(str_is(tkn, ",")) {
-                tkn = tok(fc, true, true, true);
+            array_push(exports, name);
+            t = tok_expect_two(p, ",", ")", true, true);
+            if(t == tok_comma) {
+                t = tok(p, true, true, true);
             }
         }
         snip->exports = exports;
-    } else {
-        tok_back(fc);
     }
-
 }

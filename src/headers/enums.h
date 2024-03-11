@@ -2,21 +2,69 @@
 enum LEX_TOKENS {
     tok_eof,
     tok_none,
+    // Data tokens
+    tok_data_pos = 2,
+    tok_data_scope_end = 3,
+    //
     tok_space,
     tok_newline,
+    //
     tok_id,
-    tok_at_word,
     tok_number,
     tok_string,
-    tok_char_string,
-    tok_op3,
-    tok_op2, // 10
-    tok_op1,
     tok_char,
-    tok_scope_open,
-    tok_scope_close,
-    tok_pos,
-    tok_cc,
+    tok_at_word,
+    // Brackets
+    tok_bracket_open,
+    tok_bracket_close,
+    tok_sq_bracket_open,
+    tok_sq_bracket_close,
+    tok_curly_open,
+    tok_curly_close,
+    tok_ltcurly_open,
+    // Operators
+    tok_plus,
+    tok_sub,
+    tok_mul,
+    tok_div,
+    tok_mod,
+    // ++ --
+    tok_plusplus,
+    tok_subsub,
+    // assign
+    tok_eq,
+    tok_plus_eq,
+    tok_sub_eq,
+    tok_mul_eq,
+    tok_div_eq,
+    // Compare
+    tok_eqeq,
+    tok_lt,
+    tok_lte,
+    tok_gt,
+    tok_gte,
+    tok_not_eq,
+    // && ||
+    tok_or,
+    tok_and,
+    // Bit ops
+    tok_shl,
+    tok_shr,
+    tok_bit_or,
+    tok_bit_and,
+    tok_bit_xor,
+    // ! ? : ; @ . ~ , #
+    tok_not,
+    tok_qmark,
+    tok_colon,
+    tok_semi,
+    tok_at,
+    tok_dot,
+    tok_tilde,
+    tok_comma,
+    tok_hashtag,
+    tok_triple_sub,
+    tok_eqgt,
 };
 
 enum ACCESS {

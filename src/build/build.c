@@ -72,11 +72,14 @@ int cmd_build(int argc, char *argv[]) {
     b->nsc_by_path = map_make(alc);
     b->pkcs = array_make(alc, 20);
 
+    b->units = array_make(alc, 40);
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);
     b->errors = al(alc, sizeof(ErrorCollection));
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
+
+    b->parser = parser_make(alc, b);
 
     b->func_main = NULL;
 
@@ -146,7 +149,7 @@ int cmd_build(int argc, char *argv[]) {
     // Build stages
     build_run_stages(b);
     if(b->func_main) {
-        stage_4_ast_main(b->func_main->fc);
+        stage_4_ast_main(b->func_main->unit);
     }
 
     // Object files + Linking
@@ -173,86 +176,6 @@ int cmd_build(int argc, char *argv[]) {
     }
 
     return 0;
-}
-
-void build_err(Build *b, char *msg) {
-    printf("# Error: %s\n", msg);
-    exit(1);
-}
-void parse_err(Chunk *chunk, char *msg) {
-    printf("# Parse error\n");
-    Build *b = chunk->b;
-    Array *chunks = array_make(b->alc, 10);
-    Chunk *in = chunk;
-    while (in) {
-        array_push(chunks, in);
-        in = in->parent;
-    }
-    if (chunks->length > 1) {
-        int x = chunks->length;
-        printf("------------------------------\n");
-        while (--x >= 0) {
-            Chunk *ch = array_get_index(chunks, x);
-            printf("=> line: %d | col: %d | file: %s\n", ch->line, ch->col, ch->fc ? ch->fc->path : "(generated code)");
-        }
-        printf("------------------------------\n");
-    }
-    char *content = chunk->content;
-    int line = chunk->line;
-    int col = chunk->col;
-    int col_end = chunk->col;
-    int i = 0;
-    chunk_lex(chunk, chunk->i, &i, &line, &col, &col_end);
-    int err_len = col_end > col ? col_end - col : 1;
-
-    printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
-    printf("# Line: %d | Col: %d\n", line, col);
-    printf("# Error: %s\n", msg);
-
-    int chars_before = 0;
-    int chars_after = 0;
-    int x = i;
-    while(x > 0 && content[--x] != '\n') {
-        chars_before++;
-    }
-    x = i;
-    while(content[x] != 0 && content[x++] != '\n') {
-        chars_after++;
-    }
-    int len = chars_before + chars_after;
-    // Start line
-    x = len;
-    while(x-- > 0)
-        printf("#");
-    printf("\n");
-    // Content
-    int offset = i - chars_before;
-    x = len;
-    while(x-- > 0) {
-        char ch = content[offset++];
-        if(ch == '\t') ch = ' ';
-        printf("%c", ch);
-    }
-    printf("\n");
-    // End line
-    if(err_len > chars_after) 
-        err_len = chars_after;
-    if(err_len == 0)
-        err_len = 1;
-    x = col - 2;
-    while(x-- > 0)
-        printf("#");
-    printf(" ");
-    x = err_len;
-    while(x-- > 0)
-        printf("^");
-    printf(" ");
-    x = len - col - err_len;
-    while(x-- > 0)
-        printf("#");
-    printf("\n");
-
-    exit(1);
 }
 
 Str* build_get_str_buf(Build* b) {

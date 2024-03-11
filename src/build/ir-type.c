@@ -66,7 +66,7 @@ char *ir_type_int(IR *ir, int bytes) {
         return "i64";
     }
 
-    printf("File: %s\n", ir->fc->path);
+    printf("Namespace: %s\n", ir->unit->nsc->name);
     printf("Size: %d\n", bytes);
     die("Unsupported integer size (IR Generator)");
 	return "";

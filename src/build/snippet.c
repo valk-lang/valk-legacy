@@ -1,17 +1,27 @@
 
 #include "../all.h"
 
-Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* scope_parent) {
-    Scope *sub = scope_sub_make(alc, sc_default, scope_parent, NULL);
-    sub->prio_idf_scope = snip->fc_scope;
+Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scope* scope_parent) {
+    Scope *sub = scope_sub_make(alc, sc_default, scope_parent);
+    sub->idf_parent = snip->fc_scope;
     sub->identifiers = idfs;
     sub->ast = array_make(alc, 20);
 
-    Chunk ch;
-    ch = *fc->chunk_parse;
-    *fc->chunk_parse = *snip->chunk;
-    read_ast(fc, sub, false);
-    *fc->chunk_parse = ch;
+    Map *pidfs = scope_parent->identifiers;
+    for (int i = 0; i < pidfs->values->length; i++) {
+        char *key = array_get_index(pidfs->keys, i);
+        if (!map_contains(idfs, key)) {
+            map_set(idfs, key, array_get_index(pidfs->values, i));
+        }
+    }
+
+    Scope* scope = p->scope;
+    Chunk ch = *p->chunk;
+    *p->chunk = *snip->chunk;
+    p->scope = sub;
+    read_ast(p, false);
+    *p->chunk = ch;
+    p->scope = scope;
 
     Array* exports = snip->exports;
     if(exports && scope_parent) {
@@ -19,20 +29,11 @@ Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* 
             char *name = array_get_index(exports, i);
             Idf* idf = map_get(sub->identifiers, name);
             if(!idf) {
-                sprintf(fc->b->char_buf, "Export variable not found in snippet: '%s'", name);
-                parse_err(fc->chunk_parse, fc->b->char_buf);
+                parse_err(p, -1, "Export variable not found in snippet: '%s'", name);
             }
-            scope_set_idf(scope_parent, name, idf, fc);
+            scope_set_idf(scope_parent, name, idf, p);
         }
     }
 
     return sub;
-}
-
-void read_snippet_ast(Allocator* alc, Fc* fc, Scope* scope, Snippet* snip) {
-    Chunk ch;
-    ch = *fc->chunk_parse;
-    *fc->chunk_parse = *snip->chunk;
-    read_ast(fc, scope, false);
-    *fc->chunk_parse = ch;
 }

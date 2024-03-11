@@ -4,8 +4,7 @@
 
 #include "typedefs.h"
 
-Scope* gen_snippet_ast(Allocator* alc, Fc* fc, Snippet* snip, Map* idfs, Scope* scope_parent);
-void read_snippet_ast(Allocator* alc, Fc* fc, Scope* scope, Snippet* snip);
+Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scope* scope_parent);
 
 struct Snippet {
     Array* args;

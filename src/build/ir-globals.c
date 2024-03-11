@@ -5,12 +5,11 @@ char* ir_gc_vtable_func_name(IR* ir, Func* func, char* buf);
 
 void ir_gen_globals(IR* ir) {
     //
-    Fc *fc = ir->fc;
+    Unit *u = ir->unit;
     Build *b = ir->b;
-    Scope *scope = fc->scope;
     Str *code = ir->code_global;
 
-    bool is_main_fc = fc->contains_main_func;
+    bool is_main_fc = u->contains_main_func;
 
     if (is_main_fc) {
         str_preserve(code, 500);
@@ -57,8 +56,8 @@ void ir_gen_globals(IR* ir) {
         str_flat(code, "@volt_gc_vtable = external constant ptr, align 8\n");
     }
 
-    for (int i = 0; i < fc->globals->length; i++) {
-        Global *g = array_get_index(fc->globals, i);
+    for (int i = 0; i < u->globals->length; i++) {
+        Global *g = array_get_index(u->globals, i);
 
         char *name = g->export_name;
         Type *type = g->type;
@@ -131,14 +130,13 @@ void *ir_global(IR *ir, Global *g) {
     return ir_name;
 }
 
-char *ir_string(IR *ir, VString *str, bool external) {
+char *ir_string(IR *ir, VString *str) {
     //
     if(array_contains(ir->declared_globals, str, arr_find_adr))
         return ir_ptrv(ir, str->ir_object_name, "ptr", 1);
 
     array_push(ir->declared_globals, str);
 
-    Fc *fc = ir->fc;
     Str *code = ir->code_global;
 
     char* body_name = str->ir_body_name;
@@ -153,6 +151,8 @@ char *ir_string(IR *ir, VString *str, bool external) {
     itoa(blen, blen_str, 10);
     char len_str[32];
     itoa(len, len_str, 10);
+
+    bool external = false;
 
     if (!external) {
 

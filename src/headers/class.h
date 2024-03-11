@@ -8,18 +8,17 @@ Class* class_make(Allocator* alc, Build* b, int type);
 ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value);
 ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
-Class* get_generic_class(Fc* fc, Class* class, Map* generic_types);
-void class_generate_internals(Fc* fc, Build* b, Class* class);
-void class_generate_transfer(Fc* fc, Build* b, Class* class, Func* func);
-void class_generate_mark(Fc* fc, Build* b, Class* class, Func* func);
-void class_generate_free(Fc* fc, Build* b, Class* class, Func* func);
+Class* get_generic_class(Parser* p, Class* class, Map* generic_types);
+void class_generate_internals(Parser* p, Build* b, Class* class);
+void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func);
+void class_generate_mark(Parser* p, Build* b, Class* class, Func* func);
 int get_class_pool_index(Class* class);
 
 struct Class {
     char* name;
     char* ir_name;
     Build* b;
-    Fc* fc;
+    Unit* unit;
     Chunk* body;
     Scope* scope;
     Map* props;
@@ -36,6 +35,7 @@ struct Class {
     bool is_signed;
     bool allow_math;
     bool is_generic_base;
+    bool in_header;
 };
 struct ClassProp {
     Type* type;
