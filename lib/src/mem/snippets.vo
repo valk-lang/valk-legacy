@@ -6,13 +6,11 @@ snippet stack_reserve(amount: V) {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
 
-    // reserve_(amount, STACK_ADR)
     STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
 
 } => (STACK, STACK_ADR)
 
 snippet run_gc_check() {
-    // run_gc_check_()
     if disable_gc == false {
         let s = stack
         if s.lowest_reached {
@@ -28,7 +26,6 @@ snippet run_gc_check() {
 }
 
 snippet stack_reduce() {
-    // scope_end_(amount, STACK_ADR)
 
     STACK_ADR = STACK_ADR
 
@@ -39,11 +36,3 @@ snippet stack_reduce() {
         STACK.lowest_next = STACK_ADR
     }
 }
-
-// snippet pop_return(retv: V) {
-//     STACK_ADR = STACK_ADR
-// }
-
-// snippet pop_no_return() {
-//     STACK_ADR = STACK_ADR
-// }
