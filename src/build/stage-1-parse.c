@@ -20,7 +20,7 @@ void stage_1_parse(Fc* fc) {
 
     *p->chunk = *fc->content;
     p->in_header = fc->is_header;
-    p->unit = p;
+    p->unit = u;
 
     usize start = microtime();
     stage_parse(p, u);
@@ -36,7 +36,7 @@ void stage_parse(Parser* p, Unit* u) {
 
     while(true) {
 
-        int t = tok(p, true, true, true);
+        char t = tok(p, true, true, true);
         if (t == tok_eof)
             break;
 
@@ -110,7 +110,7 @@ void stage_parse(Parser* p, Unit* u) {
 void stage_1_func(Parser *p, Unit *u, int act) {
     Build* b = p->b;
 
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     char* name = p->tkn;
     if(!is_valid_varname(name)) {
         parse_err(p, -1, "Invalid function name: '%s'", name);
@@ -137,7 +137,7 @@ void stage_1_func(Parser *p, Unit *u, int act) {
 void stage_1_header(Parser *p, Unit *u){
     Build* b = p->b;
     
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     if(t != tok_string) {
         parse_err(p, -1, "Expected a header name here wrapped in double-quotes");
     }
@@ -161,7 +161,7 @@ void stage_1_header(Parser *p, Unit *u){
 void stage_1_class(Parser* p, Unit* u, int type, int act) {
     Build* b = p->b;
 
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     char *name = p->tkn;
     if(t != tok_id) {
         parse_err(p, -1, "Invalid type name: '%s'", name);
@@ -171,20 +171,20 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     class->unit = u;
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
-    class->scope = scope_sub_make(b->alc, sc_default, p->scope, NULL);
+    class->scope = scope_sub_make(b->alc, sc_default, p->scope);
     class->in_header = p->in_header;
 
     t = tok(p, false, false, false);
     if(t == tok_sq_bracket_open) {
-        char* tkn = tok(p, false, false, true);
+        tok(p, false, false, true);
         Array* generic_names = array_make(b->alc, 2);
         while (true) {
             t = tok(p, true, false, true);
             if(t != tok_id){
-                parse_err(p, -1, "Invalid generic type name: '%s'", tkn);
+                parse_err(p, -1, "Invalid generic type name: '%s'", p->tkn);
             }
-            if (array_contains(generic_names, tkn, arr_find_str)) {
-                parse_err(p, -1, "Duplicate generic type name: '%s'", tkn);
+            if (array_contains(generic_names, p->tkn, arr_find_str)) {
+                parse_err(p, -1, "Duplicate generic type name: '%s'", p->tkn);
             }
             array_push(generic_names, p->tkn);
             if (tok_expect_two(p, ",", "]", true, false) == tok_sq_bracket_close)
@@ -214,7 +214,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     if(type == ct_int) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        int t = tok(p, true, false, false);
+        char t = tok(p, true, false, false);
         if(t == tok_number) {
             tok(p, true, false, true);
             int size = atoi(p->tkn);
@@ -232,7 +232,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     } else if(type == ct_float) {
         class->size = b->ptr_size;
         class->allow_math = true;
-        int t = tok(p, true, false, false);
+        char t = tok(p, true, false, false);
         if(t == tok_number) {
             tok(p, true, false, true);
             int size = atoi(p->tkn);
@@ -244,7 +244,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
         }
     } else if(type == ct_ptr) {
         class->size = b->ptr_size;
-        int t = tok(p, true, false, false);
+        char t = tok(p, true, false, false);
         if(t == tok_id && str_is(p->tkn, "math")) {
             tok(p, true, false, true);
             class->allow_math = true;
@@ -253,7 +253,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     } else if(type == ct_bool) {
         class->size = 1;
     } else if(type == ct_struct) {
-        int t = tok(p, true, false, false);
+        char t = tok(p, true, false, false);
         if(t == tok_id && str_is(p->tkn, "packed")) {
             tok(p, true, false, true);
             class->packed = true;
@@ -271,7 +271,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
 void stage_1_use(Parser *p, Unit *u){
 
     char* pk = NULL;
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     char* ns = p->tkn;
     int next = tok(p, false, false, false);
     if(next == tok_char && p->tkn[0] == ':') {
@@ -296,7 +296,8 @@ void stage_1_use(Parser *p, Unit *u){
 void stage_1_global(Parser *p, Unit *u, bool shared){
 
     Build *b = p->b;
-    char* name = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
 
     Global* g = al(b->alc, sizeof(Global));
     g->name = name;
@@ -319,7 +320,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared){
 
     skip_type(p);
 
-    int t = tok(p, true, false, false);
+    t = tok(p, true, false, false);
     if (t == tok_bracket_open) {
         t = tok(p, true, false, true);
         g->chunk_value = chunk_clone(b->alc, p->chunk);
@@ -329,7 +330,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared){
 
 void stage_1_value_alias(Parser *p, Unit *u) {
     Build *b = u->b;
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     char* name = p->tkn;
     if(t != tok_id) {
         parse_err(p, -1, "Invalid value alias name: '%s'", name);
@@ -352,7 +353,7 @@ void stage_1_snippet(Parser *p, Unit *u) {
     Build *b = p->b;
     Allocator *alc = b->alc;
 
-    int t = tok(p, true, false, true);
+    char t = tok(p, true, false, true);
     char* name = p->tkn;
     if(t != tok_id) {
         parse_err(p, -1, "Invalid snippet name: '%s'", name);

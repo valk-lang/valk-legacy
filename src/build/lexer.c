@@ -228,10 +228,10 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
         if (ch == ')' || ch == ']' || ch == '}') {
             depth--;
             if (depth < 0) {
-                lex_err(b, chunk, "Unexpected closing tag '%c'", ch);
+                lex_err(b, chunk, i, "Unexpected closing tag '%c'", ch);
             }
             if (closer_chars[depth] != ch) {
-                lex_err(b, chunk, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
+                lex_err(b, chunk, i, "Unexpected closing tag '%c', expected '%c'", ch, closer_chars[depth]);
             }
             tokens[o++] = bracket_token[ch];
             tokens[o++] = ch;

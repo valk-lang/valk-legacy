@@ -149,7 +149,7 @@ int cmd_build(int argc, char *argv[]) {
     // Build stages
     build_run_stages(b);
     if(b->func_main) {
-        stage_4_ast_main(b->func_main->fc);
+        stage_4_ast_main(b->func_main->unit);
     }
 
     // Object files + Linking

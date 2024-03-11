@@ -2,7 +2,7 @@
 #include "../all.h"
 
 Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scope* scope_parent) {
-    Scope *sub = scope_sub_make(alc, sc_default, scope_parent, NULL);
+    Scope *sub = scope_sub_make(alc, sc_default, scope_parent);
     sub->idf_parent = snip->fc_scope;
     sub->identifiers = idfs;
     sub->ast = array_make(alc, 20);

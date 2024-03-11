@@ -457,8 +457,6 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     IRBlock *block_cond = ir_block_make(ir, ir->func, "while_cond_");
     IRBlock *block_while = ir_block_make(ir, ir->func, "while_code_");
     IRBlock *after = ir_block_make(ir, ir->func, "while_after_");
-    scope_while->ir_after_block = after;
-    scope_while->ir_cond_block = block_cond;
 
     ir_jump(ir, block_cond);
 
@@ -481,7 +479,15 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     }
 
     // Ast
+    IRBlock* backup_after = ir->block_after;
+    IRBlock* backup_cond = ir->block_cond;
+    ir->block_after = after;
+    ir->block_cond = block_cond;
     ir_write_ast(ir, scope_while);
+    ir->block_after = backup_after;
+    ir->block_cond = backup_cond;
+
+
     if (!scope_while->did_return) {
         ir_jump(ir, block_cond);
     }

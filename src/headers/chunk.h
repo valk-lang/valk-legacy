@@ -6,7 +6,7 @@
 
 Chunk *chunk_make(Allocator *alc, Build *b, Fc *fc);
 Chunk *chunk_clone(Allocator *alc, Chunk *ch);
-void chunk_set_content(Chunk *chunk, char *content, int length);
+void chunk_set_content(Build* b, Chunk *chunk, char *content, int length);
 void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos);
 ChunkPos* chunk_token_pos(Build* b, Chunk *chunk, int token_i);
 

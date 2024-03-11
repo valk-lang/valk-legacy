@@ -3,8 +3,15 @@
 
 #include <stdarg.h>
 
-void build_err(Build *b, char *msg) {
-    printf("# Error: %s\n", msg);
+void build_err(Build *b, char *msg, ...) {
+
+    va_list args;
+    va_start(args, msg);
+    char error[2048];
+    vsprintf(error, msg, args);
+    va_end(args);
+
+    printf("# Error: %s\n", error);
     exit(1);
 }
 

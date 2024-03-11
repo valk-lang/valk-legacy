@@ -13,7 +13,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     Build *b = p->b;
     Chunk *chunk = p->chunk;
 
-    int t = tok(p, true, true, true);
+    char t = tok(p, true, true, true);
     char* tkn = p->tkn;
     // char *tr = &chunk->token;
 
@@ -344,7 +344,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     if (type == idf_scope) {
         Scope* sub = idf->item;
         tok_expect(p, ":", false, false);
-        int t = tok(p, false, false, true);
+        char t = tok(p, false, false, true);
 
         Id id;
         read_id(p, p->tkn, &id);
@@ -420,7 +420,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
         array_push(args, arg);
 
-        int t = tok(p, true, true, true);
+        char t = tok(p, true, true, true);
         if (t == tok_comma)
             continue;
         if (t == tok_bracket_close)
@@ -465,7 +465,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
     if(ont->func_errors) {
         VFuncCall* f = fcall->item;
-        int t = tok_expect_two(p, "!", "?", true, false);
+        char t = tok_expect_two(p, "!", "?", true, false);
 
         if(t == tok_not) {
 
@@ -483,7 +483,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             }
 
             Scope *scope = p->scope;
-            Scope *se = p->scope_end;
+            Chunk *se = p->scope_end;
             Scope* err_scope = scope_sub_make(alc, sc_default, scope);
             f->err_scope = err_scope;
 
@@ -530,7 +530,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         class = get_generic_class(p, class, generic_types);
     }
 
-    int t = tok(p, false, false, false);
+    char t = tok(p, false, false, false);
     if(t == tok_dot) {
         // Static functions
         tok(p, false, false, true);
@@ -568,7 +568,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         map_set_force_new(values, name, val);
         t = tok(p, true, true, true);
         if(t == tok_comma) {
-            t = tok(t, true, true, true);
+            t = tok(p, true, true, true);
             continue;
         } else if(t == tok_curly_close) {
             break;
@@ -627,7 +627,7 @@ Value* value_handle_ptrv(Allocator *alc, Parser* p) {
         parse_err(p, -1, "You cannot use 'void' type in @ptrv");
     }
     // Index
-    int t = tok(p, true, true, false);
+    char t = tok(p, true, true, false);
     Value *index = NULL;
     if(t == tok_comma) {
         tok(p, true, true, true);

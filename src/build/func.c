@@ -52,7 +52,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
         func->chunk_rett = chunk_clone(b->alc, p->chunk);
         skip_type(p);
     } else {
-        int t = tok(p, true, true, false);
+        char t = tok(p, true, true, false);
         if (t != tok_curly_open && t != tok_not) {
             // Has return type
             func->chunk_rett = chunk_clone(b->alc, p->chunk);
@@ -60,7 +60,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
         }
     }
 
-    int t = tok(p, true, true, false);
+    char t = tok(p, true, true, false);
     Map *errors = NULL;
     if (t == tok_not) {
         errors = map_make(b->alc);

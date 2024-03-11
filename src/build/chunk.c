@@ -17,12 +17,12 @@ Chunk *chunk_clone(Allocator *alc, Chunk *ch) {
     return new;
 }
 
-void chunk_set_content(Chunk *chunk, char *content, int length) {
+void chunk_set_content(Build* b, Chunk *chunk, char *content, int length) {
     //
     chunk->content = content;
     chunk->length = length;
     // Lex
-    chunk_lex_start(chunk);
+    chunk_lex(b, chunk, NULL);
 }
 
 ChunkPos* chunk_token_pos(Build* b, Chunk *chunk, int token_i) {

@@ -33,7 +33,7 @@ Id *read_id(Parser *p, char *first_part, Id *buf) {
     char* name = first_part;
     Build* b = p->b;
 
-    int t = tok(p, false, false, false);
+    char t = tok(p, false, false, false);
     if(t == tok_colon) {
         tok(p, false, false, true);
         t = tok(p, false, false, true);

@@ -4,7 +4,7 @@
 
 #include "typedefs.h"
 
-Type *read_type(Fc *fc, Allocator *alc, bool allow_newline);
+Type *read_type(Parser *p, Allocator *alc, bool allow_newline);
 Type* type_clone(Allocator* alc, Type* type);
 Type* type_gen_void(Allocator* alc);
 Type* type_gen_null(Allocator* alc, Build* b);
@@ -13,7 +13,7 @@ Type* type_gen_func(Allocator* alc, Func* func);
 Type* type_gen_volt(Allocator* alc, Build* b, char* name);
 Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed);
 bool type_compat(Type* t1, Type* t2, char** reason);
-void type_check(Chunk* chunk, Type* t1, Type* t2);
+void type_check(Parser* p, Type* t1, Type* t2);
 bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);

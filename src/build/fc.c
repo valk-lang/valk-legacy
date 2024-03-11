@@ -30,7 +30,7 @@ Fc *fc_make(Nsc *nsc, char *path) {
     if(b->parser_started) b->time_parse -= time;
 
     Chunk *content = chunk_make(alc, b, fc);
-    chunk_set_content(content, str_to_chars(alc, content_str), content_str->length);
+    chunk_set_content(b, content, str_to_chars(alc, content_str), content_str->length);
     fc->content = content;
 
     stage_add_item(b->stage_1_parse, fc);

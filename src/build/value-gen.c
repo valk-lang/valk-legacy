@@ -178,7 +178,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
         return val;
     }
 
-    Scope *sub = scope_sub_make(alc, sc_default, scope, scope->chunk_end);
+    Scope *sub = scope_sub_make(alc, sc_default, scope);
     sub->ast = array_make(alc, 10);
 
     // Disable gc

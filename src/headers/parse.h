@@ -5,9 +5,9 @@
 #include "typedefs.h"
 
 // Read
-char* tok(Parser* p, bool allow_space, bool allow_newline, bool update);
+char tok(Parser* p, bool allow_space, bool allow_newline, bool update);
 void tok_expect(Parser* p, char* expect, bool allow_space, bool allow_newline);
-int tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline);
+char tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline);
 void tok_skip_whitespace(Parser* p);
 bool tok_next_is_whitespace(Parser* p);
 

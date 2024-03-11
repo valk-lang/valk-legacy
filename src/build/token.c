@@ -17,7 +17,7 @@ void token_if(Allocator* alc, Parser* p) {
         parse_err(p, -1, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
     }
 
-    int t = tok(p, true, true, true);
+    char t = tok(p, true, true, true);
     int scope_end_i = 0;
     bool single = false;
     Chunk* chunk_end = NULL;
@@ -31,7 +31,7 @@ void token_if(Allocator* alc, Parser* p) {
     }
 
     Scope* scope = p->scope;
-    Scope* se = p->scope_end;
+    Chunk* se = p->scope_end;
     Scope *scope_if = scope_sub_make(alc, sc_default, scope);
     Scope *scope_else = scope_sub_make(alc, sc_default, scope);
 
@@ -62,9 +62,9 @@ void token_if(Allocator* alc, Parser* p) {
             } else {
                 parse_err(p, -1, "Expected '{' or ':' after 'else', but found: '%s'", p->tkn);
             }
-            p->scope = scope_if;
+            p->scope = scope_else;
             p->scope_end = chunk_end;
-            read_ast(p, scope_else, single);
+            read_ast(p, single);
             p->scope = scope;
             p->scope_end = se;
         }
@@ -84,7 +84,7 @@ void token_while(Allocator* alc, Parser* p) {
         parse_err(p, -1, "if condition value must return a bool type, but found: '%s'", type_to_str(cond->rett, buf));
     }
 
-    int t = tok(p, true, true, true);
+    char t = tok(p, true, true, true);
     bool single = false;
 
     Chunk* chunk_end = NULL;
@@ -98,7 +98,7 @@ void token_while(Allocator* alc, Parser* p) {
     }
 
     Scope *scope = p->scope;
-    Scope* se = p->scope_end;
+    Chunk* se = p->scope_end;
     Scope *ls = p->loop_scope;
     Scope *scope_while = scope_sub_make(alc, sc_loop, scope);
 
@@ -112,27 +112,27 @@ void token_while(Allocator* alc, Parser* p) {
 
     // Gc reserve
     // TODO: DELETE THIS???
-    if(scope_while->decls) {
-        Build* b = p->b;
-        Array* decls = scope_while->decls;
-        int gc_count = decls->length;
-        Scope* wrap = scope_sub_make(alc, sc_default, scope, chunk_end);
+    // if(scope_while->decls) {
+    //     Build* b = p->b;
+    //     Array* decls = scope_while->decls;
+    //     int gc_count = decls->length;
+    //     Scope* wrap = scope_sub_make(alc, sc_default, scope);
 
-        // Reserve
-        Map *idfs = map_make(alc);
-        Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-        Idf *idf = idf_make(alc, idf_value, amount);
-        map_set(idfs, "amount", idf);
-        Scope *gc_reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "reserve"), idfs, scope_while);
+    //     // Reserve
+    //     Map *idfs = map_make(alc);
+    //     Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
+    //     Idf *idf = idf_make(alc, idf_value, amount);
+    //     map_set(idfs, "amount", idf);
+    //     Scope *gc_reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "reserve"), idfs, scope_while);
 
-        array_shift(scope_while->ast, token_make(alc, t_ast_scope, gc_reserve));
+    //     array_shift(scope_while->ast, token_make(alc, t_ast_scope, gc_reserve));
 
-        // Pop
-        if (!scope_while->did_return) {
-            Scope *pop = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), scope_while);
-            array_push(scope_while->ast, token_make(alc, t_ast_scope, pop));
-        }
-    }
+    //     // Pop
+    //     if (!scope_while->did_return) {
+    //         Scope *pop = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), scope_while);
+    //         array_push(scope_while->ast, token_make(alc, t_ast_scope, pop));
+    //     }
+    // }
 
     //
     array_push(scope->ast, tgen_while(alc, cond, scope_while));

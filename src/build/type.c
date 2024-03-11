@@ -26,12 +26,12 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
     bool nullable = false;
     bool is_inline = false;
 
-    int t = tok(p, true, allow_newline, true);
+    char t = tok(p, true, allow_newline, true);
 
     if(t == tok_at_word) {
         if (str_is(p->tkn, "@ignu")) {
             tok_expect(p, "(", false, false);
-            Type* type = read_type(p, alc, scope, false);
+            Type* type = read_type(p, alc, false);
             tok_expect(p, ")", true, false);
             type->nullable = false;
             type->ignore_null = true;
@@ -54,7 +54,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             // Args
             Array* args = array_make(alc, 4);
             while (tok(p, true, false, false) != tok_bracket_close) {
-                Type* type = read_type(p, alc, scope, false);
+                Type* type = read_type(p, alc, false);
                 array_push(args, type);
                 if (tok(p, true, false, false) != tok_bracket_close) {
                     tok_expect(p, ",", true, false);
@@ -64,7 +64,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             tok_expect(p, "(", false, false);
             Type* rett;
             if (tok(p, true, false, false) != tok_bracket_close) {
-                rett = read_type(p, alc, scope, false);
+                rett = read_type(p, alc, false);
             } else {
                 rett = type_gen_void(alc);
             }
@@ -102,7 +102,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
                     Map *generic_types = map_make(alc);
                     for (int i = 0; i < names->length; i++) {
                         char *name = array_get_index(names, i);
-                        Type *type = read_type(p, alc, scope, false);
+                        Type *type = read_type(p, alc, false);
                         map_set(generic_types, name, type);
                         if (i + 1 < names->length) {
                             tok_expect(p, ",", true, false);

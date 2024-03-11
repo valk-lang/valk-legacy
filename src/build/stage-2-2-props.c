@@ -2,7 +2,6 @@
 #include "../all.h"
 
 void stage_props(Unit *u);
-void stage_props_class(Unit* u, Class *class);
 
 void stage_2_props(Unit* u) {
     Build* b = u->b;
@@ -35,11 +34,14 @@ void stage_props_class(Parser* p, Class *class) {
     if (class->is_generic_base)
         return;
 
+    Scope* scope = p->scope;
+    p->scope = class->scope;
+
     Build *b = p->b;
     *p->chunk = *class->body;
 
     while(true) {
-        int t = tok(p, true, true, true);
+        char t = tok(p, true, true, true);
 
         if(t == tok_curly_close)
             break;
@@ -71,7 +73,7 @@ void stage_props_class(Parser* p, Class *class) {
             prop->index = class->props->values->length;
             map_set_force_new(class->props, name, prop);
 
-            prop->type = read_type(p, b->alc, class->scope, false);
+            prop->type = read_type(p, b->alc, false);
 
             t = tok(p, true, false, false);
             if(t == tok_bracket_open) {
@@ -98,7 +100,7 @@ void stage_props_class(Parser* p, Class *class) {
         if(!str_is(tkn, "fn")) {
             parse_err(p, -1, "Expected 'fn' here, found '%s' instead", tkn);
         }
-        char* name = p->tkn;
+        name = p->tkn;
         if (next != tok_id) {
             parse_err(p, -1, "Invalid property name: '%s'", name);
         }
@@ -118,4 +120,6 @@ void stage_props_class(Parser* p, Class *class) {
 
         parse_handle_func_args(p, func);
     }
+
+    p->scope = scope;
 }

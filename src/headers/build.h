@@ -14,7 +14,7 @@ Pkc *pkc_load_pkc(Pkc *pkc, char *name, Parser* p);
 Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p);
 
 Nsc *nsc_make(Allocator *alc, Pkc *pkc, char *name, char *dir);
-Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Chunk* chunk);
+Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Parser* p);
 Nsc *get_volt_nsc(Build *b, char *name);
 
 Fc *fc_make(Nsc *nsc, char *path);

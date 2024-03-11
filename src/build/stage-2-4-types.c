@@ -41,6 +41,9 @@ void stage_types_func(Parser* p, Func* func) {
         return;
     func->types_parsed = true;
 
+    Scope* scope = p->scope;
+    p->scope = func->scope;
+
     Build *b = p->b;
 
     if(func->class && !func->is_static) {
@@ -56,7 +59,7 @@ void stage_types_func(Parser* p, Func* func) {
 
     if(func->chunk_args) {
         *p->chunk = *func->chunk_args;
-        int t = tok(p, true, true, true);
+        char t = tok(p, true, true, true);
         while(t != tok_bracket_close) {
             char* name = p->tkn;
             if(!is_valid_varname(name)) {
@@ -67,7 +70,7 @@ void stage_types_func(Parser* p, Func* func) {
             }
 
             tok_expect(p, ":", true, false);
-            Type* type = read_type(p, b->alc, func->scope, false);
+            Type* type = read_type(p, b->alc, false);
             if(type->type == type_void) {
                 parse_err(p, -1, "You cannot use void types for arguments");
             }
@@ -102,39 +105,49 @@ void stage_types_func(Parser* p, Func* func) {
     }
     if(func->chunk_rett) {
         *p->chunk = *func->chunk_rett;
-        Type *type = read_type(p, b->alc, func->scope, false);
+        Type *type = read_type(p, b->alc, false);
         func->rett = type;
         func->scope->must_return = !type_is_void(type);
         func->scope->rett = type;
     } else {
         func->rett = type_gen_void(b->alc);
     }
+
+    p->scope = scope;
 }
 
 void stage_types_class(Parser* p, Class* class) {
 
     Build *b = p->b;
+    Scope* scope = p->scope;
+    p->scope = class->scope;
 
     Array* props = class->props->values;
     for(int i = 0; i < props->length; i++) {
         ClassProp *prop = array_get_index(props, i);
         if (prop->chunk_type) {
             *p->chunk = *prop->chunk_type;
-            Type *type = read_type(p, b->alc, class->scope, false);
+            Type *type = read_type(p, b->alc, false);
             prop->type = type;
         }
     }
+
+    p->scope = scope;
 }
 
 void stage_types_global(Parser* p, Global* g) {
 
     Build *b = p->b;
+    Scope* scope = p->scope;
+    p->scope = g->declared_scope;
 
     *p->chunk = *g->chunk_type;
-    Type *type = read_type(p, b->alc, g->declared_scope, false);
+    Type *type = read_type(p, b->alc, false);
     g->type = type;
 
     if (g->is_shared && type_is_gc(type)) {
         parse_err(p, -1, "The compiler currently does not yet support classes in shared globals");
     }
+
+    p->scope = scope;
 }

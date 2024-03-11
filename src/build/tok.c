@@ -50,7 +50,7 @@ void tok_expect(Parser* p, char* expect, bool allow_space, bool allow_newline) {
         parse_err(p, start, "Expected '%s' here, instead of '%s'", expect, tkn);
     }
 }
-int tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
+char tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space, bool allow_newline) {
     int start = p->chunk->i;
     char t = tok(p, allow_space, allow_newline, true);
     char* tkn = p->tkn;

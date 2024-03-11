@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 // Core
-IR* ir_make(Unit* u);
+IR* ir_make(Unit* u, Parser* p);
 void ir_gen_globals(IR* ir);
 void ir_gen_functions(IR* ir);
 void ir_gen_final(IR* ir);
@@ -76,6 +76,9 @@ struct IR {
     //
     IRBlock* block;
     IRFunc* func;
+    //
+    IRBlock* block_after;
+    IRBlock* block_cond;
     //
     Array* funcs;
     Array* attrs;

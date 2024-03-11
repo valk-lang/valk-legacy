@@ -50,6 +50,9 @@ void stage_ast(Unit *u) {
         p->scope = func->scope;
         p->loop_scope = NULL;
         read_ast(p, false);
+        p->scope = NULL;
+        p->func = NULL;
+        p->class = NULL;
     }
 
     p->unit = NULL;
@@ -72,7 +75,7 @@ void read_ast(Parser *p, bool single_line) {
             return;
 
         int before_i = p->chunk->i;
-        int t = tok(p, true, true, true);
+        char t = tok(p, true, true, true);
         char* tkn = p->tkn;
 
         if (tkn[0] == ';')
@@ -93,14 +96,14 @@ void read_ast(Parser *p, bool single_line) {
                 t = tok(p, true, false, true);
                 Type* type = NULL;
                 if(t == tok_colon) {
-                    type = read_type(p, alc, scope, true);
+                    type = read_type(p, alc, true);
                     t = tok(p, true, false, true);
                 }
                 if(t != tok_eq) {
                     parse_err(p, -1, "Expected '=' here, found: '%s'", p->tkn);
                 }
 
-                Value* val = read_value(alc, p, scope, true, 0);
+                Value* val = read_value(alc, p, true, 0);
                 if(type) {
                     val = try_convert(alc, b, val, type);
                     type_check(p, type, val->rett);
@@ -138,11 +141,11 @@ void read_ast(Parser *p, bool single_line) {
             if (str_is(tkn, "return")){
                 Value* val = NULL;
                 if(scope->rett && !type_is_void(scope->rett)) {
-                    val = read_value(alc, p, scope, false, 0);
+                    val = read_value(alc, p, false, 0);
                     val = try_convert(alc, b, val, scope->rett);
                     type_check(p, scope->rett, val->rett);
                 } else {
-                    int t = tok(p, true, false, true);
+                    char t = tok(p, true, false, true);
                     if(t != tok_none && t != tok_semi && t != tok_curly_close) {
                         parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
                     }
@@ -156,7 +159,7 @@ void read_ast(Parser *p, bool single_line) {
                 break;
             }
             if (str_is(tkn, "throw")){
-                int t = tok(p, true, false, true);
+                char t = tok(p, true, false, true);
                 if(t != tok_id) {
                     parse_err(p, -1, "Invalid error name: '%s'", p->tkn);
                 }
@@ -220,7 +223,7 @@ void read_ast(Parser *p, bool single_line) {
                 }
                 tok_expect(p, ")", true, true);
 
-                Scope* sub = scope_sub_make(alc, sc_default, scope, NULL);
+                Scope* sub = scope_sub_make(alc, sc_default, scope);
                 sub->idf_parent = snip->fc_scope;
                 sub->identifiers = idfs;
 

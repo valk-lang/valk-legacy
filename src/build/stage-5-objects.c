@@ -18,7 +18,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/lto.h>
 
-void stage_build_o_file(Build* b, Nsc* nsc, Array* ir_files);
+void stage_build_o_file(Build* b, Unit* u, Array* ir_files);
 void stage_set_target(Build* b, CompileData* data);
 void llvm_build_o_file(void* data);
 void stage_5_optimize(LLVMModuleRef mod);
@@ -32,7 +32,7 @@ void stage_5_objects(Build* b) {
 
     Array *o_files = array_make(b->alc, 100);
     Array *units = b->units;
-    for (int i = 0; i < pkcs->length; i++) {
+    for (int i = 0; i < units->length; i++) {
 
         Unit *u = array_get_index(units, i);
         array_push(o_files, u->path_o);
@@ -41,7 +41,7 @@ void stage_5_objects(Build* b) {
         if(u->ir_changed || !file_exists(u->path_o)) {
             Array *ir_files = array_make(b->alc, 2);
             array_push(o_files, u->path_o);
-            stage_build_o_file(b, unit, ir_files);
+            stage_build_o_file(b, u, ir_files);
         }
     }
 

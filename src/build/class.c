@@ -232,7 +232,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
 
     char* content = str_to_chars(b->alc, code);
     Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(chunk, content, code->length);
+    chunk_set_content(b, chunk, content, code->length);
 
     *p->chunk = *chunk;
     parse_handle_func_args(p, func);
@@ -288,7 +288,7 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
 
     char* content = str_to_chars(b->alc, code);
     Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(chunk, content, code->length);
+    chunk_set_content(b, chunk, content, code->length);
 
     *p->chunk = *chunk;
     parse_handle_func_args(p, func);
