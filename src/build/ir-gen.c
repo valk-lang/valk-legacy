@@ -467,17 +467,6 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     // Code
     ir->block = block_while;
 
-    // Clear previous GC stack items
-    // Array* decls = scope_while->decls;
-    // if(decls) {
-    //     for (int i = 0; i < decls->length; i++) {
-    //         Decl *decl = array_get_index(decls, i);
-    //         if (decl->is_gc) {
-    //             ir_store(ir, decl->ir_store_var, "null", "ptr", 8);
-    //         }
-    //     }
-    // }
-
     // Ast
     IRBlock* backup_after = ir->block_after;
     IRBlock* backup_cond = ir->block_cond;

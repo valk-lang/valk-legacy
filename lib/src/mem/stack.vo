@@ -43,7 +43,7 @@ struct Stack {
     age: u8 (33)
 
     run_gc: bool (false)
-    lowest_reached: bool (false)
+    // lowest_reached: bool (false)
     bumper_overflow: bool (false)
     clear_unknown: bool (false)
 
