@@ -34,6 +34,13 @@ void stage_props_class(Parser* p, Class *class) {
     if (class->is_generic_base)
         return;
 
+    if(p->b->verbose > 2){
+        printf("# Class properties / functions: '%s'\n", class->name);
+    }
+    if(class->props->values->length > 0 || class->funcs->values->length > 0){
+        die("Called property stage twice on same class (compiler bug)");
+    }
+
     Scope* scope = p->scope;
     p->scope = class->scope;
 

@@ -2,6 +2,9 @@
 enum LEX_TOKENS {
     tok_eof,
     tok_none,
+    // Data tokens
+    tok_data_pos = 2,
+    tok_data_scope_end = 3,
     //
     tok_space,
     tok_newline,
@@ -62,10 +65,6 @@ enum LEX_TOKENS {
     tok_hashtag,
     tok_triple_sub,
     tok_eqgt,
-
-    // Data tokens
-    tok_data_pos = 241,
-    tok_data_scope_end = 242,
 };
 
 enum ACCESS {

@@ -40,6 +40,7 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
     int i_last = 0;
 
     Str* str_buf = b->str_buf;
+    str_clear(str_buf);
     str_preserve(str_buf, length * 2 + 1024);
     char *tokens = str_buf->data;
 
@@ -342,6 +343,8 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             op = tok_comma;
         } else if (ch == '@') {
             op = tok_at;
+        } else if (ch == '%') {
+            op = tok_mod;
         }
 
         if(op > -1) {
@@ -364,9 +367,15 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
     tokens[o++] = '\0';
 
     str_buf->length = o;
-
     chunk->tokens = str_to_chars(b->alc, str_buf);
     b->LOC += line;
+
+    // int x = 0;
+    // while(x < o) {
+    //     char ch = chunk->tokens[x++];
+    //     printf("%u.", ch);
+    // }
+    // exit(1);
 
     // Probably will never happen
     // if (err_token_i > -1) {

@@ -34,6 +34,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->unit = u;
 
     array_push(pkc->b->units, u);
+    stage_add_item(pkc->b->stage_2_alias, u);
 
     return nsc;
 }

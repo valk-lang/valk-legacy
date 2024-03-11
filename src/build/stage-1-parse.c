@@ -21,6 +21,7 @@ void stage_1_parse(Fc* fc) {
     *p->chunk = *fc->content;
     p->in_header = fc->is_header;
     p->unit = u;
+    p->scope = fc->scope;
 
     usize start = microtime();
     stage_parse(p, u);
@@ -28,8 +29,7 @@ void stage_1_parse(Fc* fc) {
 
     p->in_header = false;
     p->unit = NULL;
-
-    stage_add_item(b->stage_2_alias, u);
+    p->scope = NULL;
 }
 
 void stage_parse(Parser* p, Unit* u) {
@@ -37,8 +37,10 @@ void stage_parse(Parser* p, Unit* u) {
     while(true) {
 
         char t = tok(p, true, true, true);
-        if (t == tok_eof)
+
+        if (t == tok_eof) {
             break;
+        }
 
         int act = act_public;
 
@@ -274,7 +276,7 @@ void stage_1_use(Parser *p, Unit *u){
     char t = tok(p, true, false, true);
     char* ns = p->tkn;
     int next = tok(p, false, false, false);
-    if(next == tok_char && p->tkn[0] == ':') {
+    if(next == tok_colon) {
         next = tok(p, false, false, true);
         pk = ns;
         t = tok(p, false, false, true);

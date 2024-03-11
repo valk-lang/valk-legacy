@@ -2,6 +2,7 @@
 #include "../all.h"
 
 char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
+    p->tkn = "...";
     Chunk* ch = p->chunk;
     char *tokens = ch->tokens;
     int i = ch->i;
@@ -17,7 +18,7 @@ char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
         t = tokens[i++];
     }
     char td = tokens[i];
-    if(td > 240) {
+    if(td == 2 || td == 3) {
         i++;
         // Data token
         if(td == tok_data_pos) {
@@ -32,10 +33,12 @@ char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
     }
     // Token chars
     p->tkn = (tokens + i);
-    while(tokens[i++] != 0) {}
 
     //
     if(update) {
+        // Skip tkn bytes
+        while(tokens[i++] != 0) {}
+        //
         ch->i = i;
     }
 

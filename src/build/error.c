@@ -80,7 +80,7 @@ void lex_err(Build* b, Chunk *ch, int content_i, char *msg, ...) {
 
 void get_content_line_col(char* content, int target_i, int* _line, int* _col) {
     int i = 0;
-    int line = 0;
+    int line = 1;
     int col = 0;
     while (i < target_i) {
         char ch = content[i++];
