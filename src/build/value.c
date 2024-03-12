@@ -880,11 +880,11 @@ bool try_convert_number(Value* val, Type* type) {
 }
 
 bool value_needs_gc_buffer(Value* val) {
-    if(!val->rett->is_pointer)
-        return false;
-    if(val->type == v_null)
-        return false;
-    if(val->type == v_decl)
-        return false;
-    return type_is_gc(val->rett);
+    if(type_is_gc(val->rett)) {
+        if(val->type == v_decl || val->type == v_string || val->type == v_null) {
+            return false;
+        }
+        return true;
+    }
+    return false;
 }
