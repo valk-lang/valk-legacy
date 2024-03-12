@@ -147,6 +147,24 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Left value must be an assignable value. e.g. a variable");
             }
             v = value_make(alc, v_atomic, vop, val->rett);
+        } else if (str_is(tkn, "isset")) {
+            tok_expect(p, "(", false, false);
+            Value* on = read_value(alc, p, true, 0);
+            if(on->type != v_decl) {
+                parse_err(p, -1, "The 'isset' value must be a local variable");
+            }
+            if(!on->rett->nullable) {
+                parse_err(p, -1, "Using 'isset' on a value that cant be null");
+            }
+            tok_expect(p, ")", true, true);
+            v = vgen_isset(alc, b, on);
+
+            if (on->type == v_decl) {
+                Array *issets = array_make(alc, 4);
+                v->issets = issets;
+                array_push(issets, on);
+            }
+
         } else {
             // Identifiers
             Id id;
@@ -202,6 +220,9 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Class *class = rett->class;
             if (!class) {
                 parse_err(p, -1, "Unexpected '.'");
+            }
+            if (rett->nullable) {
+                parse_err(p, -1, "You cannot use '.' on a null-able value");
             }
 
             t = tok(p, false, false, true);
@@ -366,6 +387,10 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         Decl* decl = idf->item;
         return value_make(alc, v_decl, decl, decl->type);
     }
+    if (type == idf_decl_overwrite) {
+        DeclOverwrite* dov = idf->item;
+        return value_make(alc, v_decl, dov->decl, dov->type);
+    }
     if (type == idf_global) {
         Global* g = idf->item;
         return value_make(alc, v_global, g, g->type);
@@ -407,7 +432,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
 
-    parse_err(p, -1, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
+    parse_err(p, -1, "This identifier cannot be used inside a function (identifier-type:%d)", idf->type);
     return NULL;
 }
 

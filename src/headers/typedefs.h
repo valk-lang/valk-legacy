@@ -37,6 +37,7 @@ typedef struct Idf Idf;
 typedef struct Id Id;
 typedef struct Type Type;
 typedef struct Decl Decl;
+typedef struct DeclOverwrite DeclOverwrite;
 typedef struct Global Global;
 typedef struct Class Class;
 typedef struct ClassProp ClassProp;

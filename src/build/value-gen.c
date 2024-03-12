@@ -6,6 +6,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->type = type;
     v->item = item;
     v->rett = rett;
+    v->issets = NULL;
     return v;
 }
 
@@ -199,7 +200,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
         if(value_needs_gc_buffer(arg)) {
-            Decl *decl = decl_make(alc, arg->rett, false);
+            Decl *decl = decl_make(alc, NULL, arg->rett, false);
             array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
             arg = value_make(alc, v_decl, decl, decl->type);
         } else {
@@ -222,4 +223,8 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     buf->scope = sub;
 
     return value_make(alc, v_gc_buffer, buf, val->rett);
+}
+
+Value *vgen_isset(Allocator *alc, Build *b, Value *on) {
+    return value_make(alc, v_isset, on, type_gen_volt(alc, b, "bool"));
 }

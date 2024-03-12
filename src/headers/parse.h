@@ -21,11 +21,16 @@ struct Idf {
 };
 struct Decl {
     Type* type;
+    char *name;
     char *ir_var;
     char *ir_store_var;
     bool is_mut;
     bool is_gc;
     bool is_arg;
+};
+struct DeclOverwrite {
+    Decl* decl;
+    Type* type;
 };
 struct Global {
     char* name;

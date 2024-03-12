@@ -35,6 +35,8 @@ void token_if(Allocator* alc, Parser* p) {
     Scope *scope_if = scope_sub_make(alc, sc_if, scope);
     Scope *scope_else = scope_sub_make(alc, sc_if, scope);
 
+    scope_apply_issets(alc, scope_if, cond->issets);
+
     p->scope = scope_if;
     p->scope_end = chunk_end;
     read_ast(p, single);
@@ -102,6 +104,8 @@ void token_while(Allocator* alc, Parser* p) {
     Scope *ls = p->loop_scope;
     Scope *scope_while = scope_sub_make(alc, sc_loop, scope);
 
+    scope_apply_issets(alc, scope_while, cond->issets);
+
     p->scope = scope_while;
     p->scope_end = chunk_end;
     p->loop_scope = scope_while;
@@ -109,30 +113,6 @@ void token_while(Allocator* alc, Parser* p) {
     p->scope = scope;
     p->scope_end = se;
     p->loop_scope = ls;
-
-    // Gc reserve
-    // TODO: DELETE THIS???
-    // if(scope_while->decls) {
-    //     Build* b = p->b;
-    //     Array* decls = scope_while->decls;
-    //     int gc_count = decls->length;
-    //     Scope* wrap = scope_sub_make(alc, sc_default, scope);
-
-    //     // Reserve
-    //     Map *idfs = map_make(alc);
-    //     Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-    //     Idf *idf = idf_make(alc, idf_value, amount);
-    //     map_set(idfs, "amount", idf);
-    //     Scope *gc_reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "reserve"), idfs, scope_while);
-
-    //     array_shift(scope_while->ast, token_make(alc, t_ast_scope, gc_reserve));
-
-    //     // Pop
-    //     if (!scope_while->did_return) {
-    //         Scope *pop = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "pop_no_return"), map_make(alc), scope_while);
-    //         array_push(scope_while->ast, token_make(alc, t_ast_scope, pop));
-    //     }
-    // }
 
     //
     array_push(scope->ast, tgen_while(alc, cond, scope_while));

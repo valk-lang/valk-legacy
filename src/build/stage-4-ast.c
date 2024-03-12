@@ -116,7 +116,7 @@ void read_ast(Parser *p, bool single_line) {
                     type = val->rett;
                 }
 
-                Decl* decl = decl_make(alc, type, false);
+                Decl* decl = decl_make(alc, name, type, false);
                 Idf *idf = idf_make(b->alc, idf_decl, decl);
                 scope_set_idf(scope, name, idf, p);
 

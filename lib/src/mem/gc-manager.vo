@@ -2,7 +2,7 @@
 use volt:mem
 use volt:os
 
-shared gc_manager_instance : ?GcManager
+shared gc_manager_instance : @ignu(GcManager)
 
 fn gc_manager() GcManager {
     let gc = gc_manager_instance

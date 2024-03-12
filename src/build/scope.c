@@ -63,3 +63,26 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
         scope->gc_decl_count++;
     }
 }
+
+void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
+    //
+    if (!issets)
+        return;
+
+    for (int i = 0; i < issets->length; i++) {
+        Value *on = array_get_index(issets, i);
+        if (on->type == v_decl) {
+            Decl *decl = on->item;
+
+            Type *type = type_clone(alc, decl->type);
+            type->nullable = false;
+
+            DeclOverwrite *dov = al(alc, sizeof(DeclOverwrite));
+            dov->decl = decl;
+            dov->type = type;
+
+            Idf *idf = idf_make(alc, idf_decl_overwrite, dov);
+            map_set(scope->identifiers, decl->name, idf);
+        }
+    }
+}

@@ -3,7 +3,7 @@ use volt:mem
 use volt:os
 use volt:io
 
-global stack : ?Stack;
+global stack : @ignu(Stack);
 global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;

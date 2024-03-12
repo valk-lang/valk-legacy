@@ -80,6 +80,7 @@ enum ACCESS {
 enum IDF {
     idf_func,
     idf_decl,
+    idf_decl_overwrite,
     idf_nsc,
     idf_scope,
     idf_class,
@@ -139,6 +140,7 @@ enum VALUES {
     v_gc_get_table,
     v_value_scope,
     v_var,
+    v_isset,
 };
 
 enum TOKENS {

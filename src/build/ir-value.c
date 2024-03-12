@@ -93,6 +93,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char* var = ir_global(ir, g);
         return ir_load(ir, g->type, var);
     }
+    if (v->type == v_isset) {
+        Value *on = v->item;
+        char *lval = ir_value(ir, scope, on);
+        return ir_notnull_i1(ir, lval);
+    }
     if (v->type == v_ir_cached) {
         VIRCached* item = v->item;
         if(item->ir_value)
