@@ -155,6 +155,12 @@ void read_ast(Parser *p, bool single_line) {
                         parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
                     }
                 }
+                if(val) {
+                    // Important for GC
+                    val = vgen_var(alc, b, val);
+                    array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                }
+
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
                 if(!p->scope_end) {
@@ -286,5 +292,85 @@ void read_ast(Parser *p, bool single_line) {
 
     if(scope->must_return && !scope->did_return) {
         parse_err(p, -1, "Missing return statement");
+    }
+
+    if (scope->has_gc_decls) {
+        // Start scope
+        Scope* start = scope_sub_make(alc, sc_default, scope);
+        start->ast = array_make(alc, 10);
+        array_shift(scope->ast, token_make(alc, t_ast_scope, start));
+        // End scope
+        int last_token_index = scope->ast->length - 1;
+        Scope* end = scope_sub_make(alc, sc_default, scope);
+        end->ast = array_make(alc, 10);
+        array_push(scope->ast, token_make(alc, t_ast_scope, end));
+        // Swap return/continue/break token & end-scope
+        if(scope->did_return) {
+            int last_index = scope->ast->length - 1;
+            void* a = array_get_index(scope->ast, last_token_index);
+            void* b = array_get_index(scope->ast, last_index);
+            array_set_index(scope->ast, last_token_index, b);
+            array_set_index(scope->ast, last_index, a);
+        }
+
+        // Stack
+        Map *idfs = map_make(alc);
+        Value *amount = vgen_int(alc, scope->gc_decl_count, type_gen_number(alc, b, b->ptr_size, false, false));
+        Idf *idf = idf_make(alc, idf_value, amount);
+        map_set(idfs, "amount", idf);
+
+        // Cache stack & stack_adr variable
+        Scope *cache = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_cache"), idfs, start);
+        array_push(start->ast, token_make(alc, t_ast_scope, cache));
+
+        idf = map_get(cache->identifiers, "STACK_ADR");
+        Value *stack_adr = idf->item;
+
+        if (scope->type == sc_func) {
+            // Stack reserve
+            Scope *reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_reserve"), idfs, start);
+            array_push(start->ast, token_make(alc, t_ast_scope, reserve));
+
+            // Set stack offset for varables
+            Array *decls = scope->decls;
+            int x = 0;
+            for (int i = 0; i < decls->length; i++) {
+                Decl *decl = array_get_index(decls, i);
+                if (!decl->is_gc)
+                    continue;
+                Value *offset = vgen_ptrv(alc, b, stack_adr, type_gen_volt(alc, b, "ptr"), vgen_int(alc, x++, type_gen_volt(alc, b, "i32")));
+                TDeclare *item = al(alc, sizeof(TDeclare));
+                item->decl = decl;
+                item->value = offset;
+                array_push(start->ast, token_make(alc, t_set_decl_store_var, item));
+                array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+            }
+
+            // Stack reduce
+            Func* func = p->func;
+            Scope* reduce_scope = scope_sub_make(alc, sc_default, scope);
+            reduce_scope->ast = array_make(alc, 10);
+            func->scope_stack_reduce = reduce_scope;
+            Scope *scope_end = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_reduce"), idfs, scope);
+            array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
+
+        } else {
+            // if / while : At end of scope, set local variables to null
+            Array *decls = scope->decls;
+            for (int i = 0; i < decls->length; i++) {
+                Decl *decl = array_get_index(decls, i);
+                array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+            }
+        }
+
+        // if (scope->type == sc_loop || scope->type == sc_func) {
+        // if (scope->gc_check) {
+        //     Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), start);
+        //     array_shift(start->ast, token_make(alc, t_ast_scope, gcscope));
+        // }
+    }
+    if(scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)){
+        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        array_shift(scope->ast, token_make(alc, t_ast_scope, gcscope));
     }
 }

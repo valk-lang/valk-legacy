@@ -32,8 +32,8 @@ void token_if(Allocator* alc, Parser* p) {
 
     Scope* scope = p->scope;
     Chunk* se = p->scope_end;
-    Scope *scope_if = scope_sub_make(alc, sc_default, scope);
-    Scope *scope_else = scope_sub_make(alc, sc_default, scope);
+    Scope *scope_if = scope_sub_make(alc, sc_if, scope);
+    Scope *scope_else = scope_sub_make(alc, sc_if, scope);
 
     p->scope = scope_if;
     p->scope_end = chunk_end;

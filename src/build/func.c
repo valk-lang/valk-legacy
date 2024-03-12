@@ -8,7 +8,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->b = u->b;
     f->unit = u;
     f->scope = scope_make(alc, sc_func, parent);
-    f->scope_gc_pop = NULL;
+    f->scope_stack_reduce = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;

@@ -43,6 +43,7 @@ struct Stack {
     age: u8 (33)
 
     run_gc: bool (false)
+    // lowest_reached: bool (false)
     bumper_overflow: bool (false)
     clear_unknown: bool (false)
 
@@ -155,7 +156,7 @@ struct Stack {
 
 
         this.stack_adr_last = this.stack_adr
-        this.lowest_next = this.stack_adr + (100000 * sizeof(ptr))
+        this.lowest_next = this.stack_adr + (1000 * sizeof(ptr))
         disable_gc = false
     }
 

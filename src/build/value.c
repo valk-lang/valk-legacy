@@ -510,7 +510,11 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         }
     }
 
-    return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+    Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+    if(buffer->type == v_gc_buffer && p->scope->ast) {
+        p->scope->gc_check = true;
+    }
+    return buffer;
 }
 
 Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
@@ -600,9 +604,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
     if(class->type == ct_class && p->scope->ast) {
-        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), p->scope);
-        Token *t = token_make(alc, t_ast_scope, gcscope);
-        array_shift(p->scope->ast, t);
+        p->scope->gc_check = true;
     }
 
     return buffer;
@@ -878,11 +880,11 @@ bool try_convert_number(Value* val, Type* type) {
 }
 
 bool value_needs_gc_buffer(Value* val) {
-    if(!val->rett->is_pointer)
-        return false;
-    if(val->type == v_null)
-        return false;
-    if(val->type == v_decl)
-        return false;
-    return type_is_gc(val->rett);
+    if(type_is_gc(val->rett)) {
+        if(val->type == v_decl || val->type == v_string || val->type == v_null) {
+            return false;
+        }
+        return true;
+    }
+    return false;
 }

@@ -36,3 +36,8 @@
 -- loop over all unknown items (recursive)
 --- if state > 0 && age != gc_age : set state 0 && call item._gc_free()
 ```
+
+```
+# GC checking:
+> At the end of every scope (if/while) that did not use 'return' and contains stack positions
+```
