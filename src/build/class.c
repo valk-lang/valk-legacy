@@ -88,12 +88,15 @@ int class_determine_size(Build* b, Class* class) {
             }
         }
     }
-    // if (!class->packed) {
-    //     if (largest > b->ptr_size)
-    //         largest = b->ptr_size;
-    //     int rem = size % largest;
-    //     size += rem;
-    // }
+    if (!class->packed) {
+        if (largest > b->ptr_size)
+            largest = b->ptr_size;
+        if (largest > 0) {
+            int rem = size % largest;
+            if(rem > 0)
+                size += largest - rem;
+        }
+    }
 
     if (size == 0) {
         size = 8;
@@ -110,9 +113,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
         class->pool_index = get_class_pool_index(class);
-        // STACK
-        // Idf *idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
-        // scope_set_idf(class->scope, "STACK", idf, fc);
 
         // VTABLE_INDEX
         if(b->verbose > 2)
@@ -137,12 +137,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_mark_size"));
         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
-        // MALLOC
-        idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "alloc"));
-        scope_set_idf(class->scope, "MALLOC", idf, p);
-        // MEMCOPY
-        idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "copy"));
-        scope_set_idf(class->scope, "MEMCOPY", idf, p);
 
         // Transfer
         strcpy(buf, class->name);
@@ -182,8 +176,6 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(to_state: u8) void {\n");
-    // str_flat(code, "  print(\"> Transfer: \")\n");
-    // str_flat(code, "  println((this @as ptr).to_hex())\n");
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
 

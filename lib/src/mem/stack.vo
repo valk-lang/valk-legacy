@@ -264,7 +264,6 @@ struct Stack {
         this.transfer.delete()
 
         GcPool.delete_all()
-        mprint()
 
         // Stack is deleted by the Gc
         this.stopped = true
