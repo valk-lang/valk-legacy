@@ -80,6 +80,7 @@ enum ACCESS {
 enum IDF {
     idf_func,
     idf_decl,
+    idf_decl_overwrite,
     idf_nsc,
     idf_scope,
     idf_class,

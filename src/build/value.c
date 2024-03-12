@@ -387,6 +387,10 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         Decl* decl = idf->item;
         return value_make(alc, v_decl, decl, decl->type);
     }
+    if (type == idf_decl_overwrite) {
+        DeclOverwrite* dov = idf->item;
+        return value_make(alc, v_decl, dov->decl, dov->type);
+    }
     if (type == idf_global) {
         Global* g = idf->item;
         return value_make(alc, v_global, g, g->type);
@@ -428,7 +432,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
 
-    parse_err(p, -1, "This identifier cannot be used inside a function. (identifier-type:%d)", idf->type);
+    parse_err(p, -1, "This identifier cannot be used inside a function (identifier-type:%d)", idf->type);
     return NULL;
 }
 

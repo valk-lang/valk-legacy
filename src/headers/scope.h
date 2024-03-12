@@ -8,6 +8,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent);
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p);
 void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl);
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent);
+void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets);
 
 struct Scope {
     Scope* parent;

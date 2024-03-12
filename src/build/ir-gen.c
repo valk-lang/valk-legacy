@@ -270,6 +270,8 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
 char *ir_i1_cast(IR *ir, char *val) {
     char *var_i1 = ir_var(ir->func);
     Str* code = ir->block->code;
+    str_preserve(code, 200);
+
     str_flat(code, "  ");
     str_add(code, var_i1);
     str_flat(code, " = trunc i8 ");
@@ -533,6 +535,8 @@ char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type) {
 
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
+    str_preserve(code, 200);
+
     str_flat(code, "  ");
     str_add(code, result);
     str_flat(code, " = getelementptr inbounds ");
@@ -551,6 +555,8 @@ char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type) {
 char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* type) {
     Str *code = ir->block->code;
     char *var = ir_var(ir->func);
+    str_preserve(code, 200);
+
     str_flat(code, "  ");
     str_add(code, var);
     str_flat(code, " = phi ");
@@ -571,6 +577,8 @@ char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlo
 char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* that2, IRBlock* that_block2, char* type) {
     Str *code = ir->block->code;
     char *var = ir_var(ir->func);
+    str_preserve(code, 200);
+
     str_flat(code, "  ");
     str_add(code, var);
     str_flat(code, " = phi ");
@@ -589,5 +597,18 @@ char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* tha
     str_add(code, that_block2->name);
     str_flat(code, " ]\n");
 
+    return var;
+}
+
+char *ir_notnull_i1(IR *ir, char *val) {
+    char *var = ir_var(ir->func);
+    Str *code = ir->block->code;
+    str_preserve(code, 200);
+
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = icmp ne ptr ");
+    str_add(code, val);
+    str_flat(code, ", null\n");
     return var;
 }
