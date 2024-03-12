@@ -256,24 +256,14 @@ void ir_func_return_nothing(IR* ir) {
 }
 
 void ir_func_return(IR* ir, char* type, char* value) {
-    // IRFunc* func = ir->func;
-    // Func* vfunc = func->func;
-    // if(func->gc_count > 0) {
-    //     Allocator* alc = ir->alc;
-    //     Build* b = ir->b;
-    //     if(type && type_is_gc(vfunc->rett)) {
-    //         Map *idfs = map_make(alc);
-    //         Value *retv = value_make(alc, v_ir_value, value, vfunc->rett);
-    //         Idf *idf = idf_make(alc, idf_value, retv);
-    //         map_set(idfs, "retv", idf);
 
-    //         Scope* pop = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "pop_return"), idfs, vfunc->scope);
-    //         ir_write_ast(ir, pop);
-    //     } else {
-    //         Scope* pop = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "pop_no_return"), map_make(alc), vfunc->scope);
-    //         ir_write_ast(ir, pop);
-    //     }
-    // }
+    IRFunc* func = ir->func;
+    Func* vfunc = func->func;
+    if(vfunc->scope_stack_reduce) {
+        Scope* sub = vfunc->scope_stack_reduce;
+        ir_write_ast(ir, sub);
+    }
+    
     Str* code = ir->block->code;
     str_flat(code, "  ret ");
     if(type) {

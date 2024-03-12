@@ -15,7 +15,7 @@ struct Func {
     Build *b;
     Unit* unit;
     Scope* scope;
-    Scope* scope_gc_pop;
+    Scope* scope_stack_reduce;
     //
     Chunk* chunk_args;
     Chunk* chunk_rett;
