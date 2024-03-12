@@ -369,8 +369,8 @@ void read_ast(Parser *p, bool single_line) {
         //     array_shift(start->ast, token_make(alc, t_ast_scope, gcscope));
         // }
     }
-    // if(scope->gc_check){
-    //     Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-    //     array_shift(scope->ast, token_make(alc, t_ast_scope, gcscope));
-    // }
+    if(scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)){
+        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        array_shift(scope->ast, token_make(alc, t_ast_scope, gcscope));
+    }
 }

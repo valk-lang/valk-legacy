@@ -43,17 +43,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     Allocator* alc = ir->alc;
     Build* b = ir->b;
     Func* vfunc = func->func;
-    // int gc_count = func_get_reserve_count(vfunc);
-    // func->gc_count = gc_count;
-
-    // Scope* gc_reserve = NULL;
-    // if(gc_count > 0) {
-    //     Map *idfs = map_make(alc);
-    //     Value *amount = vgen_int(alc, gc_count, type_gen_number(alc, b, b->ptr_size, false, false));
-    //     Idf *idf = idf_make(alc, idf_value, amount);
-    //     map_set(idfs, "amount", idf);
-    //     gc_reserve = gen_snippet_ast(alc, ir->parser, get_volt_snippet(ir->b, "mem", "reserve"), idfs, vfunc->scope);
-    // }
 
     // Arg vars
     Array *args = vfunc->args->values;
@@ -91,40 +80,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         Func* stack_new = get_volt_class_func(b, "mem", "Stack", "init");
         char* stack_ob = ir_func_call(ir, ir_func_ptr(ir, stack_new), NULL, ir_type(ir, stack_new->rett), 0, 0);
     }
-
-    // Set decl IR values
-    // int gc_index = 0;
-    // char* stack_adr = NULL;
-
-    // GC reserve
-    // if(gc_reserve) {
-    //     ir_write_ast(ir, gc_reserve);
-    //     Idf *idf = map_get(gc_reserve->identifiers, "STACK_ADR");
-    //     Value *vc = idf->item;
-    //     stack_adr = ir_value(ir, scope, vc);
-    // }
-
-    // for (int i = 0; i < decls->length; i++) {
-    //     Decl* decl = array_get_index(decls, i);
-    //     Str *code = ir->block->code;
-    //     if(decl->is_gc) {
-    //         str_preserve(ir->block->code, 256);
-
-    //         char lindex[10];
-    //         itoa(gc_index, lindex, 10);
-    //         gc_index++;
-    //         char *var = ir_var(ir->func);
-    //         str_flat(code, "  ");
-    //         str_add(code, var);
-    //         str_flat(code, " = getelementptr inbounds ptr, ptr ");
-    //         str_add(code, stack_adr);
-    //         str_flat(code, ", i32 ");
-    //         str_add(code, lindex);
-    //         str_flat(code, "\n");
-
-    //         decl->ir_store_var = var;
-    //     }
-    // }
 
     // Store arg values
     for (int i = 0; i < args->length; i++) {
