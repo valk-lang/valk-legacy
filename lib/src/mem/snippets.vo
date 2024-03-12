@@ -2,17 +2,23 @@
 use io;
 use os;
 
+snippet boot() {
+	GcManager.init()
+	Stack.init()
+}
+snippet shutdown() {
+	stack.shutdown()
+    gc_manager_instance.shutdown()
+}
+
 snippet stack_cache() {
     @cache_value(stack) as STACK
     @cache_value(STACK.stack_adr) as STACK_ADR
 }
 
 snippet stack_reserve(amount: V) {
-
-    // STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
     STACK_ADR = @ptr_offset(STACK_ADR, amount, sizeof(ptr))
-
-} => (STACK, STACK_ADR)
+}
 
 snippet run_gc_check() {
     if disable_gc == false {

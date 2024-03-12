@@ -72,15 +72,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     if(ir->b->verbose > 2)
         printf("> Func IR: %s\n", vfunc->export_name);
 
-    // Start GC
-    if(func->func == ir->b->func_main) {
-        // Gc
-        Func* gc_start = get_volt_class_func(b, "mem", "GcManager", "init");
-        ir_func_call(ir, ir_func_ptr(ir, gc_start), NULL, ir_type(ir, gc_start->rett), 0, 0);
-        Func* stack_new = get_volt_class_func(b, "mem", "Stack", "init");
-        char* stack_ob = ir_func_call(ir, ir_func_ptr(ir, stack_new), NULL, ir_type(ir, stack_new->rett), 0, 0);
-    }
-
     // Store arg values
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);

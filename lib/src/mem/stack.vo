@@ -254,7 +254,7 @@ struct Stack {
         }
     }
 
-    fn stop() {
+    fn shutdown() {
         //
         this.force_full = true
         this.stack_adr = this.stack_base

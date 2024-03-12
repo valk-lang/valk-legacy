@@ -18,6 +18,8 @@ struct GcManager {
     free_index : uint(0)
     free_index_lock : uint (0)
     has_free_index : bool (false)
+    stop : bool (false)
+    stopped : bool (false)
 
     static fn init() {
         if gc_manager_instance != null {
@@ -78,5 +80,9 @@ struct GcManager {
             }
             os:sleep_ms(100)
         }
+    }
+
+    fn shutdown() {
+        this.stop = true;
     }
 }
