@@ -204,9 +204,9 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
         str_add(code, pn);
         str_flat(code, "\n");
         if(p->type->nullable) {
-            str_flat(code, "if ");
+            str_flat(code, "if isset(");
             str_add(code, var);
-            str_flat(code, " != null {\n");
+            str_flat(code, ") {\n");
         }
         str_flat(code, "  ");
         str_add(code, var);
@@ -260,9 +260,9 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
         str_add(code, pn);
         str_flat(code, "\n");
         if(p->type->nullable) {
-            str_flat(code, "if ");
+            str_flat(code, "if isset(");
             str_add(code, var);
-            str_flat(code, " != null {\n");
+            str_flat(code, ") {\n");
         }
         str_flat(code, "  ");
         str_add(code, var);

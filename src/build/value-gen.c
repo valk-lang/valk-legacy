@@ -6,6 +6,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->type = type;
     v->item = item;
     v->rett = rett;
+    v->issets = NULL;
     return v;
 }
 
@@ -222,4 +223,8 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     buf->scope = sub;
 
     return value_make(alc, v_gc_buffer, buf, val->rett);
+}
+
+Value *vgen_isset(Allocator *alc, Build *b, Value *on) {
+    return value_make(alc, v_isset, on, type_gen_volt(alc, b, "bool"));
 }

@@ -35,11 +35,13 @@ Value* vgen_gc_link(Allocator* alc, Value* on, Value* to, Type* rett);
 Value* vgen_var(Allocator* alc, Build* b, Value* value);
 Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_values, Type* rett);
 Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack);
+Value *vgen_isset(Allocator *alc, Build *b, Value *on);
 
 struct Value {
     int type;
     void* item;
     Type* rett;
+    Array *issets;
 };
 struct VPair {
     Value* left;

@@ -139,6 +139,7 @@ enum VALUES {
     v_gc_get_table,
     v_value_scope,
     v_var,
+    v_isset,
 };
 
 enum TOKENS {
