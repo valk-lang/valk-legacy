@@ -506,6 +506,29 @@ char* ir_ptrv(IR* ir, char* on, char* type, int index) {
 
     return result;
 }
+char* ir_ptr_offset(IR* ir, char* on, char* index, char* index_type, int size) {
+
+    char size_buf[20];
+    itoa(size, size_buf, 10);
+
+    char *result = ir_var(ir->func);
+    Str *code = ir->block->code;
+    str_preserve(code, 250);
+
+    str_flat(code, "  ");
+    str_add(code, result);
+    str_flat(code, " = getelementptr [");
+    str_add(code, size_buf);
+    str_flat(code, " x i8], ptr ");
+    str_add(code, on);
+    str_flat(code, ", ");
+    str_add(code, index_type);
+    str_flat(code, " ");
+    str_add(code, index);
+    str_flat(code, "\n");
+
+    return result;
+}
 char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type) {
 
     char *result = ir_var(ir->func);

@@ -56,6 +56,7 @@ typedef struct VNumber VNumber;
 typedef struct VGcBuffer VGcBuffer;
 typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
+typedef struct VPtrOffset VPtrOffset;
 typedef struct VOp VOp;
 typedef struct VIncr VIncr;
 typedef struct VIRCached VIRCached;

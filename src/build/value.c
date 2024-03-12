@@ -38,6 +38,34 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
             v = value_make(alc, v_ptr_of, from, type_gen_volt(alc, b, "ptr"));
 
+        } else if (str_is(tkn, "@ptr_offset")) {
+            tok_expect(p, "(", false, false);
+            Value *on = read_value(alc, p, true, 0);
+            if (!on->rett->is_pointer) {
+                parse_err(p, -1, "First argument of '@ptr_offset' must a pointer value");
+            }
+            tok_expect(p, ",", true, false);
+            Value *index = read_value(alc, p, true, 0);
+            if (index->rett->type != type_int) {
+                parse_err(p, -1, "Second argument of '@ptr_offset' must return an integer value");
+            }
+            int t = tok(p, true, false, false);
+            int size = 1;
+            if(t == tok_comma) {
+                tok(p, true, false, true);
+                Value* s = read_value(alc, p, true, 0);
+                if (s->type != v_number || s->rett->type == ct_float) {
+                    parse_err(p, -1, "Third argument of '@ptr_offset' must an integer literal. e.g. 1 or sizeof(ptr)");
+                }
+                VNumber* vn = s->item;
+                size = vn->value_int;
+                if (size < 1) {
+                    parse_err(p, -1, "Third argument of '@ptr_offset' must be larger than 0");
+                }
+            }
+            tok_expect(p, ")", true, true);
+            v = vgen_ptr_offset(alc, b, on, index, size);
+
         } else if (str_is(tkn, "@stack")) {
             tok_expect(p, "(", false, false);
             Type* type = read_type(p, alc, true);

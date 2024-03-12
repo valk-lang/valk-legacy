@@ -117,6 +117,7 @@ enum VALUES {
     v_decl,
     v_class_pa,
     v_ptrv,
+    v_ptr_offset,
     v_global,
     v_func_ptr,
     v_func_call, // 5

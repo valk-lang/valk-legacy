@@ -9,13 +9,8 @@ snippet stack_cache() {
 
 snippet stack_reserve(amount: V) {
 
-    // if disable_gc == false {
-    //     let x = amount
-    //     while x-- > 0 {
-    //         @ptrv(STACK_ADR, ptr, x) = null
-    //     }
-    // }
-    STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
+    // STACK_ADR = STACK_ADR + (amount * sizeof(ptr));
+    STACK_ADR = @ptr_offset(STACK_ADR, amount, sizeof(ptr))
 
 } => (STACK, STACK_ADR)
 
@@ -38,7 +33,5 @@ snippet run_gc_check() {
 }
 
 snippet stack_reduce() {
-
     STACK_ADR = STACK_ADR
-
 }

@@ -42,6 +42,13 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *val = ir_assign_value(ir, scope, v);
         return ir_load(ir, v->rett, val);
     }
+    if (v->type == v_ptr_offset) {
+        VPtrOffset* of = v->item;
+        char* on = ir_value(ir, scope, of->on);
+        char* index = ir_value(ir, scope, of->index);
+        char* index_type = ir_type(ir, of->index->rett);
+        return ir_ptr_offset(ir, on, index, index_type, of->size);
+    }
     if (v->type == v_ptr_of) {
         return ir_assign_value(ir, scope, v->item);
     }

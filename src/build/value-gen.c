@@ -57,6 +57,13 @@ Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) 
     item->index = index;
     return value_make(alc, v_ptrv, item, type);
 }
+Value *vgen_ptr_offset(Allocator *alc, Build* b, Value *on, Value* index, int size) {
+    VPtrOffset *item = al(alc, sizeof(VPtrOffset));
+    item->on = on;
+    item->index = index;
+    item->size = size;
+    return value_make(alc, v_ptr_offset, item, type_gen_volt(alc, b, "ptr"));
+}
 
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett) {
     VOp *item = al(alc, sizeof(VOp));
