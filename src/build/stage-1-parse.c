@@ -5,6 +5,7 @@ void stage_parse(Parser* p, Unit* u);
 void stage_1_func(Parser* p, Unit* u, int act);
 void stage_1_header(Parser* p, Unit* u);
 void stage_1_class(Parser* p, Unit* u, int type, int act);
+void stage_1_trait(Parser* p, Unit* u, int act);
 void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared);
 void stage_1_value_alias(Parser* p, Unit* u);
@@ -266,6 +267,27 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     tok_expect(p, "{", true, true);
 
     class->body = chunk_clone(b->alc, p->chunk);
+
+    skip_body(p);
+}
+
+void stage_1_trait(Parser* p, Unit* u, int act) {
+    Build* b = p->b;
+
+    char t = tok(p, true, false, true);
+    char *name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid type name: '%s'", name);
+    }
+
+    tok_expect(p, "{", true, true);
+
+    Trait* trait = al(b->alc, sizeof(Trait));
+    trait->chunk = chunk_clone(b->alc, p->chunk);
+
+    Scope* nsc_scope = u->nsc->scope;
+    Idf* idf = idf_make(b->alc, idf_trait, trait);
+    scope_set_idf(nsc_scope, name, idf, p);
 
     skip_body(p);
 }

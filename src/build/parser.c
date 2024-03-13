@@ -7,12 +7,11 @@ Parser* parser_make(Allocator* alc, Build* b) {
     p->unit = NULL;
     p->tkn = NULL;
 
-    p->chunks = al(alc, 20 * sizeof(Chunk));
+    p->contexts = al(alc, 20 * sizeof(ParserContext));
     p->chunk = chunk_make(alc, b, NULL);
     p->scope_end = NULL;
 
     p->func = NULL;
-    p->class = NULL;
     p->scope = NULL;
     p->loop_scope = NULL;
 
@@ -27,25 +26,42 @@ Parser* parser_make(Allocator* alc, Build* b) {
     return p;
 }
 
-void parser_set_chunk(Parser* p, Chunk* chunk, bool sub_chunk) {
+void parser_save_context(Parser* p) {
     int ci = p->chunk_index;
-    if(sub_chunk) {
-        ci++;
-        if(ci == 20)
-            build_err(p->b, "Too much parsing recursion. Max recursive chunks allowed: 20");
-    }
-    p->chunks[ci] = *chunk;
-    *p->chunk = *chunk;
-    p->chunk_index = ci;
+
+    ParserContext *pc = &p->contexts[ci];
+    pc->chunk = *p->chunk;
+    pc->scope_end = p->scope_end;
+    pc->func = p->func;
+    pc->scope = p->scope;
+    pc->loop_scope = p->loop_scope;
+    pc->line = p->line;
+    pc->col = p->col;
+    pc->scope_end_i = p->scope_end_i;
+    pc->in_header = p->in_header;
+
+    p->chunk_index = ci + 1;
 }
 
-void parser_pop_chunk(Parser* p) {
+
+void parser_pop_context(Parser* p, bool restore_pos) {
     int ci = p->chunk_index - 1;
     if(ci < 0) {
         return;
     }
-    *p->chunk = p->chunks[ci];
-    p->chunk_index--;
+    ParserContext *pc = &p->contexts[ci];
+    if(restore_pos)
+        *p->chunk = pc->chunk;
+    p->scope_end = pc->scope_end;
+    p->func = pc->func;
+    p->scope = pc->scope;
+    p->loop_scope = pc->loop_scope;
+    p->line = pc->line;
+    p->col = pc->col;
+    p->scope_end_i = pc->scope_end_i;
+    p->in_header = pc->in_header;
+
+    p->chunk_index = ci;
 }
 
 Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope) {

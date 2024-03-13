@@ -5,20 +5,19 @@
 #include "typedefs.h"
 
 Parser* parser_make(Allocator* alc, Build* b);
-void parser_set_chunk(Parser* p, Chunk* chunk, bool sub_chunk);
-void parser_pop_chunk(Parser* p);
+void parser_save_context(Parser* p);
+void parser_pop_context(Parser* p, bool restore_pos);
 Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope);
 
 struct Parser {
     Build* b;
     // State
     Unit* unit;
-    Chunk* chunks;
+    ParserContext* contexts;
     Chunk* chunk;
     Chunk* scope_end;
     //
     Func* func;
-    Class* class;
     //
     Scope* scope;
     Scope* loop_scope;
@@ -30,6 +29,17 @@ struct Parser {
     int scope_end_i;
     //
     int chunk_index;
+    bool in_header;
+};
+struct ParserContext {
+    Chunk chunk;
+    Chunk* scope_end;
+    Func* func;
+    Scope* scope;
+    Scope* loop_scope;
+    int line;
+    int col;
+    int scope_end_i;
     bool in_header;
 };
 

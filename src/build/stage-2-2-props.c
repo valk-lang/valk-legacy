@@ -41,10 +41,8 @@ void stage_props_class(Parser* p, Class *class) {
         die("Called property stage twice on same class (compiler bug)");
     }
 
-    Scope* scope = p->scope;
-    p->scope = class->scope;
-
     Build *b = p->b;
+    p->scope = class->scope;
     *p->chunk = *class->body;
 
     while(true) {
@@ -127,6 +125,4 @@ void stage_props_class(Parser* p, Class *class) {
 
         parse_handle_func_args(p, func);
     }
-
-    p->scope = scope;
 }

@@ -66,9 +66,9 @@
 #include "headers/class.h"
 #include "headers/ir.h"
 #include "headers/snippet.h"
+#include "headers/chunk.h"
 #include "headers/parser.h"
 #include "headers/unit.h"
-#include "headers/chunk.h"
 #include "headers/error.h"
 #include "headers/scope.h"
 

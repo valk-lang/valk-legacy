@@ -367,9 +367,8 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
     Idf* idf = idf_make(b->alc, idf_class, gclass);
     scope_set_idf(gclass->scope, "CLASS", idf, p);
 
-    // Save chunk for parser
-    Chunk ch;
-    ch = *p->chunk;
+    // Save parser context
+    parser_save_context(p);
 
     // Stage 2
     stage_props_class(p, gclass);
@@ -389,8 +388,9 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
         stage_types_func(p, func);
     }
 
-    // Restore chunk
-    *p->chunk = ch;
+    // Restore parser context
+    parser_pop_context(p, true);
+
     //
     build_return_str_buf(b, hash);
     return gclass;

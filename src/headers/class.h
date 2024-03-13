@@ -44,5 +44,8 @@ struct ClassProp {
     int index;
     bool skip_default_value;
 };
+struct Trait {
+    Chunk* chunk;
+};
 
 #endif

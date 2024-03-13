@@ -41,10 +41,8 @@ void stage_types_func(Parser* p, Func* func) {
         return;
     func->types_parsed = true;
 
-    Scope* scope = p->scope;
-    p->scope = func->scope;
-
     Build *b = p->b;
+    p->scope = func->scope;
 
     if(func->class && !func->is_static) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
@@ -112,14 +110,11 @@ void stage_types_func(Parser* p, Func* func) {
     } else {
         func->rett = type_gen_void(b->alc);
     }
-
-    p->scope = scope;
 }
 
 void stage_types_class(Parser* p, Class* class) {
 
     Build *b = p->b;
-    Scope* scope = p->scope;
     p->scope = class->scope;
 
     Array* props = class->props->values;
@@ -131,14 +126,11 @@ void stage_types_class(Parser* p, Class* class) {
             prop->type = type;
         }
     }
-
-    p->scope = scope;
 }
 
 void stage_types_global(Parser* p, Global* g) {
 
     Build *b = p->b;
-    Scope* scope = p->scope;
     p->scope = g->declared_scope;
 
     *p->chunk = *g->chunk_type;
@@ -148,6 +140,4 @@ void stage_types_global(Parser* p, Global* g) {
     if (g->is_shared && type_is_gc(type)) {
         parse_err(p, -1, "The compiler currently does not yet support classes in shared globals");
     }
-
-    p->scope = scope;
 }

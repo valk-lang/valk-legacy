@@ -22,6 +22,7 @@ typedef struct ChunkPos ChunkPos;
 typedef struct Stage Stage;
 typedef struct CompileData CompileData;
 typedef struct Parser Parser;
+typedef struct ParserContext ParserContext;
 typedef struct Unit Unit;
 // IR
 typedef struct IR IR;
@@ -41,6 +42,7 @@ typedef struct DeclOverwrite DeclOverwrite;
 typedef struct Global Global;
 typedef struct Class Class;
 typedef struct ClassProp ClassProp;
+typedef struct Trait Trait;
 typedef struct ValueAlias ValueAlias;
 // Tokens
 typedef struct Token Token;

@@ -46,18 +46,12 @@ void stage_ast(Unit *u) {
         if (u->b->verbose > 2)
             printf("Stage 4 | Parse AST: %s\n", func->name);
 
-        parser_set_chunk(p, func->chunk_body, false);
-
+        *p->chunk = *func->chunk_body;
         p->func = func;
-        p->class = func->class;
         p->scope = func->scope;
         p->loop_scope = NULL;
         p->scope_end = func->body_end; 
         read_ast(p, false);
-        p->scope = NULL;
-        p->func = NULL;
-        p->class = NULL;
-        p->scope_end = NULL;
     }
 
     p->unit = NULL;
