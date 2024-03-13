@@ -722,6 +722,23 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     Type* lt = left->rett;
     Type* rt = right->rett;
 
+    // _add
+    if (!lt->nullable) {
+        Func *add = lt->class ? map_get(lt->class->funcs, "_add") : NULL;
+        if (add && add->is_static == false && add->arg_types->length == 2) {
+            Type *arg_type = array_get_index(add->arg_types, 1);
+            Array *args = array_make(alc, 2);
+            array_push(args, left);
+            array_push(args, right);
+            right = try_convert(alc, b, right, arg_type);
+            type_check(p, arg_type, right->rett);
+            Value *on = vgen_func_ptr(alc, add, NULL);
+            Value *fcall = vgen_func_call(alc, on, args);
+            return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+        }
+    }
+
+    //
     if(!lt->class || !lt->class->allow_math) {
         parse_err(p, -1, "You cannot use operators on these values");
     }

@@ -6,8 +6,6 @@ extension: .vo
 description: language with fast non blocking gc with optional manual memory management
 
 ## TODO
-- && ||
-- string concat
 - string functions
 - number functions
 - cli arguments: argv/argc
@@ -20,6 +18,7 @@ description: language with fast non blocking gc with optional manual memory mana
 - macros
 - test features --test
 - ci
+- validate class functions: _add, _gc_free, ...
 
 ## Low priority
 - watch files --watch

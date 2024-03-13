@@ -29,7 +29,7 @@ class String {
 
     static fn make_empty(length: uint) String {
         let d = mem:alloc(length + 1)
-        @ptrv(d, u8, length) = 0
+        @ptrv(d, u8, length) = 0 // trailing 0 byte
         let str = String {
             data: d
             bytes: length
@@ -40,6 +40,17 @@ class String {
     static fn make_from_ptr(data: ptr, length: uint) String {
         let s = String.make_empty(length);
         mem:copy(data, s.data, length)
+        return s
+    }
+
+    fn _add(add: String) String {
+        let this_len = this.bytes
+        let add_len = add.bytes
+        let len = this_len + add_len
+        let s = CLASS.make_empty(len)
+        let data = s.data;
+        mem:copy(this.data, data, this_len)
+        mem:copy(add.data, @ptr_offset(data, this_len), add_len + 1) // + 1 for 0 byte
         return s
     }
 }
