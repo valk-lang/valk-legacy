@@ -3,9 +3,6 @@ header "sys" as sys
 
 use volt:mem;
 
-global str_buf : ?ptr
-global str_rev : ?ptr
-
 integer uint unsigned {
 
     use Number

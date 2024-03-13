@@ -1,3 +1,4 @@
 
 integer u8 1 unsigned {
+    use Number
 }

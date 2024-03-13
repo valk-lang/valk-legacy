@@ -100,7 +100,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
                 parse_err(p, -1, "Invalid trait name: '%s'", name);
             }
             Id id;
-            Idf *idf = idf_by_id(p, class->scope, read_id(p, name, &id), true);
+            Idf *idf = idf_by_id(p, p->scope, read_id(p, name, &id), true);
             if (idf->type != idf_trait) {
                 parse_err(p, -1, "This is not a trait: '%s'", id.name);
             }
@@ -109,8 +109,9 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             parser_save_context(p);
 
             *p->chunk = *t->chunk;
+            Scope* scope = p->scope;
             p->scope = scope_sub_make(b->alc, sc_default, t->scope);
-            p->scope->identifiers = class->scope->identifiers;
+            p->scope->identifiers = scope->identifiers;
 
             stage_props_class(p, class, true);
 
@@ -145,7 +146,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         char export_name[512];
         sprintf(export_name, "%s__%s", class->ir_name, name);
 
-        Func *func = func_make(b->alc, class->unit, class->scope, name, dups(b->alc, export_name));
+        Func *func = func_make(b->alc, class->unit, p->scope, name, dups(b->alc, export_name));
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;

@@ -1,7 +1,4 @@
 
 integer i32 4 {
-
-    fn to_str() String {
-        return (this @as uint).to_str()
-    }
+    use Number
 }

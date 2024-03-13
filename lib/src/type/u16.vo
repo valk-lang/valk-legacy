@@ -1,6 +1,4 @@
 
 integer u16 2 unsigned {
-    fn to_str() String {
-        return (this @as uint).to_str()
-    }
+    use Number
 }

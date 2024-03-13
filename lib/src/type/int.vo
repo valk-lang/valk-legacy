@@ -2,13 +2,5 @@
 use volt:mem
 
 integer int {
-
-    fn to_str() String {
-        if this < 0 {
-            return "negative"
-        }
-        let x = this @as uint
-        return x.to_str()
-    }
-
+    use Number
 }

@@ -1,4 +1,9 @@
 
+use volt:mem;
+
+global str_buf : ?ptr
+global str_rev : ?ptr
+
 trait Number {
 
     fn to_hex() String {

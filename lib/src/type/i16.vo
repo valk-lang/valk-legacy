@@ -1,3 +1,4 @@
 
 integer i16 2 {
+    use Number
 }
