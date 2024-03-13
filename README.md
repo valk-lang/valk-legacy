@@ -10,8 +10,7 @@
 [Website](https://voltx.dev) | [Documentation](https://voltx.dev/docs) | [Discord](https://discord.gg/RwEGqdSERA)
 
 
-
-Volt is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Volt is unique because of its new way of doing garbage collection. It's faster than rust & go while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
+Volt is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Volt is unique because of its new way of doing garbage collection. It's much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
 **Features**: Super fast non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, Using c-libraries.
 
