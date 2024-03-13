@@ -39,5 +39,5 @@
 
 ```
 # GC checking:
-> At the end of every scope (if/while) that did not use 'return' and contains stack positions
+> At the start of any function that creates objects or calls a function using a stack buffer
 ```

@@ -1,12 +1,39 @@
 
-# Volt plan
+# Volt
 
-website: volt-lang.dev
+website: voltx.dev
 extension: .vo
 description: language with fast non blocking gc with optional manual memory management
 
 ## TODO
-- class_init stack buffer
-- func call buffer args on the stack (increase stack in temporary scope)
-- if func return value is not used, add to unknown
-- move func args on the stack before gc()
+- && ||
+- string concat
+- string functions
+- number functions
+- cli arguments: argv/argc
+- shared memory gc
+- format string
+- ? ... : ...
+- iterators
+- <{ ... } value scopes
+- compile macros
+- macros
+- test features --test
+- ci
+
+## Low priority
+- watch files --watch
+- unions
+- async / await
+- closures
+- generics for functions & traits
+- package management
+- debug info
+- language server
+- volt make command (like: npm run)
+- run command: volt run ...
+
+## Maybe
+- defer token
+- interfaces
+- multi-threaded compiling
