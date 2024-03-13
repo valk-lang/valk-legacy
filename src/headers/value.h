@@ -36,6 +36,7 @@ Value* vgen_var(Allocator* alc, Build* b, Value* value);
 Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_values, Type* rett);
 Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack);
 Value *vgen_isset(Allocator *alc, Build *b, Value *on);
+Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 
 struct Value {
     int type;

@@ -141,6 +141,7 @@ enum VALUES {
     v_value_scope,
     v_var,
     v_isset,
+    v_and_or, // 25
 };
 
 enum TOKENS {
@@ -177,6 +178,9 @@ enum OPERATORS {
     op_bit_xor,
     op_shl,
     op_shr,
+    //
+    op_and,
+    op_or,
 };
 
 enum SCOPES {

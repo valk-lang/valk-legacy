@@ -59,6 +59,7 @@ char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type);
 char* ir_this_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* type);
 char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* that, IRBlock* that_block, char* that2, IRBlock* that_block2, char* type);
 char *ir_notnull_i1(IR *ir, char *val);
+char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right, char* right, IRBlock* block_last, int op);
 
 // Structs
 struct IR {

@@ -612,3 +612,22 @@ char *ir_notnull_i1(IR *ir, char *val) {
     str_flat(code, ", null\n");
     return var;
 }
+
+char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right, char* right, IRBlock* block_last, int op) {
+
+    bool is_or = op == op_or;
+
+    IRBlock *block_after = ir_block_make(ir, ir->func, "and_or_after_");
+
+    if (is_or) {
+        ir_cond_jump(ir, left, block_after, block_right);
+    } else {
+        ir_cond_jump(ir, left, block_right, block_after);
+    }
+
+    ir->block = block_last;
+    ir_jump(ir, block_after);
+
+    ir->block = block_after;
+    return ir_this_or_that(ir, is_or ? "true" : "false", block_current, right, block_last, "i1");
+}

@@ -374,6 +374,31 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         }
     }
 
+    if (prio == 0 || prio > 40) {
+        while (t == tok_and || t == tok_or) {
+            tok(p, true, true, true);
+
+            if (v->rett->type != type_bool) {
+                parse_err(p, -1, "Left side must return a bool");
+            }
+
+            int op = op_and;
+            if (t == tok_or) {
+                op = op_or;
+            }
+
+            Value *right = read_value(alc, p, true, 40);
+
+            if (right->rett->type != type_bool) {
+                parse_err(p, -1, "Right side must return a bool");
+            }
+
+            v = vgen_and_or(alc, b, v, right, op);
+
+            t = tok(p, true, true, false);
+        }
+    }
+
     return v;
 }
 

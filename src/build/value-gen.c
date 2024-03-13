@@ -228,3 +228,33 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
 Value *vgen_isset(Allocator *alc, Build *b, Value *on) {
     return value_make(alc, v_isset, on, type_gen_volt(alc, b, "bool"));
 }
+
+Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) {
+    VOp *item = al(alc, sizeof(VOp));
+    item->op = op;
+    item->left = left;
+    item->right = right;
+    Type *rett = type_gen_volt(alc, b, "bool");
+
+    Value *result = value_make(alc, v_and_or, item, rett);
+
+    // merge issets when using '&&'
+    if (op == op_and && (left->issets || right->issets)) {
+        Array *issets = array_make(alc, 4);
+        if (left->issets) {
+            Array *prev = left->issets;
+            for (int i = 0; i < prev->length; i++) {
+                array_push(issets, array_get_index(prev, i));
+            }
+        }
+        if (right->issets) {
+            Array *prev = right->issets;
+            for (int i = 0; i < prev->length; i++) {
+                array_push(issets, array_get_index(prev, i));
+            }
+        }
+        result->issets = issets;
+    }
+
+    return result;
+}
