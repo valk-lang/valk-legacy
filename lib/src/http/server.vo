@@ -14,13 +14,6 @@ class ServerData {
     handler: fn(Request)(Response)
     // static_dirs: Array[String] (Array[String].new())
     show_info: bool
-
-    // fn _gc_transfer() {
-    //     println("T.DATA")
-    // }
-    // fn _gc_free() {
-    //     println("F.DATA")
-    // }
 }
 
 shared server_fd : i32
@@ -37,14 +30,6 @@ class Server {
     - handler: fn(Request)(Response)
     // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
-
-    fn _gc_transfer() {
-        println("TRANSFER SERVER")
-    }
-
-    fn _gc_free() {
-        println("FREEE HTTP SERVER")
-    }
 
     static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
 
@@ -108,7 +93,6 @@ class Server {
             // println("[+] Worker count: " + worker_count.str());
         }
 
-        print("start threads\n")
         worker_count--;
         while worker_count > 0 {
             // let copy = this.server_data();
@@ -117,19 +101,16 @@ class Server {
         }
 
         // let copy = this.server_data();
-        print("start main thread\n")
         Server.worker();
         os:sleep_ms(200);
-        print("main thread stopped\n")
     }
 
     - static fn worker() void {
 
         let data = Server.server_data() ! {
-            print("failed to get data\n")
+            print("[x] Failed to get data\n")
             return
         }
-        print("run work\n")
 
         let max_connections = data.max_connections;
         let handler = data.handler;
@@ -144,8 +125,6 @@ class Server {
         let buf = mem:alloc(1000)
 
         let poll = io:Poll[?Connection].new();
-        print("Socket fd: ")
-        println(sock_fd.to_str())
         let sock_lsn = poll.create_listener(sock_fd, null);
         sock_lsn.detect_read_request(true);
 
@@ -184,13 +163,13 @@ class Server {
 
                 let http_con = lsn.data @as Connection
                 if lsn.data == null {
-                    print("❓ Missing http connection for fd: \n") // + lsn.fd.str());
+                    print("[x] Missing http connection for fd: \n") // + lsn.fd.str());
                     net:Socket.close(lsn.fd);
                     continue;
                 };
 
                 if http_con.fd != fd {
-                    print("❗ fd mismatch\n");
+                    print("[x] fd mismatch\n");
                     net:Socket.close(fd);
                     continue;
                 }
@@ -205,7 +184,7 @@ class Server {
                 }
 
                 if lsn.has_write_request() {
-                    //println("[+] Continue sending response: " + fd.str());
+                    // println("[+] Continue sending response: " + fd.str());
 
                     if http_con.can_clear_out() {
                         http_con.reset_out();
@@ -222,7 +201,7 @@ class Server {
                 if lsn.has_read_request() {
                     Server.respond(data, http_con, handler) ! {
                         if data.show_info {
-                            // println("[+] Invalid request: " + fd.str());
+                            println("[+] Invalid request: " + fd.to_str());
                         }
                         net:Socket.close(fd)
                         continue

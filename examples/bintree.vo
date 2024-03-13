@@ -30,18 +30,17 @@ class Node {
 }
 
 fn stretch(depth: int) {
-    let check_stretch = Node.tree(depth + 1).check()
-    print("stretch: ")
-    print(check_stretch.to_str())
-    print("\n")
+    let check = Node.tree(depth).check()
+    println("stretch tree of depth " + depth.to_str() + "\t check: " + check.to_str())
 }
 
-fn main() i32 {
+fn main() {
 
     let depth = 17
 
-    stretch(depth)
-    let keep = Node.tree(depth)
+    stretch(depth + 1)
+
+    let longlived = Node.tree(depth)
 
     let x = 4
     while x <= depth {
@@ -56,15 +55,9 @@ fn main() i32 {
         while i++ < iters {
             check += Node.tree(x).check()
         }
-        print("check: ")
-        print(check.to_str())
-        print("\n")
+        println(iters.to_str() + "\t trees of depth " + x.to_str() + "\t check: " + check.to_str())
         x += 2
     }
 
-    print("long-lived: ")
-    print(keep.check().to_str())
-    print("\n")
-
-    return 0
+    println("long lived tree of depth " + depth.to_str() + "\t check: " + longlived.check().to_str())
 }

@@ -12,13 +12,6 @@ class SocketTCP {
 	- addrinfo: sys:cstruct_addrinfo
 	- connection: ?Connection (null)
 
-    // fn _gc_transfer() {
-    //     println("T.TCP")
-    // }
-    // fn _gc_free() {
-    //     println("F.TCP")
-    // }
-
 	static fn new(host: String, port: u16, blocking: bool (true)) SocketTCP !os_socket_create !invalid_host {
 
         // #if OS == win
@@ -53,13 +46,11 @@ class SocketTCP {
         	//#if OS == win
 			//println("WSA socket error: " + sys:WSAGetLastError().str());
 			//#end
-            println("Socket create failed")
 			throw os_socket_create;
     	}
 
 		// Get host info
 		let addrinfo = CLASS.get_addrinfo(host, port) ! {
-            println("Invalid host")
             throw invalid_host
         }
 
@@ -145,17 +136,11 @@ class SocketTCP {
 
 		let chost = host.data;
 		let cport = port.to_str().data;
-        print("Host: ")
-        println(host)
-        print("Port: ")
-        println(port.to_str())
     	let err = sys:getaddrinfo(chost, cport, hints, @ptr_of(addrinfo));
 		if err != 0 {
-            println("adr info failed")
 			throw failed;
 		}
         if addrinfo == null {
-            println("adr info is null")
 			throw failed;
         }
 
