@@ -16,6 +16,7 @@ class Node {
         }
         return res
     }
+
     fn check() uint {
         let res : uint = 1
         let lt = this.left
@@ -26,7 +27,6 @@ class Node {
         }
         return res
     }
-
 }
 
 fn stretch(depth: int) {
