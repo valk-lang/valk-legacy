@@ -36,7 +36,7 @@ void stage_4_ast_main(Unit *u);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
 // Sub stages
-void stage_props_class(Parser* p, Class *class);
+void stage_props_class(Parser* p, Class *class, bool is_trait);
 void stage_types_func(Parser* p, Func *func);
 void stage_types_class(Parser* p, Class* class);
 void read_ast(Parser *p, bool single_line);

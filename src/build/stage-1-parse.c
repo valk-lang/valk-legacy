@@ -88,6 +88,10 @@ void stage_parse(Parser* p, Unit* u) {
                 stage_1_use(p, u);
                 continue;
             }
+            if (str_is(tkn, "trait")) {
+                stage_1_trait(p, u, act);
+                continue;
+            }
             if (str_is(tkn, "shared")) {
                 stage_1_global(p, u, true);
                 continue;
@@ -284,6 +288,7 @@ void stage_1_trait(Parser* p, Unit* u, int act) {
 
     Trait* trait = al(b->alc, sizeof(Trait));
     trait->chunk = chunk_clone(b->alc, p->chunk);
+    trait->scope = p->scope;
 
     Scope* nsc_scope = u->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_trait, trait);

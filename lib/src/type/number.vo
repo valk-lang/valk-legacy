@@ -1,4 +1,41 @@
 
-// trait Number {
+trait Number {
 
-// }
+    fn to_hex() String {
+        return this.to_base(16)
+    }
+    fn to_str() String {
+        return this.to_base(10)
+    }
+    fn to_base(base: CLASS) String {
+        let chars = "0123456789ABCDEF".data
+
+        if str_buf == null {
+            str_buf = mem:alloc(24)
+            str_rev = mem:alloc(24)
+        }
+        let buf = str_buf
+        let rev = str_rev
+
+        if(this == 0 || base == 0) {
+            return "0";
+        }
+
+        let val = this
+        let i : uint = 0;
+        while val > 0 {
+            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
+            i++
+            val = val / base
+        }
+        // Set len
+        let len = i
+        // Reverse
+        let up = 0
+        while i-- > 0 {
+            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
+        }
+
+        return String.make_from_ptr(buf @as ptr, len)
+    }
+}

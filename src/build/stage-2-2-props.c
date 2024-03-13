@@ -23,13 +23,15 @@ void stage_props(Unit *u) {
     Array* classes = u->classes;
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
-        stage_props_class(p, class);
+        p->scope = class->scope;
+        *p->chunk = *class->body;
+        stage_props_class(p, class, false);
     }
     //
     p->unit = NULL;
 }
 
-void stage_props_class(Parser* p, Class *class) {
+void stage_props_class(Parser* p, Class *class, bool is_trait) {
 
     if (class->is_generic_base)
         return;
@@ -42,8 +44,6 @@ void stage_props_class(Parser* p, Class *class) {
     }
 
     Build *b = p->b;
-    p->scope = class->scope;
-    *p->chunk = *class->body;
 
     while(true) {
         char t = tok(p, true, true, true);
@@ -86,6 +86,35 @@ void stage_props_class(Parser* p, Class *class) {
                 prop->chunk_value = chunk_clone(b->alc, p->chunk);
                 skip_body(p);
             }
+            continue;
+        }
+
+        if(str_is(name, "use")) {
+            // Trait
+            if(is_trait) {
+                parse_err(p, -1, "You cannot use traits inside other traits");
+            }
+
+            name = p->tkn;
+            if (next != tok_id) {
+                parse_err(p, -1, "Invalid trait name: '%s'", name);
+            }
+            Id id;
+            Idf *idf = idf_by_id(p, class->scope, read_id(p, name, &id), true);
+            if (idf->type != idf_trait) {
+                parse_err(p, -1, "This is not a trait: '%s'", id.name);
+            }
+
+            Trait* t = idf->item;
+            parser_save_context(p);
+
+            *p->chunk = *t->chunk;
+            p->scope = scope_sub_make(b->alc, sc_default, t->scope);
+            p->scope->identifiers = class->scope->identifiers;
+
+            stage_props_class(p, class, true);
+
+            parser_pop_context(p, true);
             continue;
         }
 

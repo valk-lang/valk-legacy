@@ -371,7 +371,10 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
     parser_save_context(p);
 
     // Stage 2
-    stage_props_class(p, gclass);
+    p->scope = gclass->scope;
+    *p->chunk = *gclass->body;
+    stage_props_class(p, gclass, false);
+
     // Class size
     int size = class_determine_size(b, gclass);
     if(size == -1) {

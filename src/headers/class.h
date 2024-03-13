@@ -46,6 +46,7 @@ struct ClassProp {
 };
 struct Trait {
     Chunk* chunk;
+    Scope* scope;
 };
 
 #endif

@@ -7,45 +7,8 @@ global str_buf : ?ptr
 global str_rev : ?ptr
 
 integer uint unsigned {
-    fn to_hex() String {
-        let base = 16 @as uint
-        return this.to_base(base)
-    }
-    fn to_str() String {
-        let base = 10 @as uint
-        return this.to_base(base)
-    }
-    fn to_base(base: uint) String {
-        let chars = "0123456789ABCDEF".data
 
-        if str_buf == null {
-            str_buf = mem:alloc(24)
-            str_rev = mem:alloc(24)
-        }
-        let buf = str_buf
-        let rev = str_rev
-
-        if(this == 0) {
-            return "0";
-        }
-
-        let val = this
-        let i = 0 @as uint;
-        while val > 0 {
-            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
-            i++
-            val = val / base
-        }
-        // Set len
-        let len = i @as uint
-        // Reverse
-        let up = 0
-        while i-- > 0 {
-            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
-        }
-
-        return String.make_from_ptr(buf @as ptr, len)
-    }
+    use Number
 
     fn print(base: uint) {
 
