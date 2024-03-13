@@ -1,4 +1,6 @@
 
+header "sys" as sys
+
 use volt:mem;
 
 global str_buf : ?ptr
@@ -22,7 +24,7 @@ trait Number {
         let buf = str_buf
         let rev = str_rev
 
-        if(this == 0 || base == 0) {
+        if this == 0 || base == 0 {
             return "0";
         }
 
@@ -42,5 +44,38 @@ trait Number {
         }
 
         return String.make_from_ptr(buf @as ptr, len)
+    }
+
+    fn print(base: CLASS) {
+
+        let chars = "0123456789ABCDEF".data
+
+        if str_buf == null {
+            str_buf = mem:alloc(24)
+            str_rev = mem:alloc(24)
+        }
+        let buf = str_buf @as ptr
+        let rev = str_rev
+
+        if this == 0 || base == 0 {
+            sys:write(1 @as i32, chars, 1);
+        }
+
+        let val = this
+        let i : uint = 0;
+        while val > 0 {
+            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
+            i++
+            val = val / base
+        }
+        // Set len
+        let len = i
+        // Reverse
+        let up = 0
+        while i-- > 0 {
+            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
+        }
+
+        sys:write(1, buf, len);
     }
 }

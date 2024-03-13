@@ -1,0 +1,4 @@
+
+integer u64 8 unsigned {
+    use Number
+}
