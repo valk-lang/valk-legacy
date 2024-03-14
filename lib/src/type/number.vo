@@ -8,18 +8,22 @@ global str_rev : ?ptr
 
 trait Number {
 
-    fn to_hex() String {
-        return this.to_base(16)
+    fn _string() String {
+        return this.to_base(10)
     }
     fn to_str() String {
         return this.to_base(10)
     }
+    fn to_hex() String {
+        return this.to_base(16)
+    }
+
     fn to_base(base: CLASS) String {
         let chars = "0123456789ABCDEF".data
 
         if str_buf == null {
-            str_buf = mem:alloc(24)
-            str_rev = mem:alloc(24)
+            str_buf = mem:alloc(64)
+            str_rev = mem:alloc(64)
         }
         let buf = str_buf
         let rev = str_rev
@@ -51,8 +55,8 @@ trait Number {
         let chars = "0123456789ABCDEF".data
 
         if str_buf == null {
-            str_buf = mem:alloc(24)
-            str_rev = mem:alloc(24)
+            str_buf = mem:alloc(64)
+            str_rev = mem:alloc(64)
         }
         let buf = str_buf @as ptr
         let rev = str_rev

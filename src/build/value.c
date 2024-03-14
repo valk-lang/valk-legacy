@@ -496,7 +496,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             Value *arg = read_value(alc, p, true, 0);
             Type *arg_type = array_get_index(func_args, arg_i++);
             if (arg_type) {
-                arg = try_convert(alc, b, arg, arg_type);
+                arg = try_convert(alc, b, p->scope, arg, arg_type);
                 type_check(p, arg_type, arg->rett);
             }
 
@@ -530,11 +530,12 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             p->scope = default_value_ch->fc->scope;
             //
             Value* arg = read_value(b->alc, p, true, 0);
-            arg = try_convert(alc, b, arg, arg_type);
+            arg = try_convert(alc, b, scope, arg, arg_type);
             type_check(p, arg_type, arg->rett);
             //
             p->scope = scope;
             *p->chunk = ch;
+
             array_push(args, arg);
             index++;
         }
@@ -582,7 +583,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
         } else if(t == tok_qmark) {
             Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, b, errv, fcall->rett);
+            errv = try_convert(alc, b, p->scope, errv, fcall->rett);
             type_check(p, fcall->rett, errv->rett);
             f->err_value = errv;
         }
@@ -650,7 +651,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
         tok_expect(p, ":", true, false);
         Value* val = read_value(alc, p, true, 0);
-        val = try_convert(alc, b, val, prop->type);
+        val = try_convert(alc, b, p->scope, val, prop->type);
         type_check(p, prop->type, val->rett);
         map_set_force_new(values, name, val);
         t = tok(p, true, true, true);
@@ -672,7 +673,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
 
             Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope);
 
-            val = try_convert(alc, b, val, prop->type);
+            val = try_convert(alc, b, p->scope, val, prop->type);
             type_check(p, prop->type, val->rett);
 
             map_set_force_new(values, name, val);
@@ -722,15 +723,31 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     Type* lt = left->rett;
     Type* rt = right->rett;
 
+    if (op == op_add) {
+        Class* str_class = get_volt_class(b, "type", "String");
+        // Try make both string if neither are nullable
+        if (!lt->nullable && !rt->nullable) {
+            if (lt->class == str_class || rt->class == str_class) {
+                if (lt->class != str_class) {
+                    left = try_convert(alc, b, p->scope, left, rt);
+                    lt = left->rett;
+                } else {
+                    right = try_convert(alc, b, p->scope, right, lt);
+                    rt = right->rett;
+                }
+            }
+        }
+    }
+
     // _add
     if (!lt->nullable) {
         Func *add = lt->class ? map_get(lt->class->funcs, "_add") : NULL;
         if (add && add->is_static == false && add->arg_types->length == 2) {
             Type *arg_type = array_get_index(add->arg_types, 1);
+            right = try_convert(alc, b, p->scope, right, arg_type);
             Array *args = array_make(alc, 2);
             array_push(args, left);
             array_push(args, right);
-            right = try_convert(alc, b, right, arg_type);
             type_check(p, arg_type, right->rett);
             Value *on = vgen_func_ptr(alc, add, NULL);
             Value *fcall = vgen_func_call(alc, on, args);
@@ -903,7 +920,23 @@ void value_is_mutable(Value* v) {
     }
 }
 
-Value* try_convert(Allocator* alc, Build* b, Value* val, Type* type) {
+Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* type) {
+
+    Class* str_class = get_volt_class(b, "type", "String");
+    Class* from_class = val->rett->class;
+    if(type->class == str_class && from_class != str_class && from_class != NULL && !val->rett->nullable) {
+        // To string
+        Func *to_str = map_get(from_class->funcs, "_string");
+        if (to_str) {
+            Array *args = array_make(alc, 2);
+            array_push(args, val);
+            Value *on = vgen_func_ptr(alc, to_str, NULL);
+            Value *fcall = vgen_func_call(alc, on, args);
+            return vgen_gc_buffer(alc, b, scope, fcall, args, true);
+        }
+    }
+
+
     // If number literal, change the type
     if(val->type == v_number && (type->type == type_int || type->type == type_float)){
         try_convert_number(val, type);

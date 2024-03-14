@@ -7,7 +7,6 @@ description: language with fast non blocking gc with optional manual memory mana
 
 ## TODO
 - string functions
-- number functions
 - cli arguments: argv/argc
 - shared memory gc
 - format string
@@ -18,7 +17,7 @@ description: language with fast non blocking gc with optional manual memory mana
 - macros
 - test features --test
 - ci
-- validate class functions: _add, _gc_free, ...
+- validate class functions: _add, _gc_free, _string, ...
 
 ## Low priority
 - watch files --watch

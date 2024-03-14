@@ -104,7 +104,7 @@ void read_ast(Parser *p, bool single_line) {
 
                 Value* val = read_value(alc, p, true, 0);
                 if(type) {
-                    val = try_convert(alc, b, val, type);
+                    val = try_convert(alc, b, p->scope, val, type);
                     type_check(p, type, val->rett);
                 } else {
                     type = val->rett;
@@ -141,7 +141,7 @@ void read_ast(Parser *p, bool single_line) {
                 Value* val = NULL;
                 if(scope->rett && !type_is_void(scope->rett)) {
                     val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, b, val, scope->rett);
+                    val = try_convert(alc, b, p->scope, val, scope->rett);
                     type_check(p, scope->rett, val->rett);
                 } else {
                     char t = tok(p, true, false, true);
@@ -235,7 +235,7 @@ void read_ast(Parser *p, bool single_line) {
                 right = value_handle_op(alc, p, left, right, op);
             }
 
-            right = try_convert(alc, b, right, left->rett);
+            right = try_convert(alc, b, p->scope, right, left->rett);
             type_check(p, left->rett, right->rett);
 
             array_push(scope->ast, tgen_assign(alc, left, right));
