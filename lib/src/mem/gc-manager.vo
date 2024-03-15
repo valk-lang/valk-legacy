@@ -97,10 +97,13 @@ struct GcManager {
             if up_to_date_count == sc {
                 gm.clean_unused()
                 gc_age++;
+                if gc_age == 0 {
+                    gc_age = 1
+                }
             }
 
             //
-            os:sleep_ms(200)
+            os:sleep_ms(500)
         }
     }
 

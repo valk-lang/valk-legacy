@@ -290,6 +290,7 @@ struct Stack {
     }
 
     fn add_shared(item: ptr) {
+        print("ADD\n")
         this.shared.add(item)
     }
     fn clean_shared() {
@@ -303,12 +304,7 @@ struct Stack {
             let item = @ptrv(data, ptr, tail)
             if @ptrv(item, u8, byte_gc_age_rel) != age {
                 // Free item
-                let vtable = @ptrv(item, u32, -1)
-                let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, ?fn(ptr)(void), vt_gc_free)
-                func(item);
-                @ptrv(item, u8, byte_state_rel) = state_unused
-
+                @ptrv(item, u8, byte_state_rel) = state_solid
                 ring.remove(tail)
             }
 

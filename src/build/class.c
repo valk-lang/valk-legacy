@@ -341,6 +341,17 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  if state > 8 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
+
+    if (class->pool_index > -1) {
+        str_flat(code, "  if state < 4 {\n");
+        str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+        str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
+        str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+        str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+        str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+        str_flat(code, "  }\n");
+    }
+    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
     str_flat(code, "  STACK.add_shared(this)\n");
 
     // Props

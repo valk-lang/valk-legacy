@@ -7,14 +7,14 @@ use io;
 use fs;
 use mem;
 
-class ServerData {
-    socket: net:SocketTCP
-    max_connections: uint
-    thread_nr: uint (0)
-    handler: fn(Request)(Response)
-    // static_dirs: Array[String] (Array[String].new())
-    show_info: bool
-}
+// class ServerData {
+//     socket: net:SocketTCP
+//     max_connections: uint
+//     thread_nr: uint (0)
+//     handler: fn(Request)(Response)
+//     // static_dirs: Array[String] (Array[String].new())
+//     show_info: bool
+// }
 
 shared server_fd : i32
 
@@ -27,7 +27,7 @@ class Server {
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
-    - handler: fn(Request)(Response)
+    - handler: fn(Request)(Response) (test)
     // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
 
@@ -49,30 +49,30 @@ class Server {
         };
     }
 
-    static fn server_data() ServerData !invalid_address {
+    // static fn server_data() ServerData !invalid_address {
 
-        // let dirs = Array[String].new();
-        // each this.static_dirs as dir {
-        //     dirs.push(dir.copy());
-        // }
+    //     // let dirs = Array[String].new();
+    //     // each this.static_dirs as dir {
+    //     //     dirs.push(dir.copy());
+    //     // }
 
-        let host = "localhost"
-        let port : u16 = 9000
-        let socket = net:SocketTCP {
-			host: host
-			fd: server_fd
-			port: port
-			blocking: false
-			addrinfo: net:SocketTCP.get_addrinfo(host, port) ! { throw invalid_address }
-		}
+    //     let host = "localhost"
+    //     let port : u16 = 9000
+    //     let socket = net:SocketTCP {
+	// 		host: host
+	// 		fd: server_fd
+	// 		port: port
+	// 		blocking: false
+	// 		addrinfo: net:SocketTCP.get_addrinfo(host, port) ! { throw invalid_address }
+	// 	}
 
-        return ServerData {
-            socket: socket
-            max_connections: 10000
-            handler: test
-            show_info: true
-        };
-    }
+    //     return ServerData {
+    //         socket: socket
+    //         max_connections: 10000
+    //         handler: test
+    //         show_info: true
+    //     };
+    // }
 
     fn start(worker_count: i32 (16)) void {
 
@@ -96,30 +96,30 @@ class Server {
         worker_count--;
         while worker_count > 0 {
             // let copy = this.server_data();
-            let thread = os:Thread.start(Server.worker)
+            let thread = os:Thread.start_with_data(Server.worker, this)
             worker_count--;
         }
 
         // let copy = this.server_data();
-        Server.worker();
+        this.worker();
         os:sleep_ms(200);
     }
 
-    - static fn worker() void {
+    - fn worker() {
 
-        let data = Server.server_data() ! {
-            print("[x] Failed to get data\n")
-            return
-        }
+        // let data = Server.server_data() ! {
+        //     print("[x] Failed to get data\n")
+        //     return
+        // }
 
-        let max_connections = data.max_connections;
-        let handler = data.handler;
+        let max_connections = this.max_connections;
+        let handler = this.handler;
 
         // let nr = atomic(data.thread_nr + 1);
 
         //println("[-] Start thread: " + nr.str());
 
-        let sock = data.socket;
+        let sock = this.socket;
         let sock_fd = sock.fd;
 
         let buf = mem:alloc(1000)
@@ -146,7 +146,7 @@ class Server {
                     }
 
                     let fd = netcon.fd;
-                    if data.show_info {
+                    if this.show_info {
                         // println("[+] New connection: " + fd.str());
                     }
 
@@ -176,7 +176,7 @@ class Server {
 
                 // Existing connection
                 if lsn.has_stopped_the_connection() {
-                    if data.show_info {
+                    if this.show_info {
                         print("[+] Close connection: \n") // + fd.str());
                     }
                     net:Socket.close(fd);
@@ -199,8 +199,8 @@ class Server {
                     continue;
                 }
                 if lsn.has_read_request() {
-                    Server.respond(data, http_con, handler) ! {
-                        if data.show_info {
+                    Server.respond(this, http_con, handler) ! {
+                        if this.show_info {
                             println("[+] Invalid request: " + fd.to_str());
                         }
                         net:Socket.close(fd)
@@ -217,7 +217,7 @@ class Server {
         }
     }
 
-    - static fn respond(data: ServerData, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         while true {
 
