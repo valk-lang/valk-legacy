@@ -14,7 +14,7 @@ value state_used (1)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
-value state_global (10)
+value state_shared (10)
 value stack_size (1000000)
 
 value sub_state_keep (5)
@@ -87,9 +87,10 @@ struct Stack {
     static fn link(on: ptr, to: ptr) ptr {
         let to_state = @ptrv(to, u8, -8)
         let on_state = @ptrv(on, u8, -8)
-        if on_state == state_global {
-            // TODO move item to global
+        if on_state == state_shared {
+            // TODO move item to shared
             // print("TODO: MOVE TO GLOBAL")
+            @gc_share(to)
             return to
         }
         if to_state < state_transfer {

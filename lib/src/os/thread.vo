@@ -3,19 +3,44 @@ header "pthread" as pt;
 
 use volt:mem;
 
+struct ThreadEntry {
+	func: ptr
+	data: ptr
+	has_data: bool
+}
+
 struct Thread {
 
-    - static fn entry(data: ptr) void {
+    - static fn entry(e: ThreadEntry) {
 		mem:Stack.init()
-		let func = data @as fn()(void);
-		func();
+		if e.has_data {
+			let func = e.func @as fn(ptr)(void);
+			func(e.data);
+		} else {
+			let func = e.func @as fn()(void);
+			func();
+		}
 		mem:stack.shutdown()
 	}
 
-	static fn start(start_func: ptr) void {
+	static fn start(start_func: ptr) {
+		CLASS.init(start_func, null, false);
+	}
+	static fn start_with_data(start_func: ptr, data: ptr) {
+		@gc_share(data)
+		CLASS.init(start_func, data, true);
+	}
+
+	static fn init(start_func: ptr, data: ptr, has_data: bool) {
+
+		let e = ThreadEntry {
+			func: start_func
+			data: data
+			has_data: has_data
+		}
 
     	let thr = pt:pthread_t{ data: 0 @as uint };
-    	let err = pt:pthread_create(thr, null, Thread.entry, start_func);
+    	let err = pt:pthread_create(thr, null, Thread.entry, e);
     	// if err != 0 {
 		// 	throw fail;
     	// }

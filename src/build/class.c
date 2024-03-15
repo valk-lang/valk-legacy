@@ -162,9 +162,22 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         mark->is_static = false;
         map_set_force_new(class->funcs, "_v_mark", mark);
 
+        // Share
+        strcpy(buf, class->name);
+        strcat(buf, "__v_share");
+        name = dups(alc, buf);
+        strcpy(buf, class->ir_name);
+        strcat(buf, "__v_share");
+        export_name = dups(alc, buf);
+        Func *share = func_make(b->alc, class->unit, class->scope, name, export_name);
+        share->class = class;
+        share->is_static = false;
+        map_set_force_new(class->funcs, "_v_share", share);
+
         // AST
         class_generate_transfer(p, b, class, transfer);
         class_generate_mark(p, b, class, mark);
+        class_generate_share(p, b, class, share);
     }
 }
 
@@ -275,6 +288,61 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
     Func* hook = map_get(class->funcs, "_gc_mark");
     if(hook) {
         str_flat(code, "  this._gc_mark()\n");
+    }
+
+    str_flat(code, "}\n");
+
+    char* content = str_to_chars(b->alc, code);
+    Chunk *chunk = chunk_make(b->alc, b, NULL);
+    chunk_set_content(b, chunk, content, code->length);
+
+    *p->chunk = *chunk;
+    parse_handle_func_args(p, func);
+}
+
+void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
+
+    Map* props = class->props;
+
+    Str* code = b->str_buf;
+    str_clear(code);
+
+    str_flat(code, "() void {\n");
+    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
+
+    // Props
+    for(int i = 0; i < props->values->length; i++) {
+        ClassProp* p = array_get_index(props->values, i);
+        char* pn = array_get_index(props->keys, i);
+        if(!type_is_gc(p->type))
+            continue;
+        char var[32];
+        strcpy(var, "prop_");
+        itoa(i, var + 5, 10);
+
+        str_flat(code, "let ");
+        str_add(code, var);
+        str_flat(code, " = this.");
+        str_add(code, pn);
+        str_flat(code, "\n");
+        if(p->type->nullable) {
+            str_flat(code, "if isset(");
+            str_add(code, var);
+            str_flat(code, ") {\n");
+        }
+        str_flat(code, "  ");
+        str_add(code, var);
+        str_flat(code, "._v_share()\n");
+        if(p->type->nullable) {
+            str_flat(code, "}\n");
+        }
+    }
+
+    Func* hook = map_get(class->funcs, "_gc_share");
+    if(hook) {
+        str_flat(code, "  this._gc_share()\n");
     }
 
     str_flat(code, "}\n");

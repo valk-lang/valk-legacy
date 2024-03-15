@@ -37,6 +37,7 @@ void ir_gen_globals(IR* ir) {
             Func* transfer = map_get(class->funcs, "_v_transfer");
             Func* mark = map_get(class->funcs, "_v_mark");
             Func* gc_free = map_get(class->funcs, "_gc_free");
+            Func* share = map_get(class->funcs, "_v_share");
 
             str_preserve(code, 500);
             str_flat(code, ",\n");
@@ -46,7 +47,8 @@ void ir_gen_globals(IR* ir) {
             str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
             str_flat(code, ", ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
-            str_flat(code, ", ptr null");
+            str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, share, gc_vt_name_buf));
         }
         str_flat(code, "\n], align 8\n");
     } else {
