@@ -173,7 +173,7 @@ struct GcPool {
                 if state == state_used {
                     let vtable = @ptrv(item, u32, 1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, ?fn(ptr)(void), 2)
+                    let func = @ptrv(table, ?fn(ptr)(void), vt_gc_free)
                     func(item + 8);
 
                     @ptrv(item, u8, 0) = state_unused
@@ -249,7 +249,7 @@ struct GcPool {
                     if call_gc_free {
                         let vtable = @ptrv(item, u32, 1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, ?fn(ptr)(void), 2)
+                        let func = @ptrv(table, ?fn(ptr)(void), vt_gc_free)
                         func(item + 8);
                     }
                     @ptrv(item, u8, 0) = state_unused

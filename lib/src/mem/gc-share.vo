@@ -1,8 +1,0 @@
-
-fn gc_share(item: ptr) {
-    @ptrv(item, u8, -8) = state_shared
-    let vtable = @ptrv(item, u32, -1)
-    let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr)(void), 3)
-    func(item);
-}

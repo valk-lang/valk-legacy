@@ -1,8 +1,10 @@
 
-use volt:mem
-use volt:os
+use mem
+use os
+use io
 
 shared gc_manager_instance : @ignu(GcManager)
+shared gc_age : u8
 
 fn gc_manager() GcManager {
     let gc = gc_manager_instance
@@ -22,6 +24,7 @@ struct GcManager {
     stopped : bool (false)
 
     static fn init() {
+        gc_age = 1
         if gc_manager_instance != null {
             return
         }
@@ -52,25 +55,36 @@ struct GcManager {
     }
 
     static fn loop() {
-        let g = gc_manager_instance;
+        let gm = gc_manager_instance;
         let cycles = 0
         let x = 0 @as uint;
         while true {
             x++
-            let sc = g.stack_count;
-            let stacks = g.stacks;
+
+            //
+            let sc = gm.stack_count;
+            let up_to_date_count : uint = 0;
+            let stacks = gm.stacks;
+            let age = gc_age
+
             // Loop stacks
             let si = sc;
             while si > 0 {
                 si--
                 let s = @ptrv(stacks, Stack, si);
                 if s @as ?Stack == null {
-                    if g.has_free_index == false {
-                        g.free_index = si
-                        atomic(g.free_index_lock + si)
-                        g.has_free_index = true
+                    up_to_date_count++
+                    if gm.has_free_index == false {
+                        gm.free_index = si
+                        atomic(gm.free_index_lock + si)
+                        gm.has_free_index = true
                     }
                     continue;
+                }
+                if s.gc_age == age {
+                    up_to_date_count++
+                } else {
+                    s.force_full = true
                 }
                 if s.stopped {
                     @ptrv(stacks, ?Stack, si) = null
@@ -78,7 +92,26 @@ struct GcManager {
                     continue
                 }
             }
-            os:sleep_ms(100)
+
+            // If all up-to-date
+            if up_to_date_count == sc {
+                gm.clean_unused()
+                gc_age++;
+            }
+
+            //
+            os:sleep_ms(200)
+        }
+    }
+
+    fn clean_unused() {
+        let stacks = this.stacks
+        let si = this.stack_count
+        while si-- > 0 {
+            let s = @ptrv(stacks, ?Stack, si)
+            if isset(s) {
+                s.clean_shared()
+            }
         }
     }
 

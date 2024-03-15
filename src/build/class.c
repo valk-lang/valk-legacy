@@ -121,6 +121,9 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
         //
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
+        scope_set_idf(class->scope, "STACK", idf, p);
+        //
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "pools"));
         scope_set_idf(class->scope, "POOLS", idf, p);
         //
@@ -137,6 +140,8 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
         idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_mark_size"));
         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
+        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_age"));
+        scope_set_idf(class->scope, "GC_AGE", idf, p);
 
         // Transfer
         strcpy(buf, class->name);
@@ -162,6 +167,18 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         mark->is_static = false;
         map_set_force_new(class->funcs, "_v_mark", mark);
 
+        // Mark GC
+        strcpy(buf, class->name);
+        strcat(buf, "__v_mark_gc");
+        name = dups(alc, buf);
+        strcpy(buf, class->ir_name);
+        strcat(buf, "__v_mark_gc");
+        export_name = dups(alc, buf);
+        Func *mark_gc = func_make(b->alc, class->unit, class->scope, name, export_name);
+        mark_gc->class = class;
+        mark_gc->is_static = false;
+        map_set_force_new(class->funcs, "_v_mark_gc", mark_gc);
+
         // Share
         strcpy(buf, class->name);
         strcat(buf, "__v_share");
@@ -176,7 +193,8 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 
         // AST
         class_generate_transfer(p, b, class, transfer);
-        class_generate_mark(p, b, class, mark);
+        class_generate_mark(p, b, class, mark, false);
+        class_generate_mark(p, b, class, mark_gc, true);
         class_generate_share(p, b, class, share);
     }
 }
@@ -243,7 +261,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     *p->chunk = *chunk;
     parse_handle_func_args(p, func);
 }
-void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
+void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool shared) {
 
     Map* props = class->props;
 
@@ -252,11 +270,17 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
 
     str_flat(code, "(age: u8) void {\n");
     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
-    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+    if(shared) {
+        str_flat(code, "  if state < 10 { return }\n");
+        str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
+        str_flat(code, "  @ptrv(this, u8, -5) = age\n");
+    } else {
+        str_flat(code, "  if state > 8 { return }\n");
+        str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
+        str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+        str_flat(code, "  GC_MARK_SIZE += SIZE\n");
+    }
 
-    str_flat(code, "  GC_MARK_SIZE += SIZE\n");
     // Props
     for(int i = 0; i < props->values->length; i++) {
         ClassProp* p = array_get_index(props->values, i);
@@ -285,9 +309,14 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
         }
     }
 
-    Func* hook = map_get(class->funcs, "_gc_mark");
-    if(hook) {
-        str_flat(code, "  this._gc_mark()\n");
+    if(shared) {
+        if (map_get(class->funcs, "_gc_mark_shared")) {
+            str_flat(code, "  this._gc_mark_shared()\n");
+        }
+    } else {
+        if (map_get(class->funcs, "_gc_mark")) {
+            str_flat(code, "  this._gc_mark()\n");
+        }
     }
 
     str_flat(code, "}\n");
@@ -309,8 +338,10 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
 
     str_flat(code, "() void {\n");
     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
+    str_flat(code, "  if state > 8 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
+    str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
+    str_flat(code, "  STACK.add_shared(this)\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
