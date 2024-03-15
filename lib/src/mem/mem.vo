@@ -3,16 +3,11 @@ header "sys" as sys
 
 use io
 
-global acount : uint
-global fcount : uint
-
 fn alloc(size: uint) ptr {
-    acount++
 	return sys:malloc(size);
 }
 
 fn free(adr: ptr) {
-    fcount++
 	sys:free(adr);
 }
 
@@ -48,16 +43,4 @@ fn clear(adr: ptr, length: uint) {
 		@ptrv(adr, u8, i) = 0;
 		i++;
 	}
-}
-
-////////////////////////////////
-// Debug & compiler functions
-////////////////////////////////
-
-fn mprint() {
-    io:print_fake("Alloc: " @as ptr)
-	acount.print(10)
-    io:print_fake(" | Free: " @as ptr)
-	fcount.print(10)
-    io:print_fake("\n" @as ptr)
 }
