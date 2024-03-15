@@ -282,13 +282,11 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, -8) < state_const {
-                    if @ptrv(item, u8, byte_gc_age_rel) != age {
-                        let vtable = @ptrv(item, u32, -1)
-                        let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
-                        func(item, age);
-                    }
+                if @ptrv(item, u8, byte_gc_age_rel) != age {
+                    let vtable = @ptrv(item, u32, -1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    func(item, age);
                 }
             }
             item_adr = item_adr + sizeof(ptr)
@@ -296,7 +294,6 @@ struct Stack {
     }
 
     fn add_shared(item: ptr) {
-        print("ADD\n")
         this.shared.add(item)
     }
     fn clean_shared() {
@@ -310,9 +307,6 @@ struct Stack {
             let item = @ptrv(data, ptr, tail)
             if @ptrv(item, u8, byte_gc_age_rel) != age {
                 // Free item
-        print("REM:")
-        @ptrv(item, ptr, -1).print()
-        print("\n")
                 @ptrv(item, u8, byte_state_rel) = state_solid
                 ring.remove(tail)
             }

@@ -169,15 +169,15 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 
         // Mark GC
         strcpy(buf, class->name);
-        strcat(buf, "__v_mark_gc");
+        strcat(buf, "__v_mark_shared");
         name = dups(alc, buf);
         strcpy(buf, class->ir_name);
-        strcat(buf, "__v_mark_gc");
+        strcat(buf, "__v_mark_shared");
         export_name = dups(alc, buf);
-        Func *mark_gc = func_make(b->alc, class->unit, class->scope, name, export_name);
-        mark_gc->class = class;
-        mark_gc->is_static = false;
-        map_set_force_new(class->funcs, "_v_mark_gc", mark_gc);
+        Func *mark_shared = func_make(b->alc, class->unit, class->scope, name, export_name);
+        mark_shared->class = class;
+        mark_shared->is_static = false;
+        map_set_force_new(class->funcs, "_v_mark_shared", mark_shared);
 
         // Share
         strcpy(buf, class->name);
@@ -194,7 +194,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         // AST
         class_generate_transfer(p, b, class, transfer);
         class_generate_mark(p, b, class, mark, false);
-        class_generate_mark(p, b, class, mark_gc, true);
+        class_generate_mark(p, b, class, mark_shared, true);
         class_generate_share(p, b, class, share);
     }
 }
@@ -271,7 +271,6 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
     str_flat(code, "(age: u8) void {\n");
     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
     if(shared) {
-        str_flat(code, "  if state < 10 { return }\n");
         str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
         str_flat(code, "  @ptrv(this, u8, -5) = age\n");
     } else {
@@ -338,7 +337,7 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
 
     str_flat(code, "() void {\n");
     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-    str_flat(code, "  if state > 8 { return }\n");
+    str_flat(code, "  if state > 4 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 

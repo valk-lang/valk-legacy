@@ -89,35 +89,24 @@ class Server {
         }
 
         if this.show_info {
-            // println("[+] Running http server on port " + this.port.str());
-            // println("[+] Worker count: " + worker_count.str());
+            println("[+] Running http server on port " + this.port);
+            println("[+] Worker count: " + worker_count);
         }
 
         worker_count--;
         while worker_count > 0 {
-            // let copy = this.server_data();
             let thread = os:Thread.start_with_data(Server.worker, this)
             worker_count--;
         }
 
-        // let copy = this.server_data();
         this.worker();
         os:sleep_ms(200);
     }
 
     - fn worker() {
 
-        // let data = Server.server_data() ! {
-        //     print("[x] Failed to get data\n")
-        //     return
-        // }
-
         let max_connections = this.max_connections;
         let handler = this.handler;
-
-        // let nr = atomic(data.thread_nr + 1);
-
-        //println("[-] Start thread: " + nr.str());
 
         let sock = this.socket;
         let sock_fd = sock.fd;
