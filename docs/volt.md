@@ -16,6 +16,7 @@ description: language with fast non blocking gc with optional manual memory mana
 - macros
 - test features --test
 - ci
+- borrow & gc_check stack if thread paused for too long in order to free shared memory 
 
 ## Low priority
 - watch files --watch
