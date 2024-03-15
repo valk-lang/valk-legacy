@@ -6,8 +6,7 @@ extension: .vo
 description: language with fast non blocking gc with optional manual memory management
 
 ## TODO
-- validate class functions: main, _add, _gc_free, _string, ...
-- shared memory gc
+- validate class functions: main, _add, _string, _gc_free, _gc_mark, _gc_transfer, _gc_share
 - string functions
 - format string
 - ? ... : ...

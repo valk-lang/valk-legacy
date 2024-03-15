@@ -1,0 +1,50 @@
+
+use mem
+
+class RingBuffer[T] {
+    - data: ptr
+    - size: uint
+    ~ length: uint (0)
+    - index: uint (0)
+
+    static fn new() {
+        let size : uint = 4;
+        return CLASS {
+            data: mem:alloc(size * sizeof(T))
+            size: size
+        }
+    }
+
+    fn add(item: T) {
+        let length = this.length
+        let data = this.data
+
+        let index = this.index
+        @ptrv(data, T, index) = @gc_link(this, item)
+        let new_len = length + 1
+        this.length = new_len
+
+        if length == this.size {
+            data = this.increase_size()
+        }
+
+        let new_index = index + 1
+        if new_index == this.size {
+            new_index = 0
+        } 
+        this.index = new_index
+    }
+
+    fn remove(index: uint) {
+        let len = this.length
+        if len == 0 : return
+        let ci = this.index
+        let last = ci - len
+        if len > ci {
+            last = size - len + ci
+        }
+        if last == index : return
+        @ptrv(data, T, index) = @ptrv(data, T, last)
+        this.length = len - 1
+    }
+}

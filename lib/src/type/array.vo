@@ -6,16 +6,13 @@ class Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
-    // - is_transfered: bool (false) 
 
     static fn new(start_size: uint (2)) CLASS {
         if start_size < 2 {
             start_size = 2
         }
-        // println("CREATE ARRAY")
         return CLASS {
             size: start_size
-            // data: mem:gc_alloc(start_size * sizeof(T))
             data: mem:alloc(start_size * sizeof(T))
         };
     }
@@ -200,6 +197,13 @@ class Array[T] {
         let x = this.length
         while x-- > 0 {
             mem:gc_mark_item(@ptrv(data, T, x))
+        }
+    }
+    fn _gc_mark_shared() {
+        let data = this.data
+        let x = this.length
+        while x-- > 0 {
+            mem:gc_mark_shared_item(@ptrv(data, T, x))
         }
     }
     fn _gc_free() {

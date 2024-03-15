@@ -19,7 +19,7 @@ void ir_gen_globals(IR* ir) {
         // VTables
         int gc_vtables = b->gc_vtables;
         char gc_vt_count[20];
-        itoa((gc_vtables + 1) * 4, gc_vt_count, 10);
+        itoa((gc_vtables + 1) * 5, gc_vt_count, 10);
         char gc_vt_name_buf[256];
         Array* classes = b->classes;
 
@@ -28,7 +28,7 @@ void ir_gen_globals(IR* ir) {
         str_flat(code, "@volt_gc_vtable = unnamed_addr constant [");
         str_add(code, gc_vt_count);
         str_flat(code, " x ptr] [\n");
-        str_flat(code, "ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
+        str_flat(code, "ptr null, ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
         for(int i = 0; i < classes->length; i++) {
             Class* class = array_get_index(classes, i);
             if(class->type != ct_class)
@@ -36,6 +36,8 @@ void ir_gen_globals(IR* ir) {
 
             Func* transfer = map_get(class->funcs, "_v_transfer");
             Func* mark = map_get(class->funcs, "_v_mark");
+            Func* mark_shared = map_get(class->funcs, "_v_mark_shared");
+            Func* share = map_get(class->funcs, "_v_share");
             Func* gc_free = map_get(class->funcs, "_gc_free");
 
             str_preserve(code, 500);
@@ -45,8 +47,11 @@ void ir_gen_globals(IR* ir) {
             str_flat(code, ", ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, mark, gc_vt_name_buf));
             str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, mark_shared, gc_vt_name_buf));
+            str_flat(code, ", ptr ");
+            str_add(code, ir_gc_vtable_func_name(ir, share, gc_vt_name_buf));
+            str_flat(code, ", ptr ");
             str_add(code, ir_gc_vtable_func_name(ir, gc_free, gc_vt_name_buf));
-            str_flat(code, ", ptr null");
         }
         str_flat(code, "\n], align 8\n");
     } else {

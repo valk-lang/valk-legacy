@@ -19,6 +19,9 @@ struct Unit {
     Array *aliasses;
     Array *globals;
     //
+    int id;
+    int string_count;
+    //
     bool ir_changed;
     bool contains_main_func;
 };

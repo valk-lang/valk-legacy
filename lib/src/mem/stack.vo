@@ -14,22 +14,33 @@ value state_used (1)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
-value state_global (10)
+value state_shared (10)
 value stack_size (1000000)
 
-value sub_state_keep (5)
-value sub_state_on_stack (7)
+value vt_transfer (0)
+value vt_mark (1)
+value vt_mark_shared (2)
+value vt_share (3)
+value vt_gc_free (4)
 
 value byte_state (0)
-value byte_sub_state (1)
-value byte_temp (2)
-value byte_uu (3) // unused
+value byte_pool_index (1)
+value byte_age (2)
+value byte_gc_age (3)
+
+value byte_state_rel (-8)
+value byte_pool_index_rel (-7)
+value byte_age_rel (-6)
+value byte_gc_age_rel (-5)
 
 value trigger_lowest (0)
 value trigger_buffer_size (1)
 value trigger_gc_count (2)
 
+shared stack_count: uint
+
 struct Stack {
+    id: uint
     stack_base : ptr
     stack_adr : ptr
     stack_adr_last : ptr
@@ -38,12 +49,13 @@ struct Stack {
     lowest_next : ptr
 
     transfer : ObjectChain
-    bumper : GcBumper
+    shared : GcRing[ptr]
+    // bumper : GcBumper
 
     age: u8 (33)
+    gc_age: u8 (0)
 
     run_gc: bool (false)
-    // lowest_reached: bool (false)
     bumper_overflow: bool (false)
     clear_unknown: bool (false)
 
@@ -51,6 +63,8 @@ struct Stack {
     stopped: bool (false)
 
     static fn init() {
+
+        let id = atomic(stack_count + 1)
 
         let data = alloc(stack_size)
         // NOTE: Probably not needed
@@ -61,6 +75,7 @@ struct Stack {
         }
 
         let s = Stack {
+            id: id
             stack_base: data
             stack_adr: data
             stack_adr_last: data
@@ -69,7 +84,8 @@ struct Stack {
             lowest_next: data + (100 * sizeof(ptr))
 
             transfer: ObjectChain.new()
-            bumper: GcBumper.init()
+            shared: GcRing[ptr].new()
+            // bumper: GcBumper.init()
         }
 
         stack = s;
@@ -87,9 +103,10 @@ struct Stack {
     static fn link(on: ptr, to: ptr) ptr {
         let to_state = @ptrv(to, u8, -8)
         let on_state = @ptrv(on, u8, -8)
-        if on_state == state_global {
-            // TODO move item to global
+        if on_state == state_shared {
+            // TODO move item to shared
             // print("TODO: MOVE TO GLOBAL")
+            @gc_share(to)
             return to
         }
         if to_state < state_transfer {
@@ -135,9 +152,14 @@ struct Stack {
             // io:print_fake("f")
             //
             this.update_age()
-            this.mark_stack_as_solid()
+            this.mark_stack_age()
             GcPool.clean_old_all(this.age)
             this.clear_unknown = false
+            // Clean shared
+            if gc_age != this.gc_age {
+                this.mark_stack_gc_age()
+                this.gc_age = gc_age
+            }
         }
         GcPool.reset_all()
 
@@ -211,7 +233,7 @@ struct Stack {
                 }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), 0)
+                let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
                 func(item, state_solid);
             }
             if is_last {
@@ -234,7 +256,7 @@ struct Stack {
         this.age = age
     }
 
-    fn mark_stack_as_solid() {
+    fn mark_stack_age() {
         let item_adr = this.stack_base
         let stack_adr = this.stack_adr
         let age = this.age
@@ -245,12 +267,54 @@ struct Stack {
                     if @ptrv(item, u8, -6) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), 1)
+                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
                         func(item, age);
                     }
                 }
             }
             item_adr = item_adr + sizeof(ptr)
+        }
+    }
+    fn mark_stack_gc_age() {
+        let item_adr = this.stack_base
+        let stack_adr = this.stack_adr
+        let age = gc_age
+        while item_adr < stack_adr {
+            let item = @ptrv(item_adr, ptr);
+            if item != null {
+                if @ptrv(item, u8, byte_gc_age_rel) != age {
+                    let vtable = @ptrv(item, u32, -1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    func(item, age);
+                }
+            }
+            item_adr = item_adr + sizeof(ptr)
+        }
+    }
+
+    fn add_shared(item: ptr) {
+        this.shared.add(item)
+    }
+    fn clean_shared() {
+        let ring = this.shared
+        let tail = ring.last_index()
+        let head = ring.index
+        let size = ring.size
+        let data = ring.data
+        let age = gc_age
+        while tail != head {
+            let item = @ptrv(data, ptr, tail)
+            if @ptrv(item, u8, byte_gc_age_rel) != age {
+                // Free item
+                @ptrv(item, u8, byte_state_rel) = state_solid
+                ring.remove(tail)
+            }
+
+            tail++
+            if tail == size {
+                tail = 0
+            }
         }
     }
 
