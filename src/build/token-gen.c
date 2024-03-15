@@ -35,16 +35,20 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
     return token_make(alc, t_while, item);
 }
 
-Token *tgen_throw(Allocator *alc, Build* b, FuncError* err, char* msg) {
+Token *tgen_throw(Allocator *alc, Build* b, Unit* u, FuncError* err, char* msg) {
 
-    b->string_count++;
+    u->string_count++;
     char var[64];
     strcpy(var, "@.str.object.");
-    itoa(b->string_count, (char *)((intptr_t)var + 13), 10);
+    itoa(u->id, (char *)((intptr_t)var + 13), 10);
+    strcat(var, "_");
+    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
     char* object_name = dups(b->alc, var);
 
     strcpy(var, "@.str.body.");
-    itoa(b->string_count, (char *)((intptr_t)var + 11), 10);
+    itoa(u->id, (char *)((intptr_t)var + 11), 10);
+    strcat(var, "_");
+    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
     char* body_name = dups(b->alc, var);
 
     VString *str = al(b->alc, sizeof(VString));

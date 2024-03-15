@@ -29,6 +29,8 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->aliasses = array_make(alc, 20);
     u->globals = array_make(alc, 20);
 
+    u->id = pkc->b->units->length;
+    u->string_count = 0;
     u->ir_changed = false;
 
     nsc->unit = u;

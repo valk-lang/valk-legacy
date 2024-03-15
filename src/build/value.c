@@ -93,14 +93,18 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         char *body = tkn;
         body = string_replace_backslash_chars(b->alc, body);
 
-        b->string_count++;
+        p->unit->string_count++;
         char var[64];
         strcpy(var, "@.str.object.");
-        itoa(b->string_count, (char *)((intptr_t)var + 13), 10);
+        itoa(p->unit->id, (char *)((intptr_t)var + 13), 10);
+        strcat(var, "_");
+        itoa(p->unit->string_count, (char *)((intptr_t)var + strlen(var)), 10);
         char *object_name = dups(b->alc, var);
 
         strcpy(var, "@.str.body.");
-        itoa(b->string_count, (char *)((intptr_t)var + 11), 10);
+        itoa(p->unit->id, (char *)((intptr_t)var + 11), 10);
+        strcat(var, "_");
+        itoa(p->unit->string_count, (char *)((intptr_t)var + strlen(var)), 10);
         char *body_name = dups(b->alc, var);
 
         VString* str = al(b->alc, sizeof(VString));

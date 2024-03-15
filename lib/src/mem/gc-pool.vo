@@ -134,9 +134,8 @@ struct GcPool {
             this.index = 0
         }
         @ptrv(res, u8, 0) = this.state_used
-        @ptrv(res, u8, 1) = 0
-        @ptrv(res, u8, 2) = 0
-        @ptrv(res, u8, 3) = index @as u8
+        @ptrv(res, u8, 1) = index @as u8
+        @ptrv(res, u16, 1) = 0
         @ptrv(res, u32, 1) = vtable
 
         this.items_used++

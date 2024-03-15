@@ -24,12 +24,12 @@ value vt_share (3)
 value vt_gc_free (4)
 
 value byte_state (0)
-value byte_uu (1) // unused
+value byte_pool_index (1)
 value byte_age (2)
 value byte_gc_age (3)
 
 value byte_state_rel (-8)
-value byte_uu_rel (-7)
+value byte_pool_index_rel (-7)
 value byte_age_rel (-6)
 value byte_gc_age_rel (-5)
 
@@ -37,7 +37,10 @@ value trigger_lowest (0)
 value trigger_buffer_size (1)
 value trigger_gc_count (2)
 
+shared stack_count: uint
+
 struct Stack {
+    id: uint
     stack_base : ptr
     stack_adr : ptr
     stack_adr_last : ptr
@@ -61,6 +64,8 @@ struct Stack {
 
     static fn init() {
 
+        let id = atomic(stack_count + 1)
+
         let data = alloc(stack_size)
         // NOTE: Probably not needed
         let stackc = stack_size / sizeof(ptr)
@@ -70,6 +75,7 @@ struct Stack {
         }
 
         let s = Stack {
+            id: id
             stack_base: data
             stack_adr: data
             stack_adr_last: data
@@ -304,6 +310,9 @@ struct Stack {
             let item = @ptrv(data, ptr, tail)
             if @ptrv(item, u8, byte_gc_age_rel) != age {
                 // Free item
+        print("REM:")
+        @ptrv(item, ptr, -1).print()
+        print("\n")
                 @ptrv(item, u8, byte_state_rel) = state_solid
                 ring.remove(tail)
             }

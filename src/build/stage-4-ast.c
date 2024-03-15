@@ -172,7 +172,7 @@ void read_ast(Parser *p, bool single_line) {
                     parse_err(p, -1, "Function has no error defined named: '%s'", name);
                 }
 
-                array_push(scope->ast, tgen_throw(alc, b, err, name));
+                array_push(scope->ast, tgen_throw(alc, b, p->unit, err, name));
                 scope->did_return = true;
                 break;
             }
