@@ -15,7 +15,6 @@ struct Parser {
     Unit* unit;
     ParserContext* contexts;
     Chunk* chunk;
-    Chunk* scope_end;
     //
     Func* func;
     //

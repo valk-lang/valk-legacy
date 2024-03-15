@@ -12,7 +12,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
-    f->body_end = NULL;
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
@@ -95,11 +94,6 @@ void parse_handle_func_args(Parser* p, Func* func) {
 
     if(!func->in_header) {
         tok_expect(p, "{", true, true);
-
-        Chunk *chunk_end = chunk_clone(b->alc, p->chunk);
-        chunk_end->i = p->scope_end_i;
-        func->body_end = chunk_end;
-
         func->chunk_body = chunk_clone(b->alc, p->chunk);
         skip_body(p);
     }

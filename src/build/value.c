@@ -554,26 +554,24 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         if(t == tok_not) {
 
             t = tok(p, true, true, false);
-            bool single = true;
 
             Chunk* chunk_end = NULL;
+            int scope_end_i = -1;
             if (t == tok_curly_open) {
                 tok(p, true, true, true);
-                chunk_end = chunk_clone(alc, p->chunk);
-                chunk_end->i = p->scope_end_i;
-                single = false;
+                scope_end_i = p->scope_end_i;
             }
+            bool single = scope_end_i == -1;
 
             Scope *scope = p->scope;
-            Chunk *se = p->scope_end;
             Scope* err_scope = scope_sub_make(alc, sc_default, scope);
             f->err_scope = err_scope;
 
             p->scope = err_scope;
-            p->scope_end = chunk_end;
             read_ast(p, single);
             p->scope = scope;
-            p->scope_end = se;
+            if(!single)
+                p->chunk->i = scope_end_i;
 
             if(!err_scope->did_return) {
                 parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");

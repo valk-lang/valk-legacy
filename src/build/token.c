@@ -18,11 +18,10 @@ void token_if(Allocator* alc, Parser* p) {
     }
 
     char t = tok(p, true, true, true);
+    int scope_end_i = -1;
     bool single = false;
-    Chunk* chunk_end = NULL;
     if (t == tok_curly_open) {
-        chunk_end = chunk_clone(alc, p->chunk);
-        chunk_end->i = p->scope_end_i;
+        scope_end_i = p->scope_end_i;
     } else if (t == tok_colon) {
         single = true;
     } else {
@@ -30,17 +29,16 @@ void token_if(Allocator* alc, Parser* p) {
     }
 
     Scope* scope = p->scope;
-    Chunk* se = p->scope_end;
     Scope *scope_if = scope_sub_make(alc, sc_if, scope);
     Scope *scope_else = scope_sub_make(alc, sc_if, scope);
 
     scope_apply_issets(alc, scope_if, cond->issets);
 
     p->scope = scope_if;
-    p->scope_end = chunk_end;
     read_ast(p, single);
     p->scope = scope;
-    p->scope_end = se;
+    if(!single)
+        p->chunk->i = scope_end_i;
 
     t = tok(p, true, true, false);
     if(str_is(p->tkn, "else")) {
@@ -53,21 +51,20 @@ void token_if(Allocator* alc, Parser* p) {
             p->scope = scope;
         } else {
             // else
+            int scope_end_i = -1;
             bool single = false;
-            chunk_end = NULL;
             if (t == tok_curly_open) {
-                chunk_end = chunk_clone(alc, p->chunk);
-                chunk_end->i = p->scope_end_i;
+                scope_end_i = p->scope_end_i;
             } else if (t == tok_colon) {
                 single = true;
             } else {
                 parse_err(p, -1, "Expected '{' or ':' after 'else', but found: '%s'", p->tkn);
             }
             p->scope = scope_else;
-            p->scope_end = chunk_end;
             read_ast(p, single);
             p->scope = scope;
-            p->scope_end = se;
+            if(!single)
+                p->chunk->i = scope_end_i;
         }
     }
 
@@ -86,12 +83,10 @@ void token_while(Allocator* alc, Parser* p) {
     }
 
     char t = tok(p, true, true, true);
+    int scope_end_i = -1;
     bool single = false;
-
-    Chunk* chunk_end = NULL;
     if (t == tok_curly_open) {
-        chunk_end = chunk_clone(alc, p->chunk);
-        chunk_end->i = p->scope_end_i;
+        scope_end_i = p->scope_end_i;
     } else if (t == tok_colon) {
         single = true;
     } else {
@@ -99,19 +94,18 @@ void token_while(Allocator* alc, Parser* p) {
     }
 
     Scope *scope = p->scope;
-    Chunk* se = p->scope_end;
     Scope *ls = p->loop_scope;
     Scope *scope_while = scope_sub_make(alc, sc_loop, scope);
 
     scope_apply_issets(alc, scope_while, cond->issets);
 
     p->scope = scope_while;
-    p->scope_end = chunk_end;
     p->loop_scope = scope_while;
     read_ast(p, single);
     p->scope = scope;
-    p->scope_end = se;
     p->loop_scope = ls;
+    if (!single)
+        p->chunk->i = scope_end_i;
 
     //
     array_push(scope->ast, tgen_while(alc, cond, scope_while));

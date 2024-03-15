@@ -52,7 +52,6 @@ void stage_ast(Unit *u) {
         p->func = func;
         p->scope = func->scope;
         p->loop_scope = NULL;
-        p->scope_end = func->body_end; 
         read_ast(p, false);
     }
 
@@ -133,12 +132,6 @@ void read_ast(Parser *p, bool single_line) {
                 }
                 array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, p->loop_scope));
                 scope->did_return = true;
-                if (!single_line) {
-                    if (!p->scope_end) {
-                        parse_err(p, -1, "Missing scope end position (compiler bug)");
-                    }
-                    *p->chunk = *p->scope_end;
-                }
                 break;
             }
             if (str_is(tkn, "return")){
@@ -161,13 +154,6 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
-
-                if (!single_line) {
-                    if (!p->scope_end) {
-                        parse_err(p, -1, "Missing scope end position (compiler bug)");
-                    }
-                    *p->chunk = *p->scope_end;
-                }
                 break;
             }
             if (str_is(tkn, "throw")){
@@ -188,14 +174,7 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_throw(alc, b, err, name));
                 scope->did_return = true;
-
-                // if (!single_line) {
-                //     if (!p->scope_end) {
-                //         parse_err(p, -1, "Missing scope end position (compiler bug)");
-                //     }
-                //     *p->chunk = *p->scope_end;
-                // }
-                continue;
+                break;
             }
         }
         if (t == tok_at_word) {
@@ -427,10 +406,6 @@ void stage_generate_main(Unit *u) {
 
     // Skip first token & set scope end
     tok(p, true, true, true);
-    Chunk *chunk_end = chunk_clone(b->alc, p->chunk);
-    chunk_end->i = p->scope_end_i;
-    func->body_end = chunk_end;
-    p->scope_end = func->body_end;
 
     //
     read_ast(p, false);
