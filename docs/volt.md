@@ -7,7 +7,6 @@ description: language with fast non blocking gc with optional manual memory mana
 
 ## TODO
 - validate class functions: main, _add, _string, _gc_free, _gc_mark, _gc_transfer, _gc_share
-- shared memory gc
 - string functions
 - format string
 - ? ... : ...
