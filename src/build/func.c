@@ -105,22 +105,6 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-
-int func_get_reserve_count(Func* func) {
-    // Decls
-    int count = 0;
-    Scope* scope = func->scope;
-    Array* decls = scope->decls;
-    for (int i = 0; i < decls->length; i++) {
-        Decl* decl = array_get_index(decls, i);
-        if(decl->is_gc && !decl->is_arg) {
-            count++;
-        }
-    }
-    return count;
-}
-
-
 char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     if(!fcall->err_scope && !fcall->err_value) {
         return res;
@@ -178,5 +162,23 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         str_flat(code, " ]\n");
 
         return var;
+    }
+}
+
+
+void func_generate_args(Allocator* alc, Func* func, Map* args) {
+    int count = args->values->length;
+    for(int i = 0; i < count; i++) {
+        char* name = array_get_index(args->keys, i);
+        Type* type = array_get_index(args->values, i);
+
+        FuncArg *arg = func_arg_make(alc, type);
+        map_set_force_new(func->args, name, arg);
+        array_push(func->arg_types, arg->type);
+        Decl *decl = decl_make(alc, name, arg->type, true);
+        Idf *idf = idf_make(alc, idf_decl, decl);
+        scope_set_idf(func->scope, name, idf, NULL);
+        arg->decl = decl;
+        array_push(func->arg_values, NULL);
     }
 }

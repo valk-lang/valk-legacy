@@ -1,7 +1,5 @@
 
 use mem;
-use io;
-use os;
 
 struct StringConst {
     v1: u8 (0)

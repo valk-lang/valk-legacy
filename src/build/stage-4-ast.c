@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void stage_ast(Unit *u);
+void stage_generate_main(Unit *u);
 
 void stage_4_ast(Unit *u) {
 
@@ -25,6 +26,7 @@ void stage_4_ast_main(Unit *u) {
 
     usize start = microtime();
     stage_ast(u);
+    stage_generate_main(u);
     b->time_parse += microtime() - start;
 
     stage_4_ir(u);
@@ -131,10 +133,12 @@ void read_ast(Parser *p, bool single_line) {
                 }
                 array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, p->loop_scope));
                 scope->did_return = true;
-                if(!p->scope_end) {
-                    parse_err(p, -1, "Missing scope end position (compiler bug)");
+                if (!single_line) {
+                    if (!p->scope_end) {
+                        parse_err(p, -1, "Missing scope end position (compiler bug)");
+                    }
+                    *p->chunk = *p->scope_end;
                 }
-                *p->chunk = *p->scope_end;
                 break;
             }
             if (str_is(tkn, "return")){
@@ -157,10 +161,13 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
-                if(!p->scope_end) {
-                    parse_err(p, -1, "Missing scope end position (compiler bug)");
+
+                if (!single_line) {
+                    if (!p->scope_end) {
+                        parse_err(p, -1, "Missing scope end position (compiler bug)");
+                    }
+                    *p->chunk = *p->scope_end;
                 }
-                *p->chunk = *p->scope_end;
                 break;
             }
             if (str_is(tkn, "throw")){
@@ -181,6 +188,13 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_throw(alc, b, err, name));
                 scope->did_return = true;
+
+                // if (!single_line) {
+                //     if (!p->scope_end) {
+                //         parse_err(p, -1, "Missing scope end position (compiler bug)");
+                //     }
+                //     *p->chunk = *p->scope_end;
+                // }
                 continue;
             }
         }
@@ -252,7 +266,7 @@ void read_ast(Parser *p, bool single_line) {
 
     Scope* start;
     Scope* end;
-    bool is_main_func_scope = p->func == b->func_main && scope->type == sc_func;
+    bool is_main_func_scope = p->func == b->func_main_gen && scope->type == sc_func;
     if (scope->has_gc_decls || scope->gc_check || is_main_func_scope) {
         // Start scope
         start = scope_sub_make(alc, sc_default, scope);
@@ -339,4 +353,85 @@ void read_ast(Parser *p, bool single_line) {
         Scope *shutdown = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "shutdown"), map_make(alc), scope);
         array_push(end->ast, token_make(alc, t_ast_scope, shutdown));
     }
+}
+
+void stage_generate_main(Unit *u) {
+    //
+    Build *b = u->b;
+    bool main_has_return = false;
+    bool main_has_arg = false;
+    if(b->func_main) {
+        main_has_return = !type_is_void(b->func_main->rett);
+        main_has_arg = b->func_main->arg_types->length > 0;
+    }
+
+    // Generate main function
+    Scope* scope = b->func_main ? b->func_main->scope->parent : scope_make(b->alc, sc_default, NULL);
+    Func* func = func_make(b->alc, u, scope, "main", "main");
+    b->func_main_gen = func;
+
+    Map* args = map_make(b->alc);
+    map_set(args, "argc", type_gen_volt(b->alc, b, "i32"));
+    map_set(args, "argv", type_gen_volt(b->alc, b, "ptr"));
+    func_generate_args(b->alc, func, args);
+
+    func->rett = type_gen_volt(b->alc, b, "i32");
+    func->scope->must_return = true;
+    func->scope->rett = func->rett;
+
+    // Generate main AST
+    Str* code = b->str_buf;
+    str_clear(code);
+
+    str_flat(code, "{\n");
+    // CLI args
+    str_flat(code, "let arr = Array[String].new(10);\n");
+    str_flat(code, "let i = 0\n");
+    str_flat(code, "while i < argc {\n");
+    str_flat(code, "let cstr = @ptrv(argv, cstring, i)\n");
+    str_flat(code, "arr.push(cstr)\n");
+    str_flat(code, "i++\n");
+    str_flat(code, "}\n");
+
+    // if (b->test) {
+    //     str_flat(code, "ki__test__main();\n");
+    //     str_flat(code, "return 0;\n");
+    // } else {
+        if (b->func_main) {
+            if (main_has_return)
+                str_flat(code, "return ");
+            str_flat(code, "main(");
+            if (main_has_arg) {
+                str_flat(code, "arr");
+            }
+            str_flat(code, ");\n");
+        }
+        if (!main_has_return)
+            str_flat(code, "return 0;\n");
+    // }
+
+    str_flat(code, "}\n");
+
+    char* content = str_to_chars(b->alc, code);
+    Chunk *chunk = chunk_make(b->alc, b, NULL);
+    chunk_set_content(b, chunk, content, code->length);
+
+    func->chunk_body = chunk;
+
+    // Parse main AST
+    Parser *p = b->parser;
+    *p->chunk = *func->chunk_body;
+    p->func = func;
+    p->scope = func->scope;
+    p->loop_scope = NULL;
+
+    // Skip first token & set scope end
+    tok(p, true, true, true);
+    Chunk *chunk_end = chunk_clone(b->alc, p->chunk);
+    chunk_end->i = p->scope_end_i;
+    func->body_end = chunk_end;
+    p->scope_end = func->body_end;
+
+    //
+    read_ast(p, false);
 }

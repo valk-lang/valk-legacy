@@ -7,7 +7,7 @@
 Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name);
 FuncArg* func_arg_make(Allocator* alc, Type* type);
 void parse_handle_func_args(Parser* p, Func* func);
-int func_get_reserve_count(Func* func);
+void func_generate_args(Allocator* alc, Func* func, Map* args);
 
 struct Func {
     char* name;

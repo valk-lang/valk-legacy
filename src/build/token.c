@@ -18,7 +18,6 @@ void token_if(Allocator* alc, Parser* p) {
     }
 
     char t = tok(p, true, true, true);
-    int scope_end_i = 0;
     bool single = false;
     Chunk* chunk_end = NULL;
     if (t == tok_curly_open) {

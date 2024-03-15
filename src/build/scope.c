@@ -31,7 +31,10 @@ Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
 
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p) {
     if(map_contains(scope->identifiers, name)) {
-        parse_err(p, -1, "Name already taken: '%s'", name);
+        if(p)
+            parse_err(p, -1, "Name already taken: '%s'", name);
+        else
+            die("Name already taken (compiler bug)");
     }
     map_set_force_new(scope->identifiers, name, idf);
 }

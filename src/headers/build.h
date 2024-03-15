@@ -78,6 +78,7 @@ struct Build {
     Pkc *pkc_volt;
     Nsc *nsc_main;
     Func *func_main;
+    Func *func_main_gen;
     //
     Array *units;
     Array *classes;

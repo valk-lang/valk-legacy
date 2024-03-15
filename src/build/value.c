@@ -553,17 +553,15 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
         if(t == tok_not) {
 
-            t = tok(p, true, true, true);
-            bool single = false;
+            t = tok(p, true, true, false);
+            bool single = true;
 
             Chunk* chunk_end = NULL;
             if (t == tok_curly_open) {
+                tok(p, true, true, true);
                 chunk_end = chunk_clone(alc, p->chunk);
                 chunk_end->i = p->scope_end_i;
-            } else if (t == tok_colon) {
-                single = true;
-            } else {
-                parse_err(p, -1, "Expected '{' or ':' after '!', but found: '%s'", p->tkn);
+                single = false;
             }
 
             Scope *scope = p->scope;
