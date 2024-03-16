@@ -199,6 +199,14 @@ fn main() {
 }
 ```
 
+### Globals
+
+```
+global my_global : uint          // Global (recommended)
+shared my_shared_global : uint   // Global shared over all threads
+```
+
+
 ## Tokens
 
 ### If Else
