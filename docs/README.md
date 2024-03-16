@@ -191,11 +191,11 @@ fn main() {
     let obj = MyClass {
         a: "TEST"
     }
-    println(obj.a) // output: TEST
-    obj.a = "NEW"  // Set property
-    println(obj.a) // output: NEW
-    println(obj.b) // output: default value
-    println(obj.c) // output: 100
+    println(obj.a)   // output: TEST
+    obj.a = "UPDATE" // Set property
+    println(obj.a)   // output: UPDATE
+    println(obj.b)   // output: default value
+    println(obj.c)   // output: 100
 }
 ```
 
