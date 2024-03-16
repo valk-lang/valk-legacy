@@ -4,6 +4,7 @@
 
 #include "typedefs.h"
 
+void unit_validate(Unit *u, Parser *p);
 
 struct Unit {
     Build *b;

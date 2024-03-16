@@ -21,6 +21,8 @@ char* type_to_str(Type* t, char* res);
 char* type_to_str_export(Type* t, char* res);
 void type_to_str_append(Type* t, Str* buf);
 int type_get_size(Build* b, Type* type);
+Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable);
+Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2);
 
 struct Type {
     Class* class;

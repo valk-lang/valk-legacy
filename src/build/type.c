@@ -322,3 +322,25 @@ int type_get_size(Build* b, Type* type) {
     }
     return -1;
 }
+
+
+Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable) {
+    Array* types = array_make(alc, 2);
+    Type* t1 = type_gen_volt(alc, b, type1);
+    t1->nullable = nullable;
+    array_push(types, t1);
+    return types;
+}
+Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2) {
+    Array* types = array_make(alc, 2);
+
+    Type* t1 = type_gen_volt(alc, b, type1);
+    t1->nullable = nullable1;
+    array_push(types, t1);
+
+    Type* t2 = type_gen_volt(alc, b, type2);
+    t2->nullable = nullable2;
+    array_push(types, t2);
+
+    return types;
+}

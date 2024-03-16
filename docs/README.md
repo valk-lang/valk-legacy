@@ -141,6 +141,11 @@ fn main() {
 ### Error handling
 
 ```rust
+my_func() ? {alternative-value}
+my_func() ! {code-that-ends-with: return, break, continue, throw}
+```
+
+```rust
 fn add(value: int) int !too_big {
     if value > 100 {
         throw too_big
