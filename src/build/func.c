@@ -203,7 +203,8 @@ void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_coun
 }
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types) {
     bool has_valid = false;
-    Type *rett = array_get_index(func->arg_types, index);
+    FuncArg* arg = array_get_index(func->args->values, index);
+    Type *rett = arg->type;
     int count = allowed_types->length;
     for (int i = 0; i < count; i++) {
         Type *valid = array_get_index(allowed_types, i);
@@ -213,7 +214,7 @@ void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_typ
         }
     }
     if(!has_valid){
-        *p->chunk = *func->chunk_rett;
+        *p->chunk = *arg->chunk;
         char types[2048];
         char buf[512];
         types[0] = 0;
