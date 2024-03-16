@@ -2,7 +2,6 @@
 ## TODO
 
 ```
-- validate class functions: main, _add, _string, _gc_free, _gc_mark, _gc_transfer, _gc_share
 - mark globals, on assign to shared call @gc_share
 - string functions
 - format string
