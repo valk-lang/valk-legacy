@@ -1,24 +1,20 @@
 
-# Volt
-
-website: voltx.dev
-extension: .vo
-description: language with fast non blocking gc with optional manual memory management
-
 ## TODO
+
+```
 - validate class functions: main, _add, _string, _gc_free, _gc_mark, _gc_transfer, _gc_share
 - string functions
 - format string
 - ? ... : ...
 - iterators
 - <{ ... } value scopes
-- compile macros
+- comptime macros
 - macros
 - test features --test
 - ci
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 
 
-## Low priority
+// Lower priority
 - watch files --watch
 - unions
 - async / await
@@ -29,8 +25,12 @@ description: language with fast non blocking gc with optional manual memory mana
 - language server
 - volt make command (like: npm run)
 - run command: volt run ...
+```
 
 ## Maybe
+
+```
 - defer token
 - interfaces
 - multi-threaded compiling
+```

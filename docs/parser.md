@@ -32,19 +32,3 @@
 - Parse AST
 - Generate IR
 ```
-
-
-## Structs
-
-```
-Parser {
-    build: Build*
-    chunk: Chunk {
-        tokens: void*
-        i: int
-    }
-    func: Func*
-    scope: Scope*
-    loop_scope: Scope*
-}
-```
