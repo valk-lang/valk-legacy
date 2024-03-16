@@ -396,15 +396,12 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     parse_handle_func_args(p, func);
 }
 
-Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
+Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Build* b = p->b;
     //
     Str* hash = build_get_str_buf(b);
-    Array* names = generic_types->keys;
-    Array* types = generic_types->values;
-    for (int i = 0; i < types->length; i++) {
-        char* name = array_get_index(names, i);
-        Type* type = array_get_index(types, i);
+    for (int i = 0; i < generic_types->length; i++) {
+        Type* type = array_get_index(generic_types, i);
         type_to_str_append(type, hash);
         str_flat(hash, "|");
     }
@@ -421,11 +418,11 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
     str_clear(hash);
     str_add(hash, class->name);
     str_flat(hash, "[");
-    for (int i = 0; i < types->length; i++) {
+    for (int i = 0; i < generic_types->length; i++) {
         if(i > 0)
             str_flat(hash, ", ");
         char buf[256];
-        Type* type = array_get_index(types, i);
+        Type* type = array_get_index(generic_types, i);
         type_to_str(type, buf);
         str_add(hash, buf);
     }
@@ -436,11 +433,11 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
     str_clear(hash);
     str_add(hash, class->ir_name);
     str_flat(hash, "__");
-    for (int i = 0; i < types->length; i++) {
+    for (int i = 0; i < generic_types->length; i++) {
         if(i > 0)
             str_flat(hash, ", ");
         char buf[256];
-        Type* type = array_get_index(types, i);
+        Type* type = array_get_index(generic_types, i);
         type_to_str_export(type, buf);
         str_add(hash, buf);
     }
@@ -466,9 +463,9 @@ Class* get_generic_class(Parser* p, Class* class, Map* generic_types) {
     map_set(class->generics, h, gclass);
 
     // Set type identifiers
-    for (int i = 0; i < types->length; i++) {
-        char* name = array_get_index(names, i);
-        Type* type = array_get_index(types, i);
+    for (int i = 0; i < generic_types->length; i++) {
+        char* name = array_get_index(class->generic_names, i);
+        Type* type = array_get_index(generic_types, i);
         Idf* idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(gclass->scope, name, idf, p);
     }

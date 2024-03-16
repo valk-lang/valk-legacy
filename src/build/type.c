@@ -99,13 +99,12 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
 
                 if (class->is_generic_base) {
                     tok_expect(p, "[", false, false);
-                    Array *names = class->generic_names;
-                    Map *generic_types = map_make(alc);
-                    for (int i = 0; i < names->length; i++) {
-                        char *name = array_get_index(names, i);
-                        Type *type = read_type(p, alc, false);
-                        map_set(generic_types, name, type);
-                        if (i + 1 < names->length) {
+                    int count = class->generic_names->length;
+                    Array* generic_types = array_make(alc, count + 1);
+                    for (int i = 0; i < count; i++) {
+                        Type* type = read_type(p, alc, false);
+                        array_push(generic_types, type);
+                        if(i + 1 < count) {
                             tok_expect(p, ",", true, false);
                         } else {
                             tok_expect(p, "]", true, false);
@@ -334,11 +333,11 @@ Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable) {
 Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2) {
     Array* types = array_make(alc, 2);
 
-    Type* t1 = type_gen_volt(alc, b, type1);
+    Type* t1 = type1 ? type_gen_volt(alc, b, type1) : type_gen_void(alc);
     t1->nullable = nullable1;
     array_push(types, t1);
 
-    Type* t2 = type_gen_volt(alc, b, type2);
+    Type* t2 = type2 ? type_gen_volt(alc, b, type2) : type_gen_void(alc);
     t2->nullable = nullable2;
     array_push(types, t2);
 

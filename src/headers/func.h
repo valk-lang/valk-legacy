@@ -9,6 +9,7 @@ FuncArg* func_arg_make(Allocator* alc, Type* type);
 void parse_handle_func_args(Parser* p, Func* func);
 void func_generate_args(Allocator* alc, Func* func, Map* args);
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max);
+void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types);
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types);
 void func_validate_rett_void(Parser *p, Func *func);
 
@@ -38,6 +39,7 @@ struct Func {
     bool can_error;
     bool types_parsed;
     bool in_header;
+    bool has_rett;
 };
 struct FuncArg {
     Type* type;

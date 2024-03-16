@@ -8,7 +8,7 @@ Class* class_make(Allocator* alc, Build* b, int type);
 ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value);
 ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
-Class* get_generic_class(Parser* p, Class* class, Map* generic_types);
+Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
 void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func);
 void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool shared);

@@ -21,7 +21,7 @@ void unit_validate(Unit *u, Parser *p) {
         Func *string = map_get(funcs, "_string");
         if (string) {
             func_validate_arg_count(p, string, false, 1, 1);
-            func_validate_rett(p, add, gen_type_array_1(alc, b, "String", false));
+            func_validate_rett(p, string, gen_type_array_1(alc, b, "String", false));
         }
 
         Func *gc_free = map_get(funcs, "_gc_free");
@@ -52,6 +52,24 @@ void unit_validate(Unit *u, Parser *p) {
         if (gc_share) {
             func_validate_arg_count(p, gc_share, false, 1, 1);
             func_validate_rett_void(p, gc_share);
+        }
+    }
+
+    if(u->contains_main_func) {
+        Func *main = b->func_main;
+        if (main) {
+            func_validate_arg_count(p, main, false, 0, 1);
+
+            if(main->arg_types->length > 0) {
+                Array *types = array_make(b->alc, 2);
+                Class *class_array = get_volt_class(b, "type", "Array");
+                Class *gclass = get_generic_class(p, class_array, gen_type_array_1(alc, b, "String", false));
+                array_push(types, type_gen_class(b->alc, gclass));
+
+                func_validate_arg_type(p, main, 0, types);
+            }
+
+            func_validate_rett(p, main, gen_type_array_2(alc, b, NULL, false, "i32", false));
         }
     }
 }

@@ -107,7 +107,7 @@ void stage_types_func(Parser* p, Func* func) {
             }
         }
     }
-    if(func->chunk_rett) {
+    if(func->has_rett) {
         *p->chunk = *func->chunk_rett;
         Type *type = read_type(p, b->alc, false);
         func->rett = type;

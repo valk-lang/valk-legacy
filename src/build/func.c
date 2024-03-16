@@ -23,6 +23,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->can_error = false;
     f->types_parsed = false;
     f->in_header = false;
+    f->has_rett = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -49,12 +50,14 @@ void parse_handle_func_args(Parser* p, Func* func) {
 
     if(func->in_header) {
         func->chunk_rett = chunk_clone(b->alc, p->chunk);
+        func->has_rett = true;
         skip_type(p);
     } else {
         char t = tok(p, true, true, false);
+        func->chunk_rett = chunk_clone(b->alc, p->chunk);
         if (t != tok_curly_open && t != tok_not) {
             // Has return type
-            func->chunk_rett = chunk_clone(b->alc, p->chunk);
+            func->has_rett = true;
             skip_type(p);
         }
     }
@@ -188,17 +191,44 @@ void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_coun
     }
 
     int argc = func->arg_types->length;
+    int offset = !func->class || is_static ? 0 : 1;
     if (argc < arg_count_min) {
         *p->chunk = *func->chunk_args;
-        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_min, argc);
+        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_min - offset, argc - offset);
     }
     if (argc > arg_count_max) {
         *p->chunk = *func->chunk_args;
-        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_max, argc);
+        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_max - offset, argc - offset);
     }
 }
-// void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types) {
-// }
+void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types) {
+    bool has_valid = false;
+    Type *rett = array_get_index(func->arg_types, index);
+    int count = allowed_types->length;
+    for (int i = 0; i < count; i++) {
+        Type *valid = array_get_index(allowed_types, i);
+        if(rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
+            has_valid = true;
+            break;
+        }
+    }
+    if(!has_valid){
+        *p->chunk = *func->chunk_rett;
+        char types[2048];
+        char buf[512];
+        types[0] = 0;
+        for (int i = 0; i < count; i++) {
+            Type *valid = array_get_index(allowed_types, i);
+            type_to_str(valid, buf);
+            if(i > 0) {
+                strcat(types, ", ");
+            }
+            strcat(types, buf);
+        }
+        type_to_str(rett, buf);
+        parse_err(p, -1, "Function return type is '%s', but should be on of the following: %s", buf, types);
+    }
+}
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
     bool has_valid = false;
     Type *rett = func->rett;
@@ -223,13 +253,16 @@ void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
             }
             strcat(types, buf);
         }
-        parse_err(p, -1, "Return type must be on of the following: %s", types);
+        type_to_str(rett, buf);
+        parse_err(p, -1, "Function return type is '%s', but should be on of the following: %s", buf, types);
     }
 }
 
 void func_validate_rett_void(Parser *p, Func *func) {
     if (!type_is_void(func->rett)) {
         *p->chunk = *func->chunk_rett;
-        parse_err(p, -1, "Expected function return type to be 'void'");
+        char buf[512];
+        type_to_str(func->rett, buf);
+        parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
     }
 }
