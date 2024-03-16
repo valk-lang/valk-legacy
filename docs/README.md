@@ -20,7 +20,7 @@ make
 <table>
 <tr><td width="50%">
 
-* [Basic example](#basic-exmaple)
+* [Basic example](#basic-example)
 * [Multiple files](#multiple-files)
 * [Namespaces](#namespaces)
 * [Packages](#packages)
@@ -91,8 +91,11 @@ Work in progress.
 ## Types
 
 Types: `String` `Array` `Map`
+
 Integer types: `i8` `i16` `i32` `i64` `int` `u8` `u16` `u32` `u64` `uint`
+
 Float types: (WIP)
+
 Other: `ptr` <- raw pointer (unsafe)
 
 ## Variables
