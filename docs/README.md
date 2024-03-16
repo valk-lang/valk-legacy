@@ -18,7 +18,8 @@ make
 ## Table of contents
 
 <table>
-<tr><td width="50%">
+<tr>
+<td width=50%>
 
 * [Basic example](#basic-example)
 * [Multiple files](#multiple-files)
@@ -26,8 +27,23 @@ make
 * [Packages](#packages)
 * [Types](#types)
 * [Variables](#variables)
+* [Functions](#functions)
+* [Classes](#classes)
 
-</td></tr>
+</td>
+<td width=50%>
+* [Definitions](#definitions)
+    * [Functions](#functions)
+        * [Error handling](#error-handling)
+    * [Classes](#classes)
+    * [Globals](#globals)
+* [Tokens](#tokens)
+    * [Let](#variables)
+    * [If/Else](#if-else)
+    * [While](#while)
+    * [Throw](#error-handling)
+</td>
+</tr>
 </table>
 
 ## Basic example
@@ -106,4 +122,99 @@ let a = 5            // int (default)
 let b : uint = 5     // uint
 let c : u8 = "test"  // Compile error
 let d = b @as u8     // Casting
+```
+
+## Definitions
+
+## Functions
+
+```rust
+fn add(arg1: int, arg2: int (5)) int {
+    return arg1 + arg2
+}
+
+fn main() {
+    add(1) // result: 6
+    add(2, 2) // result: 4
+}
+```
+
+## Error handling
+
+```rust
+fn add(value: int) int !too_big {
+    if value > 100 {
+        throw too_big
+    }
+    return value + 10
+}
+
+fn main() {
+    add(10) ? 0 // result: 20
+    add(200) ? 0 // result: 0
+
+    // Alternative value using scope
+    add(200) ? <{
+        println("We had an error 😢")
+        return 210
+    }
+    // result: 210
+
+    // Exit function on error
+    add(200) ! {
+        println("We had an error 😢")
+        return // main has a void return type, so we use an empty return
+    }
+    // Single line
+    add(200) ! return
+    // Break loop
+    while true {
+        add(200) ! break // or continue
+    }
+}
+```
+
+## Classes
+
+```rust
+class MyClass {
+    a: String
+    b: String ("default value")
+    c: uint (100)
+}
+
+fn main() {
+    let obj = MyClass {
+        a: "TEST"
+    }
+    println(obj.a) // output: TEST
+    obj.a = "NEW"  // Set property
+    println(obj.a) // output: NEW
+    println(obj.b) // output: default value
+    println(obj.c) // output: 100
+}
+```
+
+## Tokens
+
+## If/Else
+
+```rust
+if a == b : ...code...     // Single line
+if a == b { ...code... }
+else if a == c { ... }
+else { ... }
+```
+
+## While
+
+```rust
+let x = 0
+while x++ < 5 {
+    // 1 - 5
+    if x == 1 : continue
+    if x == 4 : break
+    print(x)
+}
+// output: 2 3
 ```
