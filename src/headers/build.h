@@ -30,6 +30,7 @@ void stage_2_props(Unit *u);
 void stage_2_update_classes(Build* b);
 void stage_2_types(Unit *u);
 void stage_3_values(Unit *u);
+void stage_3_gen(Build* b);
 void stage_4_ast(Unit *u);
 void stage_4_ir(Unit *u);
 void stage_4_ast_main(Unit *u);
@@ -66,6 +67,7 @@ struct Build {
     Stage *stage_2_class_sizes;
     Stage *stage_2_types;
     Stage *stage_3_values;
+    Stage *stage_3_gen;
     Stage *stage_4_ast;
     //
     Map *pkc_by_dir;
@@ -77,8 +79,11 @@ struct Build {
     Pkc *pkc_main;
     Pkc *pkc_volt;
     Nsc *nsc_main;
+    //
     Func *func_main;
     Func *func_main_gen;
+    Func *func_mark_globals;
+    Func *func_mark_shared;
     //
     Array *units;
     Array *classes;

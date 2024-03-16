@@ -17,9 +17,11 @@ void build_set_stages(Build* b) {
     b->stage_2_class_sizes = stage_make(alc, (void(*)(void*))stage_2_update_classes);
     b->stage_2_types = stage_make(alc, (void(*)(void*))stage_2_types);
     b->stage_3_values = stage_make(alc, (void(*)(void*))stage_3_values);
+    b->stage_3_gen = stage_make(alc, (void(*)(void*))stage_3_gen);
     b->stage_4_ast = stage_make(alc, (void(*)(void*))stage_4_ast);
 
     stage_add_item(b->stage_2_class_sizes, b);
+    stage_add_item(b->stage_3_gen, b);
 }
 
 void stage_add_item(Stage* stage, void* item) {
@@ -45,6 +47,7 @@ void build_run_stages(Build* b) {
     array_push(stages, b->stage_2_class_sizes);
     array_push(stages, b->stage_2_types);
     array_push(stages, b->stage_3_values);
+    array_push(stages, b->stage_3_gen);
     array_push(stages, b->stage_4_ast);
 
     for (int i = 0; i < stages->length; i++) {

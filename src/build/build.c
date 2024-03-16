@@ -83,6 +83,8 @@ int cmd_build(int argc, char *argv[]) {
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
+    b->func_mark_globals = NULL;
+    b->func_mark_shared = NULL;
 
     b->ptr_size = 8;
     b->error_count = 0;
