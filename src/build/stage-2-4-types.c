@@ -29,6 +29,8 @@ void stage_2_types(Unit* u) {
         stage_types_global(p, g);
     }
 
+    unit_validate(u, p);
+
     b->time_parse += microtime() - start;
 
     p->unit = NULL;
@@ -59,6 +61,9 @@ void stage_types_func(Parser* p, Func* func) {
         *p->chunk = *func->chunk_args;
         char t = tok(p, true, true, true);
         while(t != tok_bracket_close) {
+
+            Chunk* arg_chunk = chunk_clone(b->alc, p->chunk);
+
             char* name = p->tkn;
             if(!is_valid_varname(name)) {
                 parse_err(p, -1, "Invalid function argument name: '%s'", name);
@@ -74,6 +79,7 @@ void stage_types_func(Parser* p, Func* func) {
             }
 
             FuncArg* arg = func_arg_make(b->alc, type);
+            arg->chunk = arg_chunk;
             map_set_force_new(func->args, name, arg);
             array_push(func->arg_types, type);
 
@@ -101,7 +107,7 @@ void stage_types_func(Parser* p, Func* func) {
             }
         }
     }
-    if(func->chunk_rett) {
+    if(func->has_rett) {
         *p->chunk = *func->chunk_rett;
         Type *type = read_type(p, b->alc, false);
         func->rett = type;

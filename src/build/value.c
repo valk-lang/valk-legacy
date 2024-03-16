@@ -602,13 +602,12 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
 
     if(class->is_generic_base) {
         tok_expect(p, "[", false, false);
-        Array* names = class->generic_names;
-        Map* generic_types = map_make(alc);
-        for (int i = 0; i < names->length; i++) {
-            char* name = array_get_index(names, i);
+        int count = class->generic_names->length;
+        Array* generic_types = array_make(alc, count + 1);
+        for (int i = 0; i < count; i++) {
             Type* type = read_type(p, alc, false);
-            map_set(generic_types, name, type);
-            if(i + 1 < names->length) {
+            array_push(generic_types, type);
+            if(i + 1 < count) {
                 tok_expect(p, ",", true, false);
             } else {
                 tok_expect(p, "]", true, false);
