@@ -125,7 +125,7 @@ let d = b @as u8     // Casting
 
 ## Definitions
 
-## Functions
+### Functions
 
 ```rust
 fn add(arg1: int, arg2: int (5)) int {
@@ -138,7 +138,7 @@ fn main() {
 }
 ```
 
-## Error handling
+### Error handling
 
 ```rust
 fn add(value: int) int !too_big {
@@ -173,7 +173,7 @@ fn main() {
 }
 ```
 
-## Classes
+### Classes
 
 ```rust
 class MyClass {
@@ -196,7 +196,7 @@ fn main() {
 
 ## Tokens
 
-## If/Else
+### If Else
 
 ```rust
 if a == b : ...code...     // Single line
@@ -205,7 +205,7 @@ else if a == c { ... }
 else { ... }
 ```
 
-## While
+### While
 
 ```rust
 let x = 0
