@@ -32,6 +32,7 @@ make
 
 </td>
 <td width=50%>
+
 * [Definitions](#definitions)
     * [Functions](#functions)
         * [Error handling](#error-handling)
@@ -42,6 +43,7 @@ make
     * [If/Else](#if-else)
     * [While](#while)
     * [Throw](#error-handling)
+
 </td>
 </tr>
 </table>
