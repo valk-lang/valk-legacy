@@ -18,8 +18,7 @@ make
 ## Table of contents
 
 <table>
-<tr>
-<td width=50%>
+<tr><td>
 
 * [Basic example](#basic-example)
 * [Multiple files](#multiple-files)
@@ -30,12 +29,11 @@ make
 * [Functions](#functions)
 * [Classes](#classes)
 
-</td>
-<td width=50%>
+</td><td>
 
 * [Definitions](#definitions)
     * [Functions](#functions)
-        * [Error handling](#error-handling)
+        * [ErrorHandling](#error-handling)
     * [Classes](#classes)
     * [Globals](#globals)
 * [Tokens](#tokens)
@@ -44,8 +42,7 @@ make
     * [While](#while)
     * [Throw](#error-handling)
 
-</td>
-</tr>
+</td></tr>
 </table>
 
 ## Basic example
