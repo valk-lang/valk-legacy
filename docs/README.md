@@ -101,8 +101,9 @@ Other: `ptr` <- raw pointer (unsafe)
 ## Variables
 
 ```rust
-let a = 5             // int (default)
-let b : uint = 5      // uint
-let c : u8 = "test"   // Compile error
-let d : u8 = b @as u8 // Casting
+// let {name} [: {type}] = {value}
+let a = 5            // int (default)
+let b : uint = 5     // uint
+let c : u8 = "test"  // Compile error
+let d = b @as u8     // Casting
 ```
