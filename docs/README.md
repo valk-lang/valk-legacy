@@ -149,26 +149,31 @@ fn add(value: int) int !too_big {
 }
 
 fn main() {
-    add(10) ? 0 // result: 20
-    add(200) ? 0 // result: 0
+    // Alternative value in case of an error
+    let x = add(10) ? 0 // result: 20
+    x = add(200) ? 5 // result: 5
 
     // Alternative value using scope
-    add(200) ? <{
+    x = add(200) ? <{
         println("We had an error 😢")
         return 210
     }
     // result: 210
 
-    // Exit function on error
-    add(200) ! {
+    // Exit the function on error
+    x = add(200) ! {
         println("We had an error 😢")
         return // main has a void return type, so we use an empty return
     }
     // Single line
-    add(200) ! return
-    // Break loop
+    x = add(200) ! return
+    // Break / continue loops on error
     while true {
-        add(200) ! break // or continue
+        x = add(200) ! break // or continue
+        x = add(200) ! {
+            println("error, stop the loop")
+            break
+        }
     }
 }
 ```
