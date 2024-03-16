@@ -1,5 +1,5 @@
 
-# Volt documentation
+# Documentation
 
 ## Install
 
@@ -58,7 +58,6 @@ volt build file-1.vo file-2.vo -o ./main
 To organize your code, we group files into different directories. Each namespace in Volt represent 1 directory. To create a namespace, you must define it in your config file `volt.json` which should be located in the root of your project.
 
 ```json
-// volt.json
 {
     "namespaces": {
         "my_namespace": "src/my-namespace",
