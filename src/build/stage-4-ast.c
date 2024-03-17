@@ -134,10 +134,15 @@ void read_ast(Parser *p, bool single_line) {
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
-                if(scope->rett && !type_is_void(scope->rett)) {
+                Func* func = p->func;
+                if(!func) {
+                    parse_err(p, -1, "Using 'return' outside a function scope");
+                }
+                // Main return value
+                if(!type_is_void(func->rett)) {
                     val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, b, p->scope, val, scope->rett);
-                    type_check(p, scope->rett, val->rett);
+                    val = try_convert(alc, b, p->scope, val, func->rett);
+                    type_check(p, func->rett, val->rett);
                 } else {
                     char t = tok(p, true, false, true);
                     if(t != tok_none && t != tok_semi && t != tok_curly_close) {
@@ -148,6 +153,20 @@ void read_ast(Parser *p, bool single_line) {
                     // Important for GC
                     val = vgen_var(alc, b, val);
                     array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                }
+                // Extra return values
+                if(func->multi_rett) {
+                    int extra_c = func->rett_types->length - 1;
+                    int i = 1;
+                    while(i <= extra_c) {
+                        tok_expect(p, ",", true, true);
+                        Type* type = array_get_index(func->rett_types, i++);
+                        Value* val = read_value(alc, p, true, 0);
+                        val = try_convert(alc, b, p->scope, val, type);
+                        type_check(p, type, val->rett);
+                        // Store
+                        // array_push(scope->ast, token_make(alc, t_statement, val->item));
+                    }
                 }
 
                 array_push(scope->ast, tgen_return(alc, val));

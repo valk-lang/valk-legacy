@@ -109,10 +109,28 @@ void stage_types_func(Parser* p, Func* func) {
     }
     if(func->has_rett) {
         *p->chunk = *func->chunk_rett;
-        Type *type = read_type(p, b->alc, false);
-        func->rett = type;
-        func->scope->must_return = !type_is_void(type);
-        func->scope->rett = type;
+        if(func->multi_rett) {
+            tok_expect(p, "(", true, true);
+            // Return types
+            Array* types = array_make(b->alc, 2);
+            while(true) {
+                Type *type = read_type(p, b->alc, false);
+                if(type_is_void(type)) {
+                    parse_err(p, -1, "You cannot use 'void' here");
+                }
+                array_push(types, type);
+                char t = tok_expect_two(p, ",", ")", true, true);
+                if(t == tok_bracket_close)
+                    break;
+            }
+            func->rett_types = types;
+            func->rett = array_get_index(types, 0);
+        } else {
+            Type *type = read_type(p, b->alc, false);
+            func->rett = type;
+        }
+        func->scope->must_return = !type_is_void(func->rett);
+        func->scope->rett = func->rett;
     } else {
         func->rett = type_gen_void(b->alc);
     }
