@@ -119,6 +119,7 @@ void stage_types_func(Parser* p, Func* func) {
                     parse_err(p, -1, "You cannot use 'void' here");
                 }
                 array_push(types, type);
+                // next
                 char t = tok_expect_two(p, ",", ")", true, true);
                 if(t == tok_bracket_close)
                     break;

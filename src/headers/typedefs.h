@@ -50,6 +50,7 @@ typedef struct TDeclare TDeclare;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
 typedef struct TThrow TThrow;
+typedef struct TSetRetv TSetRetv;
 // Values
 typedef struct Value Value;
 typedef struct VPair VPair;

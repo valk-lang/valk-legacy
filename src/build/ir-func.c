@@ -26,6 +26,7 @@ void ir_gen_functions(IR* ir) {
         //
         func->var_count = 0;
         func->gc_count = 0;
+        func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
 
         IRBlock* start = ir_block_make(ir, func, "start_");
         IRBlock* code = ir_block_make(ir, func, "code_");
@@ -53,6 +54,14 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         decl->ir_var = var;
         if(decl->is_mut) {
             decl->ir_store_var = ir_alloca(ir, func, decl->type);
+        }
+    }
+    // Return value references
+    Array *retts = vfunc->rett_types;
+    if (retts) {
+        for (int i = 1; i < retts->length; i++) {
+            char *var = ir_var(func);
+            array_push(func->rett_refs, var);
         }
     }
 
@@ -97,7 +106,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->block = NULL;
 }
 
-void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs) {
 
     Array *args = vfunc->args->values;
     int argc = args->length;
@@ -130,6 +139,20 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
             str_add(code, arg->decl->ir_var);
         }
     }
+    // Return value references
+    Array *retts = vfunc->rett_types;
+    if (retts) {
+        for (int i = 1; i < retts->length; i++) {
+            if (i > 1 || argc > 0)
+                str_flat(code, ", ");
+            str_flat(code, "ptr noundef");
+            if (!is_extern) {
+                str_flat(code, " ");
+                str_add(code, array_get_index(rett_refs, i - 1));
+            }
+        }
+    }
+    //
     if (is_extern) {
         str_flat(code, ")\n");
     }else {
@@ -148,7 +171,7 @@ void ir_define_ext_func(IR* ir, Func* func) {
         return;
     if(!array_contains(ir->declared_funcs, func, arr_find_adr)) {
         Str *code = ir->code_extern;
-        ir_func_definition(code, ir, func, true);
+        ir_func_definition(code, ir, func, true, NULL);
         array_push(ir->declared_funcs, func);
     }
 }

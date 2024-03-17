@@ -155,18 +155,30 @@ void read_ast(Parser *p, bool single_line) {
                     array_push(scope->ast, token_make(alc, t_set_var, val->item));
                 }
                 // Extra return values
-                if(func->multi_rett) {
+                if(func->rett_types && func->rett_types->length > 1) {
                     int extra_c = func->rett_types->length - 1;
                     int i = 1;
+                    // Disable gc
+                    Global* g_disable = get_volt_global(b, "mem", "disable_gc");
+                    Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
+                    Value *var_disable = vgen_var(alc, b, disable);
+                    array_push(scope->ast, token_make(alc, t_set_var, var_disable->item));
+                    array_push(scope->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
                     while(i <= extra_c) {
                         tok_expect(p, ",", true, true);
-                        Type* type = array_get_index(func->rett_types, i++);
+                        Type* type = array_get_index(func->rett_types, i);
                         Value* val = read_value(alc, p, true, 0);
                         val = try_convert(alc, b, p->scope, val, type);
                         type_check(p, type, val->rett);
                         // Store
-                        // array_push(scope->ast, token_make(alc, t_statement, val->item));
+                        TSetRetv* sr = al(alc, sizeof(TSetRetv));
+                        sr->index = i - 1;
+                        sr->value = val;
+                        array_push(scope->ast, token_make(alc, t_set_return_value, sr));
+                        i++;
                     }
+                    // Set disable_gc to previous value
+                    array_push(scope->ast, tgen_assign(alc, disable, var_disable));
                 }
 
                 array_push(scope->ast, tgen_return(alc, val));

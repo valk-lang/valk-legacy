@@ -14,7 +14,7 @@ void ir_gen_final(IR* ir) {
     // Functions
     for (int i = 0; i < ir->funcs->length; i++) {
         IRFunc *func = array_get_index(ir->funcs, i);
-        ir_func_definition(code, ir, func->func, false);
+        ir_func_definition(code, ir, func->func, false, func->rett_refs);
         // Blocks
         if(func->block_code->code->length > 0) {
             for (int o = 0; o < func->blocks->length; o++) {
