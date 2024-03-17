@@ -86,34 +86,72 @@ void read_ast(Parser *p, bool single_line) {
 
         if (t == tok_id) {
             if (str_is(tkn, "let")){
-                t = tok(p, true, false, true);
-                char* name = p->tkn;
-                if(t != tok_id) {
-                    parse_err(p, -1, "Invalid variable name: '%s'", name);
-                }
-                t = tok(p, true, false, true);
-                Type* type = NULL;
-                if(t == tok_colon) {
-                    type = read_type(p, alc, true);
+                Array *names = array_make(alc, 2);
+                Array *types = array_make(alc, 2);
+                while (true) {
                     t = tok(p, true, false, true);
+                    char *name = p->tkn;
+                    if (t != tok_id) {
+                        parse_err(p, -1, "Invalid variable name: '%s'", name);
+                    }
+                    t = tok(p, true, false, true);
+                    Type *type = NULL;
+                    if (t == tok_colon) {
+                        type = read_type(p, alc, true);
+                        t = tok(p, true, false, true);
+                    }
+                    array_push(names, name);
+                    array_push(types, type);
+
+                    if(t != tok_comma)
+                        break;
                 }
                 if(t != tok_eq) {
                     parse_err(p, -1, "Expected '=' here, found: '%s'", p->tkn);
                 }
 
                 Value* val = read_value(alc, p, true, 0);
-                if(type) {
-                    val = try_convert(alc, b, p->scope, val, type);
-                    type_check(p, type, val->rett);
-                } else {
-                    type = val->rett;
+
+                VFuncCall* fcall = value_extract_func_call(val);
+                Array* fcall_rett_types = NULL;
+                if(names->length > 1) {
+                    if(!fcall) {
+                        parse_err(p, -1, "Right side does not return multiple values");
+                    }
+                    Value* on = fcall->on;
+                    fcall_rett_types = on->rett->func_rett_types;
+                    if(!fcall_rett_types || fcall_rett_types->length != types->length) {
+                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d values", types->length, fcall_rett_types ? fcall_rett_types->length : 0);
+                    }
+                    fcall->rett_refs = array_make(alc, names->length);
                 }
+                for(int i = 0; i < names->length; i++) {
+                    char *name = array_get_index(names, i);
+                    Type *type = array_get_index(types, i);
 
-                Decl* decl = decl_make(alc, name, type, false);
-                Idf *idf = idf_make(b->alc, idf_decl, decl);
-                scope_set_idf(scope, name, idf, p);
+                    if (type) {
+                        val = try_convert(alc, b, p->scope, val, type);
+                        type_check(p, type, val->rett);
+                    } else {
+                        if(fcall_rett_types) {
+                            type = array_get_index(fcall_rett_types, i);
+                        } else {
+                            type = val->rett;
+                        }
+                    }
 
-                array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                    Decl *decl = decl_make(alc, name, type, false);
+                    Idf *idf = idf_make(b->alc, idf_decl, decl);
+                    scope_set_idf(scope, name, idf, p);
+
+                    if(i == 0) {
+                        array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                    } else {
+                        decl->is_mut = true;
+                        scope_add_decl(alc, scope, decl);
+                        array_push(fcall->rett_refs, value_make(alc, v_decl, decl, decl->type));
+                    }
+                }
                 continue;
             }
             if (str_is(tkn, "if")){

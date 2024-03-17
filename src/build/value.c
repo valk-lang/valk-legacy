@@ -129,7 +129,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         v = value_make(alc, v_not, v, v->rett);
 
     } else if (t == tok_bracket_open) {
+        // (...) or (..., ...)
         v = read_value(alc, p, true, 0);
+
+        // char t
+
         tok_expect(p, ")", true, true);
     } else if (t == tok_id) {
         if (str_is(tkn, "sizeof")) {
@@ -1053,4 +1057,15 @@ bool value_needs_gc_buffer(Value* val) {
         return true;
     }
     return false;
+}
+
+VFuncCall* value_extract_func_call(Value* from) {
+    if(from->type == v_gc_buffer) {
+        VGcBuffer* buf = from->item;
+        from = buf->on;
+    }
+    if(from->type == v_func_call) {
+        return from->item;
+    }
+    return NULL;
 }

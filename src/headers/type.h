@@ -31,6 +31,7 @@ struct Type {
     Array* func_default_values;
     Map* func_errors;
     Type* func_rett;
+    Array* func_rett_types;
     int type;
     int size;
     bool nullable;
