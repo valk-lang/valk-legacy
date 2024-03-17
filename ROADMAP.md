@@ -2,7 +2,6 @@
 ## TODO
 
 ```
-- mark globals, on assign to shared call @gc_share
 - string functions
 - format string
 - ? ... : ...

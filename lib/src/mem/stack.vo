@@ -104,8 +104,6 @@ struct Stack {
         let to_state = @ptrv(to, u8, -8)
         let on_state = @ptrv(on, u8, -8)
         if on_state == state_shared {
-            // TODO move item to shared
-            // print("TODO: MOVE TO GLOBAL")
             @gc_share(to)
             return to
         }

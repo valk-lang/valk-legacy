@@ -264,6 +264,22 @@ void read_ast(Parser *p, bool single_line) {
             right = try_convert(alc, b, p->scope, right, left->rett);
             type_check(p, left->rett, right->rett);
 
+            if(op == op_eq && left->type == v_global) {
+                Global *g = left->item;
+                if(g->is_shared && type_is_gc(g->type)) {
+                    // Replace right with a temporary variable
+                    right = vgen_var(alc, b, right);
+                    array_push(scope->ast, token_make(alc, t_set_var, right->item));
+                    // call gc_share(right)
+                    Func *share = get_volt_func(b, "mem", "gc_share");
+                    Array *args = array_make(alc, 2);
+                    array_push(args, right);
+                    Value *on = vgen_func_ptr(alc, share, NULL);
+                    Value *fcall = vgen_func_call(alc, on, args);
+                    array_push(scope->ast, token_make(alc, t_statement, fcall));
+                }
+            }
+
             array_push(scope->ast, tgen_assign(alc, left, right));
             continue;
         }
