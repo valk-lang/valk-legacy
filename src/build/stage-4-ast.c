@@ -211,6 +211,22 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
+            if (str_is(tkn, "@volt_gc_mark_globals")) {
+                Func *func = b->func_mark_globals;
+                Array* args = array_make(alc, 2);
+                Value *on = vgen_func_ptr(alc, func, NULL);
+                Value *fcall = vgen_func_call(alc, on, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
+                continue;
+            }
+            if (str_is(tkn, "@volt_gc_mark_shared")) {
+                Func *func = b->func_mark_shared;
+                Array* args = array_make(alc, 2);
+                Value *on = vgen_func_ptr(alc, func, NULL);
+                Value *fcall = vgen_func_call(alc, on, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
+                continue;
+            }
         }
 
         p->chunk->i = before_i;

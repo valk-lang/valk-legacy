@@ -108,6 +108,9 @@ struct GcManager {
     }
 
     fn clean_unused() {
+        // Mark shared globals
+        @volt_gc_mark_shared
+        // Clean
         let stacks = this.stacks
         let si = this.stack_count
         while si-- > 0 {

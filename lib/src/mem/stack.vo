@@ -147,15 +147,17 @@ struct Stack {
         }
         if this.clear_unknown {
             //
+            // io:print_fake("f")
             gc_mark_size = 0
             gc_transfer_size = 0
-            // io:print_fake("f")
-            //
+            // Mark
             this.update_age()
             this.mark_stack_age()
+            @volt_gc_mark_globals
+            // Clean
             GcPool.clean_old_all(this.age)
             this.clear_unknown = false
-            // Clean shared
+            // Mark shared
             if gc_age != this.gc_age {
                 this.mark_stack_gc_age()
                 this.gc_age = gc_age
