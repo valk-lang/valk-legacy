@@ -5,18 +5,6 @@ use os;
 use net;
 use io;
 use fs;
-use mem;
-
-// class ServerData {
-//     socket: net:SocketTCP
-//     max_connections: uint
-//     thread_nr: uint (0)
-//     handler: fn(Request)(Response)
-//     // static_dirs: Array[String] (Array[String].new())
-//     show_info: bool
-// }
-
-shared server_fd : i32
 
 fn test(req: Request) Response {
     return Response.html("Hello world!");
@@ -38,7 +26,6 @@ class Server {
         socket.bind() ! {
             throw socket_bind_error
         }
-        server_fd = socket.fd;
 
         return Server{
             host: host,
@@ -48,31 +35,6 @@ class Server {
             handler: handler,
         };
     }
-
-    // static fn server_data() ServerData !invalid_address {
-
-    //     // let dirs = Array[String].new();
-    //     // each this.static_dirs as dir {
-    //     //     dirs.push(dir.copy());
-    //     // }
-
-    //     let host = "localhost"
-    //     let port : u16 = 9000
-    //     let socket = net:SocketTCP {
-	// 		host: host
-	// 		fd: server_fd
-	// 		port: port
-	// 		blocking: false
-	// 		addrinfo: net:SocketTCP.get_addrinfo(host, port) ! { throw invalid_address }
-	// 	}
-
-    //     return ServerData {
-    //         socket: socket
-    //         max_connections: 10000
-    //         handler: test
-    //         show_info: true
-    //     };
-    // }
 
     fn start(worker_count: i32 (16)) void {
 
@@ -110,8 +72,6 @@ class Server {
 
         let sock = this.socket;
         let sock_fd = sock.fd;
-
-        let buf = mem:alloc(1000)
 
         let poll = io:Poll[?Connection].new();
         let sock_lsn = poll.create_listener(sock_fd, null);
