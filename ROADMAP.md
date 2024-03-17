@@ -24,6 +24,7 @@
 - language server
 - volt make command (like: npm run)
 - run command: volt run ...
+- dont disable_gc in gc_share, instead disable inside hooks 
 ```
 
 ## Maybe
