@@ -120,6 +120,14 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
         v = vgen_int(alc, tkn[0], type_gen_volt(alc, b, "u8"));
 
+    } else if (t == tok_not) {
+
+        v = read_value(alc, p, true, 1);
+        if (!type_is_bool(v->rett)) {
+            parse_err(p, -1, "Value after '!' must be of type 'bool'");
+        }
+        v = value_make(alc, v_not, v, v->rett);
+
     } else if (t == tok_bracket_open) {
         v = read_value(alc, p, true, 0);
         tok_expect(p, ")", true, true);

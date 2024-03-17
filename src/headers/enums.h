@@ -143,6 +143,7 @@ enum VALUES {
     v_var,
     v_isset,
     v_and_or, // 25
+    v_not,
 };
 
 enum TOKENS {

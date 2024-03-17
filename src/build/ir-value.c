@@ -99,6 +99,18 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char *lval = ir_value(ir, scope, on);
         return ir_notnull_i1(ir, lval);
     }
+    if (vt == v_not) {
+        Value *on = v->item;
+        char *lval = ir_value(ir, scope, on);
+        Str* code = ir->block->code;
+        char* var = ir_var(ir->func);
+        str_add(code, "  ");
+        str_add(code, var);
+        str_add(code, " = xor i1 ");
+        str_add(code, lval);
+        str_add(code, ", true\n");
+        return var;
+    }
     if (vt == v_ir_cached) {
         VIRCached* item = v->item;
         if(item->ir_value)
