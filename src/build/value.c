@@ -283,6 +283,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     ///////////////////////
 
     t = tok(p, true, true, false);
+
     while (t == tok_at_word && str_is(p->tkn, "@as")) {
         tok(p, true, true, true);
 
@@ -406,6 +407,36 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
 
             v = vgen_and_or(alc, b, v, right, op);
+
+            t = tok(p, true, true, false);
+        }
+    }
+
+    if (prio == 0 || prio > 50) {
+        // ? ... : ...
+        while (t == tok_qmark) {
+            tok(p, true, true, true);
+
+            int start = p->chunk->i;
+
+            if (v->rett->type != type_bool) {
+                parse_err(p, -1, "Left side of '?' must be of type bool");
+            }
+
+            Value *v1 = read_value(alc, p, true, 0);
+            tok_expect(p, ":", true, true);
+            Value *v2 = read_value(alc, p, true, 51);
+
+            Type *type = type_merge(alc, v1->rett, v2->rett);
+            if (!type) {
+                char t1[512];
+                char t2[512];
+                type_to_str(v1->rett, t1);
+                type_to_str(v2->rett, t2);
+                parse_err(p, start, "Types '%s' and '%s' are not compatible", t1, t2);
+            }
+
+            v = vgen_this_or_that(alc, v, v1, v2, type);
 
             t = tok(p, true, true, false);
         }

@@ -111,6 +111,26 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         str_add(code, ", true\n");
         return var;
     }
+    if (vt == v_this_or_that) {
+        VThisOrThat* item = v->item;
+        char* cond = ir_value(ir, scope, item->cond);
+        IRBlock *block_v1 = ir_block_make(ir, ir->func, "tot_v1_");
+        IRBlock *block_v2 = ir_block_make(ir, ir->func, "tot_v2_");
+        IRBlock *block_after = ir_block_make(ir, ir->func, "tot_after_");
+        ir_cond_jump(ir, cond, block_v1, block_v2);
+        // v1
+        ir->block = block_v1;
+        char* v1 = ir_value(ir, scope, item->v1);
+        ir_jump(ir, block_after);
+        // v2
+        ir->block = block_v2;
+        char* v2 = ir_value(ir, scope, item->v2);
+        ir_jump(ir, block_after);
+        // After
+        ir->block = block_after;
+        char* type = ir_type(ir, v->rett);
+        return ir_this_or_that(ir, v1, block_v1, v2, block_v2, type);
+    }
     if (vt == v_ir_cached) {
         VIRCached* item = v->item;
         if(item->ir_value)

@@ -37,6 +37,7 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
 Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack);
 Value *vgen_isset(Allocator *alc, Build *b, Value *on);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
+Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett);
 
 struct Value {
     int type;
@@ -114,6 +115,11 @@ struct VPhiValue {
 struct VVar {
     Value* value;
     char* var;
+};
+struct VThisOrThat {
+    Value* cond;
+    Value* v1;
+    Value* v2;
 };
 
 #endif

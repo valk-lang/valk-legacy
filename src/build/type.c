@@ -220,6 +220,17 @@ Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is
     return NULL;
 }
 
+Type* type_merge(Allocator* alc, Type* t1, Type* t2) {
+    if (t1->class != t2->class)
+        return NULL;
+    if (t1->is_pointer != t2->is_pointer)
+        return NULL;
+    Type* type = type_make(alc, t1->type);
+    *type = *t1;
+    type->nullable = t1->nullable || t2->nullable;
+    return type;
+}
+
 bool type_compat(Type* t1, Type* t2, char** reason) {
     if (t2->type == type_null && (t1->type == type_ptr || t1->nullable || t1->ignore_null)) {
         return true;
@@ -321,7 +332,6 @@ int type_get_size(Build* b, Type* type) {
     }
     return -1;
 }
-
 
 Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable) {
     Array* types = array_make(alc, 2);

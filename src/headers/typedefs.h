@@ -67,6 +67,7 @@ typedef struct VString VString;
 typedef struct VPhiValue VPhiValue;
 typedef struct VScope VScope;
 typedef struct VVar VVar;
+typedef struct VThisOrThat VThisOrThat;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;

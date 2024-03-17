@@ -221,6 +221,7 @@ if a == b : ...code...     // Single line
 if a == b { ...code... }
 else if a == c { ... }
 else { ... }
+let c = a == b ? "true" : "false"  // inline
 ```
 
 ### While

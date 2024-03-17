@@ -258,3 +258,11 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
 
     return result;
 }
+
+Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett) {
+    VThisOrThat* item = al(alc, sizeof(VThisOrThat));
+    item->cond = cond;
+    item->v1 = v1;
+    item->v2 = v2;
+    return value_make(alc, v_this_or_that, item, rett);
+}
