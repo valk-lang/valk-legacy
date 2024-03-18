@@ -285,6 +285,10 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
         // Return types
         t1s = t1->func_rett_types;
         t2s = t2->func_rett_types;
+        if(t1s->length != t2s->length){
+            *reason = "different amount of return types";
+            return false;
+        }
         for(int i = 0; i < t1s->length; i++) {
             Type *ft1 = array_get_index(t1s, i);
             Type* ft2 = array_get_index(t2s, i);
