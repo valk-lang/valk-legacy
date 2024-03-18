@@ -277,6 +277,8 @@ let b = <{
     return a + 10
 }
 println(b)
+// output:
+// Add 10
 // 15
 ```
 
