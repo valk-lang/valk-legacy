@@ -171,9 +171,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 kd->ir_var = ir_value(ir, scope, vgen_decl(alc, kd_buf));
             }
             if(vd->is_mut) {
-                char* var = ir_assign_value(ir, scope, vgen_decl(alc, vd));
-                ir_store_old(ir, vd->type, var, fcall);
+                ir_store_old(ir, vd->type, vd->ir_store_var, fcall);
             } else {
+                if (vd->is_gc) {
+                    ir_store_old(ir, vd->type, vd->ir_store_var, fcall);
+                }
                 vd->ir_var = fcall;
             }
             // Increment index
@@ -200,6 +202,17 @@ void ir_write_ast(IR* ir, Scope* scope) {
             }
 
             ir->block = block_after;
+            // Clear from stack
+            if (kd && kd->is_gc && kd->is_mut) {
+                ir_store_old(ir, kd->type, kd->ir_store_var, "null");
+            }
+            if (kd_buf && kd_buf->is_gc && kd_buf->is_mut) {
+                ir_store_old(ir, kd_buf->type, kd_buf->ir_store_var, "null");
+            }
+            if (vd->is_gc && vd->is_mut) {
+                ir_store_old(ir, vd->type, vd->ir_store_var, "null");
+            }
+            //
             continue;
         }
 
