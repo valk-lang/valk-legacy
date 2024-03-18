@@ -18,6 +18,7 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->line = 0;
     p->col = 0;
     p->scope_end_i = 0;
+    p->cc_index = 0;
 
     p->in_header = false;
 

@@ -22,11 +22,14 @@ struct Parser {
     Scope* loop_scope;
     Array* vscope_values;
     //
+    char cc_results[100];
+    //
     char* tkn;
     //
     int line;
     int col;
     int scope_end_i;
+    int cc_index;
     //
     bool in_header;
 };
