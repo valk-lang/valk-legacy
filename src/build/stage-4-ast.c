@@ -121,7 +121,7 @@ void read_ast(Parser *p, bool single_line) {
                     Value* on = fcall->on;
                     fcall_rett_types = on->rett->func_rett_types;
                     if(!fcall_rett_types || fcall_rett_types->length < types->length) {
-                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d values", types->length, fcall_rett_types ? fcall_rett_types->length : 0);
+                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", types->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
                     }
                     fcall->rett_refs = array_make(alc, names->length);
                 }
@@ -351,6 +351,53 @@ void read_ast(Parser *p, bool single_line) {
             }
 
             array_push(scope->ast, tgen_assign(alc, left, right));
+            continue;
+
+        } else if (t == tok_comma) {
+            // Multi assign
+            Array* values = array_make(alc, 4);
+            array_push(values, left);
+            value_is_mutable(left);
+
+            while(t == tok_comma) {
+                tok(p, true, false, true);
+                Value* v = read_value(alc, p, true, 0);
+                array_push(values, v);
+                t = tok(p, true, false, false);
+            }
+
+            tok_expect(p, "=", true, true);
+
+            Value *val = read_value(alc, p, true, 0);
+
+            VFuncCall *fcall = value_extract_func_call(val);
+            if (!fcall) {
+                parse_err(p, -1, "Right side does not return multiple values");
+            }
+            Value *on = fcall->on;
+            Array *fcall_rett_types = on->rett->func_rett_types;
+            if (!fcall_rett_types || fcall_rett_types->length < values->length) {
+                parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", values->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
+            }
+            fcall->rett_refs = array_make(alc, values->length);
+
+            for (int i = 0; i < values->length; i++) {
+                Value *v = array_get_index(values, i);
+                Type *type = v->rett;
+
+                if (i == 0) {
+                    val = try_convert(alc, b, scope, val, type);
+                    type_check(p, type, val->rett);
+                } else {
+                    type_check(p, type, array_get_index(fcall_rett_types, i));
+                }
+
+                if (i == 0) {
+                    array_push(scope->ast, tgen_assign(alc, v, val));
+                } else {
+                    array_push(fcall->rett_refs, v);
+                }
+            }
             continue;
         }
 
