@@ -38,7 +38,7 @@ char *ir_var(IRFunc* func);
 void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, long int value);
-Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
+Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
