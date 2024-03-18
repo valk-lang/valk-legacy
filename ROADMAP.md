@@ -3,16 +3,16 @@
 
 ```
 // High priority
-- string functions
-- format string
 - macros (e.g. array, map)
 - test features --test
 - ci
-- borrow & gc_check stack if thread paused for too long in order to free shared memory 
 - floats
 - speed up http server: re-use headers map
 
 // Lower priority
+- string functions
+- format string
+- borrow & gc_check stack if thread paused for too long in order to free shared memory 
 - watch files --watch
 - unions
 - async / await
