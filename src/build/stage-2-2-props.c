@@ -49,6 +49,11 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         if(t == tok_curly_close)
             break;
 
+        if (t == tok_hashtag && p->on_newline) {
+            cc_parse(p);
+            continue;
+        }
+
         int act = act_public;
         if(t == tok_sub) {
             act = act_private_fc;

@@ -2,7 +2,7 @@
 #include "../all.h"
 
 char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
-    p->tkn = "...";
+    p->tkn = "";
     Chunk* ch = p->chunk;
     char *tokens = ch->tokens;
     int i = ch->i;
@@ -71,13 +71,13 @@ void tok_expect_newline(Parser* p) {
     int i = p->chunk->i;
     char t = tokens[i];
     if(t == tok_space) {
-        i += 2;
+        i++;
     }
     t = tokens[i];
     if(t != tok_newline) {
         parse_err(p, -1, "Expected a new line here");
     }
-    p->chunk->i = i + 2;
+    p->chunk->i = i + 1;
 }
 
 bool tok_next_is_whitespace(Parser* p) {
