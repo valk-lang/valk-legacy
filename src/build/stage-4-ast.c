@@ -120,7 +120,7 @@ void read_ast(Parser *p, bool single_line) {
                     }
                     Value* on = fcall->on;
                     fcall_rett_types = on->rett->func_rett_types;
-                    if(!fcall_rett_types || fcall_rett_types->length != types->length) {
+                    if(!fcall_rett_types || fcall_rett_types->length < types->length) {
                         parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d values", types->length, fcall_rett_types ? fcall_rett_types->length : 0);
                     }
                     fcall->rett_refs = array_make(alc, names->length);
@@ -129,15 +129,18 @@ void read_ast(Parser *p, bool single_line) {
                     char *name = array_get_index(names, i);
                     Type *type = array_get_index(types, i);
 
-                    if (type) {
-                        val = try_convert(alc, b, p->scope, val, type);
-                        type_check(p, type, val->rett);
-                    } else {
+                    if (!type) {
                         if(fcall_rett_types) {
                             type = array_get_index(fcall_rett_types, i);
                         } else {
                             type = val->rett;
                         }
+                    }
+                    if (i == 0) {
+                        val = try_convert(alc, b, scope, val, type);
+                        type_check(p, type, val->rett);
+                    } else {
+                        type_check(p, type, array_get_index(fcall_rett_types, i));
                     }
 
                     Decl *decl = decl_make(alc, name, type, false);
