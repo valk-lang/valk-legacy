@@ -158,4 +158,8 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
 
         parse_handle_func_args(p, func);
     }
+
+    if(p->cc_index > 0) {
+        parse_err(p, -1, "Missing #end token");
+    }
 }
