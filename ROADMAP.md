@@ -4,7 +4,6 @@
 ```
 - string functions
 - format string
-- iterators
 - <{ ... } value scopes
 - comptime macros
 - macros
