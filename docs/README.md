@@ -43,6 +43,11 @@ make
     * [Each](#each)
     * [Throw](#error-handling)
 
+</td><td>
+
+* [Values](#values)
+    * [ValueScopes](#value-scopes)
+
 </td></tr>
 </table>
 
@@ -253,4 +258,33 @@ each m as v {
     println(v)
 }
 // 10 20 30
+```
+
+## Values
+
+### Value-scopes
+
+With `value-scopes` we can execute code that eventual returns a value.
+
+```
+let a = 5
+let b = <{
+    if a > 100 {
+        println("Multiply by 2")
+        return a * 2
+    }
+    println("Add 10")
+    return a + 10
+}
+println(b)
+// 15
+```
+
+This feature is very useful in error handling for when we want to provide an alternative value but also want to execute some code when it happens. e.g. for logging.
+
+```
+let a = might_error() ? <{
+    Mylogger.log("might_error() returned an error, this should not happen!")
+    return 0
+}
 ```

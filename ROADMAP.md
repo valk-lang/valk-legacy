@@ -4,7 +4,6 @@
 ```
 - string functions
 - format string
-- <{ ... } value scopes
 - comptime macros
 - macros
 --> Only generate _gc_check, etc in Map/Array if T is a gc-type
