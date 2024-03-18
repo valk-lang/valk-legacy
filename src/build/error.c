@@ -23,12 +23,12 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     // Trace
     if (p->prev) {
         printf("------------------------------\n");
-        Parser* p = p->prev;
-        while (p) {
-            Chunk* ch = p->chunk;
+        Parser* sp = p->prev;
+        while (sp) {
+            Chunk* ch = sp->chunk;
             ChunkPos* pos = chunk_token_pos(b, ch, ch->i);
             printf("=> line: %d | col: %d | file: %s\n", pos->line, pos->col, ch->fc ? ch->fc->path : "(generated code)");
-            p = p->prev;
+            sp = sp->prev;
         }
         printf("------------------------------\n");
     }

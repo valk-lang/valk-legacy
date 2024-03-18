@@ -191,27 +191,30 @@ class Array[T] {
     // Gc
     ////////////////
 
-    fn _gc_transfer() {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:gc_transfer_item(@ptrv(data, T, x))
+    #if @type_is_gc(T)
+        fn _gc_transfer() {
+            let data = this.data
+            let x = this.length
+            while x-- > 0 {
+                mem:gc_transfer_item(@ptrv(data, T, x))
+            }
         }
-    }
-    fn _gc_mark() {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:gc_mark_item(@ptrv(data, T, x))
+        fn _gc_mark() {
+            let data = this.data
+            let x = this.length
+            while x-- > 0 {
+                mem:gc_mark_item(@ptrv(data, T, x))
+            }
         }
-    }
-    fn _gc_mark_shared() {
-        let data = this.data
-        let x = this.length
-        while x-- > 0 {
-            mem:gc_mark_shared_item(@ptrv(data, T, x))
+        fn _gc_mark_shared() {
+            let data = this.data
+            let x = this.length
+            while x-- > 0 {
+                mem:gc_mark_shared_item(@ptrv(data, T, x))
+            }
         }
-    }
+    #end
+
     fn _gc_free() {
         mem:free(this.data)
     }

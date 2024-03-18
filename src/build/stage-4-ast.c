@@ -51,6 +51,10 @@ void stage_ast(Unit *u) {
         p->loop_scope = NULL;
         p->vscope_values = NULL;
         read_ast(p, false);
+
+        if(p->cc_index > 0) {
+            parse_err(p, -1, "Missing #end token");
+        }
     }
 }
 
@@ -81,6 +85,10 @@ void read_ast(Parser *p, bool single_line) {
 
         first = true;
         //
+        if (t == tok_hashtag && p->on_newline) {
+            cc_parse(p);
+            continue;
+        }
 
         if (t == tok_id) {
             if (str_is(tkn, "let")){

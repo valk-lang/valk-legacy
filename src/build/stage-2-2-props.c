@@ -49,6 +49,11 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         if(t == tok_curly_close)
             break;
 
+        if (t == tok_hashtag && p->on_newline) {
+            cc_parse(p);
+            continue;
+        }
+
         int act = act_public;
         if(t == tok_sub) {
             act = act_private_fc;
@@ -152,5 +157,9 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);
+    }
+
+    if(p->cc_index > 0) {
+        parse_err(p, -1, "Missing #end token");
     }
 }
