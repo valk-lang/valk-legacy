@@ -196,7 +196,7 @@ void read_ast(Parser *p, bool single_line) {
                     array_push(scope->ast, token_make(alc, t_set_var, val->item));
                 }
                 // Extra return values
-                if(func->rett_types && func->rett_types->length > 1) {
+                if(func->rett_types->length > 1) {
                     int extra_c = func->rett_types->length - 1;
                     int i = 1;
                     // Disable gc

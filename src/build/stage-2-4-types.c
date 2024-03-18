@@ -129,6 +129,7 @@ void stage_types_func(Parser* p, Func* func) {
         } else {
             Type *type = read_type(p, b->alc, false);
             func->rett = type;
+            array_push(func->rett_types, type);
         }
         func->scope->must_return = !type_is_void(func->rett);
         func->scope->rett = func->rett;

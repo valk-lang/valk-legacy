@@ -58,11 +58,9 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     }
     // Return value references
     Array *retts = vfunc->rett_types;
-    if (retts) {
-        for (int i = 1; i < retts->length; i++) {
-            char *var = ir_var(func);
-            array_push(func->rett_refs, var);
-        }
+    for (int i = 1; i < retts->length; i++) {
+        char *var = ir_var(func);
+        array_push(func->rett_refs, var);
     }
 
     // Decls
@@ -141,15 +139,13 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     }
     // Return value references
     Array *retts = vfunc->rett_types;
-    if (retts) {
-        for (int i = 1; i < retts->length; i++) {
-            if (i > 1 || argc > 0)
-                str_flat(code, ", ");
-            str_flat(code, "ptr noundef");
-            if (!is_extern) {
-                str_flat(code, " ");
-                str_add(code, array_get_index(rett_refs, i - 1));
-            }
+    for (int i = 1; i < retts->length; i++) {
+        if (i > 1 || argc > 0)
+            str_flat(code, ", ");
+        str_flat(code, "ptr noundef");
+        if (!is_extern) {
+            str_flat(code, " ");
+            str_add(code, array_get_index(rett_refs, i - 1));
         }
     }
     //

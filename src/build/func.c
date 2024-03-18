@@ -12,12 +12,16 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
+
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
+    f->rett_types = array_make(alc, 1);
+
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
+
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
@@ -25,8 +29,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->in_header = false;
     f->has_rett = false;
     f->multi_rett = false;
-
-    f->rett_types = NULL;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
