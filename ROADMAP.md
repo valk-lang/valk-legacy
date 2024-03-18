@@ -5,9 +5,7 @@
 // High priority
 - string functions
 - format string
-- compile conditions
-- macros
---> Only generate _gc_check, etc in Map/Array if T is a gc-type
+- macros (e.g. array, map)
 - test features --test
 - ci
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 
@@ -27,6 +25,7 @@
 - run command: volt run ...
 - dont disable_gc in gc_share, instead disable inside hooks 
 - 'clone' functions for classes in volt pkg
+- more compile condition functions
 ```
 
 ## Maybe
