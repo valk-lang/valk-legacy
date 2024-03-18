@@ -103,6 +103,18 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_func_return_nothing(ir);
             continue;
         }
+        if (tt == t_return_vscope) {
+            char* val = ir_value(ir, scope, t->item);
+            if(!ir->vscope_values) {
+                die("Missing IR value-scope values array (compiler bug)");
+            }
+            IRPhiValue* v = al(ir->alc, sizeof(IRPhiValue));
+            v->value = val;
+            v->block = ir->block;
+            array_push(ir->vscope_values, v);
+            ir_jump(ir, ir->vscope_after);
+            continue;
+        }
         if (tt == t_set_var) {
             VVar *vv = t->item;
             vv->var = ir_value(ir, scope, vv->value);

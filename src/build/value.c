@@ -131,6 +131,34 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     } else if (t == tok_bracket_open) {
         v = read_value(alc, p, true, 0);
         tok_expect(p, ")", true, true);
+    } else if (t == tok_ltcurly_open) {
+        int scope_end_i = p->scope_end_i;
+        Array *_prev_values = p->vscope_values;
+        Array *values = array_make(alc, 2);
+        Scope *_scope = p->scope;
+        Scope *vscope = scope_sub_make(alc, sc_vscope, _scope);
+        p->scope = vscope;
+        p->vscope_values = values;
+        read_ast(p, false);
+        p->scope = _scope;
+        p->vscope_values = _prev_values;
+        p->chunk->i = scope_end_i;
+
+        if(!vscope->did_return) {
+            parse_err(p, -1, "Value scope must return a value");
+        }
+        Type* type = vscope_get_result_type(values);
+        if(!type) {
+            parse_err(p, -1, "Value scope must have atleast 1 return statement");
+        }
+        // Type check
+        for(int i = 0; i < values->length; i++) {
+            Value* v = array_get_index(values, i);
+            type_check(p, type, v->rett);
+        }
+
+        v = value_make(alc, v_vscope, vscope, type);
+
     } else if (t == tok_id) {
         if (str_is(tkn, "sizeof")) {
             tok_expect(p, "(", false, false);

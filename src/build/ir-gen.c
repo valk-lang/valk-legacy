@@ -608,6 +608,34 @@ char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* tha
     return var;
 }
 
+char* ir_phi(IR* ir, Array* values, char* type) {
+    Str *code = ir->block->code;
+    char *var = ir_var(ir->func);
+
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = phi ");
+    str_add(code, type);
+
+    for(int i = 0; i < values->length; i ++){
+        str_preserve(code, 200);
+
+        IRPhiValue* v = array_get_index(values, i);
+
+        if (i > 0)
+            str_flat(code, ",");
+        str_flat(code, " [ ");
+        str_add(code, v->value);
+        str_flat(code, ", %");
+        str_add(code, v->block->name);
+        str_flat(code, " ]");
+    }
+
+    str_flat(code, "\n");
+
+    return var;
+}
+
 char *ir_notnull_i1(IR *ir, char *val) {
     char *var = ir_var(ir->func);
     Str *code = ir->block->code;

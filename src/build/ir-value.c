@@ -291,6 +291,21 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir->block = block_current;
         return ir_and_or(ir, block_current, left, block_right, right, block_last, vop->op);
     }
+    if (vt == v_vscope) {
+        Scope* vscope = v->item;
+        IRBlock* _prev_after = ir->vscope_after;
+        Array* _prev_values = ir->vscope_values;
+        Array* values = array_make(ir->alc, 2);
+        IRBlock *block_after = ir_block_make(ir, ir->func, "vscope_after_");
+        ir->vscope_values = values;
+        ir->vscope_after = block_after;
+        ir_write_ast(ir, vscope);
+        ir->vscope_values = _prev_values;
+        ir->vscope_after = _prev_after;
+        // After
+        ir->block = block_after;
+        return ir_phi(ir, values, ir_type(ir, v->rett));
+    }
 
     return "???";
 }

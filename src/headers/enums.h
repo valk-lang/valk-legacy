@@ -145,6 +145,7 @@ enum VALUES {
     v_and_or, // 25
     v_not,
     v_this_or_that,
+    v_vscope,
 };
 
 enum TOKENS {
@@ -162,6 +163,7 @@ enum TOKENS {
     t_set_decl_store_var,
     t_set_return_value,
     t_each,
+    t_return_vscope,
 };
 
 enum OPERATORS {
@@ -193,6 +195,7 @@ enum SCOPES {
     sc_func,
     sc_loop,
     sc_if,
+    sc_vscope,
 };
 
 enum SNIPPET_ARG_TYPES {

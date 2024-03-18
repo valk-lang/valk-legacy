@@ -50,6 +50,7 @@ void stage_ast(Unit *u) {
         p->func = func;
         p->scope = func->scope;
         p->loop_scope = NULL;
+        p->vscope_values = NULL;
         read_ast(p, false);
     }
 
@@ -175,6 +176,23 @@ void read_ast(Parser *p, bool single_line) {
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
+
+                if(p->vscope_values) {
+                    // Value scope
+                    val = read_value(alc, p, false, 0);
+
+                    Array *values = p->vscope_values;
+                    Type *type = vscope_get_result_type(values);
+                    if(type) {
+                        val = try_convert(alc, b, scope, val, type);
+                        type_check(p, type, val->rett);
+                    }
+                    array_push(values, val);
+                    array_push(scope->ast, token_make(alc, t_return_vscope, val));
+                    scope->did_return = true;
+                    continue;
+                }
+
                 Func* func = p->func;
                 if(!func) {
                     parse_err(p, -1, "Using 'return' outside a function scope");

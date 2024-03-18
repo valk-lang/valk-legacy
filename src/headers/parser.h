@@ -20,6 +20,7 @@ struct Parser {
     //
     Scope* scope;
     Scope* loop_scope;
+    Array* vscope_values;
     //
     char* tkn;
     //
@@ -36,6 +37,7 @@ struct ParserContext {
     Func* func;
     Scope* scope;
     Scope* loop_scope;
+    Array* vscope_values;
     int line;
     int col;
     int scope_end_i;

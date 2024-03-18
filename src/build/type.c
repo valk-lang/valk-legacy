@@ -392,3 +392,22 @@ Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, c
 
     return types;
 }
+
+
+Type* vscope_get_result_type(Array* values) {
+    Value *first = array_get_index(values, 0);
+    if(!first)
+        return NULL;
+    Type *type = first->rett;
+    bool contains_nullable = false;
+    for (int i = 0; i < values->length; i++) {
+        Value *v = array_get_index(values, i);
+        if (v->rett->nullable) {
+            contains_nullable = true;
+            break;
+        }
+    }
+    if (type->is_pointer)
+        type->nullable = contains_nullable;
+    return type;
+}

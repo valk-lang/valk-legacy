@@ -22,6 +22,11 @@ IR* ir_make(Unit* u, Parser* p) {
     ir->func = NULL;
     ir->block = NULL;
 
+    ir->block_after = NULL;
+    ir->block_cond = NULL;
+    ir->vscope_after = NULL;
+    ir->vscope_values = NULL;
+
     ir->funcs = array_make(alc, 50);
     ir->attrs = array_make(alc, 50);
     ir->declared_funcs = array_make(alc, 50);

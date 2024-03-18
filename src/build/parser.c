@@ -13,6 +13,7 @@ Parser* parser_make(Allocator* alc, Build* b) {
     p->func = NULL;
     p->scope = NULL;
     p->loop_scope = NULL;
+    p->vscope_values = NULL;
 
     p->line = 0;
     p->col = 0;
@@ -33,6 +34,7 @@ void parser_save_context(Parser* p) {
     pc->func = p->func;
     pc->scope = p->scope;
     pc->loop_scope = p->loop_scope;
+    pc->vscope_values = p->vscope_values;
     pc->line = p->line;
     pc->col = p->col;
     pc->scope_end_i = p->scope_end_i;
@@ -53,6 +55,7 @@ void parser_pop_context(Parser* p, bool restore_pos) {
     p->func = pc->func;
     p->scope = pc->scope;
     p->loop_scope = pc->loop_scope;
+    p->vscope_values = pc->vscope_values;
     p->line = pc->line;
     p->col = pc->col;
     p->scope_end_i = pc->scope_end_i;
