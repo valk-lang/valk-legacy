@@ -40,6 +40,7 @@ make
     * [Let](#variables)
     * [If/Else](#if-else)
     * [While](#while)
+    * [Each](#each)
     * [Throw](#error-handling)
 
 </td></tr>
