@@ -1,14 +1,14 @@
 
 #include "../all.h"
 
-Parser* parser_make(Allocator* alc, Build* b) {
+Parser* parser_make(Allocator* alc, Unit* u) {
     Parser* p = al(alc, sizeof(Parser));
-    p->b = b;
-    p->unit = NULL;
+    p->b = u->b;
+    p->unit = u;
     p->tkn = NULL;
 
-    p->contexts = al(alc, 20 * sizeof(ParserContext));
-    p->chunk = chunk_make(alc, b, NULL);
+    p->prev = NULL;
+    p->chunk = chunk_make(alc, u->b, NULL);
 
     p->func = NULL;
     p->scope = NULL;
@@ -19,49 +19,21 @@ Parser* parser_make(Allocator* alc, Build* b) {
     p->col = 0;
     p->scope_end_i = 0;
 
-    p->chunk_index = 0;
-
     p->in_header = false;
 
     return p;
 }
 
-void parser_save_context(Parser* p) {
-    int ci = p->chunk_index;
-
-    ParserContext *pc = &p->contexts[ci];
-    pc->chunk = *p->chunk;
-    pc->func = p->func;
-    pc->scope = p->scope;
-    pc->loop_scope = p->loop_scope;
-    pc->vscope_values = p->vscope_values;
-    pc->line = p->line;
-    pc->col = p->col;
-    pc->scope_end_i = p->scope_end_i;
-    pc->in_header = p->in_header;
-
-    p->chunk_index = ci + 1;
+void parser_new_context(Parser** ref) {
+    Parser* p = *ref;
+    Parser *p2 = pool_get_parser(p->unit);
+    p2->prev = p;
+    *ref = p2;
 }
-
-
-void parser_pop_context(Parser* p, bool restore_pos) {
-    int ci = p->chunk_index - 1;
-    if(ci < 0) {
-        return;
-    }
-    ParserContext *pc = &p->contexts[ci];
-    if(restore_pos)
-        *p->chunk = pc->chunk;
-    p->func = pc->func;
-    p->scope = pc->scope;
-    p->loop_scope = pc->loop_scope;
-    p->vscope_values = pc->vscope_values;
-    p->line = pc->line;
-    p->col = pc->col;
-    p->scope_end_i = pc->scope_end_i;
-    p->in_header = pc->in_header;
-
-    p->chunk_index = ci;
+void parser_pop_context(Parser** ref) {
+    Parser* p2 = *ref;
+    Parser* p = p2->prev;
+    *ref = p;
 }
 
 Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope) {
@@ -70,12 +42,13 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
     if (idf_scope)
         sub->idf_parent = idf_scope;
 
-    Chunk backup = *p->chunk;
-    *p->chunk = *chunk;
-    Scope *scope = p->scope;
-    p->scope = sub;
-    Value *val = read_value(alc, p, true, 0);
-    p->scope = scope;
-    *p->chunk = backup;
+    Parser* p2 = pool_get_parser(p->unit);
+
+    *p2->chunk = *chunk;
+    p2->scope = sub;
+    Value *val = read_value(alc, p2, true, 0);
+
+    pool_return_parser(p->unit, p2);
+
     return val;
 }

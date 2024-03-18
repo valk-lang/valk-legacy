@@ -79,8 +79,6 @@ int cmd_build(int argc, char *argv[]) {
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
 
-    b->parser = parser_make(alc, b);
-
     b->func_main = NULL;
     b->func_main_gen = NULL;
     b->func_mark_globals = NULL;
@@ -91,7 +89,7 @@ int cmd_build(int argc, char *argv[]) {
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
-    b->verbose = 3;
+    b->verbose = 2;
     b->LOC = 0;
     b->parser_started = false;
 

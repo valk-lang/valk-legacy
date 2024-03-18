@@ -91,8 +91,6 @@ struct Build {
     ErrorCollection* errors;
     Array *strings;
     //
-    Parser *parser;
-    //
     size_t mem_parse;
     size_t mem_objects;
     //

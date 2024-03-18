@@ -13,7 +13,7 @@ void stage_4_ir(Unit* u) {
     Allocator* alc = u->b->alc_ast;
     usize start = microtime();
 
-    IR* ir = ir_make(u, b->parser);
+    IR* ir = ir_make(u, u->parser);
     char* ir_code = str_to_chars(alc, ir->code_final);
     char *ir_hash = al(b->alc, 64);
     ctxhash(ir_code, ir_hash);

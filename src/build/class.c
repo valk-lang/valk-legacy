@@ -476,8 +476,8 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Idf* idf = idf_make(b->alc, idf_class, gclass);
     scope_set_idf(gclass->scope, "CLASS", idf, p);
 
-    // Save parser context
-    parser_save_context(p);
+    // Create new parser
+    parser_new_context(&p);
 
     // Stage 2
     p->scope = gclass->scope;
@@ -501,8 +501,8 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     }
     validate_class(p, gclass);
 
-    // Restore parser context
-    parser_pop_context(p, true);
+    // Return parser
+    parser_pop_context(&p);
 
     //
     build_return_str_buf(b, hash);

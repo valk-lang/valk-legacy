@@ -22,7 +22,6 @@ typedef struct ChunkPos ChunkPos;
 typedef struct Stage Stage;
 typedef struct CompileData CompileData;
 typedef struct Parser Parser;
-typedef struct ParserContext ParserContext;
 typedef struct Unit Unit;
 // IR
 typedef struct IR IR;

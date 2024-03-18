@@ -2,9 +2,10 @@
 ## TODO
 
 ```
+// High priority
 - string functions
 - format string
-- comptime macros
+- compile conditions
 - macros
 --> Only generate _gc_check, etc in Map/Array if T is a gc-type
 - test features --test

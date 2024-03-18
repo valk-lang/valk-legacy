@@ -70,7 +70,7 @@ void stage_generate_main(Build *b) {
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
-    Parser *p = b->parser;
+    Parser *p = u->parser;
     *p->chunk = *chunk;
     p->scope = scope;
     parse_handle_func_args(p, func);
@@ -82,7 +82,7 @@ void stage_generate_mark_functions(Build* b) {
     Array* units = b->units;
     Unit* u = array_get_index(units, 0);
     Scope* scope = scope_make(b->alc, sc_default, NULL);
-    Parser* p = b->parser;
+    Parser* p = u->parser;
 
     Idf *idf = idf_make(b->alc, idf_func, get_volt_func(b, "mem", "gc_mark_item"));
     scope_set_idf(scope, "VOLT_GC_MARK_ITEM", idf, p);

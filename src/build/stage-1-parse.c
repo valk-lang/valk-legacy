@@ -12,16 +12,15 @@ void stage_1_value_alias(Parser* p, Unit* u);
 void stage_1_snippet(Parser* p, Unit* u);
 
 void stage_1_parse(Fc* fc) {
-    Build* b = fc->b;
-    Parser* p = b->parser;
     Unit* u = fc->nsc->unit;
+    Parser* p = u->parser;
+    Build* b = u->b;
 
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);
 
     *p->chunk = *fc->content;
     p->in_header = fc->is_header;
-    p->unit = u;
     p->scope = fc->scope;
 
     usize start = microtime();
@@ -29,7 +28,6 @@ void stage_1_parse(Fc* fc) {
     b->time_parse += microtime() - start;
 
     p->in_header = false;
-    p->unit = NULL;
     p->scope = NULL;
 }
 

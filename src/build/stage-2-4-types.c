@@ -5,8 +5,7 @@ void stage_types_global(Parser* p, Global* g);
 
 void stage_2_types(Unit* u) {
     Build* b = u->b;
-    Parser* p = b->parser;
-    p->unit = u;
+    Parser* p = u->parser;
 
     if (b->verbose > 2)
         printf("Stage 2 | Scan types: %s\n", u->nsc->name);
@@ -33,7 +32,6 @@ void stage_2_types(Unit* u) {
 
     b->time_parse += microtime() - start;
 
-    p->unit = NULL;
     stage_add_item(b->stage_3_values, u);
 }
 

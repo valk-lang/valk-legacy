@@ -17,8 +17,7 @@ void stage_2_props(Unit* u) {
 }
 
 void stage_props(Unit *u) {
-    Parser* p = u->b->parser;
-    p->unit = u;
+    Parser* p = u->parser;
     //
     Array* classes = u->classes;
     for(int i = 0; i < classes->length; i++) {
@@ -28,7 +27,6 @@ void stage_props(Unit *u) {
         stage_props_class(p, class, false);
     }
     //
-    p->unit = NULL;
 }
 
 void stage_props_class(Parser* p, Class *class, bool is_trait) {
@@ -105,17 +103,17 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
                 parse_err(p, -1, "This is not a trait: '%s'", id.name);
             }
 
+            Scope* scope = p->scope;
             Trait* t = idf->item;
-            parser_save_context(p);
+            parser_new_context(&p);
 
             *p->chunk = *t->chunk;
-            Scope* scope = p->scope;
             p->scope = scope_sub_make(b->alc, sc_default, t->scope);
             p->scope->identifiers = scope->identifiers;
 
             stage_props_class(p, class, true);
 
-            parser_pop_context(p, true);
+            parser_pop_context(&p);
             continue;
         }
 

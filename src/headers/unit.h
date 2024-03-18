@@ -16,10 +16,14 @@ struct Unit {
     char *path_cache;
     char *hash;
     //
+    Parser *parser;
+    //
     Array *funcs;
     Array *classes;
     Array *aliasses;
     Array *globals;
+    // Pools
+    Array *pool_parsers;
     //
     int id;
     int string_count;

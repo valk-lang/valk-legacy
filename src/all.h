@@ -71,5 +71,6 @@
 #include "headers/unit.h"
 #include "headers/error.h"
 #include "headers/scope.h"
+#include "headers/pool.h"
 
 #endif

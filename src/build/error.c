@@ -21,17 +21,14 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     Chunk* chunk = p->chunk;
     char *content = chunk->content;
     // Trace
-    ParserContext* contexts = p->contexts;
-    int chunkc = p->chunk_index;
-    if (chunkc > 0) {
-        int x = 0;
+    if (p->prev) {
         printf("------------------------------\n");
-        while (x < chunkc) {
-            ParserContext *ctx = &contexts[x];
-            Chunk* ch = &ctx->chunk;
+        Parser* p = p->prev;
+        while (p) {
+            Chunk* ch = p->chunk;
             ChunkPos* pos = chunk_token_pos(b, ch, ch->i);
             printf("=> line: %d | col: %d | file: %s\n", pos->line, pos->col, ch->fc ? ch->fc->path : "(generated code)");
-            x++;
+            p = p->prev;
         }
         printf("------------------------------\n");
     }

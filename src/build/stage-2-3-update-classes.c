@@ -14,10 +14,9 @@ void stage_2_update_classes(Build* b) {
 
     for (int i = 0; i < b->classes->length; i++) {
         Class *class = array_get_index(b->classes, i);
-        Parser* p = b->parser;
-        p->unit = class->unit;
+        Unit* u = class->unit;
+        Parser* p = u->parser;
         class_generate_internals(p, b, class);
-        p->unit = NULL;
     }
 
     b->time_parse += microtime() - start;

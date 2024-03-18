@@ -24,10 +24,14 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->path_cache = path_cache;
     u->hash = NULL;
     //
+    u->parser = parser_make(alc, u);
+    //
     u->funcs = array_make(alc, 50);
     u->classes = array_make(alc, 50);
     u->aliasses = array_make(alc, 20);
     u->globals = array_make(alc, 20);
+    //
+    u->pool_parsers = array_make(alc, 10);
 
     u->id = pkc->b->units->length;
     u->string_count = 0;
