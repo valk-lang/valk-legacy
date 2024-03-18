@@ -21,6 +21,7 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->cc_index = 0;
 
     p->in_header = false;
+    p->on_newline = false;
 
     return p;
 }

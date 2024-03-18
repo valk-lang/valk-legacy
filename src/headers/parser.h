@@ -32,6 +32,7 @@ struct Parser {
     int cc_index;
     //
     bool in_header;
+    bool on_newline;
 };
 
 #endif

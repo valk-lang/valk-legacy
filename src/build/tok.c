@@ -16,6 +16,9 @@ char tok(Parser* p, bool allow_space, bool allow_newline, bool update) {
         if (!allow_newline || !allow_space)
             return tok_none;
         t = tokens[i++];
+        p->on_newline = true;
+    } else {
+        p->on_newline = false;
     }
     char td = tokens[i];
     if(td == 2 || td == 3) {
@@ -63,12 +66,18 @@ char tok_expect_two(Parser* p, char* expect_1, char* expect_2, bool allow_space,
     return t;
 }
 
-void tok_skip_whitespace(Parser* p) {
-    Chunk* ch = p->chunk;
-    int t = ch->tokens[ch->i];
-    while(t == tok_space || t == tok_newline) {
-        ch->i++;
+void tok_expect_newline(Parser* p) {
+    char* tokens = p->chunk->tokens;
+    int i = p->chunk->i;
+    char t = tokens[i];
+    if(t == tok_space) {
+        i += 2;
     }
+    t = tokens[i];
+    if(t != tok_newline) {
+        parse_err(p, -1, "Expected a new line here");
+    }
+    p->chunk->i = i + 2;
 }
 
 bool tok_next_is_whitespace(Parser* p) {

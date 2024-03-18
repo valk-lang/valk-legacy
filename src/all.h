@@ -72,5 +72,6 @@
 #include "headers/error.h"
 #include "headers/scope.h"
 #include "headers/pool.h"
+#include "headers/compile-cond.h"
 
 #endif
