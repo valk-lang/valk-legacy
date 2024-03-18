@@ -241,16 +241,16 @@ while x++ < 5 {
 ### Each
 
 ```rust
-let m = Map[String]{};
-m.set("a", "1")
-m.set("b", "2")
-m.set("c", "3")
+let m = Map[uint]{};
+m.set("a", "10")
+m.set("b", "20")
+m.set("c", "30")
 each m as k, v {
-    println(k + ": " + v)
+    println(k + ":" + v)
 }
-// a:1 b:2 c:3
+// a:10 b:20 c:30
 each m as v {
     println(v)
 }
-// 1 2 3
+// 10 20 30
 ```

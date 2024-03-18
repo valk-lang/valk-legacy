@@ -36,7 +36,7 @@ class Map[T] {
 		this._values = Array[T].new()
 	}
 
-	fn _each(index: uint) (String, String) !end {
+	fn _each(index: uint) (T, String) !end {
 		let k = this._keys.get(index) ! throw end
 		let v = this._values.get(index) ! throw end
 		return v, k

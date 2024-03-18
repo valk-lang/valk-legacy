@@ -7,6 +7,7 @@
 - <{ ... } value scopes
 - comptime macros
 - macros
+--> Only generate _gc_check, etc in Map/Array if T is a gc-type
 - test features --test
 - ci
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 
