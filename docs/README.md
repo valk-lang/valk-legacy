@@ -264,7 +264,7 @@ each m as v {
 
 ### Value-scopes
 
-With `value-scopes` we can execute code that eventual returns a value.
+With `value-scopes` we can execute code that eventually returns a value.
 
 ```
 let a = 5
