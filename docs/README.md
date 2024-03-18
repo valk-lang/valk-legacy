@@ -236,3 +236,20 @@ while x++ < 5 {
 }
 // output: 2 3
 ```
+
+### Each
+
+```rust
+let m = Map[String]{};
+m.set("a", "1")
+m.set("b", "2")
+m.set("c", "3")
+each m as k, v {
+    println(k + ": " + v)
+}
+// a:1 b:2 c:3
+each m as v {
+    println(v)
+}
+// 1 2 3
+```

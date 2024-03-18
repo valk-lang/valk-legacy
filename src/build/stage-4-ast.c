@@ -270,7 +270,7 @@ void read_ast(Parser *p, bool single_line) {
                     }
                     vname = p->tkn;
                 }
-                if(str_is(kname, vname)) {
+                if(kname && str_is(kname, vname)) {
                     parse_err(p, -1, "Key/value variable names cannot be the same: '%s'", kname);
                 }
 
