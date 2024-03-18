@@ -14,6 +14,7 @@ Token *tgen_declare(Allocator *alc, Scope* scope, Decl *decl, Value* value);
 Token *tgen_if(Allocator *alc, Value* cond, Scope* scope_if, Scope* scope_else);
 Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while);
 Token *tgen_throw(Allocator *alc, Build* b, Unit* u, FuncError* err, char* msg);
+Token *tgen_each(Allocator *alc, Value *on, Func *func, Decl *kd, Decl *vd, Scope *scope, Decl* index, Value* vindex);
 
 struct Token {
     int type;
@@ -31,6 +32,16 @@ struct TIf {
 struct TWhile {
     Value* cond;
     Scope* scope_while;
+};
+struct TEach {
+    Value* on;
+    Func* func;
+    Scope* scope;
+    Decl* kd;
+    Decl* kd_buf;
+    Decl* vd;
+    Decl* index;
+    Value* vindex;
 };
 struct TThrow {
     FuncError* err;

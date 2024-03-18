@@ -139,6 +139,69 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir->block = after;
             continue;
         }
+        if (tt == t_each) {
+            TEach* item = t->item;
+            char* on = ir_value(ir, scope, item->on);
+            IRBlock *block_cond = ir_block_make(ir, ir->func, "each_cond_");
+            IRBlock *block_code = ir_block_make(ir, ir->func, "each_code_");
+            IRBlock *block_after = ir_block_make(ir, ir->func, "each_after_");
+            ir_jump(ir, block_cond);
+            ir->block = block_cond;
+
+            Decl* kd = item->kd;
+            Decl* kd_buf = item->kd_buf;
+            Decl* vd = item->vd;
+            Decl* index = item->index;
+
+            Type* type_ptr = type_gen_volt(ir->alc, ir->b, "ptr");
+            Array *types = array_make(ir->alc, 2);
+            array_push(types, item->on->rett);
+            array_push(types, index->type);
+            array_push(types, type_ptr);
+            Array *values = array_make(ir->alc, 2);
+            array_push(values, on);
+            array_push(values, ir_value(ir, scope, vgen_decl(alc, index)));
+            array_push(values, ir_value(ir, scope, kd_buf ? value_make(alc, v_ptr_of, value_make(alc, v_decl, kd_buf, kd_buf->type), type_ptr) : vgen_null(alc, ir->b)));
+            Array *args = ir_fcall_ir_args(ir, values, types);
+            //
+            char* fptr = ir_func_ptr(ir, item->func);
+            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett), 0, 0);
+
+            if(kd && !kd->is_mut) {
+                kd->ir_var = ir_value(ir, scope, vgen_decl(alc, kd_buf));
+            }
+            if(vd->is_mut) {
+                char* var = ir_assign_value(ir, scope, vgen_decl(alc, vd));
+                ir_store_old(ir, vd->type, var, fcall);
+            } else {
+                vd->ir_var = fcall;
+            }
+            // Increment index
+            char* incr = ir_op(ir, scope, op_add, ir_value(ir, scope, vgen_decl(alc, index)), ir_int(ir, 1), index->type);
+            ir_store(ir, ir_assign_value(ir, scope, vgen_decl(alc, index)), incr, ir_type(ir, index->type), index->type->size);
+            // Cond
+            Type *type_i32 = type_gen_volt(ir->alc, ir->b, "i32");
+            char *load = ir_load(ir, type_i32, "@volt_err_code");
+            char *lcond = ir_compare(ir, op_eq, load, "0", "i32", false, false);
+            // Clear error
+            ir_store_old(ir, type_i32, "@volt_err_code", "0");
+            ir_cond_jump(ir, lcond, block_code, block_after);
+            //
+            ir->block = block_code;
+            IRBlock *backup_after = ir->block_after;
+            IRBlock *backup_cond = ir->block_cond;
+            ir->block_after = block_after;
+            ir->block_cond = block_cond;
+            ir_write_ast(ir, item->scope);
+            ir->block_after = backup_after;
+            ir->block_cond = backup_cond;
+            if(!item->scope->did_return) {
+                ir_jump(ir, block_cond);
+            }
+
+            ir->block = block_after;
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

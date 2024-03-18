@@ -268,3 +268,7 @@ Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type
     item->v2 = v2;
     return value_make(alc, v_this_or_that, item, rett);
 }
+
+Value *vgen_decl(Allocator *alc, Decl* decl) {
+    return value_make(alc, v_decl, decl, decl->type);
+}

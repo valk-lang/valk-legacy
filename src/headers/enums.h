@@ -161,6 +161,7 @@ enum TOKENS {
     t_ast_scope,
     t_set_decl_store_var,
     t_set_return_value,
+    t_each,
 };
 
 enum OPERATORS {

@@ -40,6 +40,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
 Value *vgen_isset(Allocator *alc, Build *b, Value *on);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett);
+Value *vgen_decl(Allocator *alc, Decl* decl);
 
 struct Value {
     int type;

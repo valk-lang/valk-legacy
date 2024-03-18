@@ -49,6 +49,7 @@ typedef struct Token Token;
 typedef struct TDeclare TDeclare;
 typedef struct TIf TIf;
 typedef struct TWhile TWhile;
+typedef struct TEach TEach;
 typedef struct TThrow TThrow;
 typedef struct TSetRetv TSetRetv;
 // Values
