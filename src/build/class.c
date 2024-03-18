@@ -499,6 +499,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
         Func* func = array_get_index(funcs, i);
         stage_types_func(p, func);
     }
+    validate_class(p, gclass);
 
     // Restore parser context
     parser_pop_context(p, true);

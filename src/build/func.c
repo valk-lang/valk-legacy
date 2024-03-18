@@ -201,11 +201,31 @@ void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_coun
     int offset = !func->class || is_static ? 0 : 1;
     if (argc < arg_count_min) {
         *p->chunk = *func->chunk_args;
-        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_min - offset, argc - offset);
+        parse_err(p, -1, "Expected amount of function arguments: %d, instead of: %d", arg_count_min - offset, argc - offset);
     }
     if (argc > arg_count_max) {
         *p->chunk = *func->chunk_args;
-        parse_err(p, -1, "Expected amount of arguments: %d, instead of: %d", arg_count_max - offset, argc - offset);
+        parse_err(p, -1, "Expected amount of function arguments: %d, instead of: %d", arg_count_max - offset, argc - offset);
+    }
+}
+void func_validate_rett_count(Parser* p, Func* func, bool is_static, int rett_count_min, int rett_count_max) {
+
+    if (func->is_static != is_static) {
+        *p->chunk = *func->chunk_args;
+        if (is_static)
+            parse_err(p, -1, "Expected function to be static");
+        else
+            parse_err(p, -1, "Expected function to be non-static");
+    }
+
+    int rettc = func->rett_types->length;
+    if (rettc < rett_count_min) {
+        *p->chunk = *func->chunk_rett;
+        parse_err(p, -1, "Expected amount of function return-types: %d, instead of: %d", rett_count_min, rettc);
+    }
+    if (rettc > rett_count_max) {
+        *p->chunk = *func->chunk_rett;
+        parse_err(p, -1, "Expected amount of function return-types: %d, instead of: %d", rett_count_max, rettc);
     }
 }
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types) {

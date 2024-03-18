@@ -154,11 +154,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Decl* index = item->index;
 
             Type* type_ptr = type_gen_volt(ir->alc, ir->b, "ptr");
-            Array *types = array_make(ir->alc, 2);
+            Array *types = array_make(ir->alc, 4);
             array_push(types, item->on->rett);
             array_push(types, index->type);
             array_push(types, type_ptr);
-            Array *values = array_make(ir->alc, 2);
+            Array *values = array_make(ir->alc, 4);
             array_push(values, on);
             array_push(values, ir_value(ir, scope, vgen_decl(alc, index)));
             array_push(values, ir_value(ir, scope, kd_buf ? value_make(alc, v_ptr_of, value_make(alc, v_decl, kd_buf, kd_buf->type), type_ptr) : vgen_null(alc, ir->b)));

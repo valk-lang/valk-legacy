@@ -9,6 +9,7 @@ FuncArg* func_arg_make(Allocator* alc, Type* type);
 void parse_handle_func_args(Parser* p, Func* func);
 void func_generate_args(Allocator* alc, Func* func, Map* args);
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max);
+void func_validate_rett_count(Parser* p, Func* func, bool is_static, int rett_count_min, int rett_count_max);
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types);
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types);
 void func_validate_rett_void(Parser *p, Func *func);

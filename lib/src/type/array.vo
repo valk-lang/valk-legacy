@@ -57,14 +57,11 @@ class Array[T] {
         let size = this.size
         let new_size = size * 2
         let new_data : ptr = null
-        // if this.is_transfered {
-            new_data = mem:alloc(new_size * sizeof(T));
-            mem:copy(data, new_data, size * sizeof(T));
-            mem:free(data)
-        // } else {
-        //     new_data = mem:gc_alloc(new_size * sizeof(T));
-        //     mem:copy(data, new_data, size * sizeof(T));
-        // }
+
+        new_data = mem:alloc(new_size * sizeof(T));
+        mem:copy(data, new_data, size * sizeof(T));
+        mem:free(data)
+
         this.data = new_data
         this.size = new_size
         return new_data
@@ -182,6 +179,15 @@ class Array[T] {
     // }
 
     ////////////////
+    // Internals
+    ////////////////
+
+	fn _each(index: uint) (T, uint) !end {
+		let v = this.get(index) ! throw end
+		return v, index
+	}
+
+    ////////////////
     // Gc
     ////////////////
 
@@ -209,35 +215,4 @@ class Array[T] {
     fn _gc_free() {
         mem:free(this.data)
     }
-
-    ////////////////
-    // Internals
-    ////////////////
-
-    // fn __each_init() uxx {
-    //     return 0
-    // }
-
-    // fn __each(key_ref: uxx[1]) T !end {
-    //     let key = key_ref[0]
-    //     if key >= this.length {
-    //         throw end
-    //     }
-    //     key_ref[0] = key + 1
-    //     return this.get(key) !! throw end;;
-    // }
-
-    // fn __before_free() void {
-    //     // Deref items
-    //     let index = 0#uxx;
-    //     let length = this.length;
-    //     let data = this.data;
-    //     while index < length {
-    //         let value = @ptrv(data, T, index);
-    //         index++;
-    //     }
-
-    //     //
-    //     mem:free(this.data);
-    // }
 }

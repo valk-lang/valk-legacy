@@ -291,12 +291,12 @@ void read_ast(Parser *p, bool single_line) {
 
                 Decl *kd = NULL;
                 if (kname) {
-                    kd = decl_make(alc, kname, array_get_index(func->rett_types, 0), false);
+                    kd = decl_make(alc, kname, array_get_index(func->rett_types, 1), false);
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
-                Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 1), false);
+                Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 0), false);
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
