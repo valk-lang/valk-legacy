@@ -119,6 +119,26 @@ void ir_write_ast(IR* ir, Scope* scope) {
             decl->ir_store_var = ir_assign_value(ir, scope, item->value);
             continue;
         }
+        if (tt == t_set_return_value) {
+            TSetRetv* sr = t->item;
+            int index = sr->index;
+            Value* val = sr->value;
+            Array* rett_refs = ir->func->rett_refs;
+            char* var = array_get_index(rett_refs, index);
+            if(!var) {
+                build_err(ir->b, "Missing return value IR variable (compiler bug)");
+            }
+            char* type = ir_type(ir, val->rett);
+            IRBlock *block_if = ir_block_make(ir, ir->func, "if_set_ret_");
+            IRBlock *after = ir_block_make(ir, ir->func, "set_ret_after_");
+            char* nn = ir_notnull_i1(ir, var);
+            ir_cond_jump(ir, nn, block_if, after);
+            ir->block = block_if;
+            ir_store(ir, var, ir_value(ir, scope, val), type, val->rett->size);
+            ir_jump(ir, after);
+            ir->block = after;
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

@@ -36,14 +36,9 @@ class Map[T] {
 		this._values = Array[T].new()
 	}
 
-	// fn __each_init() uint {
-	// 	return 0;
-	// }
-
-	// fn __each(key_index_ref: &uxx[1]) +String !end {
-	// 	let key_i = key_index_ref[0];
-	// 	let key_v = this._keys.get(key_i) !! throw end;;
-	// 	key_index_ref[0] = key_i + 1;
-	// 	return key_v;
-	// }
+	fn _each(index: uint) (String, String) !end {
+		let k = this._keys.get(index) ! throw end
+		let v = this._values.get(index) ! throw end
+		return k, v
+	}
 }

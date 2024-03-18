@@ -25,6 +25,7 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
     VFuncCall *item = al(alc, sizeof(VFuncCall));
     item->on = on;
     item->args = args;
+    item->rett_refs = NULL;
     item->err_scope = NULL;
     item->err_value = NULL;
     return value_make(alc, v_func_call, item, on->rett->func_rett);
@@ -221,6 +222,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
     buf->result = var_result->item;
     buf->scope = sub;
+    buf->on = val;
 
     return value_make(alc, v_gc_buffer, buf, val->rett);
 }

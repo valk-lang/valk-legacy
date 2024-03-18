@@ -30,6 +30,7 @@ struct Func {
     Array* arg_types;
     Array* arg_values;
     Type* rett;
+    Array* rett_types;
     Class* class;
     Array* cached_values;
     Map* errors;
@@ -40,6 +41,7 @@ struct Func {
     bool types_parsed;
     bool in_header;
     bool has_rett;
+    bool multi_rett;
 };
 struct FuncArg {
     Type* type;

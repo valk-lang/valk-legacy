@@ -86,34 +86,75 @@ void read_ast(Parser *p, bool single_line) {
 
         if (t == tok_id) {
             if (str_is(tkn, "let")){
-                t = tok(p, true, false, true);
-                char* name = p->tkn;
-                if(t != tok_id) {
-                    parse_err(p, -1, "Invalid variable name: '%s'", name);
-                }
-                t = tok(p, true, false, true);
-                Type* type = NULL;
-                if(t == tok_colon) {
-                    type = read_type(p, alc, true);
+                Array *names = array_make(alc, 2);
+                Array *types = array_make(alc, 2);
+                while (true) {
                     t = tok(p, true, false, true);
+                    char *name = p->tkn;
+                    if (t != tok_id) {
+                        parse_err(p, -1, "Invalid variable name: '%s'", name);
+                    }
+                    t = tok(p, true, false, true);
+                    Type *type = NULL;
+                    if (t == tok_colon) {
+                        type = read_type(p, alc, true);
+                        t = tok(p, true, false, true);
+                    }
+                    array_push(names, name);
+                    array_push(types, type);
+
+                    if(t != tok_comma)
+                        break;
                 }
                 if(t != tok_eq) {
                     parse_err(p, -1, "Expected '=' here, found: '%s'", p->tkn);
                 }
 
                 Value* val = read_value(alc, p, true, 0);
-                if(type) {
-                    val = try_convert(alc, b, p->scope, val, type);
-                    type_check(p, type, val->rett);
-                } else {
-                    type = val->rett;
+
+                VFuncCall* fcall = value_extract_func_call(val);
+                Array* fcall_rett_types = NULL;
+                if(names->length > 1) {
+                    if(!fcall) {
+                        parse_err(p, -1, "Right side does not return multiple values");
+                    }
+                    Value* on = fcall->on;
+                    fcall_rett_types = on->rett->func_rett_types;
+                    if(!fcall_rett_types || fcall_rett_types->length < types->length) {
+                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", types->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
+                    }
+                    fcall->rett_refs = array_make(alc, names->length);
                 }
+                for(int i = 0; i < names->length; i++) {
+                    char *name = array_get_index(names, i);
+                    Type *type = array_get_index(types, i);
 
-                Decl* decl = decl_make(alc, name, type, false);
-                Idf *idf = idf_make(b->alc, idf_decl, decl);
-                scope_set_idf(scope, name, idf, p);
+                    if (!type) {
+                        if(fcall_rett_types) {
+                            type = array_get_index(fcall_rett_types, i);
+                        } else {
+                            type = val->rett;
+                        }
+                    }
+                    if (i == 0) {
+                        val = try_convert(alc, b, scope, val, type);
+                        type_check(p, type, val->rett);
+                    } else {
+                        type_check(p, type, array_get_index(fcall_rett_types, i));
+                    }
 
-                array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                    Decl *decl = decl_make(alc, name, type, false);
+                    Idf *idf = idf_make(b->alc, idf_decl, decl);
+                    scope_set_idf(scope, name, idf, p);
+
+                    if(i == 0) {
+                        array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                    } else {
+                        decl->is_mut = true;
+                        scope_add_decl(alc, scope, decl);
+                        array_push(fcall->rett_refs, value_make(alc, v_decl, decl, decl->type));
+                    }
+                }
                 continue;
             }
             if (str_is(tkn, "if")){
@@ -134,10 +175,15 @@ void read_ast(Parser *p, bool single_line) {
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
-                if(scope->rett && !type_is_void(scope->rett)) {
+                Func* func = p->func;
+                if(!func) {
+                    parse_err(p, -1, "Using 'return' outside a function scope");
+                }
+                // Main return value
+                if(!type_is_void(func->rett)) {
                     val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, b, p->scope, val, scope->rett);
-                    type_check(p, scope->rett, val->rett);
+                    val = try_convert(alc, b, p->scope, val, func->rett);
+                    type_check(p, func->rett, val->rett);
                 } else {
                     char t = tok(p, true, false, true);
                     if(t != tok_none && t != tok_semi && t != tok_curly_close) {
@@ -148,6 +194,32 @@ void read_ast(Parser *p, bool single_line) {
                     // Important for GC
                     val = vgen_var(alc, b, val);
                     array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                }
+                // Extra return values
+                if(func->rett_types->length > 1) {
+                    int extra_c = func->rett_types->length - 1;
+                    int i = 1;
+                    // Disable gc
+                    Global* g_disable = get_volt_global(b, "mem", "disable_gc");
+                    Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
+                    Value *var_disable = vgen_var(alc, b, disable);
+                    array_push(scope->ast, token_make(alc, t_set_var, var_disable->item));
+                    array_push(scope->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
+                    while(i <= extra_c) {
+                        tok_expect(p, ",", true, true);
+                        Type* type = array_get_index(func->rett_types, i);
+                        Value* val = read_value(alc, p, true, 0);
+                        val = try_convert(alc, b, p->scope, val, type);
+                        type_check(p, type, val->rett);
+                        // Store
+                        TSetRetv* sr = al(alc, sizeof(TSetRetv));
+                        sr->index = i - 1;
+                        sr->value = val;
+                        array_push(scope->ast, token_make(alc, t_set_return_value, sr));
+                        i++;
+                    }
+                    // Set disable_gc to previous value
+                    array_push(scope->ast, tgen_assign(alc, disable, var_disable));
                 }
 
                 array_push(scope->ast, tgen_return(alc, val));
@@ -279,6 +351,53 @@ void read_ast(Parser *p, bool single_line) {
             }
 
             array_push(scope->ast, tgen_assign(alc, left, right));
+            continue;
+
+        } else if (t == tok_comma) {
+            // Multi assign
+            Array* values = array_make(alc, 4);
+            array_push(values, left);
+            value_is_mutable(left);
+
+            while(t == tok_comma) {
+                tok(p, true, false, true);
+                Value* v = read_value(alc, p, true, 0);
+                array_push(values, v);
+                t = tok(p, true, false, false);
+            }
+
+            tok_expect(p, "=", true, true);
+
+            Value *val = read_value(alc, p, true, 0);
+
+            VFuncCall *fcall = value_extract_func_call(val);
+            if (!fcall) {
+                parse_err(p, -1, "Right side does not return multiple values");
+            }
+            Value *on = fcall->on;
+            Array *fcall_rett_types = on->rett->func_rett_types;
+            if (!fcall_rett_types || fcall_rett_types->length < values->length) {
+                parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", values->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
+            }
+            fcall->rett_refs = array_make(alc, values->length);
+
+            for (int i = 0; i < values->length; i++) {
+                Value *v = array_get_index(values, i);
+                Type *type = v->rett;
+
+                if (i == 0) {
+                    val = try_convert(alc, b, scope, val, type);
+                    type_check(p, type, val->rett);
+                } else {
+                    type_check(p, type, array_get_index(fcall_rett_types, i));
+                }
+
+                if (i == 0) {
+                    array_push(scope->ast, tgen_assign(alc, v, val));
+                } else {
+                    array_push(fcall->rett_refs, v);
+                }
+            }
             continue;
         }
 

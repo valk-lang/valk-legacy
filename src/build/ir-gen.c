@@ -37,7 +37,7 @@ char *ir_int(IR* ir, long int value) {
     return res;
 }
 
-Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
+Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs) {
     Array *ir_values = array_make(ir->alc, values->length + 1);
     Array *types = array_make(ir->alc, values->length + 1);
     for (int i = 0; i < values->length; i++) {
@@ -45,6 +45,14 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values) {
         char *val = ir_value(ir, scope, v);
         array_push(ir_values, val);
         array_push(types, v->rett);
+    }
+    if (rett_refs) {
+        for (int i = 0; i < rett_refs->length; i++) {
+            Value *v = array_get_index(rett_refs, i);
+            char *val = v ? ir_assign_value(ir, scope, v) : "null";
+            array_push(ir_values, val);
+            array_push(types, type_gen_volt(ir->alc, ir->b, "ptr"));
+        }
     }
     return ir_fcall_ir_args(ir, ir_values, types);
 }

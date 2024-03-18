@@ -10,6 +10,7 @@ Type* type_make(Allocator* alc, int type) {
     t->func_default_values = NULL;
     t->func_errors = NULL;
     t->func_rett = NULL;
+    t->func_rett_types = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
@@ -61,17 +62,23 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
                 }
             }
             tok_expect(p, ")", false, false);
+            // Return types
+            Array *return_types = array_make(alc, 2);
             tok_expect(p, "(", false, false);
-            Type* rett;
-            if (tok(p, true, false, false) != tok_bracket_close) {
-                rett = read_type(p, alc, false);
-            } else {
-                rett = type_gen_void(alc);
+            char tt = tok(p, true, false, false);
+            if (tt == tok_bracket_close)
+                tok(p, true, false, true);
+            while (tt != tok_bracket_close) {
+                Type* rett = read_type(p, alc, false);
+                array_push(return_types, rett);
+                tt = tok_expect_two(p, ",", ")", true, false);
             }
-            tok_expect(p, ")", false, false);
+            Type* rett = array_get_index(return_types, 0);
+            rett = rett ? rett : type_gen_void(alc);
             //
             Type *t = type_make(alc, type_func);
             t->func_rett = rett;
+            t->func_rett_types = return_types;
             t->func_args = args;
             t->size = b->ptr_size;
             t->is_pointer = true;
@@ -183,6 +190,7 @@ Type* type_gen_class(Allocator* alc, Class* class) {
 Type* type_gen_func(Allocator* alc, Func* func) {
     Type* t = type_make(alc, type_func);
     t->func_rett = func->rett;
+    t->func_rett_types = func->rett_types;
     t->func_args = func->arg_types;
     t->func_default_values = func->arg_values;
     t->func_errors = func->errors;
@@ -258,6 +266,37 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
     if (!t1->ignore_null && t2->nullable && !t1->nullable) {
         *reason = "non-null vs null-able-type";
         return false;
+    }
+    if (t1->type == type_func) {
+        Array* t1s = t1->func_args;
+        Array* t2s = t2->func_args;
+        if(t1s->length != t2s->length){
+            *reason = "different amount of argument types";
+            return false;
+        }
+        for(int i = 0; i < t1s->length; i++) {
+            Type *ft1 = array_get_index(t1s, i);
+            Type* ft2 = array_get_index(t2s, i);
+            if (!type_compat(ft2, ft1, reason)) {
+                *reason = "argument types not compatible";
+                return false;
+            }
+        }
+        // Return types
+        t1s = t1->func_rett_types;
+        t2s = t2->func_rett_types;
+        if(t1s->length != t2s->length){
+            *reason = "different amount of return types";
+            return false;
+        }
+        for(int i = 0; i < t1s->length; i++) {
+            Type *ft1 = array_get_index(t1s, i);
+            Type* ft2 = array_get_index(t2s, i);
+            if (!type_compat(ft1, ft2, reason)) {
+                *reason = "return types not compatible";
+                return false;
+            }
+        }
     }
     return true;
 }

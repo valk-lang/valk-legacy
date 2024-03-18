@@ -22,7 +22,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (vt == v_func_call) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);
-        Array *values = ir_fcall_args(ir, scope, fcall->args);
+        Array *values = ir_fcall_args(ir, scope, fcall->args, fcall->rett_refs);
         char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
         return ir_func_err_handler(ir, scope, res, fcall);
     }

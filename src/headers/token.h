@@ -36,5 +36,9 @@ struct TThrow {
     FuncError* err;
     VString* msg;
 };
+struct TSetRetv {
+    int index;
+    Value* value;
+};
 
 #endif

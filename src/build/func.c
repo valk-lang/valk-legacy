@@ -12,18 +12,23 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
+
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
+    f->rett_types = array_make(alc, 1);
+
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
+
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
     f->types_parsed = false;
     f->in_header = false;
     f->has_rett = false;
+    f->multi_rett = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -48,21 +53,21 @@ void parse_handle_func_args(Parser* p, Func* func) {
     func->chunk_args = chunk_clone(b->alc, p->chunk);
     skip_body(p);
 
-    if(func->in_header) {
-        func->chunk_rett = chunk_clone(b->alc, p->chunk);
+    // Return type
+    func->chunk_rett = chunk_clone(b->alc, p->chunk);
+
+    char t = tok(p, true, true, false);
+    if (t != tok_curly_open && t != tok_not) {
         func->has_rett = true;
-        skip_type(p);
-    } else {
-        char t = tok(p, true, true, false);
-        func->chunk_rett = chunk_clone(b->alc, p->chunk);
-        if (t != tok_curly_open && t != tok_not) {
-            // Has return type
-            func->has_rett = true;
+        if(t == tok_bracket_open) {
+            func->multi_rett = true;
+            skip_body(p);
+        } else {
             skip_type(p);
         }
     }
 
-    char t = tok(p, true, true, false);
+    t = tok(p, true, true, false);
     Map *errors = NULL;
     if (t == tok_not) {
         errors = map_make(b->alc);
@@ -99,6 +104,8 @@ void parse_handle_func_args(Parser* p, Func* func) {
         tok_expect(p, "{", true, true);
         func->chunk_body = chunk_clone(b->alc, p->chunk);
         skip_body(p);
+    } else {
+        tok_expect(p, ";", true, true);
     }
 }
 

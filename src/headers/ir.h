@@ -15,7 +15,7 @@ char *ir_type_int(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 char *ir_type_align(IR *ir, Type *type, char* result);
 // Func
-void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs);
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size);
@@ -38,7 +38,7 @@ char *ir_var(IRFunc* func);
 void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, long int value);
-Array *ir_fcall_args(IR *ir, Scope *scope, Array *values);
+Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
@@ -107,6 +107,8 @@ struct IRFunc {
     Array* blocks;
     IRBlock* block_start;
     IRBlock* block_code;
+    //
+    Array* rett_refs;
     //
     char* stack_save_vn;
     char* di_scope;

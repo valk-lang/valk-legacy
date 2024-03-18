@@ -406,11 +406,14 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
         str_flat(hash, "|");
     }
     char* h = str_temp_chars(hash);
-    Class* gclass = map_get(class->generics, h);
+    Class *gclass = map_get(class->generics, h);
     if (gclass) {
         build_return_str_buf(b, hash);
         return gclass;
     }
+    if(b->verbose > 2)
+        printf("Create new generic class for: %s\n", h);
+
     // Generate new
     h = str_to_chars(b->alc, hash);
 

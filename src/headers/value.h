@@ -12,6 +12,8 @@ void value_is_mutable(Value* v);
 Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* type);
 bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
+VFuncCall* value_extract_func_call(Value* from);
+
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
@@ -56,6 +58,7 @@ struct VFuncPtr {
 struct VFuncCall {
     Value *on;
     Array *args;
+    Array *rett_refs;
     Scope *err_scope;
     Value *err_value;
     int line;
@@ -68,6 +71,7 @@ struct VNumber {
 struct VGcBuffer {
     VVar* result;
     Scope* scope;
+    Value* on;
 };
 struct VClassPA {
     Value* on;
