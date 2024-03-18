@@ -241,7 +241,7 @@ while x++ < 5 {
 ### Each
 
 ```rust
-let m = Map[uint]{};
+let m = Map[String]{};
 m.set("a", "10")
 m.set("b", "20")
 m.set("c", "30")
