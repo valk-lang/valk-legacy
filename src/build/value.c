@@ -592,7 +592,16 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
     if(ont->func_errors) {
         VFuncCall* f = fcall->item;
-        char t = tok_expect_two(p, "!", "?", true, false);
+        bool void_rett = type_is_void(fcall->rett);
+        char t;
+        if(void_rett){
+            t = tok(p, true, false, false);
+            if(t == tok_not || t == tok_qmark) {
+                t = tok(p, true, false, true);
+            }
+        } else {
+            t = tok_expect_two(p, "!", "?", true, false);
+        }
 
         if(t == tok_not) {
 
@@ -621,6 +630,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             }
 
         } else if(t == tok_qmark) {
+            if (void_rett) {
+                parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
+            }
             Value* errv = read_value(alc, p, false, 0);
             errv = try_convert(alc, b, p->scope, errv, fcall->rett);
             type_check(p, fcall->rett, errv->rett);
