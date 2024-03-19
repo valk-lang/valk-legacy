@@ -34,7 +34,10 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->pool_parsers = array_make(alc, 10);
 
     u->id = pkc->b->units->length;
+
     u->string_count = 0;
+    u->export_count = 0;
+
     u->ir_changed = false;
 
     nsc->unit = u;

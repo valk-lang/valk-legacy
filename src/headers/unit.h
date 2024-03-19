@@ -27,6 +27,7 @@ struct Unit {
     //
     int id;
     int string_count;
+    int export_count;
     //
     bool ir_changed;
     bool contains_main_func;

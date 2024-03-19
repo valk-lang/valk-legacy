@@ -222,12 +222,25 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
         }
         char* num = p->tkn;
-        long int iv = 0;
-        iv = atol(num);
-        if (negative){
-            iv *= -1;
+        // Check if float
+        int before = p->chunk->i;
+        char t1 = tok(p, false, false, true);
+        char t2 = tok(p, false, false, true);
+        if (t1 == tok_dot && t2 == tok_number) {
+            char *buf = b->char_buf;
+            char* deci = p->tkn;
+            sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
+            double fv = atof(buf);
+            v = vgen_float(alc, fv, type_gen_volt(alc, b, "float"));
+        } else {
+            p->chunk->i = before;
+            long int iv = atol(num);
+            if (negative) {
+                iv *= -1;
+            }
+            v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
         }
-        v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
+
     } else if(t == tok_plusplus || t == tok_subsub) {
         bool incr = t == tok_plusplus;
         if(tok_next_is_whitespace(p)) {
@@ -1065,28 +1078,34 @@ Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* typ
 bool try_auto_cast_number(Value* val, Type* type) {
 }
 
-bool try_convert_number(Value* val, Type* type) {
-    if(val->type != v_number || (type->type != type_int && type->type != type_float))
+bool try_convert_number(Value* val, Type* to_type) {
+    int tto = to_type->type;
+    if(val->type != v_number || (tto != type_int && tto != type_float))
         return false;
-    int bytes = type->size;
+    int bytes = to_type->size;
     int bits = bytes * 8;
     VNumber *number = val->item;
-    if (type->type == type_int && val->rett->type != type_float) {
+    if (tto == type_int && val->rett->type != type_float) {
         long int one = 1;
         long int max = bytes < sizeof(intptr_t) ? (one << (bits - 1)) : INTPTR_MAX;
         long int min = 0;
-        if (type->is_signed) {
+        if (to_type->is_signed) {
             min = max * -1;
         }
         long int value = number->value_int;
         // printf("try:%ld\n", value);
         if (value >= min && value <= max) {
             // printf("conv:%ld\n", value);
-            val->rett = type;
+            val->rett = to_type;
             return true;
         }
-    } else if (type->type == type_float) {
-        // TODO: float
+    } else if (tto == type_float) {
+        if(val->rett->type == type_int) {
+            // int -> float
+            number->value_float = (double) number->value_int;
+            val->rett = to_type;
+            return true;
+        }
     }
     return false;
 }

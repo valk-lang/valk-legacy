@@ -12,6 +12,7 @@ void ir_gen_final(IR* ir);
 // Type
 char *ir_type(IR *ir, Type *type);
 char *ir_type_int(IR *ir, int bytes);
+char *ir_type_float(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 char *ir_type_align(IR *ir, Type *type, char* result);
 // Func
@@ -38,6 +39,7 @@ char *ir_var(IRFunc* func);
 void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, long int value);
+char *ir_float(IR* ir, double value);
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);

@@ -72,6 +72,11 @@ char cc_parse_cond(Parser* p) {
             Type* type = read_type(p, p->b->alc, false);
             tok_expect(p, ")", true, false);
             result = type_is_gc(type) ? 1 : 0;
+        } else if (str_is(p->tkn, "@type_is_signed")) {
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, p->b->alc, false);
+            tok_expect(p, ")", true, false);
+            result = type->is_signed ? 1 : 0;
         }
     }
 

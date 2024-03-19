@@ -121,28 +121,28 @@ enum VALUES {
     v_ptrv,
     v_ptr_offset,
     v_global,
-    v_func_ptr,
-    v_func_call, // 5
+    v_func_ptr, // 5
+    v_func_call, 
     v_number,
     v_cast,
     v_string,
-    v_op,
-    v_compare, // 10
+    v_op, // 10
+    v_compare, 
     v_class_init,
     v_incr,
     v_null,
-    v_stack,
-    v_atomic, // 15
+    v_stack, // 15
+    v_atomic,
     v_ptr_of,
     v_ir_cached,
     v_gc_link,
-    v_gc_buffer,
-    v_ir_value, // 20
+    v_gc_buffer, // 20
+    v_ir_value, 
     v_gc_get_table,
     v_value_scope,
     v_var,
-    v_isset,
-    v_and_or, // 25
+    v_isset, // 25
+    v_and_or,
     v_not,
     v_this_or_that,
     v_vscope,

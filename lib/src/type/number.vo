@@ -19,20 +19,36 @@ trait Number {
     }
 
     fn to_base(base: CLASS) String {
-        let chars = "0123456789ABCDEF".data
-
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-            str_rev = mem:alloc(64)
-        }
-        let buf = str_buf
-        let rev = str_rev
 
         if this == 0 || base == 0 {
             return "0";
         }
+        if str_buf == null {
+            str_buf = mem:alloc(64)
+        }
+        let buf = str_buf @as ptr
+        let len = this.to_base_to_ptr(base, buf)
 
+        return String.make_from_ptr(buf, len)
+    }
+
+    fn to_base_to_ptr(base: CLASS, result: ptr) uint {
+
+        let chars = "0123456789ABCDEF".data
+
+        if str_rev == null {
+            str_rev = mem:alloc(64)
+        }
+        let rev = str_rev
         let val = this
+        let negative = false
+        #if @type_is_signed(CLASS)
+        if val < 0 {
+            negative = true
+            val = val * -1
+        }
+        #end
+
         let i : uint = 0;
         while val > 0 {
             @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
@@ -40,14 +56,25 @@ trait Number {
             val = val / base
         }
         // Set len
+        if i == 0 {
+            @ptrv(result, u8, 0) = '0'
+            return 1
+        }
         let len = i
+        #if @type_is_signed(CLASS)
+        if negative {
+            len++
+            @ptrv(result, u8, 0) = '-'
+        }
+        #end
         // Reverse
-        let up = 0
+        let amount = i
+        let offset : uint = negative ? 1 @as uint : 0 @as uint
         while i-- > 0 {
-            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
+            @ptrv(result, u8, i + offset) = @ptrv(rev, u8, amount - i - 1)
         }
 
-        return String.make_from_ptr(buf @as ptr, len)
+        return len
     }
 
     fn print(base: CLASS) {

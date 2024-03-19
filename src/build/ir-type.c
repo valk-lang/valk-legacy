@@ -24,6 +24,9 @@ char *ir_type(IR *ir, Type *type) {
     } else if (type->type == type_int) {
         int bytes = type->size;
         return ir_type_int(ir, bytes);
+    } else if (type->type == type_float) {
+        int bytes = type->size;
+        return ir_type_float(ir, bytes);
     }
 
     printf("Type: %s\n", type_to_str(type, name));
@@ -70,6 +73,18 @@ char *ir_type_int(IR *ir, int bytes) {
     printf("Size: %d\n", bytes);
     die("Unsupported integer size (IR Generator)");
 	return "";
+}
+
+char *ir_type_float(IR *ir, int bytes) {
+    if (bytes == 4) {
+        return "float";
+    } else if (bytes == 8) {
+        return "double";
+    }
+    printf("Namespace: %s\n", ir->unit->nsc->name);
+    printf("Size: %d\n", bytes);
+    die("Unsupported float size (IR Generator)");
+    return "";
 }
 
 char *ir_type_align(IR *ir, Type *type, char* result) {
