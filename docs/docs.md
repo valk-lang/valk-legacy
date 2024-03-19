@@ -45,8 +45,9 @@ make
 
 </td><td>
 
-* [Values](#values)
+* [Advanced](#advanced)
     * [ValueScopes](#value-scopes)
+    * [CompileConditions](#compile-conditions)
 
 </td></tr>
 </table>
@@ -260,13 +261,13 @@ each m as v {
 // 10 20 30
 ```
 
-## Values
+## Advanced
 
 ### Value-scopes
 
 With `value-scopes` we can execute code that eventually returns a value.
 
-```
+```rust
 let a = 5
 let b = <{
     if a > 100 {
@@ -284,9 +285,34 @@ println(b)
 
 This feature is very useful in error handling for when we want to provide an alternative value but also want to execute some code when it happens. e.g. for logging.
 
-```
+```rust
 let a = might_error() ? <{
     Mylogger.log("might_error() returned an error, this should not happen!")
     return 0
+}
+```
+
+### Compile conditions
+
+This feature is still being worked on
+
+With `compile conditions` we can modify our code based on parameters we gave the compiler. We can also do checks on types. This can be useful when working with generic types.
+
+```rust
+fn main() {
+    #if OS == linux
+    println("Linux")
+    #elif OS != macos
+    println("Not macOS or Linux")
+    #else
+    println("...")
+    #end
+
+    #if @type_is_pointer(T)
+    println("Type is a pointer")
+    #if @type_is_gc(T)
+    println("Type is a garbage collected type")
+    #end
+    #end
 }
 ```

@@ -7,7 +7,7 @@
 
 # Volt programming language
 
-[Website](https://voltx.dev) | [Documentation](https://github.com/volt-lang/volt/blob/main/docs/README.md) | [Roadmap](https://github.com/volt-lang/volt/blob/main/ROADMAP.md) | [Discord](https://discord.gg/RwEGqdSERA)
+[Website](https://voltx.dev) | [Documentation](https://github.com/volt-lang/volt/blob/main/docs/docs.md) | [Roadmap](https://github.com/volt-lang/volt/blob/main/ROADMAP.md) | [Discord](https://discord.gg/RwEGqdSERA)
 
 
 Volt is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Volt is unique because of its new way of doing garbage collection. It's much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
