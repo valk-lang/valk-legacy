@@ -32,15 +32,15 @@ struct Connection {
     fn send(buffer: utils:ByteBuffer) uint !connection_error !e_again {
 
         if this.open == false { throw connection_error }
-        if buffer.start_index >= buffer.length { return 0 }
+        if buffer.read_index >= buffer.length { return 0 }
 
         // let ssl = this.ssl;
-        let bytes_to_send = buffer.length - buffer.start_index;
+        let bytes_to_send = buffer.length - buffer.read_index;
         let bytes_sent : uint = 0;
 
         // if isset(ssl) {
         //     // SSL
-        //     let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + buffer.start_index, bytes_to_send @as i32);
+        //     let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + buffer.read_index, bytes_to_send @as i32);
         //     if wbytes <= 0 {
         //         // SSL_ERROR_WANT_WRITE: 3
         //         let err = ossl.SSL_get_error(ssl.ssl, wbytes);
@@ -57,9 +57,9 @@ struct Connection {
         // } else {
             // No SSL
             // #if OS == win
-            // let wbytes = sys.send(this.fd, buffer.data + buffer.start_index, bytes_to_send @as i32, 0);
+            // let wbytes = sys.send(this.fd, buffer.data + buffer.read_index, bytes_to_send @as i32, 0);
             // #else
-            let wbytes = sys:send(this.fd, buffer.data + buffer.start_index, bytes_to_send, 0);
+            let wbytes = sys:send(this.fd, buffer.data + buffer.read_index, bytes_to_send, 0);
             // #end
             if wbytes < 0 {
                 // #if OS == win
@@ -87,7 +87,7 @@ struct Connection {
             bytes_sent = wbytes @as uint;
         // }
 
-        buffer.start_index += bytes_sent;
+        buffer.read_index += bytes_sent;
 
         return bytes_sent;
     }

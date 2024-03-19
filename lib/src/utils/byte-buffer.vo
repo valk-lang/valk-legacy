@@ -6,7 +6,7 @@ class ByteBuffer {
     ~ data: ptr
 	~ size: uint
 	length: uint (0)
-	start_index: uint (0)
+	read_index: uint (0)
 
 	static fn new(start_size: uint) CLASS {
 		if start_size < 10 {
@@ -24,7 +24,7 @@ class ByteBuffer {
 	}
 
 	fn clear() void {
-		this.start_index = 0;
+		this.read_index = 0;
 		this.length = 0;
 	}
 
@@ -130,14 +130,20 @@ class ByteBuffer {
 		return str;
 	}
 
-	fn clear_before_start_index() {
-		let index = this.start_index;
-		if index == 0 { return }
-		let bytes = this.length - index;
+	fn clear_before_read_index() {
+		let index = this.read_index
+		let len = this.length
+		if index == len {
+			this.read_index = 0
+			this.length = 0
+			return
+		}
+		if index == 0 : return
+		let bytes = len - index;
 		let data = this.data;
 		mem:copy(data + index, data, bytes);
 		this.length -= index;
-		this.start_index = 0;
+		this.read_index = 0;
 	}
 
 	// 

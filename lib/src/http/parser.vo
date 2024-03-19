@@ -59,7 +59,7 @@ struct Parser {
 
 		let stage = result.stage;
 		let data = bytes.data;
-		let pos = bytes.start_index;
+		let pos = bytes.read_index;
 		let length = bytes.length;
 
 		if stage > 2 {
@@ -103,7 +103,7 @@ struct Parser {
 			}
 
 			pos = index + 2;
-			bytes.start_index = pos;
+			bytes.read_index = pos;
 			stage = 1;
 			result.stage = stage;
 		}
@@ -119,7 +119,7 @@ struct Parser {
 			if index == pos {
 				// End of headers
 				pos = index + 2;
-				bytes.start_index = pos;
+				bytes.read_index = pos;
 				stage = 2;
 				result.stage = stage;
 
@@ -143,7 +143,7 @@ struct Parser {
 			headers.set(key.to_lower(), value);
 
 			pos = index + 2;
-			bytes.start_index = pos;
+			bytes.read_index = pos;
 		}
 
 		if only_headers {
@@ -159,7 +159,7 @@ struct Parser {
 			let body = bytes.sub_str(pos, content_len);
 
 			pos += content_len;
-			bytes.start_index = pos;
+			bytes.read_index = pos;
 			result.fully_parsed = true;
 			result.body = body;
 			result.stage = 3;

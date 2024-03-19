@@ -176,7 +176,7 @@ class Server {
             let res = http_con.parse_result;
             let read_buf = http_con.read_buf;
             while true {
-                if read_buf.start_index == read_buf.length {
+                if read_buf.read_index == read_buf.length {
                     // let bytes = http_con.netcon.recv(read_buf) ! |err| {
                     //     if err == err#e_again {
                     //         return;
@@ -193,7 +193,7 @@ class Server {
                     throw read_error //, "Invalid request";
                 }
 
-                read_buf.clear_before_start_index();
+                read_buf.clear_before_read_index();
 
                 if res.fully_parsed {
                     break

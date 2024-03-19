@@ -12,6 +12,7 @@ class Connection {
     // uploads: ?Array[String] (null)
     read_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     parse_result: ParseResult (ParseResult{})
+    parse_pos: uint (0)
 
     // Response
     // out_file: ?fs:FileStream = null;
@@ -24,7 +25,7 @@ class Connection {
         this.parse_result.clear()
 
         let read_buf = this.read_buf;
-        if read_buf.start_index == read_buf.length {
+        if read_buf.read_index == read_buf.length {
             read_buf.clear();
         }
     }
