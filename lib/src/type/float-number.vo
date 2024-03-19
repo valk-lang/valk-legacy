@@ -24,9 +24,8 @@ trait FloatNumber {
         let fpart = this - ipart @as CLASS; 
 
         @ptrv(buf, u8, ilen) = '.'
-        // Get the value of fraction part upto given no. 
-        // of points after dot. The third parameter 
-        // is needed to handle cases like 233.007 
+        
+        // Get decimals by multiplying with 10^{amount of decimals}
         let x = 1
         let d = decimals
         while d-- > 0 {
