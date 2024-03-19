@@ -84,7 +84,7 @@ char *ir_type_float(IR *ir, int bytes) {
     printf("Namespace: %s\n", ir->unit->nsc->name);
     printf("Size: %d\n", bytes);
     die("Unsupported float size (IR Generator)");
-	return "";
+    return "";
 }
 
 char *ir_type_align(IR *ir, Type *type, char* result) {
