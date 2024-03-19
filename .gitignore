@@ -6,6 +6,7 @@
 /.vscode
 callgrind.*
 out.txt
+/flame
 
 # Prerequisites
 *.d
