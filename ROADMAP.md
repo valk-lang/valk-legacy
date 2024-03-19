@@ -7,6 +7,10 @@
 - test features --test
 - ci
 - floats
+- handle access types (private, readonly, ...)
+- compile condition variables
+- cli args + update help
+- make prebuilt releases (version 0.0.1)
 
 // Lower priority
 - string functions
