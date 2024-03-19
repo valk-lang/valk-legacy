@@ -21,7 +21,7 @@
 <g id="shape-3ab8d9d9-68ca-8014-8004-111a27809403">
 <g class="fills" id="fills-3ab8d9d9-68ca-8014-8004-111a27809403">
 <path rx="0" ry="0" d="M65.500,135.500L130.000,269.000C130.000,269.000,143.333,293.000,170.000,293.000C196.000,293.000,210.000,269.000,210.000,269.000L274.500,135.500L170.000,267.000L65.500,135.500Z" style="fill: rgb(31, 7, 71); fill-opacity: 1;">
-<animate id="bot" attributeName="fill" values="rgb(31, 7, 71);white;rgb(31, 7, 71)" begin="0s;top.end+5s" dur="0.2s" />
+<animate id="bot" attributeName="fill" values="rgb(31, 7, 71);white;rgb(31, 7, 71)" begin="2s;top.end+5s" dur="0.2s" />
 </path>
 </g>
 </g>
