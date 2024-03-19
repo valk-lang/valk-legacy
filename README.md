@@ -61,7 +61,7 @@ Volt is only faster in the way it creates and manages objects, which most progra
 
 - Each thread handles it's own memory, but you can still share your variables with other threads. Even when your thread has ended, the memory will still be valid.
 
-- Volt does not force the user to use mutexes/locks for shared memory. Therefore the program can crash when you use 2 threads to modify the same data at the same time.
+- Volt does not force the user to use mutexes/locks for shared memory. Therefore the program can crash when you use multiple threads to modify the same data at the same time. Reading the same data with multiple threads is fine.
 
 ## References
 
