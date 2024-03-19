@@ -46,8 +46,8 @@ make
 </td><td>
 
 * [Advanced](#advanced)
-    * [ValueScopes](#value-scopes)
-    * [CompileConditions](#compile-conditions)
+    * [Value Scopes](#value-scopes)
+    * [Compile Conditions](#compile-conditions)
 
 </td></tr>
 </table>
@@ -263,9 +263,9 @@ each m as v {
 
 ## Advanced
 
-### Value-scopes
+### Value scopes
 
-With `value-scopes` we can execute code that eventually returns a value.
+With `value scopes` we can execute code that eventually returns a value.
 
 ```rust
 let a = 5
