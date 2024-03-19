@@ -6,7 +6,6 @@
 - macros (e.g. array, map)
 - test features --test
 - ci
-- floats
 - handle access types (private, readonly, ...)
 - compile condition variables
 - cli args + update help
