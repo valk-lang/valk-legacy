@@ -129,7 +129,7 @@ class Server {
                 // Existing connection
                 if lsn.has_stopped_the_connection() {
                     if this.show_info {
-                        print("[+] Close connection: \n") // + fd.str());
+                        println("[+] Close connection: " + fd)
                     }
                     net:Socket.close(fd);
                     continue;
@@ -152,7 +152,7 @@ class Server {
                 if lsn.has_read_request() {
                     Server.respond(this, http_con, handler) ! {
                         if this.show_info {
-                            println("[+] Invalid request: " + fd.to_str());
+                            println("[+] Invalid request: " + fd);
                         }
                         net:Socket.close(fd)
                         continue
