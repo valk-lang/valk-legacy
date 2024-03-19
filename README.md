@@ -46,9 +46,9 @@ cd volt
 make
 ```
 
-## How can it be faster than rust?
+## How can it have faster/similar performance as Rust?
 
-Volt is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and uses less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Volt often being faster than Rust. Note that our way doing GC is much different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. 9 out of 10 times we simply clean up the pools instead.
+Volt is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and uses less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Volt being faster than Rust sometimes. Note that our way doing GC is much different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. 9 out of 10 times we simply clean up the pools instead.
 
 ## Benchmarks
 
