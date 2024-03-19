@@ -20,7 +20,8 @@ class Connection {
 
     fn reset_parser() void {
 
-        this.parse_result = ParseResult{};
+        // this.parse_result = ParseResult{};
+        this.parse_result.clear()
 
         let read_buf = this.read_buf;
         if read_buf.start_index == read_buf.length {

@@ -27,14 +27,14 @@ class Poll[T] {
         return poll
     }
 
-    fn wait(timeout: i32 (-1)) Array[Listener[T]] {
+    fn wait(timeout: i32 (-1), buffer: ?Array[Listener[T]] (null)) Array[Listener[T]] {
 
-        let events = Array[Listener[T]].new()
+        let events = isset(buffer) ? buffer : Array[Listener[T]].new()
 
         let ebuf = this.epoll_buffer
         let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 10, timeout)
         if count_ <= 0 {
-            os:sleep_ms(100)
+            os:sleep_ms(1)
             return events
         }
         let count = count_ @as uint

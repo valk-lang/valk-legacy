@@ -451,7 +451,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Left side of '?' must be of type bool");
             }
 
+            Scope* scope = p->scope;
+            Scope* sv1 = scope_sub_make(alc, sc_default, scope);
+            scope_apply_issets(alc, sv1, v->issets);
+
+            p->scope = sv1;
             Value *v1 = read_value(alc, p, true, 0);
+            p->scope = scope;
             tok_expect(p, ":", true, true);
             Value *v2 = read_value(alc, p, true, 51);
 

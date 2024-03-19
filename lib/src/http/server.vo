@@ -77,8 +77,11 @@ class Server {
         let sock_lsn = poll.create_listener(sock_fd, null);
         sock_lsn.detect_read_request(true);
 
+        let buffer = Array[io:Listener[?Connection]].new()
+
         while true {
-            let events = poll.wait();
+            buffer.clear()
+            let events = poll.wait(-1, buffer);
             let event_count = events.length;
             let i : uint = 0;
 

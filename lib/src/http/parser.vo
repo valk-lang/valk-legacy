@@ -19,6 +19,16 @@ class ParseResult {
 	~ fully_parsed: bool (false)
 	~ headers_parsed: bool (false)
 	- stage: uint (0)
+
+	fn clear() {
+		this.stage = 0
+		this.headers_parsed = false
+		this.fully_parsed = false
+		this.content_length = 0
+		this.status = 0
+		this.body = ""
+		this.headers.clear()
+	}
 }
 
 struct Parser {
@@ -38,13 +48,13 @@ struct Parser {
 		// Stage 3. Done
 
 		if result.fully_parsed {
-			result.stage (0)
-			result.headers_parsed (false)
-			result.fully_parsed (false)
-			result.content_length (0)
-			result.status (0)
-			result.body ("")
-			result.headers (Map[String]{})
+			result.stage = 0
+			result.headers_parsed = false
+			result.fully_parsed = false
+			result.content_length = 0
+			result.status = 0
+			result.body = ""
+			result.headers.clear()
 		}
 
 		let stage = result.stage;
