@@ -18,6 +18,7 @@ class Connection {
     // out_file: ?fs:FileStream = null;
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
+    response: Response (Response{})
 
     fn reset_parser() void {
 

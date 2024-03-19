@@ -6,8 +6,8 @@ use net;
 use io;
 use fs;
 
-fn test(req: Request) Response {
-    return Response.html("Hello world!");
+fn test(req: Request, res: Response) {
+    res.html("Hello world!");
 }
 
 class Server {
@@ -15,11 +15,11 @@ class Server {
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
-    - handler: fn(Request)(Response) (test)
+    - handler: fn(Request, Response)() (test)
     // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
 
-    static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
+    static fn new(host: String, port: u16, handler: fn(Request, Response)()) Server !socket_init_error !socket_bind_error {
 
         let max_connections : uint = 10000;
         let socket = net:Socket.new_tcp(host, port, false) ! { throw socket_init_error }
@@ -99,7 +99,7 @@ class Server {
 
                     let fd = netcon.fd;
                     if this.show_info {
-                        // println("[+] New connection: " + fd.str());
+                        println("[+] New connection: " + fd);
                     }
 
                     let http_con = Connection {
@@ -115,15 +115,19 @@ class Server {
 
                 let http_con = lsn.data @as Connection
                 if lsn.data == null {
-                    print("[x] Missing http connection for fd: \n") // + lsn.fd.str());
-                    net:Socket.close(lsn.fd);
-                    continue;
+                    if this.show_info {
+                        println("[x] Missing http connection for fd: " + lsn.fd)
+                    }
+                    net:Socket.close(lsn.fd)
+                    continue
                 };
 
                 if http_con.fd != fd {
-                    print("[x] fd mismatch\n");
-                    net:Socket.close(fd);
-                    continue;
+                    if this.show_info {
+                        print("[x] fd mismatch\n")
+                    }
+                    net:Socket.close(fd)
+                    continue
                 }
 
                 // Existing connection
@@ -131,8 +135,8 @@ class Server {
                     if this.show_info {
                         println("[+] Close connection: " + fd)
                     }
-                    net:Socket.close(fd);
-                    continue;
+                    net:Socket.close(fd)
+                    continue
                 }
 
                 if lsn.has_write_request() {
@@ -167,7 +171,9 @@ class Server {
         }
     }
 
-    - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    - static fn respond(server: Server, http_con: Connection, handler: fn(Request, Response)()) void !read_error !sent_error {
+
+        let resp = http_con.response
 
         while true {
 
@@ -187,7 +193,10 @@ class Server {
                     }
                 }
                 Parser.parse_request(read_buf, res) ! {
-                    http_con.respond(Response.error(400));
+                    resp.reset()
+                    resp.error(400)
+                    http_con.respond(resp);
+                    http_con.send_response_bytes();
                     throw read_error //, "Invalid request";
                 }
 
@@ -223,8 +232,8 @@ class Server {
 			    body: res.body,
 			    path: res.path,
             };
-            let resp = handler(req);
-
+            resp.reset()
+            handler(req, resp);
             http_con.respond(resp);
         }
 
