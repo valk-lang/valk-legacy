@@ -49,6 +49,11 @@ make
     * [Value Scopes](#value-scopes)
     * [Compile Conditions](#compile-conditions)
 
+</td><td>
+
+* [Unsafe](#unsafe)
+    * WIP 🔨
+
 </td></tr>
 </table>
 
@@ -316,3 +321,8 @@ fn main() {
     #end
 }
 ```
+
+
+## Unsafe
+
+Work in progress 🔨
