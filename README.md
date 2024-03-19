@@ -1,7 +1,7 @@
 
 <div align="center">
 <p>
-    <img width="170" src="https://raw.githubusercontent.com/volt-lang/volt/master/misc/logo.png">
+    <img width="170" src="https://raw.githubusercontent.com/volt-lang/volt/master/misc/volt.svg">
 </p>
 </div>
 
