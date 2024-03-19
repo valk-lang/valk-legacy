@@ -148,7 +148,6 @@ class Server {
                         lsn.detect_write_request(false);
                         http_con.reset_out();
                     }
-                    continue;
                 }
                 if lsn.has_read_request() {
                     Server.respond(this, http_con, handler) ! {
@@ -163,7 +162,6 @@ class Server {
                     } else {
                         http_con.reset_out()
                     }
-                    continue;
                 }
             }
         }
