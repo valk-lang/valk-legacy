@@ -1,0 +1,38 @@
+
+use mem
+
+global float_str_buf : ?ptr
+
+trait FloatNumber {
+
+    fn to_str(decimals: uint (2)) String {
+        let ipart = this @as int; 
+        if (decimals == 0) : return ipart.to_str()
+
+        // Get buffer
+        if float_str_buf == null {
+            float_str_buf = mem:alloc(64)
+        }
+        let buf = float_str_buf @as ptr
+
+        //
+        let ilen = ipart.to_base_to_ptr(10, buf)
+        let fpart = this - ipart @as CLASS; 
+
+        @ptrv(buf, u8, ilen) = '.'
+        // Get the value of fraction part upto given no. 
+        // of points after dot. The third parameter 
+        // is needed to handle cases like 233.007 
+        let x = 1
+        let d = decimals
+        while d-- > 0 {
+            x *= 10
+        }
+        fpart = fpart * x; 
+
+        let tail = fpart @as int
+        let tlen = tail.to_base_to_ptr(10, buf + ilen + 1)
+
+        return String.make_from_ptr(buf, ilen + tlen + 1)
+    }
+}

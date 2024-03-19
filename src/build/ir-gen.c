@@ -208,32 +208,56 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
     char *lfrom_type = ir_type(ir, from_type);
     char *lto_type = ir_type(ir, to_type);
     char *result_var = lval;
+    char *int_type_for_ptr = ir_type_int(ir, ir->b->ptr_size);
 
     if (from_type->is_pointer && !to_type->is_pointer) {
         // Ptr to int
+        char *int_type = ir_type_int(ir, to_type->size);
         char *var = ir_var(ir->func);
         str_flat(code, "  ");
         str_add(code, var);
-        str_flat(code, " = ptrtoint ");
-        str_add(code, lfrom_type);
-        str_flat(code, " ");
+        str_flat(code, " = ptrtoint ptr ");
         str_add(code, result_var);
         str_flat(code, " to ");
-        str_add(code, lto_type);
+        str_add(code, int_type);
         str_flat(code, "\n");
         result_var = var;
-    } else if (!from_type->is_pointer) {
-        if (from_type->size < to_type->size) {
-            // Ext
-            char *new_type = ir_type_int(ir, to_type->size);
+
+        if(to_type->type == type_float){
             char *var = ir_var(ir->func);
             str_flat(code, "  ");
             str_add(code, var);
-            if (from_type->is_signed) {
-                str_flat(code, " = sext ");
+            str_flat(code, " = uitofp ");
+            str_add(code, int_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ");
+            str_add(code, lto_type);
+            str_flat(code, "\n");
+            result_var = var;
+        }
+
+    } else if (!from_type->is_pointer) {
+
+        bool from_int = from_type->type == type_int;
+        bool from_float = !from_int;
+
+        bool to_int = to_type->is_pointer || to_type->type == type_int;
+        bool to_float = !to_int;
+
+        if (from_type->size < to_type->size) {
+            // Ext
+            char *new_type = from_int ? ir_type_int(ir, to_type->size) : ir_type_float(ir, to_type->size);
+            char *var = ir_var(ir->func);
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = ");
+            if (from_int) {
+                str_add(code, from_type->is_signed ? "sext" : "zext");
             } else {
-                str_flat(code, " = zext ");
+                str_add(code, "fpext");
             }
+            str_flat(code, " ");
             str_add(code, lfrom_type);
             str_flat(code, " ");
             str_add(code, result_var);
@@ -244,11 +268,13 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
             result_var = var;
         } else if (from_type->size > to_type->size) {
             // Trunc
-            char *new_type = ir_type_int(ir, to_type->size);
+            char *new_type = from_int ? ir_type_int(ir, to_type->size) : ir_type_float(ir, to_type->size);
             char *var = ir_var(ir->func);
             str_flat(code, "  ");
             str_add(code, var);
-            str_flat(code, " = trunc ");
+            str_flat(code, " = ");
+            str_add(code, from_int ? "trunc" : "fptrunc");
+            str_flat(code, " ");
             str_add(code, lfrom_type);
             str_flat(code, " ");
             str_add(code, result_var);
@@ -259,7 +285,21 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
             result_var = var;
         }
         if (to_type->is_pointer) {
-            // Bitcast to i8*|%struct...*
+            if (from_float) {
+                char *var = ir_var(ir->func);
+                str_flat(code, "  ");
+                str_add(code, var);
+                str_flat(code, " = fptoui ");
+                str_add(code, lfrom_type);
+                str_flat(code, " ");
+                str_add(code, result_var);
+                str_flat(code, " to ");
+                str_add(code, int_type_for_ptr);
+                str_flat(code, "\n");
+                result_var = var;
+                lfrom_type = int_type_for_ptr;
+            }
+
             char *var = ir_var(ir->func);
             str_flat(code, "  ");
             str_add(code, var);
@@ -268,6 +308,34 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
             str_flat(code, " ");
             str_add(code, result_var);
             str_flat(code, " to ptr\n");
+            result_var = var;
+        } else if (from_int && to_float) {
+            char *var = ir_var(ir->func);
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = ");
+            str_add(code, from_type->is_signed ? "sitofp" : "uitofp");
+            str_flat(code, " ");
+            str_add(code, lfrom_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ");
+            str_add(code, lto_type);
+            str_flat(code, "\n");
+            result_var = var;
+        } else if (from_float && to_int) {
+            char *var = ir_var(ir->func);
+            str_flat(code, "  ");
+            str_add(code, var);
+            str_flat(code, " = ");
+            str_add(code, to_type->is_signed ? "fptosi" : "fptoui");
+            str_flat(code, " ");
+            str_add(code, lfrom_type);
+            str_flat(code, " ");
+            str_add(code, result_var);
+            str_flat(code, " to ");
+            str_add(code, lto_type);
+            str_flat(code, "\n");
             result_var = var;
         }
     }

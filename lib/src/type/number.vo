@@ -19,18 +19,27 @@ trait Number {
     }
 
     fn to_base(base: CLASS) String {
-        let chars = "0123456789ABCDEF".data
-
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-            str_rev = mem:alloc(64)
-        }
-        let buf = str_buf
-        let rev = str_rev
 
         if this == 0 || base == 0 {
             return "0";
         }
+        if str_buf == null {
+            str_buf = mem:alloc(64)
+        }
+        let buf = str_buf @as ptr
+        let len = this.to_base_to_ptr(base, buf)
+
+        return String.make_from_ptr(buf, len)
+    }
+
+    fn to_base_to_ptr(base: CLASS, result: ptr) uint {
+
+        let chars = "0123456789ABCDEF".data
+
+        if str_rev == null {
+            str_rev = mem:alloc(64)
+        }
+        let rev = str_rev
 
         let val = this
         let i : uint = 0;
@@ -44,10 +53,10 @@ trait Number {
         // Reverse
         let up = 0
         while i-- > 0 {
-            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
+            @ptrv(result, u8, i) = @ptrv(rev, u8, up++)
         }
 
-        return String.make_from_ptr(buf @as ptr, len)
+        return len
     }
 
     fn print(base: CLASS) {
