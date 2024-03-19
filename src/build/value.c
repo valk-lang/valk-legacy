@@ -222,12 +222,25 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
         }
         char* num = p->tkn;
-        long int iv = 0;
-        iv = atol(num);
-        if (negative){
-            iv *= -1;
+        // Check if float
+        int before = p->chunk->i;
+        char t1 = tok(p, false, false, true);
+        char t2 = tok(p, false, false, true);
+        if (t1 == tok_dot && t2 == tok_number) {
+            char *buf = b->char_buf;
+            char* deci = p->tkn;
+            sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
+            double fv = atof(buf);
+            v = vgen_float(alc, fv, type_gen_volt(alc, b, "float"));
+        } else {
+            p->chunk->i = before;
+            long int iv = atol(num);
+            if (negative) {
+                iv *= -1;
+            }
+            v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
         }
-        v = vgen_int(alc, iv, type_gen_volt(alc, b, "int"));
+
     } else if(t == tok_plusplus || t == tok_subsub) {
         bool incr = t == tok_plusplus;
         if(tok_next_is_whitespace(p)) {
