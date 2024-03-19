@@ -52,8 +52,6 @@ class Connection {
     // 	}
 
     // 	out.append_str("\r\n");
-
-    // 	this.send_response_bytes();
     // }
 
     fn respond(resp: Response) void {
@@ -68,7 +66,6 @@ class Connection {
         // }
 
         resp.compile(this.out_buf);
-        this.send_response_bytes();
     }
 
     fn can_clear_out() bool {

@@ -227,6 +227,8 @@ class Server {
 
             http_con.respond(resp);
         }
+
+        http_con.send_response_bytes();
     }
 
     fn add_static_dir(path: String, relative_to_exe: bool (false)) void {
