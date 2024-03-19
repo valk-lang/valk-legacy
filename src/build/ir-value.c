@@ -14,7 +14,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VNumber* item = v->item;
         if(v->rett->type == type_int || v->rett->type == type_bool)
             return ir_int(ir, item->value_int);
-        // TODO: float
+        return ir_float(ir, item->value_float);
     }
     if (vt == v_null) {
         return "null";
@@ -307,7 +307,8 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return ir_phi(ir, values, ir_type(ir, v->rett));
     }
 
-    return "???";
+    printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
+    exit(1);
 }
 
 char* ir_assign_value(IR* ir, Scope* scope, Value* v) {

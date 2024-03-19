@@ -36,6 +36,11 @@ char *ir_int(IR* ir, long int value) {
     itoa(v, res + (value < 0 ? 1 : 0), 10);
     return res;
 }
+char *ir_float(IR* ir, double value) {
+    char *res = al(ir->alc, 64);
+    sprintf(res, "%f", value);
+    return res;
+}
 
 Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs) {
     Array *ir_values = array_make(ir->alc, values->length + 1);
@@ -239,10 +244,10 @@ char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type) {
 
     } else if (!from_type->is_pointer) {
 
-        bool from_int = from_type->type == type_int;
+        bool from_int = from_type->type == type_int || from_type->type == type_bool;
         bool from_float = !from_int;
 
-        bool to_int = to_type->is_pointer || to_type->type == type_int;
+        bool to_int = to_type->is_pointer || to_type->type == type_int || to_type->type == type_bool;
         bool to_float = !to_int;
 
         if (from_type->size < to_type->size) {
@@ -358,6 +363,7 @@ char *ir_i1_cast(IR *ir, char *val) {
 
 char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
 
+    bool is_float = rett->type == type_float;
     char *ltype = ir_type(ir, rett);
     char *var = ir_var(ir->func);
     Str *code = ir->block->code;
@@ -378,19 +384,23 @@ char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
     str_add(code, var);
     str_flat(code, " = ");
     if (op == op_add) {
-        str_flat(code, "add ");
+        str_add(code, is_float ? "fadd " : "add ");
     } else if (op == op_sub) {
-        str_flat(code, "sub ");
+        str_add(code, is_float ? "fsub " : "sub ");
     } else if (op == op_mul) {
-        str_flat(code, "mul ");
+        str_add(code, is_float ? "fmul " : "mul ");
     } else if (op == op_div) {
-        if (rett->is_signed) {
+        if (is_float) {
+            str_flat(code, "fdiv ");
+        } else if (rett->is_signed) {
             str_flat(code, "sdiv ");
         } else {
             str_flat(code, "udiv ");
         }
     } else if (op == op_mod) {
-        if (rett->is_signed) {
+        if (is_float) {
+            str_flat(code, "frem ");
+        } else if (rett->is_signed) {
             str_flat(code, "srem ");
         } else {
             str_flat(code, "urem ");

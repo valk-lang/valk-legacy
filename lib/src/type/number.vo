@@ -50,6 +50,10 @@ trait Number {
         }
         // Set len
         let len = i
+        if len == 0 {
+            @ptrv(result, u8, 0) = '0'
+            return 1
+        }
         // Reverse
         let up = 0
         while i-- > 0 {

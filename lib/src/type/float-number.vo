@@ -5,6 +5,10 @@ global float_str_buf : ?ptr
 
 trait FloatNumber {
 
+    fn _string() String {
+        return this.to_str(2)
+    }
+
     fn to_str(decimals: uint (2)) String {
         let ipart = this @as int; 
         if (decimals == 0) : return ipart.to_str()
