@@ -7,7 +7,6 @@
 - test features --test
 - ci
 - floats
-- speed up http server: re-use headers map
 
 // Lower priority
 - string functions

@@ -57,6 +57,8 @@ Volt is only faster in the way it creates and manages objects, which most progra
 
 Code used: [https://programming-language-benchmarks.vercel.app/problem/binarytrees](https://programming-language-benchmarks.vercel.app/problem/binarytrees)
 
+    <img src="https://raw.githubusercontent.com/volt-lang/volt/master/misc/volt-http.png">
+
 </p></div>
 
 
