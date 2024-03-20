@@ -14,7 +14,6 @@
 ```
 // v0.0.1
 - macros (e.g. array, map)
-- test features --test
 - ci
 - handle access types (private, readonly, ...)
 - compile condition variables
