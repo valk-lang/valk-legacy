@@ -65,6 +65,10 @@ Volt is only faster in the way it creates and manages objects, which most progra
 
 - Unlike other languages, our GC has no randomness. Every run is exactly the same as the run before to the last byte. So there are no fluctuations in cpu usage and memory usage. (Except when using shared memory over multiple threads)
 
+## Contributions
+
+Once we hit version 0.1.0, we want to look for people who can help with: the standard library, packages and supporting SIMD. If you want to contribute, just hop into the discord and post in general chat or send a private message to the discord owner.
+
 ## References
 
 Bintree code used for benchmarks: [https://programming-language-benchmarks.vercel.app/problem/binarytrees](https://programming-language-benchmarks.vercel.app/problem/binarytrees)
