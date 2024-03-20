@@ -838,7 +838,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     }
 
     // _add
-    if (!lt->nullable) {
+    if (op == op_add && !lt->nullable) {
         Func *add = lt->class ? map_get(lt->class->funcs, "_add") : NULL;
         if (add && add->is_static == false && add->arg_types->length == 2) {
             Type *arg_type = array_get_index(add->arg_types, 1);
@@ -855,7 +855,11 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
 
     //
     if(!lt->class || !lt->class->allow_math) {
-        parse_err(p, -1, "You cannot use operators on these values");
+        char t1[512];
+        char t2[512];
+        type_to_str(left->rett, t1);
+        type_to_str(right->rett, t2);
+        parse_err(p, -1, "You cannot use the '%s' operator between these types: %s <-> %s", op_to_str(op), t1, t2);
     }
     bool is_ptr = false;
     bool is_signed = lt->is_signed || rt->is_signed;

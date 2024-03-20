@@ -52,11 +52,7 @@ int cmd_build(int argc, char *argv[]) {
         cmd_build_help();
         return 1;
     }
-    char* path_out = map_get(options, "-o");
-    if (!path_out) {
-        cmd_build_help();
-        return 1;
-    }
+
     if(array_contains(args, "--help", arr_find_str) || array_contains(args, "-h", arr_find_str)) {
         cmd_build_help();
         return 0;
@@ -67,6 +63,12 @@ int cmd_build(int argc, char *argv[]) {
     bool autorun = array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
     bool is_clean = array_contains(args, "--clean", arr_find_str) || array_contains(args, "-c", arr_find_str);
     bool optimize = !array_contains(args, "--no-opt", arr_find_str);
+
+    char* path_out = map_get(options, "-o");
+    if (!path_out && !autorun) {
+        cmd_build_help();
+        return 1;
+    }
 
     int verbose = 0;
     if(array_contains(args, "-v", arr_find_str)) {
@@ -148,6 +150,14 @@ int cmd_build(int argc, char *argv[]) {
     b->cache_dir = cache_dir;
     if (b->verbose > 0)
         printf("📦 Cache directory: %s\n", cache_dir);
+
+    // Generate out path if needed
+    if(!b->path_out) {
+        path_out = al(alc, VOLT_PATH_MAX);
+        strcpy(path_out, b->cache_dir);
+        strcat(path_out, "tmp_build");
+        b->path_out = path_out;
+    }
 
     //
     build_set_stages(b);

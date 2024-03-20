@@ -4,6 +4,9 @@ struct TestResult {
     // Asserts
     as_count: uint (0)
     as_failed: uint (0)
+    as_count_t: uint (0)
+    as_failed_t: uint (0)
+    // Tests
     tests_count: uint (0)
     tests_fail_count: uint (0)
     // Error at
@@ -21,17 +24,20 @@ struct TestResult {
 }
 
 fn test_init() TestResult {
+    println("-----------------------")
     return TestResult{};
 }
 
 fn test_assert(check: bool, result: TestResult, path: String, line: uint) {
     result.as_count++
+    result.as_count_t++
     if check == false {
         if result.as_failed == 0 {
             result.fail_path = path
             result.fail_line = line
         }
         result.as_failed++
+        result.as_failed_t++
     }
 }
 
@@ -56,8 +62,7 @@ fn test_result(result: TestResult) {
     print("> " + name + dots + " " + (failed ? "FAIL" : "OK") + "\n")
 
     if(failed) {
-        print("# FAILED IN: " + result.fail_path + "\n")
-        print("# ON LINE: " + result.fail_line + "\n")
+        print("# FAIL ON LINE: " + result.fail_line + ", IN: " + result.fail_path + "\n")
         result.tests_fail_count++
     }
     result.tests_count++
@@ -65,7 +70,9 @@ fn test_result(result: TestResult) {
 
 fn test_final_result(result: TestResult) {
     println("-----------------------")
+    println("ASSERTS FAILED: " + result.as_failed_t)
+    println("ASSERTS CORRECT: " + (result.as_count_t - result.as_failed_t))
     println("TESTS FAILED: " + result.tests_fail_count)
-    println("TESTS SUCCESS: " + (result.tests_count - result.tests_fail_count))
+    println("TESTS SUCCEEDED: " + (result.tests_count - result.tests_fail_count))
     println("-----------------------")
 }

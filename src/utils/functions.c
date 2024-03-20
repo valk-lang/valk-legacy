@@ -154,3 +154,4 @@ size_t get_mem_usage() {
     return info.arena + info.hblkhd;
     #endif
 }
+
