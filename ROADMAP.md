@@ -17,7 +17,6 @@
 - ci
 - handle access types (private, readonly, ...)
 - compile condition variables
-- cli args + update help
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
