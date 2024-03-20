@@ -202,3 +202,15 @@ enum SNIPPET_ARG_TYPES {
     snip_value,
     snip_type,
 };
+
+enum TARGET {
+    os_linux,
+    os_win,
+    os_macos,
+    os_bsd,
+    os_other,
+    arch_x86,
+    arch_x64,
+    arch_arm64,
+    arch_other,
+};

@@ -6,4 +6,6 @@ unsigned long microtime();
 void sleep_ms(unsigned int ms);
 void ctxhash(char *content_, char *buf_);
 size_t get_mem_usage();
+char* arch_str(int arch);
+char* os_str(int os);
 

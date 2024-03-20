@@ -2,6 +2,8 @@
 #include "../all.h"
 
 void cmd_build_help();
+int default_arch();
+int default_os();
 
 int cmd_build(int argc, char *argv[]) {
 
@@ -16,6 +18,8 @@ int cmd_build(int argc, char *argv[]) {
     Array *args = array_make(alc, 20);
     Array *has_value = array_make(alc, 10);
     array_push(has_value, "-o");
+    array_push(has_value, "--target");
+    array_push(has_value, "--def");
     parse_argv(argv, argc, has_value, args, options);
 
     // Validate args
@@ -25,8 +29,8 @@ int cmd_build(int argc, char *argv[]) {
         char *arg = array_get_index(args, i);
         if (ends_with(arg, ".vo")) {
             if (!file_exists(arg)) {
-                sprintf(char_buf, "File not found: '%s'", arg);
-                die(char_buf);
+                printf("File not found: '%s'", arg);
+                return 1;
             }
             char *fullpath = al(alc, VOLT_PATH_MAX);
             get_fullpath(arg, fullpath);
@@ -37,12 +41,12 @@ int cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!is_dir(arg)) {
-            sprintf(char_buf, "Invalid file/directory: '%s'", arg);
-            die(char_buf);
+            printf("Invalid file/directory: '%s'", arg);
+            return 1;
         }
         if (main_dir) {
-            sprintf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
-            die(char_buf);
+            printf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
+            return 1;
         }
         char *dir_buf = al(alc, VOLT_PATH_MAX);
         get_fullpath(arg, dir_buf);
@@ -81,6 +85,58 @@ int cmd_build(int argc, char *argv[]) {
         verbose = 3;
     }
 
+    Map* cc_defs = build_cc_defs(alc, options);
+
+    int os = default_os();
+    int arch = default_arch();
+    int target_os = os;
+    int target_arch = arch;
+    char *target = map_get(options, "--target");
+
+    if (target) {
+        if (strcmp(target, "linux-x64") == 0) {
+            target_os = os_linux;
+            target_arch = arch_x64;
+        } else if (strcmp(target, "linux-arm64") == 0) {
+            target_os = os_linux;
+            target_arch = arch_arm64;
+        } else if (strcmp(target, "macos-x64") == 0) {
+            target_os = os_macos;
+            target_arch = arch_x64;
+        } else if (strcmp(target, "macos-arm64") == 0) {
+            target_os = os_macos;
+            target_arch = arch_arm64;
+        } else if (strcmp(target, "win-x64") == 0) {
+            target_os = os_win;
+            target_arch = arch_x64;
+        } else if (strcmp(target, "win-arm64") == 0) {
+            target_os = os_win;
+            target_arch = arch_arm64;
+        } else {
+            printf("Unsupported target: '%s'\nOptions: linux-x64, linux-arm64, macos-x64, macos-arm64, win-x64, win-arm64", target);
+            return 1;
+        }
+    }
+
+    if(target_arch == arch_x86) {
+        printf("x86-32bit is currently not supported by the compiler\n");
+        return 1;
+    }
+    if(target_arch == arch_other) {
+        printf("Your target architecture is unknown / not-supported by the compiler\n");
+        return 1;
+    }
+    if(target_os == os_bsd) {
+        printf("BSD is currently not supported by the compiler\n");
+        return 1;
+    }
+    if(target_os == os_other) {
+        printf("The compiler does not recognize the operating system you are using\n");
+        return 1;
+    }
+
+    map_set(cc_defs, "OS", os_str(target_os));
+    map_set(cc_defs, "ARCH", arch_str(target_arch));
 
     // Build
     Build *b = al(alc, sizeof(Build));
@@ -90,9 +146,6 @@ int cmd_build(int argc, char *argv[]) {
     b->char_buf = char_buf;
     b->str_buf = str_buf;
     b->path_out = path_out;
-
-    b->os = "linux";
-    b->arch = "x64";
 
     b->pkc_by_dir = map_make(alc);
     b->fc_by_path = map_make(alc);
@@ -113,6 +166,12 @@ int cmd_build(int argc, char *argv[]) {
 
     b->pkc_main = NULL;
     b->nsc_main = NULL;
+
+    b->cc_defs = cc_defs;
+    b->arch = target_arch;
+    b->target_arch = target_arch;
+    b->os = target_os;
+    b->target_os = target_os;
 
     b->ptr_size = 8;
     b->error_count = 0;
@@ -256,6 +315,86 @@ Str* build_get_str_buf(Build* b) {
 }
 void build_return_str_buf(Build* b, Str* buf) {
     array_push(b->pool_str, buf);
+}
+
+
+Map* build_cc_defs(Allocator* alc, Map* options) {
+
+    Map* res = map_make(alc);
+
+    char* defs = map_get(options, "--def");
+    if(!defs)
+        return res;
+
+    int len = strlen(defs);
+    int i = 0;
+    bool read_key = true;
+    int part_i = 0;
+    char part[256];
+    char key[256];
+
+    while (i < len) {
+        char ch = defs[i];
+        i++;
+        if (ch == '=' && read_key) {
+            part[part_i] = '\0';
+            part_i = 0;
+            if (!is_valid_varname_all(part)) {
+                printf("Invalid comptime variable name: '%s'\n", part);
+                exit(1);
+            }
+            strcpy(key, part);
+            read_key = false;
+            continue;
+        }
+        if (ch == ',' && !read_key) {
+            part[part_i] = '\0';
+            part_i = 0;
+
+            map_set(res, dups(alc, key), dups(alc, part));
+
+            read_key = true;
+            continue;
+        }
+        part[part_i] = ch;
+        part_i++;
+    }
+    if (!read_key) {
+        part[part_i] = '\0';
+        map_set(res, dups(alc, key), dups(alc, part));
+    }
+
+    return res;
+}
+
+int default_os() {
+//
+#if _WIN32
+    return os_win;
+#endif
+#if __unix__
+#if __linux__
+    return os_linux;
+#else
+    return os_bsd;
+#endif
+#endif
+#if __APPLE__
+    return os_macos;
+#endif
+    return os_other;
+}
+
+int default_arch() {
+//
+#if defined(__x86_64__) || defined(_M_X64)
+    return arch_x64;
+#elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+    return arch_x86;
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    return arch_arm64;
+#endif
+    return arch_other;
 }
 
 void cmd_build_help() {

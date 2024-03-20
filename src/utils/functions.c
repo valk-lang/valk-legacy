@@ -155,3 +155,20 @@ size_t get_mem_usage() {
     #endif
 }
 
+char* arch_str(int arch) {
+    if(arch == arch_x64)
+        return "x64";
+    else if(arch == arch_arm64)
+        return "arm64";
+    return "unknown";
+}
+
+char* os_str(int os) {
+    if(os == os_win)
+        return "win";
+    else if(os == os_linux)
+        return "linux";
+    else if(os == os_macos)
+        return "macos";
+    return "unknown";
+}

@@ -7,6 +7,7 @@
 int cmd_build(int argc, char *argv[]);
 Str* build_get_str_buf(Build* b);
 void build_return_str_buf(Build* b, Str* buf);
+Map* build_cc_defs(Allocator* alc, Map* options);
 
 Pkc *pkc_make(Allocator *alc, Build *b, char *name_suggestion);
 void pkc_set_dir(Pkc *pkc, char *dir);
@@ -50,9 +51,6 @@ struct Build {
     char *cache_dir;
     char *path_out;
     //
-    char *os;
-    char *arch;
-    //
     char *char_buf;
     Str *str_buf;
     usize time_lex;
@@ -91,8 +89,15 @@ struct Build {
     ErrorCollection* errors;
     Array *strings;
     //
+    Map* cc_defs;
+    //
     size_t mem_parse;
     size_t mem_objects;
+    //
+    int os;
+    int target_os;
+    int arch;
+    int target_arch;
     //
     int ptr_size;
     int error_count;
