@@ -301,8 +301,6 @@ let a = might_error() ? <{
 
 ### Compile conditions
 
-This feature is still being worked on
-
 With `compile conditions` we can modify our code based on parameters we gave the compiler. We can also do checks on types. This can be useful when working with generic types.
 
 ```rust
@@ -338,7 +336,19 @@ println(a) // 5
 
 ### Testing
 
-(WIP)
+To test our project, we pass in the `--test` cli argument with our build command. Instead of calling our `main` function, the program will now run all your defined tests. In these tests we can use `assert` to check if something is an expected result.
+
+```rust
+test "My test" {
+    let a = 10
+    assert(a > 5)
+    assert("this" == "that")
+}
+```
+
+```sh
+volt build ./my-tests/*.vo --test --run
+```
 
 ## Unsafe
 
