@@ -269,7 +269,7 @@ void cmd_build_help() {
     printf(" --no-opt            build without optimizations\n");
     printf("\n");
 
-    // printf(" --def               define comptime variables\n");
+    // printf(" --def               define compile condition variables\n");
     // printf("                     format: VAR1=VAL,VAR2=VAL\n");
     // printf(" --target            compile for a specific os/arch\n");
     // printf("                     linux-x64, macos-x64, win-x64\n");

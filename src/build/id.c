@@ -67,11 +67,22 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
 
     Idf* idf = scope_find_idf(scope, name, true);
     if(!idf && !ns) {
-        if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "int") || str_is(name, "uint") || str_is(name, "float") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "u8") || str_is(name, "Array") || str_is(name, "Map")) {
+        if(str_is(name, "uint")){
+            char* name = get_number_type_name(b, b->ptr_size, false, false);
             Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        }
-        if(str_is(name, "print") || str_is(name, "println")) {
+        } else if(str_is(name, "int")){
+            char* name = get_number_type_name(b, b->ptr_size, false, true);
+            Nsc* ns = get_volt_nsc(p->b, "type");
+            idf = scope_find_idf(ns->scope, name, true);
+        } else if(str_is(name, "float")){
+            char* name = get_number_type_name(b, b->ptr_size, true, false);
+            Nsc* ns = get_volt_nsc(p->b, "type");
+            idf = scope_find_idf(ns->scope, name, true);
+        } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "u8") || str_is(name, "Array") || str_is(name, "Map")) {
+            Nsc* ns = get_volt_nsc(p->b, "type");
+            idf = scope_find_idf(ns->scope, name, true);
+        } else if(str_is(name, "print") || str_is(name, "println")) {
             Nsc* ns = get_volt_nsc(p->b, "io");
             idf = scope_find_idf(ns->scope, name, true);
         }

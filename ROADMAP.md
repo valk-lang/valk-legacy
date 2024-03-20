@@ -13,13 +13,13 @@
 
 ```
 // v0.0.1
-- macros (e.g. array, map)
 - ci
 - handle access types (private, readonly, ...)
 - compile condition variables
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
+- macros (e.g. array, map)
 - string functions
 - format string
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 

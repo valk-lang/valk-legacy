@@ -200,6 +200,13 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     return t;
 }
 Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
+    if (str_is(name, "uint")) {
+        name = get_number_type_name(b, b->ptr_size, false, false);
+    } else if (str_is(name, "int")) {
+        name = get_number_type_name(b, b->ptr_size, false, true);
+    } else if (str_is(name, "float")) {
+        name = get_number_type_name(b, b->ptr_size, true, false);
+    }
     Nsc* nsc = get_volt_nsc(b, "type");
     Idf* idf = scope_find_idf(nsc->scope, name, false);
     if(idf && idf->type == idf_class) {
@@ -209,21 +216,29 @@ Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
     exit(1);
 }
 
-Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed) {
+char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed) {
     if(is_float) {
         if(size == 4)
-            return type_gen_volt(alc, b, "f32");
+            return "f32";
         if(size == 8)
-            return type_gen_volt(alc, b, "f64");
+            return "f64";
     } else {
         if(size == 1)
-            return type_gen_volt(alc, b, is_signed ? "i8" : "u8");
+            return is_signed ? "i8" : "u8";
         if(size == 2)
-            return type_gen_volt(alc, b, is_signed ? "i16" : "u16");
+            return is_signed ? "i16" : "u16";
         if(size == 4)
-            return type_gen_volt(alc, b, size == b->ptr_size ? (is_signed ? "int" : "uint") : (is_signed ? "i32" : "u32"));
+            return is_signed ? "i32" : "u32";
         if(size == 8)
-            return type_gen_volt(alc, b, size == b->ptr_size ? (is_signed ? "int" : "uint") : (is_signed ? "i64" : "u64"));
+            return is_signed ? "i64" : "u64";
+    }
+    return NULL;
+}
+
+Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed) {
+    char* name = get_number_type_name(b, size, is_float, is_signed);
+    if(name) {
+        return type_gen_volt(alc, b, name);
     }
     return NULL;
 }

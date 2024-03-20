@@ -1,6 +1,0 @@
-
-use volt:mem
-
-integer int {
-    use Number
-}
