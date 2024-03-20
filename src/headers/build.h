@@ -104,6 +104,8 @@ struct Build {
     //
     bool parser_started;
     bool is_test;
+    bool is_clean;
+    bool optimize;
 };
 struct Fc {
     Build *b;

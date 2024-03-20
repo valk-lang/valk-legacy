@@ -57,9 +57,28 @@ int cmd_build(int argc, char *argv[]) {
         cmd_build_help();
         return 1;
     }
+    if(array_contains(args, "--help", arr_find_str) || array_contains(args, "-h", arr_find_str)) {
+        cmd_build_help();
+        return 0;
+    }
 
     // Options
-    bool is_test = array_contains(args, "--test", arr_find_str);
+    bool is_test = array_contains(args, "--test", arr_find_str) || array_contains(args, "-t", arr_find_str);
+    bool autorun = array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
+    bool is_clean = array_contains(args, "--clean", arr_find_str) || array_contains(args, "-c", arr_find_str);
+    bool optimize = !array_contains(args, "--no-opt", arr_find_str);
+
+    int verbose = 0;
+    if(array_contains(args, "-v", arr_find_str)) {
+        verbose = 1;
+    }
+    if(array_contains(args, "-vv", arr_find_str)) {
+        verbose = 2;
+    }
+    if(array_contains(args, "-vvv", arr_find_str)) {
+        verbose = 3;
+    }
+
 
     // Build
     Build *b = al(alc, sizeof(Build));
@@ -98,11 +117,13 @@ int cmd_build(int argc, char *argv[]) {
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
-    b->verbose = 2;
+    b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
 
     b->is_test = is_test;
+    b->is_clean = is_clean;
+    b->optimize = optimize;
 
     // Cache dir
     char *cache_buf = al(alc, 1000);
@@ -112,9 +133,9 @@ int cmd_build(int argc, char *argv[]) {
     strcat(cache_buf, "||");
     // strcat(cache_buf, os);
     // strcat(cache_buf, arch);
-    // strcat(cache_buf, optimize ? "1" : "0");
+    strcat(cache_buf, optimize ? "1" : "0");
     // strcat(cache_buf, debug ? "1" : "0");
-    // strcat(cache_buf, test ? "1" : "0");
+    strcat(cache_buf, is_test ? "1" : "0");
     ctxhash(cache_buf, cache_hash);
     strcpy(cache_dir, get_storage_path());
     strcat(cache_dir, "/cache/");
@@ -185,8 +206,8 @@ int cmd_build(int argc, char *argv[]) {
         if(b->mem_objects > 0) {
             printf("💾 Mem peak LLVM: %.2f MB\n", (double)(b->mem_objects - mem_after_parse) / (1024 * 1024));
         }
-        printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
     }
+    printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
 
     return 0;
 }
@@ -201,20 +222,21 @@ void build_return_str_buf(Build* b, Str* buf) {
 }
 
 void cmd_build_help() {
-    printf("\n# volt build {.vo-file|config-dir} [{more .vo-files}] -o {outpath}\n");
+    printf("\n# volt build {.vo-file|config-dir} [{more .vo-files}] -o {outpath}\n\n");
 
-    // printf(" --clean -c          clear cache\n");
-    // printf(" --debug -d          generate debug info\n");
-    // printf(" --optimize -O       apply code optimizations\n");
-    // printf(" --run -r            run code after compiling\n");
-    // printf(" --test              generate a 'main' that runs all tests\n");
+    printf(" --run -r            run program after compiling\n");
     // printf(" --watch             watch files & rebuild when code changes\n");
-    // printf("\n");
+    printf(" --test -t           build tests\n");
+    printf(" --clean -c          ignore cache\n");
+    // printf(" --debug -d          generate debug info\n");
+    printf(" --no-opt            build without optimizations\n");
+    printf("\n");
 
     // printf(" --def               define comptime variables\n");
     // printf("                     format: VAR1=VAL,VAR2=VAL\n");
     // printf(" --target            compile for a specific os/arch\n");
     // printf("                     linux-x64, macos-x64, win-x64\n");
-    // printf(" -v -vv -vvv         show compile info\n");
+    printf(" -v -vv -vvv         show compile info\n");
+    printf(" --help -h           build command usage info\n");
     printf("\n");
 }

@@ -38,7 +38,7 @@ void stage_5_objects(Build* b) {
         array_push(o_files, u->path_o);
 
         // Build o file if needed
-        if(u->ir_changed || !file_exists(u->path_o)) {
+        if(b->is_clean || u->ir_changed || !file_exists(u->path_o)) {
             Array *ir_files = array_make(b->alc, 2);
             array_push(ir_files, u->path_ir);
             stage_build_o_file(b, u, ir_files);
@@ -125,9 +125,9 @@ void llvm_build_o_file(void* data_) {
     LLVMSetTarget(nsc_mod, data->triple);
     LLVMSetDataLayout(nsc_mod, data->data_layout);
 
-    // if (b->optimize) {
-    stage_5_optimize(nsc_mod);
-    // }
+    if (b->optimize) {
+        stage_5_optimize(nsc_mod);
+    }
 
     if (LLVMTargetMachineEmitToFile(data->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
         fprintf(stderr, "Failed to emit machine code!\n");
