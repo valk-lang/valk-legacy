@@ -1,4 +1,6 @@
 
+use os
+
 struct TestResult {
     name: ?String (null)
     // Asserts
@@ -47,7 +49,7 @@ fn test_result(result: TestResult) {
     let failed = result.as_failed > 0
 
     if name.bytes > 50 {
-        name = name.sub_str_bytes(0, 64)
+        name = name.sub_str_bytes(0, 50)
     }
     if name.bytes % 2 != 0 {
         name += " "
@@ -75,4 +77,7 @@ fn test_final_result(result: TestResult) {
     println("TESTS FAILED: " + result.tests_fail_count)
     println("TESTS SUCCEEDED: " + (result.tests_count - result.tests_fail_count))
     println("-----------------------")
+
+    let failed = result.tests_fail_count > 0
+    os:exit(failed ? 1 : 0)
 }
