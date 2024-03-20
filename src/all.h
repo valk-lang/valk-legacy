@@ -73,5 +73,6 @@
 #include "headers/scope.h"
 #include "headers/pool.h"
 #include "headers/compile-cond.h"
+#include "headers/test.h"
 
 #endif

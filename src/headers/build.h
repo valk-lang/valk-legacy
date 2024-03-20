@@ -103,6 +103,7 @@ struct Build {
     int LOC;
     //
     bool parser_started;
+    bool is_test;
 };
 struct Fc {
     Build *b;

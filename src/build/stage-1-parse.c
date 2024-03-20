@@ -9,6 +9,7 @@ void stage_1_trait(Parser* p, Unit* u, int act);
 void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared);
 void stage_1_value_alias(Parser* p, Unit* u);
+void stage_1_test(Parser* p, Unit* u);
 void stage_1_snippet(Parser* p, Unit* u);
 
 void stage_1_parse(Fc* fc) {
@@ -100,6 +101,10 @@ void stage_parse(Parser* p, Unit* u) {
             }
             if (str_is(tkn, "value")) {
                 stage_1_value_alias(p, u);
+                continue;
+            }
+            if (str_is(tkn, "test")) {
+                stage_1_test(p, u);
                 continue;
             }
             if (str_is(tkn, "snippet")) {
@@ -373,6 +378,38 @@ void stage_1_value_alias(Parser *p, Unit *u) {
 
     Idf* idf = idf_make(b->alc, idf_value_alias, va);
     scope_set_idf(u->nsc->scope, name, idf, p);
+}
+
+void stage_1_test(Parser* p, Unit* u){
+    Build *b = p->b;
+    Allocator *alc = b->alc;
+
+    int t = tok(p, true, false, true);
+    if(t != tok_string) {
+        parse_err(p, -1, "Missing test name");
+    }
+    char* name = p->tkn;
+    tok_expect(p, "{", true, true);
+
+    if (u->b->is_test) {
+        Test *test = al(alc, sizeof(Test));
+        test->name = name;
+        test->body = chunk_clone(alc, p->chunk);
+
+        char *buf = b->char_buf;
+        strcpy(buf, "volt_test_gen_");
+        sprintf(buf, "volt_test_gen_%d_%s", u->tests->length, u->unique_hash);
+        char *fn = dups(alc, buf);
+
+        Func *func = func_make(b->alc, u, p->scope, fn, NULL);
+        func->in_header = p->in_header;
+        func->chunk_body = chunk_clone(alc, p->chunk);
+        test->func = func;
+
+        array_push(u->tests, test);
+    }
+
+    skip_body(p);
 }
 
 void stage_1_snippet(Parser *p, Unit *u) {

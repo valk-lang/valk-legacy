@@ -15,6 +15,9 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     char *path_cache = al(alc, VOLT_PATH_MAX);
     sprintf(path_cache, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
 
+    char uh[64];
+    ctxhash(dir ? dir : path_o, uh);
+
     Unit* u = al(alc, sizeof(Unit));
     u->b = pkc->b;
     u->nsc = nsc;
@@ -22,6 +25,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->path_o = path_o;
     u->path_ir = path_ir;
     u->path_cache = path_cache;
+    u->unique_hash = dups(alc, uh);
     u->hash = NULL;
     //
     u->parser = parser_make(alc, u);
@@ -30,6 +34,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->classes = array_make(alc, 50);
     u->aliasses = array_make(alc, 20);
     u->globals = array_make(alc, 20);
+    u->tests = array_make(alc, 20);
     //
     u->pool_parsers = array_make(alc, 10);
 

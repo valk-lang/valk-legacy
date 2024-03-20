@@ -55,6 +55,9 @@ int cmd_build(int argc, char *argv[]) {
         return 1;
     }
 
+    // Options
+    bool is_test = array_contains(args, "--test", arr_find_str);
+
     // Build
     Build *b = al(alc, sizeof(Build));
     b->alc = alc;
@@ -92,6 +95,8 @@ int cmd_build(int argc, char *argv[]) {
     b->verbose = 2;
     b->LOC = 0;
     b->parser_started = false;
+
+    b->is_test = is_test;
 
     // Cache dir
     char *cache_buf = al(alc, 1000);

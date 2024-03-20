@@ -15,6 +15,7 @@ struct Unit {
     char *path_ir;
     char *path_cache;
     char *hash;
+    char *unique_hash;
     //
     Parser *parser;
     //
@@ -22,6 +23,7 @@ struct Unit {
     Array *classes;
     Array *aliasses;
     Array *globals;
+    Array *tests;
     // Pools
     Array *pool_parsers;
     //

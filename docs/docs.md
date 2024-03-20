@@ -48,6 +48,7 @@ make
 * [Advanced](#advanced)
     * [Value Scopes](#value-scopes)
     * [Compile Conditions](#compile-conditions)
+    * [Atomics](#atomics)
 
 </td><td>
 
@@ -322,6 +323,17 @@ fn main() {
 }
 ```
 
+### Atomics
+
+We can do atomic operations on integers by placing our operation inside an `atomic()` token.
+
+```rust
+// {value-before-updating} = atomic( {variable} {op} {value} )
+let v = 5
+let a = atomic(v + 2)
+println(v) // 7
+println(a) // 5
+```
 
 ## Unsafe
 
