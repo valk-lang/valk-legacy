@@ -97,9 +97,9 @@ int cmd_build(int argc, char *argv[]) {
         if (strcmp(target, "linux-x64") == 0) {
             target_os = os_linux;
             target_arch = arch_x64;
-        } else if (strcmp(target, "linux-arm64") == 0) {
-            target_os = os_linux;
-            target_arch = arch_arm64;
+        // } else if (strcmp(target, "linux-arm64") == 0) {
+        //     target_os = os_linux;
+        //     target_arch = arch_arm64;
         } else if (strcmp(target, "macos-x64") == 0) {
             target_os = os_macos;
             target_arch = arch_x64;
@@ -109,11 +109,11 @@ int cmd_build(int argc, char *argv[]) {
         } else if (strcmp(target, "win-x64") == 0) {
             target_os = os_win;
             target_arch = arch_x64;
-        } else if (strcmp(target, "win-arm64") == 0) {
-            target_os = os_win;
-            target_arch = arch_arm64;
+        // } else if (strcmp(target, "win-arm64") == 0) {
+        //     target_os = os_win;
+        //     target_arch = arch_arm64;
         } else {
-            printf("Unsupported target: '%s'\nOptions: linux-x64, linux-arm64, macos-x64, macos-arm64, win-x64, win-arm64", target);
+            printf("Unsupported target: '%s'\nOptions: linux-x64, macos-x64, macos-arm64, win-x64", target);
             return 1;
         }
     }
