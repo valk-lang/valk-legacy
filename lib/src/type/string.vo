@@ -25,6 +25,24 @@ class String {
         mem:free(this.data)
     }
 
+    fn sub_str_bytes(byte_start_index: uint, byte_length: uint) String {
+
+        let this_bytes = this.bytes;
+        if(byte_start_index > this_bytes){
+            return "";
+        }
+        if((byte_start_index + byte_length) > this_bytes){
+            byte_length = this_bytes - byte_start_index;
+        }
+        if(byte_length == 0){
+            return "";
+        }
+        let from = this.data + byte_start_index;
+        let res = String.make_empty(byte_length);
+        mem:copy(from, res.data, byte_length);
+        return res;
+    }
+
     static fn make_empty(length: uint) String {
         let d = mem:alloc(length + 1)
         @ptrv(d, u8, length) = 0 // trailing 0 byte

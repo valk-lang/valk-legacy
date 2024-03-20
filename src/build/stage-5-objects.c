@@ -75,13 +75,13 @@ void llvm_build_o_file(void* data_) {
     Build *b = data->b;
     Array *ir_files = data->ir_files;
     char *path_o = data->path_o;
+    int ir_count = ir_files->length;
 
     LLVMContextRef ctx = LLVMContextCreate();
     LLVMContextSetOpaquePointers(ctx, true);
 
-    LLVMModuleRef nsc_mod = LLVMModuleCreateWithNameInContext("ki_module", ctx);
+    LLVMModuleRef nsc_mod = ir_count == 1 ? NULL : LLVMModuleCreateWithNameInContext("ki_module", ctx);
 
-    int ir_count = ir_files->length;
     int i = 0;
     while (i < ir_count) {
         char *ir_path = array_get_index(ir_files, i);
@@ -100,11 +100,15 @@ void llvm_build_o_file(void* data_) {
 
         LLVMParseIRInContext(ctx, buf, &mod, &msg);
         if (msg) {
-            Str* code = str_make(b->alc, 1000);
+            Str *code = str_make(b->alc, 1000);
             file_get_contents(code, ir_path);
             printf("IR Code:\n%s\n", str_to_chars(b->alc, code));
             printf("LLVM IR parse error: %s\n", msg);
             exit(1);
+        }
+        if (ir_count == 1) {
+            nsc_mod = mod;
+            break;
         }
 
         LLVMLinkModules2(nsc_mod, mod);

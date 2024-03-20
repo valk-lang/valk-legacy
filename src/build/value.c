@@ -182,6 +182,30 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 array_push(issets, on);
             }
 
+        } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
+
+            tok_expect(p, "(", false, false);
+            Value* val = read_value(alc, p, true, 0);
+            if(val->rett->type != type_bool) {
+                parse_err(p, -1, "The first argument for 'assert' should be a bool value");
+            }
+            tok_expect(p, ")", true, true);
+            // Get test result variable
+            Idf *idf = scope_find_idf(p->scope, "VOLT_TEST_RESULT", true);
+            if(!idf) {
+                parse_err(p, -1, "Missing test result variable while parsing 'assert' (compiler bug)");
+            }
+            Value* result = value_handle_idf(alc, p, idf);
+            // 
+            Func* test_assert = get_volt_func(b, "core", "test_assert");
+            Array* args = array_make(alc, 2);
+            array_push(args, val);
+            array_push(args, result);
+            array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
+            array_push(args, vgen_int(alc, p->line, type_gen_volt(alc, b, "uint")));
+            Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
+            v = vgen_func_call(alc, fptr, args);
+
         } else {
             // Identifiers
             Id id;

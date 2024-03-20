@@ -49,6 +49,7 @@ make
     * [Value Scopes](#value-scopes)
     * [Compile Conditions](#compile-conditions)
     * [Atomics](#atomics)
+    * [Testing](#testing)
 
 </td><td>
 
@@ -334,6 +335,10 @@ let a = atomic(v + 2)
 println(v) // 7
 println(a) // 5
 ```
+
+### Testing
+
+(WIP)
 
 ## Unsafe
 
