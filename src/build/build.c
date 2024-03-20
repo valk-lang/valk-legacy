@@ -33,6 +33,9 @@ int cmd_build(int argc, char *argv[]) {
             array_push(vo_files, fullpath);
             continue;
         }
+        if (arg[0] == '-') {
+            continue;
+        }
         if (!is_dir(arg)) {
             sprintf(char_buf, "Invalid file/directory: '%s'", arg);
             die(char_buf);
@@ -87,6 +90,9 @@ int cmd_build(int argc, char *argv[]) {
     b->func_mark_globals = NULL;
     b->func_mark_shared = NULL;
 
+    b->pkc_main = NULL;
+    b->nsc_main = NULL;
+
     b->ptr_size = 8;
     b->error_count = 0;
     b->export_count = 0;
@@ -139,6 +145,7 @@ int cmd_build(int argc, char *argv[]) {
 
     // Load core dependencies
     Pkc *vlt = pkc_load_pkc(pkc_main, "volt", NULL);
+    Nsc *core = nsc_load(vlt, "core", true, NULL);
     Nsc *io = nsc_load(vlt, "io", true, NULL);
     Nsc *mem = nsc_load(vlt, "mem", true, NULL);
     Nsc *type = nsc_load(vlt, "type", true, NULL);

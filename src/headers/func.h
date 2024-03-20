@@ -43,6 +43,7 @@ struct Func {
     bool in_header;
     bool has_rett;
     bool multi_rett;
+    bool is_test;
 };
 struct FuncArg {
     Type* type;

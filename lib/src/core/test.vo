@@ -1,0 +1,53 @@
+
+struct TestResult {
+    name: ?String (null)
+    // Asserts
+    as_correct: uint (0)
+    as_failed: uint (0)
+
+    as_total: uint (0)
+    as_total_correct: uint (0)
+    as_total_failed: uint (0)
+
+    tests_count: uint (0)
+    tests_fail_count: uint (0)
+
+    fn reset(name: String) {
+        this.name = name
+        this.as_correct = 0
+        this.as_failed = 0
+    }
+}
+
+fn test_init() TestResult {
+    return TestResult{};
+}
+
+fn test_assert(correct: bool, result: TestResult) {
+    result.as_total++
+    if correct {
+        result.as_correct++
+    } else {
+        result.as_failed++
+    }
+}
+
+fn test_result(result: TestResult) {
+    let name = result.name
+    print("> ")
+    if isset(name) {
+        print(name)
+    } else {
+        print("TEST-WITHOUT-NAME")
+    }
+    print(" : ")
+    print(result.as_failed > 0 ? "FAIL" : "OK")
+    print("\n")
+}
+
+fn test_final_result(result: TestResult) {
+    println("-----------------------")
+    println("TESTS FAILED: " + result.tests_fail_count)
+    println("TESTS SUCCESS: " + (result.tests_count - result.tests_fail_count))
+    println("-----------------------")
+}

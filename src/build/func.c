@@ -29,6 +29,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->in_header = false;
     f->has_rett = false;
     f->multi_rett = false;
+    f->is_test = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

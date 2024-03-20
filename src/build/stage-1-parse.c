@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-void stage_parse(Parser* p, Unit* u);
+void stage_parse(Parser* p, Unit* u, Fc* fc);
 void stage_1_func(Parser* p, Unit* u, int act);
 void stage_1_header(Parser* p, Unit* u);
 void stage_1_class(Parser* p, Unit* u, int type, int act);
@@ -9,7 +9,7 @@ void stage_1_trait(Parser* p, Unit* u, int act);
 void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared);
 void stage_1_value_alias(Parser* p, Unit* u);
-void stage_1_test(Parser* p, Unit* u);
+void stage_1_test(Parser* p, Unit* u, Fc* fc);
 void stage_1_snippet(Parser* p, Unit* u);
 
 void stage_1_parse(Fc* fc) {
@@ -25,14 +25,14 @@ void stage_1_parse(Fc* fc) {
     p->scope = fc->scope;
 
     usize start = microtime();
-    stage_parse(p, u);
+    stage_parse(p, u, fc);
     b->time_parse += microtime() - start;
 
     p->in_header = false;
     p->scope = NULL;
 }
 
-void stage_parse(Parser* p, Unit* u) {
+void stage_parse(Parser* p, Unit* u, Fc* fc) {
 
     while(true) {
 
@@ -104,7 +104,7 @@ void stage_parse(Parser* p, Unit* u) {
                 continue;
             }
             if (str_is(tkn, "test")) {
-                stage_1_test(p, u);
+                stage_1_test(p, u, fc);
                 continue;
             }
             if (str_is(tkn, "snippet")) {
@@ -380,7 +380,7 @@ void stage_1_value_alias(Parser *p, Unit *u) {
     scope_set_idf(u->nsc->scope, name, idf, p);
 }
 
-void stage_1_test(Parser* p, Unit* u){
+void stage_1_test(Parser* p, Unit* u, Fc* fc){
     Build *b = p->b;
     Allocator *alc = b->alc;
 
@@ -391,7 +391,7 @@ void stage_1_test(Parser* p, Unit* u){
     char* name = p->tkn;
     tok_expect(p, "{", true, true);
 
-    if (u->b->is_test) {
+    if (b->is_test && fc->nsc->pkc == b->pkc_main) {
         Test *test = al(alc, sizeof(Test));
         test->name = name;
         test->body = chunk_clone(alc, p->chunk);
@@ -404,6 +404,7 @@ void stage_1_test(Parser* p, Unit* u){
         Func *func = func_make(b->alc, u, p->scope, fn, NULL);
         func->in_header = p->in_header;
         func->chunk_body = chunk_clone(alc, p->chunk);
+        func->is_test = true;
         test->func = func;
 
         array_push(u->tests, test);

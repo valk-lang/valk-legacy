@@ -272,3 +272,30 @@ Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type
 Value *vgen_decl(Allocator *alc, Decl* decl) {
     return value_make(alc, v_decl, decl, decl->type);
 }
+
+Value *vgen_string(Allocator *alc, Unit *u, char *body) {
+    Build *b = u->b;
+
+    u->string_count++;
+    char var[64];
+    strcpy(var, "@.str.object.");
+    itoa(u->id, (char *)((intptr_t)var + 13), 10);
+    strcat(var, "_");
+    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
+    char *object_name = dups(b->alc, var);
+
+    strcpy(var, "@.str.body.");
+    itoa(u->id, (char *)((intptr_t)var + 11), 10);
+    strcat(var, "_");
+    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
+    char *body_name = dups(b->alc, var);
+
+    VString *str = al(b->alc, sizeof(VString));
+    str->body = body;
+    str->ir_object_name = object_name;
+    str->ir_body_name = body_name;
+
+    array_push(b->strings, str);
+
+    return value_make(alc, v_string, str, type_gen_volt(alc, b, "String"));
+}

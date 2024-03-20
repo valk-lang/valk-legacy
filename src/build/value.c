@@ -92,30 +92,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     } else if (t == tok_string) {
         char *body = tkn;
         body = string_replace_backslash_chars(b->alc, body);
-
-        p->unit->string_count++;
-        char var[64];
-        strcpy(var, "@.str.object.");
-        itoa(p->unit->id, (char *)((intptr_t)var + 13), 10);
-        strcat(var, "_");
-        itoa(p->unit->string_count, (char *)((intptr_t)var + strlen(var)), 10);
-        char *object_name = dups(b->alc, var);
-
-        strcpy(var, "@.str.body.");
-        itoa(p->unit->id, (char *)((intptr_t)var + 11), 10);
-        strcat(var, "_");
-        itoa(p->unit->string_count, (char *)((intptr_t)var + strlen(var)), 10);
-        char *body_name = dups(b->alc, var);
-
-        VString* str = al(b->alc, sizeof(VString));
-        str->body = body;
-        str->ir_object_name = object_name;
-        str->ir_body_name = body_name;
-
-        array_push(b->strings, str);
-
-        v = value_make(alc, v_string, str, type_gen_volt(alc, b, "String"));
-
+        v = vgen_string(alc, p->unit, body);
     } else if (t == tok_char) {
 
         v = vgen_int(alc, tkn[0], type_gen_volt(alc, b, "u8"));

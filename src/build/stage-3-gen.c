@@ -47,10 +47,52 @@ void stage_generate_main(Build *b) {
     str_flat(code, "i++\n");
     str_flat(code, "}\n");
 
-    // if (b->test) {
-    //     str_flat(code, "ki__test__main();\n");
-    //     str_flat(code, "return 0;\n");
-    // } else {
+    if (b->is_test) {
+        int count = 0;
+        char* buf = b->char_buf;
+
+        Idf *idf = idf_make(b->alc, idf_func, get_volt_func(b, "core", "test_init"));
+        scope_set_idf(func->scope, "VOLT_TEST_INIT", idf, NULL);
+        idf = idf_make(b->alc, idf_func, get_volt_func(b, "core", "test_result"));
+        scope_set_idf(func->scope, "VOLT_TEST_RESULT", idf, NULL);
+        idf = idf_make(b->alc, idf_func, get_volt_func(b, "core", "test_final_result"));
+        scope_set_idf(func->scope, "VOLT_TEST_FINAL_RESULT", idf, NULL);
+
+        // Init test result
+        str_flat(code, "let result = VOLT_TEST_INIT()\n");
+        // Call tests
+        Array* units = b->units;
+        for(int i = 0; i < units->length; i++) {
+            Unit* u = array_get_index(units, i);
+            Array* tests = u->tests;
+            for(int o = 0; o < tests->length; o++) {
+                Test* t = array_get_index(tests, o);
+                Func* tf = t->func;
+                // Set name
+                sprintf(buf, "VOLT_TEST_NAME_%d", count);
+                char* name_idf = dups(b->alc, buf);
+                Idf *idf = idf_make(b->alc, idf_value, vgen_string(b->alc, u, t->name));
+                scope_set_idf(func->scope, name_idf, idf, NULL);
+                str_flat(code, "result.reset(");
+                str_add(code, name_idf);
+                str_flat(code, ")\n");
+                // Call test
+                sprintf(buf, "VOLT_TEST_FUNC_%d", count);
+                char* func_idf_name = dups(b->alc, buf);
+                idf = idf_make(b->alc, idf_func, tf);
+                scope_set_idf(func->scope, func_idf_name, idf, NULL);
+                str_add(code, func_idf_name);
+                str_flat(code, "(result)\n");
+                // Result
+                str_flat(code, "VOLT_TEST_RESULT(result)\n");
+                //
+                count++;
+            }
+        }
+        // Result
+        str_flat(code, "VOLT_TEST_FINAL_RESULT(result)\n");
+        str_flat(code, "return 0;\n");
+    } else {
         if (b->func_main) {
             if (main_has_return)
                 str_flat(code, "return ");
@@ -62,7 +104,7 @@ void stage_generate_main(Build *b) {
         }
         if (!main_has_return)
             str_flat(code, "return 0;\n");
-    // }
+    }
 
     str_flat(code, "}\n");
 
