@@ -200,11 +200,11 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     return t;
 }
 Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
-    if (str_is(name, "uint")) {
+    if (name[0] == 'u' && str_is(name, "uint")) {
         name = get_number_type_name(b, b->ptr_size, false, false);
-    } else if (str_is(name, "int")) {
+    } else if (name[0] == 'i' && str_is(name, "int")) {
         name = get_number_type_name(b, b->ptr_size, false, true);
-    } else if (str_is(name, "float")) {
+    } else if (name[0] == 'f' && str_is(name, "float")) {
         name = get_number_type_name(b, b->ptr_size, true, false);
     }
     Nsc* nsc = get_volt_nsc(b, "type");

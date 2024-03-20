@@ -67,15 +67,15 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
 
     Idf* idf = scope_find_idf(scope, name, true);
     if(!idf && !ns) {
-        if(str_is(name, "uint")){
+        if(name[0] == 'u' && str_is(name, "uint")){
             char* name = get_number_type_name(b, b->ptr_size, false, false);
             Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        } else if(str_is(name, "int")){
+        } else if(name[0] == 'i' && str_is(name, "int")){
             char* name = get_number_type_name(b, b->ptr_size, false, true);
             Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        } else if(str_is(name, "float")){
+        } else if(name[0] == 'f' && str_is(name, "float")){
             char* name = get_number_type_name(b, b->ptr_size, true, false);
             Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
