@@ -80,6 +80,23 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 }
 #endif
 
+void sleep_ms(unsigned int ms) {
+#ifdef WIN32
+    Sleep(ms);
+#else
+    //
+    struct timespec ts;
+    int res;
+
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+#endif
+}
+
 // simple hash has similar speed to crc32 but returns a string instead of a number
 // by: github.com/ctxcode
 void ctxhash(char *content_, char *buf_) {

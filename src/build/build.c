@@ -207,7 +207,34 @@ int cmd_build(int argc, char *argv[]) {
             printf("💾 Mem peak LLVM: %.2f MB\n", (double)(b->mem_objects - mem_after_parse) / (1024 * 1024));
         }
     }
-    printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+
+    // Flush all output
+#ifdef WIN32
+    _flushall();
+#else
+    sync();
+#endif
+    int i = 0;
+    while (!file_exists(b->path_out)) {
+        sleep_ms(10);
+        i++;
+        if (i == 100)
+            break;
+    }
+
+    if(autorun) {
+
+        char cmd[VOLT_PATH_MAX];
+        strcpy(cmd, "\"");
+        strcat(cmd, b->path_out);
+        strcat(cmd, "\"");
+        int code = system(cmd);
+        code = code == 0 ? 0 : 1;
+        exit(code);
+
+    } else {
+        printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+    }
 
     return 0;
 }
