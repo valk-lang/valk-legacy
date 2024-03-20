@@ -15,7 +15,6 @@
 // v0.0.1
 - ci
 - handle access types (private, readonly, ...)
-- compile condition variables
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
