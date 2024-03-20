@@ -12,7 +12,7 @@
 
 Volt is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Volt is unique because of its new way of doing garbage collection. It's much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
-**Features**: Super fast non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling,  c-libraries.
+**Features**: Super fast non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
 ## Install
 
@@ -62,6 +62,8 @@ Volt is only faster in the way it creates and manages objects, which most progra
 - Each thread handles it's own memory, but you can still share your variables with other threads. Even when your thread has ended, the memory will still be valid and automatically freed once other threads no longer use it.
 
 - Volt does not force the user to use mutexes/locks for shared memory. Therefore the program can crash when you use multiple threads to modify the same data at the same time. Reading the same data with multiple threads is fine.
+
+- Unlike other languages, our GC has no randomness. Every run is exactly the same as the run before to the last byte. So there are no fluctuations in cpu usage and memory usage. 
 
 ## References
 
