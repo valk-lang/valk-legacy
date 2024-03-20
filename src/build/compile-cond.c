@@ -66,6 +66,8 @@ char cc_parse_cond(Parser* p) {
     char* tkn = p->tkn;
     char result = -1;
 
+    Build *b = p->b;
+
     if(t == tok_at_word) {
         if (str_is(p->tkn, "@type_is_gc")) {
             tok_expect(p, "(", false, false);
@@ -78,11 +80,46 @@ char cc_parse_cond(Parser* p) {
             tok_expect(p, ")", true, false);
             result = type->is_signed ? 1 : 0;
         }
+    } else if(t == tok_id) {
+        char* name = p->tkn;
+        Map* defs = b->cc_defs;
+        char* value = map_get(defs, name);
+        if(!value)
+            parse_err(p, -1, "Unknown compile condition variable: '%s'", name);
+        result = str_is(value, "0") ? 0 : 1;
+
+        t = tok(p, true, false, false);
+        if(t == tok_eqeq || t == tok_not_eq) {
+            bool not_eq = t == tok_not_eq;
+            t = tok(p, true, false, true);
+            t = tok(p, true, false, true);
+            if(t == tok_id) {
+                result = str_is(value, p->tkn) ? 1 : 0;
+            } else if(t == tok_number) {
+                result = str_is(value, p->tkn) ? 1 : 0;
+            } else {
+                parse_err(p, -1, "Invalid right-side compile condition value: '%s'", p->tkn);
+            }
+            if(not_eq) {
+                // Inverse result
+                result = result ? 0 : 1;
+            }
+        }
     }
 
     if(result == -1) {
         parse_err(p, -1, "Invalid compile condition value");
     }
+
+    t = tok(p, true, false, false);
+    if (t == tok_and) {
+        t = tok(p, true, false, true);
+        result = result && cc_parse_cond(p);
+    } else if (t == tok_or) {
+        t = tok(p, true, false, true);
+        result = result && cc_parse_cond(p);
+    }
+
     return result;
 }
 

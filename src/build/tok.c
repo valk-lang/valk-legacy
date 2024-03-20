@@ -75,7 +75,7 @@ void tok_expect_newline(Parser* p) {
     }
     t = tokens[i];
     if(t != tok_newline) {
-        parse_err(p, -1, "Expected a new line here");
+        parse_err(p, -1, "Expected a new line here, found: '%s'", tokens + i + 1);
     }
     p->chunk->i = i + 1;
 }
