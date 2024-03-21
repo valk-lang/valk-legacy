@@ -52,12 +52,6 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             act = act_private_nsc;
         } else if (t == tok_triple_sub) {
             act = act_private_pkc;
-        } else if (t == tok_tilde) {
-            act = act_readonly_fc;
-        } else if (t == tok_tilde2) {
-            act = act_readonly_nsc;
-        } else if (t == tok_tilde3) {
-            act = act_readonly_pkc;
         }
 
         char* tkn = p->tkn;

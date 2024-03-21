@@ -286,6 +286,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             ClassProp* prop = map_get(class->props, prop_name);
             if(prop) {
                 // Property
+                value_check_act(prop->act, class->fc, p, "property");
                 v = vgen_class_pa(alc, v, prop);
             } else {
                 // Check functions
@@ -293,6 +294,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 if (!func) {
                     parse_err(p, -1, "Class '%s' has no property/function named: '%s'", class->name, prop_name);
                 }
+                value_check_act(func->act, class->fc, p, "function");
                 if(func->is_static) {
                     parse_err(p, -1, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name);
                 }
@@ -1153,15 +1155,15 @@ void value_check_act(int act, Fc* fc, Parser* p, char* name) {
     }
     if(!cfc)
         return;
-    if(act == act_private_fc || act == act_readonly_fc) {
+    if(act == act_private_fc) {
         if(fc != cfc) {
             parse_err(p, -1, "You cannot access this %s from this file", name);
         }
-    } else if(act == act_private_nsc || act == act_readonly_nsc) {
+    } else if(act == act_private_nsc) {
         if(fc->nsc != cfc->nsc) {
             parse_err(p, -1, "You cannot access this %s from this namespace", name);
         }
-    } else if(act == act_private_pkc || act == act_readonly_pkc) {
+    } else if(act == act_private_pkc) {
         if(fc->nsc->pkc != cfc->nsc->pkc) {
             parse_err(p, -1, "You cannot access this %s from this package", name);
         }

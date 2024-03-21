@@ -27,15 +27,12 @@ make
 * [Types](#types)
 * [Variables](#variables)
 * [Functions](#functions)
+    * [Error Handling](#error-handling)
 * [Classes](#classes)
+* [Globals](#globals)
 
 </td><td>
 
-* [Definitions](#definitions)
-    * [Functions](#functions)
-        * [ErrorHandling](#error-handling)
-    * [Classes](#classes)
-    * [Globals](#globals)
 * [Tokens](#tokens)
     * [Let](#variables)
     * [If/Else](#if-else)
@@ -46,6 +43,7 @@ make
 </td><td>
 
 * [Advanced](#advanced)
+    * [Access Types](#access-types)
     * [Value Scopes](#value-scopes)
     * [Compile Conditions](#compile-conditions)
     * [Atomics](#atomics)
@@ -269,6 +267,25 @@ each m as v {
 ```
 
 ## Advanced
+
+### Access types
+
+With access types we control who can access what. We can define things as either `-` (private) or `~` (readonly). We can also control the reach of these access types by repeating the token. Readonly can only be used for class properties. Private can be used for `functions`, `classes`, `traits` & `globals`.
+
+```rust
+- fn  ...   // function is private except in this file
+-- fn  ...  // function is private except in this namespace
+--- fn  ... // function is private except in this package
+
+class MyClass {
+    - p1: ...    // property is private except in this file
+    -- p2:  ...  // property is private except in this namespace
+    --- p3: ...  // property is private except in this package
+    ~ p4: ...    // property is public but can only be modified from this file
+    ~~ p5: ...   // property is public but can only be modified from this namespace
+    ~~~ p6: ...  // property is public but can only be modified from this package
+}
+```
 
 ### Value scopes
 
