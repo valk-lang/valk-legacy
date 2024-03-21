@@ -9,7 +9,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 
-void value_check_act(int act, Parser* p);
+void value_check_act(int act, Fc* fc, Parser* p, char* name);
 
 Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     Build *b = p->b;
@@ -511,7 +511,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_global) {
         Global* g = idf->item;
-        value_check_act(g->act, p);
+        value_check_act(g->act, g->fc, p, "global");
         return value_make(alc, v_global, g, g->type);
     }
     if (type == idf_scope) {
@@ -526,14 +526,17 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_func) {
         Func* func = idf->item;
+        value_check_act(func->act, func->fc, p, "function");
         return vgen_func_ptr(alc, func, NULL);
     }
     if (type == idf_class) {
         Class* class = idf->item;
+        value_check_act(class->act, class->fc, p, "class");
         return value_handle_class(alc, p, class);
     }
     if (type == idf_value_alias) {
         ValueAlias* va = idf->item;
+        value_check_act(va->act, va->fc, p, "value-alias");
         Chunk ch;
         ch = *p->chunk;
         *p->chunk = *va->chunk;
@@ -1139,13 +1142,28 @@ VFuncCall* value_extract_func_call(Value* from) {
     return NULL;
 }
 
-void value_check_act(int act, Parser* p) {
-    Fc* fc = NULL;
+void value_check_act(int act, Fc* fc, Parser* p, char* name) {
+    if (act == act_public)
+        return;
+    Fc* cfc = NULL;
     Parser* sp = p;
-    while(sp && !fc) {
-        fc = sp->chunk->fc;
+    while(sp && !cfc) {
+        cfc = sp->chunk->fc;
         sp = sp->prev;
     }
-    if(!fc)
+    if(!cfc)
         return;
+    if(act == act_private_fc || act == act_readonly_fc) {
+        if(fc != cfc) {
+            parse_err(p, -1, "You cannot access this %s from this file", name);
+        }
+    } else if(act == act_private_nsc || act == act_readonly_nsc) {
+        if(fc->nsc != cfc->nsc) {
+            parse_err(p, -1, "You cannot access this %s from this namespace", name);
+        }
+    } else if(act == act_private_pkc || act == act_readonly_pkc) {
+        if(fc->nsc->pkc != cfc->nsc->pkc) {
+            parse_err(p, -1, "You cannot access this %s from this package", name);
+        }
+    }
 }
