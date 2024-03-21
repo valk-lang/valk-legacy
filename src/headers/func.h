@@ -36,6 +36,8 @@ struct Func {
     Array* cached_values;
     Map* errors;
     //
+    int act;
+    //
     bool is_static;
     bool is_inline;
     bool can_error;

@@ -5,6 +5,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     Class* c = al(alc, sizeof(Class));
     c->b = b;
     c->type = type;
+    c->act = act_public;
     c->name = NULL;
     c->ir_name = NULL;
     c->body = NULL;

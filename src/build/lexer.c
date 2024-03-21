@@ -325,6 +325,16 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
                 op = tok_or;
                 i++;
             }
+        } else if (ch == '~') {
+            op = tok_tilde;
+            if(next == '~') {
+                op = tok_tilde2;
+                i++;
+                if(content[i] == '~') {
+                    op = tok_tilde3;
+                    i++;
+                }
+            }
         } else if (ch == '?') {
             op = tok_qmark;
         } else if (ch == '^') {
@@ -333,8 +343,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             op = tok_colon;
         } else if (ch == '.') {
             op = tok_dot;
-        } else if (ch == '~') {
-            op = tok_tilde;
         } else if (ch == '#') {
             op = tok_hashtag;
         } else if (ch == ';') {

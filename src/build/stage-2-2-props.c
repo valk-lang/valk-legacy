@@ -55,14 +55,29 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         }
 
         int act = act_public;
-        if(t == tok_sub) {
+        if (t == tok_sub) {
             act = act_private_fc;
-            t = tok(p, true, false, true);
-        } else if(t == tok_tilde) {
+        } else if (t == tok_subsub) {
+            act = act_private_nsc;
+        } else if (t == tok_triple_sub) {
+            act = act_private_pkc;
+        } else if (t == tok_tilde) {
             act = act_readonly_fc;
-            t = tok(p, true, false, true);
+        } else if (t == tok_tilde2) {
+            act = act_readonly_nsc;
+        } else if (t == tok_tilde3) {
+            act = act_readonly_pkc;
         }
+
         char* name = p->tkn;
+        char* act_tkn;
+
+        if(act != act_public) {
+            t = tok(p, true, false, true);
+            act_tkn = name;
+            name = p->tkn;
+        }
+
         int next = tok(p, true, false, true);
 
         if(next == tok_colon) {
@@ -76,6 +91,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
                 parse_err(p, -1, "Property name is already used for another property or function: '%s'", name);
             }
             ClassProp* prop = al(b->alc, sizeof(ClassProp));
+            prop->act = act;
             prop->chunk_type = chunk_clone(b->alc, p->chunk);
             prop->chunk_value = NULL;
             prop->index = class->props->values->length;
@@ -150,6 +166,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         sprintf(export_name, "%s__%s", class->ir_name, name);
 
         Func *func = func_make(b->alc, class->unit, p->scope, name, dups(b->alc, export_name));
+        func->act = act;
         func->class = class;
         func->is_static = is_static;
         func->is_inline = is_inline;

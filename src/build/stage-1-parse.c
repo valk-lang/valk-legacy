@@ -41,14 +41,33 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
         if (t == tok_eof) {
             break;
         }
-
-        int act = act_public;
-
         if (t == tok_semi) {
             continue;
         }
 
+        int act = act_public;
+        if (t == tok_sub) {
+            act = act_private_fc;
+        } else if (t == tok_subsub) {
+            act = act_private_nsc;
+        } else if (t == tok_triple_sub) {
+            act = act_private_pkc;
+        } else if (t == tok_tilde) {
+            act = act_readonly_fc;
+        } else if (t == tok_tilde2) {
+            act = act_readonly_nsc;
+        } else if (t == tok_tilde3) {
+            act = act_readonly_pkc;
+        }
+
         char* tkn = p->tkn;
+        char* act_tkn;
+
+        if(act != act_public) {
+            t = tok(p, true, false, true);
+            act_tkn = tkn;
+            tkn = p->tkn;
+        }
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {
@@ -79,14 +98,6 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_class(p, u, ct_bool, act);
                 continue;
             }
-            if (str_is(tkn, "header")) {
-                stage_1_header(p, u);
-                continue;
-            }
-            if (str_is(tkn, "use")) {
-                stage_1_use(p, u);
-                continue;
-            }
             if (str_is(tkn, "trait")) {
                 stage_1_trait(p, u, act);
                 continue;
@@ -101,6 +112,19 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             }
             if (str_is(tkn, "value")) {
                 stage_1_value_alias(p, u);
+                continue;
+            }
+
+            if (act != act_public) {
+                parse_err(p, -1, "Unexpected '%s' before '%s'", act_tkn, tkn);
+            }
+
+            if (str_is(tkn, "header")) {
+                stage_1_header(p, u);
+                continue;
+            }
+            if (str_is(tkn, "use")) {
+                stage_1_use(p, u);
                 continue;
             }
             if (str_is(tkn, "test")) {
@@ -127,6 +151,7 @@ void stage_1_func(Parser *p, Unit *u, int act) {
     }
 
     Func* func = func_make(b->alc, u, p->scope, name, NULL);
+    func->act = act;
     func->in_header = p->in_header;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
@@ -177,6 +202,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     }
 
     Class* class = class_make(b->alc, b, type);
+    class->act = act;
     class->unit = u;
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
@@ -291,6 +317,7 @@ void stage_1_trait(Parser* p, Unit* u, int act) {
     Trait* trait = al(b->alc, sizeof(Trait));
     trait->chunk = chunk_clone(b->alc, p->chunk);
     trait->scope = p->scope;
+    trait->act = act;
 
     Scope* nsc_scope = u->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_trait, trait);

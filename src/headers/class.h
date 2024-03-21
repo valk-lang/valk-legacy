@@ -27,6 +27,7 @@ struct Class {
     Array* generic_names;
     Map* generic_types;
     Map* generics;
+    int act;
     int type;
     int size;
     int gc_fields;
@@ -43,11 +44,13 @@ struct ClassProp {
     Chunk* chunk_type;
     Chunk* chunk_value;
     int index;
+    int act;
     bool skip_default_value;
 };
 struct Trait {
     Chunk* chunk;
     Scope* scope;
+    int act;
 };
 
 #endif

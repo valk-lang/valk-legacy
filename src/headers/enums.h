@@ -61,6 +61,8 @@ enum LEX_TOKENS {
     tok_at,
     tok_dot,
     tok_tilde,
+    tok_tilde2,
+    tok_tilde3,
     tok_comma,
     tok_hashtag,
     tok_triple_sub,
