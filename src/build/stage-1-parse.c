@@ -2,13 +2,13 @@
 #include "../all.h"
 
 void stage_parse(Parser* p, Unit* u, Fc* fc);
-void stage_1_func(Parser* p, Unit* u, int act);
+void stage_1_func(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_header(Parser* p, Unit* u);
-void stage_1_class(Parser* p, Unit* u, int type, int act);
-void stage_1_trait(Parser* p, Unit* u, int act);
+void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc);
+void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_use(Parser* p, Unit* u);
-void stage_1_global(Parser* p, Unit* u, bool shared);
-void stage_1_value_alias(Parser* p, Unit* u);
+void stage_1_global(Parser* p, Unit* u, bool shared, int act, Fc* fc);
+void stage_1_value_alias(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_test(Parser* p, Unit* u, Fc* fc);
 void stage_1_snippet(Parser* p, Unit* u);
 
@@ -71,47 +71,47 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {
-                stage_1_func(p, u, act);
+                stage_1_func(p, u, act, fc);
                 continue;
             }
             if (str_is(tkn, "struct")) {
-                stage_1_class(p, u, ct_struct, act);
+                stage_1_class(p, u, ct_struct, act, fc);
                 continue;
             }
             if (str_is(tkn, "class")) {
-                stage_1_class(p, u, ct_class, act);
+                stage_1_class(p, u, ct_class, act, fc);
                 continue;
             }
             if (str_is(tkn, "pointer")) {
-                stage_1_class(p, u, ct_ptr, act);
+                stage_1_class(p, u, ct_ptr, act, fc);
                 continue;
             }
             if (str_is(tkn, "integer")) {
-                stage_1_class(p, u, ct_int, act);
+                stage_1_class(p, u, ct_int, act, fc);
                 continue;
             }
             if (str_is(tkn, "float")) {
-                stage_1_class(p, u, ct_float, act);
+                stage_1_class(p, u, ct_float, act, fc);
                 continue;
             }
             if (str_is(tkn, "boolean")) {
-                stage_1_class(p, u, ct_bool, act);
+                stage_1_class(p, u, ct_bool, act, fc);
                 continue;
             }
             if (str_is(tkn, "trait")) {
-                stage_1_trait(p, u, act);
+                stage_1_trait(p, u, act, fc);
                 continue;
             }
             if (str_is(tkn, "shared")) {
-                stage_1_global(p, u, true);
+                stage_1_global(p, u, true, act, fc);
                 continue;
             }
             if (str_is(tkn, "global")) {
-                stage_1_global(p, u, false);
+                stage_1_global(p, u, false, act, fc);
                 continue;
             }
             if (str_is(tkn, "value")) {
-                stage_1_value_alias(p, u);
+                stage_1_value_alias(p, u, act, fc);
                 continue;
             }
 
@@ -141,7 +141,7 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
     }
 }
 
-void stage_1_func(Parser *p, Unit *u, int act) {
+void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
     Build* b = p->b;
 
     char t = tok(p, true, false, true);
@@ -152,6 +152,7 @@ void stage_1_func(Parser *p, Unit *u, int act) {
 
     Func* func = func_make(b->alc, u, p->scope, name, NULL);
     func->act = act;
+    func->fc = fc;
     func->in_header = p->in_header;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
@@ -192,7 +193,7 @@ void stage_1_header(Parser *p, Unit *u){
     scope_set_idf(p->scope, name, idf, p);
 }
 
-void stage_1_class(Parser* p, Unit* u, int type, int act) {
+void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Build* b = p->b;
 
     char t = tok(p, true, false, true);
@@ -203,6 +204,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
 
     Class* class = class_make(b->alc, b, type);
     class->act = act;
+    class->fc = fc;
     class->unit = u;
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
@@ -303,7 +305,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act) {
     skip_body(p);
 }
 
-void stage_1_trait(Parser* p, Unit* u, int act) {
+void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc) {
     Build* b = p->b;
 
     char t = tok(p, true, false, true);
@@ -315,6 +317,7 @@ void stage_1_trait(Parser* p, Unit* u, int act) {
     tok_expect(p, "{", true, true);
 
     Trait* trait = al(b->alc, sizeof(Trait));
+    trait->fc = fc;
     trait->chunk = chunk_clone(b->alc, p->chunk);
     trait->scope = p->scope;
     trait->act = act;
@@ -351,13 +354,15 @@ void stage_1_use(Parser *p, Unit *u){
     scope_set_idf(p->scope, ns, idf, p);
 }
 
-void stage_1_global(Parser *p, Unit *u, bool shared){
+void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
 
     Build *b = p->b;
     char t = tok(p, true, false, true);
     char* name = p->tkn;
 
     Global* g = al(b->alc, sizeof(Global));
+    g->act = act;
+    g->fc = fc;
     g->name = name;
     g->export_name = gen_export_name(u->nsc, name);
     g->type = NULL;
@@ -386,7 +391,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared){
     }
 }
 
-void stage_1_value_alias(Parser *p, Unit *u) {
+void stage_1_value_alias(Parser *p, Unit *u, int act, Fc* fc) {
     Build *b = u->b;
     char t = tok(p, true, false, true);
     char* name = p->tkn;
@@ -400,6 +405,8 @@ void stage_1_value_alias(Parser *p, Unit *u) {
     ValueAlias *va = al(b->alc, sizeof(ValueAlias));
     va->chunk = chunk;
     va->scope = p->scope;
+    va->fc = fc;
+    va->act = act;
 
     skip_body(p);
 

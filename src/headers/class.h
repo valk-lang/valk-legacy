@@ -20,6 +20,7 @@ struct Class {
     char* ir_name;
     Build* b;
     Unit* unit;
+    Fc* fc;
     Chunk* body;
     Scope* scope;
     Map* props;
@@ -50,6 +51,7 @@ struct ClassProp {
 struct Trait {
     Chunk* chunk;
     Scope* scope;
+    Fc* fc;
     int act;
 };
 

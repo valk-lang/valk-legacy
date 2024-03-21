@@ -6,6 +6,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->b = b;
     c->type = type;
     c->act = act_public;
+    c->fc = NULL;
     c->name = NULL;
     c->ir_name = NULL;
     c->body = NULL;

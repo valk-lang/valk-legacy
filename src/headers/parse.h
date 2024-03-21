@@ -40,12 +40,16 @@ struct Global {
     Chunk *chunk_type;
     Chunk *chunk_value;
     Scope *declared_scope;
+    Fc* fc;
+    int act;
     bool is_shared;
     bool is_mut;
 };
 struct ValueAlias {
     Chunk* chunk;
     Scope* scope;
+    Fc* fc;
+    int act;
 };
 
 #endif

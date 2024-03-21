@@ -19,6 +19,7 @@ struct Func {
     char* export_name;
     Build *b;
     Unit* unit;
+    Fc* fc;
     Scope* scope;
     Scope* scope_stack_reduce;
     //

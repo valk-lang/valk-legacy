@@ -9,6 +9,8 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 
+void value_check_act(int act, Parser* p);
+
 Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     Build *b = p->b;
     Chunk *chunk = p->chunk;
@@ -509,6 +511,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_global) {
         Global* g = idf->item;
+        value_check_act(g->act, p);
         return value_make(alc, v_global, g, g->type);
     }
     if (type == idf_scope) {
@@ -1134,4 +1137,15 @@ VFuncCall* value_extract_func_call(Value* from) {
         return from->item;
     }
     return NULL;
+}
+
+void value_check_act(int act, Parser* p) {
+    Fc* fc = NULL;
+    Parser* sp = p;
+    while(sp && !fc) {
+        fc = sp->chunk->fc;
+        sp = sp->prev;
+    }
+    if(!fc)
+        return;
 }
