@@ -18,7 +18,7 @@ make
 ## Table of contents
 
 <table>
-<tr><td>
+<tr><td width=200px><br>
 
 * [Basic example](#basic-example)
 * [Multiple files](#multiple-files)
@@ -26,22 +26,23 @@ make
 * [Packages](#packages)
 * [Types](#types)
 * [Variables](#variables)
-
-</td><td>
-
 * [Functions](#functions)
-    * [Error Handling](#error-handling)
+   * [Error Handling](#error-handling)
 * [Classes](#classes)
 * [Globals](#globals)
 
-* [Tokens](#tokens)
+
+<br></td><td width=200px><br>
+
+
+- [Tokens](#tokens)
     * [Let](#variables)
     * [If/Else](#if-else)
     * [While](#while)
     * [Each](#each)
     * [Throw](#error-handling)
 
-</td><td>
+<br></td><td width=200px><br>
 
 * [Advanced](#advanced)
     * [Access Types](#access-types)
@@ -50,12 +51,12 @@ make
     * [Atomics](#atomics)
     * [Testing](#testing)
 
-</td><td>
+<br></td><td width=200px><br>
 
 * [Unsafe](#unsafe)
     * WIP 🔨
 
-</td></tr>
+<br></td></tr>
 </table>
 
 ## Basic example
