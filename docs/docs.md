@@ -26,12 +26,13 @@ make
 * [Packages](#packages)
 * [Types](#types)
 * [Variables](#variables)
+
+</td><td>
+
 * [Functions](#functions)
     * [Error Handling](#error-handling)
 * [Classes](#classes)
 * [Globals](#globals)
-
-</td><td>
 
 * [Tokens](#tokens)
     * [Let](#variables)

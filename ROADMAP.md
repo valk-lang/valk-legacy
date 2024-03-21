@@ -14,7 +14,6 @@
 ```
 // v0.0.1
 - ci
-- handle access types (private, readonly, ...)
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
