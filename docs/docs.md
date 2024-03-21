@@ -353,3 +353,29 @@ volt build ./my-tests/*.vo --test --run
 ## Unsafe
 
 Work in progress 🔨
+
+### Structs
+
+Structs are the same as classes but without being garbage collected. A `struct` is pretty much the same as a struct in `c`.
+
+```rust
+struct MyStruct {
+    a: i32
+    b: i32
+}
+
+fn main() {
+    let ob = MyStruct{
+        a: 5
+        b: 100
+    }
+}
+```
+
+Volt allocates these objects using `volt:mem:alloc` and you can use `volt:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
+
+```rust
+let ob = my_alloc(sizeof(inline MyStruct))
+```
+
+
