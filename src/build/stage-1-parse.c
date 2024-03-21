@@ -154,7 +154,6 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
 
     if (str_is(name, "main")) {
         b->func_main = func;
-        u->contains_main_func = true;
     }
     if (p->in_header) {
         func->export_name = name;

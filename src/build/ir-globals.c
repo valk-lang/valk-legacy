@@ -9,7 +9,7 @@ void ir_gen_globals(IR* ir) {
     Build *b = ir->b;
     Str *code = ir->code_global;
 
-    bool is_main_fc = u->contains_main_func;
+    bool is_main_fc = u->is_main;
 
     if (is_main_fc) {
         str_preserve(code, 500);

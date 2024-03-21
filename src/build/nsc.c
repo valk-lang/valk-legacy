@@ -44,7 +44,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->export_count = 0;
 
     u->ir_changed = false;
-    u->contains_main_func = false;
+    u->is_main = false;
 
     nsc->unit = u;
 

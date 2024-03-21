@@ -7,7 +7,7 @@ void stage_4_ast(Unit *u) {
 
     Build *b = u->b;
 
-    if(u->contains_main_func)
+    if(u->is_main)
         return;
 
     usize start = microtime();

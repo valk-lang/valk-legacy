@@ -232,6 +232,7 @@ int cmd_build(int argc, char *argv[]) {
         map_set_force_new(pkc_main->namespaces, "main", nsc_main);
     }
     b->nsc_main = nsc_main;
+    nsc_main->unit->is_main = true;
 
     // Load core dependencies
     Pkc *vlt = pkc_load_pkc(pkc_main, "volt", NULL);
@@ -251,9 +252,7 @@ int cmd_build(int argc, char *argv[]) {
 
     // Build stages
     build_run_stages(b);
-    if(b->func_main) {
-        stage_4_ast_main(b->func_main->unit);
-    }
+    stage_4_ast_main(b->nsc_main->unit);
 
     // Object files + Linking
     alc_delete(b->alc_ast);

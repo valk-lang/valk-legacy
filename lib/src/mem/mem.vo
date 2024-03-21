@@ -4,43 +4,65 @@ header "sys" as sys
 use io
 
 fn alloc(size: uint) ptr {
-	return sys:malloc(size);
+	return sys:malloc(size)
 }
 
 fn free(adr: ptr) {
-	sys:free(adr);
+	sys:free(adr)
 }
 
 fn calloc(size: uint) ptr {
-	let adr = alloc(size);
+	let adr = alloc(size)
 	clear(adr, size)
 	return adr
 }
 
 fn copy(from: ptr, to: ptr, length: uint) {
-	let i = 0 @as uint;
-	let chunks = length / sizeof(uint);
+	let i = 0 @as uint
+	let chunks = length / sizeof(uint)
 	while i < chunks {
-		@ptrv(to, uint, i) = @ptrv(from, uint, i);
-		i++;
+		@ptrv(to, uint, i) = @ptrv(from, uint, i)
+		i++
 	}
-	i = i * sizeof(uint);
+	i = i * sizeof(uint)
 	while i < length {
-		@ptrv(to, u8, i) = @ptrv(from, u8, i);
-		i++;
+		@ptrv(to, u8, i) = @ptrv(from, u8, i)
+		i++
 	}
 }
 
 fn clear(adr: ptr, length: uint) {
-	let i = 0 @as uint;
-	let chunks = length / sizeof(uint);
+	let i = 0 @as uint
+	let chunks = length / sizeof(uint)
 	while i < chunks {
-		@ptrv(adr, uint, i) = 0;
-		i++;
+		@ptrv(adr, uint, i) = 0
+		i++
 	}
-	i = i * sizeof(uint);
+	i = i * sizeof(uint)
 	while i < length {
-		@ptrv(adr, u8, i) = 0;
-		i++;
+		@ptrv(adr, u8, i) = 0
+		i++
 	}
+}
+
+fn equal(a: ptr, b: ptr, length: uint) bool {
+	let chunks = length / sizeof(ptr)
+	let i : uint = chunks
+	while i > 0 {
+		i--
+		let av = @ptrv(a, uint, i)
+		let bv = @ptrv(b, uint, i)
+		if(av != bv) : return false
+	}
+	i = length % sizeof(ptr)
+	let offset = chunks * sizeof(ptr)
+	let ao = a + offset
+	let bo = b + offset
+	while i > 0 {
+		i--
+		let av = @ptrv(ao, u8, i)
+		let bv = @ptrv(bo, u8, i)
+		if(av != bv) : return false
+	}
+	return true
 }

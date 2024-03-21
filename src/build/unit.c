@@ -13,7 +13,7 @@ void unit_validate(Unit *u, Parser *p) {
         validate_class(p, class);
     }
 
-    if(u->contains_main_func) {
+    if(u->is_main) {
         Func *main = b->func_main;
         if (main) {
             func_validate_arg_count(p, main, false, 0, 1);

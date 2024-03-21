@@ -32,7 +32,7 @@ struct Unit {
     int export_count;
     //
     bool ir_changed;
-    bool contains_main_func;
+    bool is_main;
 };
 
 #endif

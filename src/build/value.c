@@ -961,6 +961,21 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
     Type* lt = left->rett;
     Type* rt = right->rett;
 
+    if (op == op_eq && !lt->nullable) {
+        Func *eq = lt->class ? map_get(lt->class->funcs, "_eq") : NULL;
+        if (eq && eq->is_static == false && eq->arg_types->length == 2) {
+            Type *arg_type = array_get_index(eq->arg_types, 1);
+            right = try_convert(alc, b, p->scope, right, arg_type);
+            Array *args = array_make(alc, 2);
+            array_push(args, left);
+            array_push(args, right);
+            type_check(p, arg_type, right->rett);
+            Value *on = vgen_func_ptr(alc, eq, NULL);
+            Value *fcall = vgen_func_call(alc, on, args);
+            return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+        }
+    }
+
     bool is_ptr = lt->is_pointer || rt->is_pointer;
     if(is_ptr) {
         // Pointers
