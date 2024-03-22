@@ -29,7 +29,7 @@ int cmd_build(int argc, char *argv[]) {
         char *arg = array_get_index(args, i);
         if (ends_with(arg, ".vo")) {
             if (!file_exists(arg)) {
-                printf("File not found: '%s'", arg);
+                printf("File not found: '%s'\n", arg);
                 return 1;
             }
             char *fullpath = al(alc, VOLT_PATH_MAX);
@@ -41,11 +41,11 @@ int cmd_build(int argc, char *argv[]) {
             continue;
         }
         if (!is_dir(arg)) {
-            printf("Invalid file/directory: '%s'", arg);
+            printf("Invalid file/directory: '%s'\n", arg);
             return 1;
         }
         if (main_dir) {
-            printf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'", main_dir, arg);
+            printf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'\n", main_dir, arg);
             return 1;
         }
         char *dir_buf = al(alc, VOLT_PATH_MAX);
@@ -113,7 +113,7 @@ int cmd_build(int argc, char *argv[]) {
         //     target_os = os_win;
         //     target_arch = arch_arm64;
         } else {
-            printf("Unsupported target: '%s'\nOptions: linux-x64, macos-x64, macos-arm64, win-x64", target);
+            printf("Unsupported target: '%s'\nOptions: linux-x64, macos-x64, macos-arm64, win-x64\n", target);
             return 1;
         }
     }
@@ -211,8 +211,13 @@ int cmd_build(int argc, char *argv[]) {
     if (!file_exists(cache_dir))
         makedir(cache_dir, 0700);
     b->cache_dir = cache_dir;
-    if (b->verbose > 0)
+    if (b->verbose > 0) {
+        #ifdef WIN32
+        printf("> Cache directory: %s\n", cache_dir);
+        #else
         printf("📦 Cache directory: %s\n", cache_dir);
+        #endif
+    }
 
     // Generate out path if needed
     if(!b->path_out) {
@@ -266,6 +271,15 @@ int cmd_build(int argc, char *argv[]) {
 
     // Finish build
     if (b->verbose > 0) {
+        #ifdef WIN32
+        printf("- LOC: %d\n", b->LOC);
+        printf("- Lexer: %.3fs\n", (double)b->time_lex / 1000000);
+        printf("- Parse: %.3fs\n", (double)b->time_parse / 1000000);
+        printf("- Gen IR: %.3fs\n", (double)b->time_ir / 1000000);
+        printf("- LLVM: %.3fs\n", (double)b->time_llvm / 1000000);
+        printf("- Link: %.3fs\n", (double)b->time_link / 1000000);
+        printf("- File IO: %.3fs\n", (double)b->time_io / 1000000);
+        #else
         printf("📃 LOC: %d\n", b->LOC);
         printf("⌚ Lexer: %.3fs\n", (double)b->time_lex / 1000000);
         printf("⌚ Parse: %.3fs\n", (double)b->time_parse / 1000000);
@@ -279,6 +293,7 @@ int cmd_build(int argc, char *argv[]) {
         if(b->mem_objects > 0) {
             printf("💾 Mem peak LLVM: %.2f MB\n", (double)(b->mem_objects - mem_after_parse) / (1024 * 1024));
         }
+        #endif
     }
 
     // Flush all output
@@ -306,7 +321,11 @@ int cmd_build(int argc, char *argv[]) {
         exit(code);
 
     } else {
+        #ifdef WIN32
+        printf("> Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+        #else
         printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
+        #endif
     }
 
     return 0;

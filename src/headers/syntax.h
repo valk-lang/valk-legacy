@@ -24,6 +24,6 @@ bool str_in(char* tkn, char* comp);
 char *string_replace_backslash_chars(Allocator *alc, char *body);
 char* op_to_str(int op);
 void char_to_hex(const unsigned char ch, char* buf);
-char* itos(long int val, char* buf, const int base);
+char* itos(v_i64 val, char* buf, const int base);
 
 #endif
