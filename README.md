@@ -71,4 +71,4 @@ Once we hit version 0.1.0, we want to look for people who can help with: the sta
 
 ## References
 
-Bintree code used for benchmarks: [https://programming-language-benchmarks.vercel.app/problem/binarytrees](https://programming-language-benchmarks.vercel.app/problem/binarytrees)
+Binary tree benchmark code: [https://programming-language-benchmarks.vercel.app/problem/binarytrees](https://programming-language-benchmarks.vercel.app/problem/binarytrees)
