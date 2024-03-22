@@ -158,6 +158,8 @@ int cmd_build(int argc, char *argv[]) {
     b->errors = al(alc, sizeof(ErrorCollection));
     b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
+    b->links = array_make(alc, 10);
+    b->link_settings = map_make(alc);
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
@@ -168,9 +170,9 @@ int cmd_build(int argc, char *argv[]) {
     b->nsc_main = NULL;
 
     b->cc_defs = cc_defs;
-    b->arch = target_arch;
+    b->host_arch = arch;
     b->target_arch = target_arch;
-    b->os = target_os;
+    b->host_os = os;
     b->target_os = target_os;
 
     b->ptr_size = 8;
@@ -247,7 +249,7 @@ int cmd_build(int argc, char *argv[]) {
 
     for (int i = 0; i < vo_files->length; i++) {
         char *path = array_get_index(vo_files, i);
-        fc_make(nsc_main, path);
+        fc_make(nsc_main, path, false);
     }
 
     // Build stages

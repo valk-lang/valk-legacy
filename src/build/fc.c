@@ -1,7 +1,7 @@
 
 #include "../all.h"
 
-Fc *fc_make(Nsc *nsc, char *path) {
+Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header) {
     Pkc *pkc = nsc->pkc;
     Build *b = pkc->b;
     Allocator *alc = b->alc;
@@ -13,6 +13,7 @@ Fc *fc_make(Nsc *nsc, char *path) {
     fc->path = path;
     fc->alc = alc;
     fc->nsc = nsc;
+    fc->header_pkc = NULL;
     fc->scope = scope_make(alc, sc_default, nsc->scope);
     fc->is_header = is_header;
 
@@ -33,7 +34,8 @@ Fc *fc_make(Nsc *nsc, char *path) {
     chunk_set_content(b, content, str_to_chars(alc, content_str), content_str->length);
     fc->content = content;
 
-    stage_add_item(b->stage_1_parse, fc);
+    if(!is_sub_header)
+        stage_add_item(b->stage_1_parse, fc);
 
     return fc;
 }

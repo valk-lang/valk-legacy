@@ -1,98 +1,36 @@
 
-fn malloc(size: uint) ptr;
-fn free(adr: ptr) i32;
+#if OS == linux
 
-fn exit(code: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
-fn raise(sig: i32) i32;
-fn __errno_location() ptr;
+link_dynamic "pthread"
+link_dynamic "c"
+link_dynamic ":libc_nonshared.a"
+link_dynamic ":ld-linux-x86-64.so.2"
 
-fn read(fd: i32, buf: ptr, size: uint) int;
-fn write(fd: i32, data: ptr, length: uint) i32;
-fn open(path: ptr, flags: i32, mode: i32) i32;
-fn close(fd: i32) i32;
+header "linux/structs"
+header "linux/abi"
+//header "linux-[ARCH]/enum"
+header "linux/x64/enum"
 
-fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
-fn send(fd: i32, buf: ptr, len: uint, flags: i32) int;
+#elif OS == macos
 
-fn socket(domain: i32, type: i32, protocol: i32) i32;
-fn connect(sockfd: i32, addr: cstruct_sockaddr, addrlen: u32) i32;
-fn accept(sockfd: i32, addr: ?cstruct_sockaddr, addrlen: ?ptr) i32;
-fn accept4(sockfd: i32, addr: ?cstruct_sockaddr, addrlen: ?ptr, flags: i32) i32;
-fn shutdown(sockfd: i32, how: i32) i32;
-fn bind(sockfd: i32, addr: cstruct_sockaddr, addrlen: u32) i32;
-fn listen(sockfd: i32, backlog: i32) i32;
+link_dynamic "System"
 
-fn getsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-fn setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-fn getaddrinfo(host: ptr, port: ptr, hints: cstruct_addrinfo, res: ptr) i32;
-fn freeaddrinfo(info: cstruct_addrinfo) i32;
+header "macos/structs"
+header "macos/abi"
+//header "macos-[ARCH]/enum"
+header "macos-x64/enum"
 
-fn epoll_create(size: i32) i32;
-fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
-fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: cstruct_epoll_event) i32;
+#elif OS == win
 
-fn nanosleep(req: libc_timespec, rem: libc_timespec) i32;
+link_dynamic "kernel32"
+link_dynamic "libucrt"
+link_dynamic "WS2_32"
+link_dynamic "msvcrt"
+link_dynamic "libvcruntime"
 
-struct libc_timespec {
-	tv_sec: int // seconds
-	tv_nsec: int // nanoseconds
-}
+header "win/structs"
+header "win/abi"
+//header "win-[ARCH]/enum"
+header "win-x64/enum"
 
-struct cstruct_epoll_event packed {
-    events: u32 // events
-    data: ptr // data
-}
-
-struct cstruct_addrinfo {
-    ai_flags: i32 (0)
-    ai_family: i32 (0)
-    ai_socktype: i32 (0)
-    ai_protocol: i32 (0)
-    ai_addrlen: u32 (0)
-    ai_addr: cstruct_sockaddr
-    ai_canonname: ptr (null)
-    ai_next: ?cstruct_addrinfo (null)
-}
-
-struct cstruct_sockaddr {
-	sa_family: u16 (0)
-	sa_data_1: u32 (0)
-	sa_data_2: u32 (0)
-	sa_data_3: u32 (0)
-	sa_data_4: u16 (0)
-}
-
-value EAGAIN (11)
-value SOCK_STREAM (1)
-value SOCK_NONBLOCK (2048)
-
-value SOL_SOCKET (1)
-value SOL_TCP (6)
-value SO_REUSEADDR (2)
-
-value AF_INET (2)
-value AF_UNIX (1)
-
-value AI_PASSIVE (1)
-value AI_CANONNAME (2)
-value AI_NUMERICHOST (4)
-
-value EPOLLERR (8)
-value EPOLLET (-2147483648)
-value EPOLLHUP (16)
-value EPOLLIN (1)
-value EPOLLMSG (1024)
-value EPOLLONESHOT (1073741824)
-value EPOLLOUT (4)
-value EPOLLPRI (2)
-value EPOLLRDBAND (128)
-value EPOLLRDHUP (8192)
-value EPOLLRDNORM (64)
-value EPOLLWRBAND (512)
-value EPOLLWRNORM (256)
-value EPOLL_CLOEXEC (524288)
-value EPOLL_CTL_ADD (1)
-value EPOLL_CTL_DEL (2)
-value EPOLL_CTL_MOD (3)
-value EPOLL_NONBLOCK (2048)
+#end

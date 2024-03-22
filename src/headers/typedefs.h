@@ -24,6 +24,7 @@ typedef struct CompileData CompileData;
 typedef struct Parser Parser;
 typedef struct Unit Unit;
 typedef struct Thread Thread;
+typedef struct Link Link;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;
