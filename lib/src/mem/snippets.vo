@@ -3,11 +3,11 @@ use io;
 use os;
 
 snippet boot() {
-	GcManager.init()
-	Stack.init()
+    GcManager.init()
+    Stack.init()
 }
 snippet shutdown() {
-	stack.shutdown()
+    stack.shutdown()
     gc_manager_instance.shutdown()
 }
 

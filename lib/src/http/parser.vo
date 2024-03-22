@@ -10,160 +10,160 @@ use io
 // }
 
 class ParseResult {
-	~ status: uint (0)
-	~ method: String ("")
-	~ path: String ("")
-	~ headers: Map[String] (Map[String]{})
-	~ body: String ("")
-	~ content_length: uint (0)
-	~ fully_parsed: bool (false)
-	~ headers_parsed: bool (false)
-	- stage: uint (0)
+    ~ status: uint (0)
+    ~ method: String ("")
+    ~ path: String ("")
+    ~ headers: Map[String] (Map[String]{})
+    ~ body: String ("")
+    ~ content_length: uint (0)
+    ~ fully_parsed: bool (false)
+    ~ headers_parsed: bool (false)
+    - stage: uint (0)
 
-	fn clear() {
-		this.stage = 0
-		this.headers_parsed = false
-		this.fully_parsed = false
-		this.content_length = 0
-		this.status = 0
-		this.body = ""
-		this.headers.clear()
-	}
+    fn clear() {
+        this.stage = 0
+        this.headers_parsed = false
+        this.fully_parsed = false
+        this.content_length = 0
+        this.status = 0
+        this.body = ""
+        this.headers.clear()
+    }
 }
 
 struct Parser {
 
-	// static fn parse_response(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
-	// 	Parser.parse_bytes(bytes, result, only_headers, false) ! { throw invalid }
-	// }
-	static fn parse_request(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
-		Parser.parse_bytes(bytes, result, only_headers, true) ! { throw invalid }
-	}
+    // static fn parse_response(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
+    // 	Parser.parse_bytes(bytes, result, only_headers, false) ! { throw invalid }
+    // }
+    static fn parse_request(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool (false)) !invalid {
+        Parser.parse_bytes(bytes, result, only_headers, true) ! { throw invalid }
+    }
 
-	- static fn parse_bytes(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool, is_request: bool) !invalid {
+    - static fn parse_bytes(bytes: utils:ByteBuffer, result: ParseResult, only_headers: bool, is_request: bool) !invalid {
 
-		// Stage 0. Protocol & status
-		// Stage 1. Headers
-		// Stage 2. Body
-		// Stage 3. Done
+        // Stage 0. Protocol & status
+        // Stage 1. Headers
+        // Stage 2. Body
+        // Stage 3. Done
 
-		if result.fully_parsed {
-			result.stage = 0
-			result.headers_parsed = false
-			result.fully_parsed = false
-			result.content_length = 0
-			result.status = 0
-			result.body = ""
-			result.headers.clear()
-		}
+        if result.fully_parsed {
+            result.stage = 0
+            result.headers_parsed = false
+            result.fully_parsed = false
+            result.content_length = 0
+            result.status = 0
+            result.body = ""
+            result.headers.clear()
+        }
 
-		let stage = result.stage;
-		let data = bytes.data;
-		let pos = bytes.read_index;
-		let length = bytes.length;
+        let stage = result.stage;
+        let data = bytes.data;
+        let pos = bytes.read_index;
+        let length = bytes.length;
 
-		if stage > 2 {
+        if stage > 2 {
             if only_headers {
-			    return
+                return
             }
-		}
+        }
 
         let ch = '\0'
         if pos > 0 {
             ch = @ptrv(data, u8, pos - 1)
         }
-		let prev_ch = '\0'
+        let prev_ch = '\0'
 
-		// Header
-		if stage == 0 {
-			let index = bytes.index_of_byte('\r', pos) ! { return }
-			if index + 1 == length { return }
-			if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
+        // Header
+        if stage == 0 {
+            let index = bytes.index_of_byte('\r', pos) ! { return }
+            if index + 1 == length { return }
+            if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-			let space1 = bytes.index_of_byte(' ', pos) ! { throw invalid }
-			let space2 = bytes.index_of_byte(' ', space1 + 1) ! { throw invalid }
+            let space1 = bytes.index_of_byte(' ', pos) ! { throw invalid }
+            let space2 = bytes.index_of_byte(' ', space1 + 1) ! { throw invalid }
 
-			if space1 > index { throw invalid }
+            if space1 > index { throw invalid }
             if space2 > index { throw invalid }
 
-			let part1 = bytes.sub_str(pos, space1);
-			let part2 = bytes.sub_str(space1 + 1, space2 - space1 - 1);
-			let part3 = bytes.sub_str(space2 + 1, index - space2 - 1);
+            let part1 = bytes.sub_str(pos, space1);
+            let part2 = bytes.sub_str(space1 + 1, space2 - space1 - 1);
+            let part3 = bytes.sub_str(space2 + 1, index - space2 - 1);
 
-			if is_request {
-				// Request "GET / HTTP/1.1"
-				result.method = part1;
-				result.path = part2;
-				let version = part3;
-			} else {
-				// Response "HTTP/1.1 200 OK"
-				let version = part1;
-				let status_str = part2;
-				result.status = status_str.to_uint() ! { throw invalid }
-			}
+            if is_request {
+                // Request "GET / HTTP/1.1"
+                result.method = part1;
+                result.path = part2;
+                let version = part3;
+            } else {
+                // Response "HTTP/1.1 200 OK"
+                let version = part1;
+                let status_str = part2;
+                result.status = status_str.to_uint() ! { throw invalid }
+            }
 
-			pos = index + 2;
-			bytes.read_index = pos;
-			stage = 1;
-			result.stage = stage;
-		}
+            pos = index + 2;
+            bytes.read_index = pos;
+            stage = 1;
+            result.stage = stage;
+        }
 
-		// Headers
-		let headers = result.headers;
-		let content_len = result.content_length;
-		while stage == 1 {
-			let index = bytes.index_of_byte('\r', pos) ! { return }
-			if index + 1 == length { return }
-			if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
+        // Headers
+        let headers = result.headers;
+        let content_len = result.content_length;
+        while stage == 1 {
+            let index = bytes.index_of_byte('\r', pos) ! { return }
+            if index + 1 == length { return }
+            if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-			if index == pos {
-				// End of headers
-				pos = index + 2;
-				bytes.read_index = pos;
-				stage = 2;
-				result.stage = stage;
+            if index == pos {
+                // End of headers
+                pos = index + 2;
+                bytes.read_index = pos;
+                stage = 2;
+                result.stage = stage;
 
-				let content_len_str = headers.get("content-length") ? "0";
-				content_len = content_len_str.to_uint() ! {
-					throw invalid;
-				};
-				result.content_length = content_len;
-				result.headers_parsed = true;
-				break;
-			}
+                let content_len_str = headers.get("content-length") ? "0";
+                content_len = content_len_str.to_uint() ! {
+                    throw invalid;
+                };
+                result.content_length = content_len;
+                result.headers_parsed = true;
+                break;
+            }
 
-			let split = bytes.index_of_byte(':', pos) ! { throw invalid }
-			if split > index { throw invalid }
-			while @ptrv(data, u8, split + 1) == ' ' {
-				split++;
-			}
+            let split = bytes.index_of_byte(':', pos) ! { throw invalid }
+            if split > index { throw invalid }
+            while @ptrv(data, u8, split + 1) == ' ' {
+                split++;
+            }
 
-			let key = bytes.sub_str(pos, split - pos - 1);
-			let value = bytes.sub_str(split + 1, index - split - 1);
-			headers.set(key.to_lower(), value);
+            let key = bytes.sub_str(pos, split - pos - 1);
+            let value = bytes.sub_str(split + 1, index - split - 1);
+            headers.set(key.to_lower(), value);
 
-			pos = index + 2;
-			bytes.read_index = pos;
-		}
+            pos = index + 2;
+            bytes.read_index = pos;
+        }
 
-		if only_headers {
-			return
-		}
+        if only_headers {
+            return
+        }
 
-		if stage == 2 {
-			let bytes_left = length - pos;
-			if bytes_left < content_len {
-				return
-			}
+        if stage == 2 {
+            let bytes_left = length - pos;
+            if bytes_left < content_len {
+                return
+            }
 
-			let body = bytes.sub_str(pos, content_len);
+            let body = bytes.sub_str(pos, content_len);
 
-			pos += content_len;
-			bytes.read_index = pos;
-			result.fully_parsed = true;
-			result.body = body;
-			result.stage = 3;
-		}
+            pos += content_len;
+            bytes.read_index = pos;
+            result.fully_parsed = true;
+            result.body = body;
+            result.stage = 3;
+        }
 
-	}
+    }
 }

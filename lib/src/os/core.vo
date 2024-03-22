@@ -10,9 +10,9 @@ fn signal(sig: int, handler: fn(i32)(void)) void {
 }
 
 fn signal_ignore(sig: int) void {
-	sys:signal(sig @as i32, null);
+    sys:signal(sig @as i32, null);
 }
 
 fn raise(sig: int) void {
-	sys:raise(sig @as i32);
+    sys:raise(sig @as i32);
 }

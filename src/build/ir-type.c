@@ -10,16 +10,16 @@ char *ir_type(IR *ir, Type *type) {
     char name[256];
 
     if (type_is_void(type)) {
-		return "void";
+        return "void";
     } else if (type->type == type_bool) {
-		return "i1";
+        return "i1";
     } else if (type->type == type_struct) {
 
         ir_define_struct(ir, class);
 
         strcpy(name, "\%struct.");
         strcpy(name + 8, class->ir_name);
-		return dups(ir->alc, name);
+        return dups(ir->alc, name);
 
     } else if (type->type == type_int) {
         int bytes = type->size;
@@ -72,7 +72,7 @@ char *ir_type_int(IR *ir, int bytes) {
     printf("Namespace: %s\n", ir->unit->nsc->name);
     printf("Size: %d\n", bytes);
     die("Unsupported integer size (IR Generator)");
-	return "";
+    return "";
 }
 
 char *ir_type_float(IR *ir, int bytes) {

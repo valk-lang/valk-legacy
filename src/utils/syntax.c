@@ -189,8 +189,8 @@ char backslash_char(char ch) {
 
 bool str_is(const char* tkn, const char* comp) {
     while (*tkn == *comp++)
-		if (*tkn++ == '\0')
-			return true;
+        if (*tkn++ == '\0')
+        	return true;
     return false;
 }
 
