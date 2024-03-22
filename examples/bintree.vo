@@ -31,7 +31,7 @@ class Node {
 
 fn stretch(depth: int) {
     let check = Node.tree(depth).check()
-    println("stretch tree of depth " + depth.to_str() + "\t check: " + check.to_str())
+    println("stretch tree of depth " + depth + "\t check: " + check)
 }
 
 fn main() {
@@ -55,9 +55,9 @@ fn main() {
         while i++ < iters {
             check += Node.tree(x).check()
         }
-        println(iters.to_str() + "\t trees of depth " + x.to_str() + "\t check: " + check.to_str())
+        println(iters + "\t trees of depth " + x + "\t check: " + check)
         x += 2
     }
 
-    println("long lived tree of depth " + depth.to_str() + "\t check: " + longlived.check().to_str())
+    println("long lived tree of depth " + depth + "\t check: " + longlived.check())
 }
