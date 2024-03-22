@@ -136,7 +136,7 @@ int cmd_build(int argc, char *argv[]) {
     }
 
     char* os_name = os_str(target_os);
-    char* arch_name = os_str(target_arch);
+    char* arch_name = arch_str(target_arch);
     map_set(cc_defs, "OS", os_name);
     map_set(cc_defs, "ARCH", arch_name);
 
