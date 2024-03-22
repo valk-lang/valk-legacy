@@ -109,19 +109,7 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
     }
     return NULL;
 }
-Idf* scope_find_type_idf(Scope* scope, char* name, bool recursive) {
-    while(scope) {
-        Idf* idf = scope->type_identifiers ? map_get(scope->type_identifiers, name) : NULL;
-        if(!idf) {
-            if(!recursive)
-                break;
-            scope = scope->parent;
-            continue;
-        }
-        return idf;
-    }
-    return NULL;
-}
+
 
 Idf* get_volt_idf(Build* b, char* ns, char* name, bool must_exist) {
     Nsc* nsc = get_volt_nsc(b, ns);

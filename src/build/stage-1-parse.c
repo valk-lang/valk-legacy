@@ -182,14 +182,9 @@ void stage_1_header(Parser *p, Unit *u, Fc* fc){
 
     if(p->in_header) {
         Fc *hfc = pkc_load_header(fc->header_pkc, fn, p, true);
-
-        Scope* scope = p->scope;
         parser_new_context(&p);
-
-        Scope* sub = scope_sub_make(b->alc, sc_default, scope);
-        p->scope = sub;
         *p->chunk = *hfc->content;
-
+        stage_parse(p, u, hfc);
         parser_pop_context(&p);
         return;
     }
@@ -252,9 +247,6 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
     array_push(u->classes, class);
-    if(!nsc_scope->type_identifiers)
-        nsc_scope->type_identifiers = map_make(b->alc);
-    map_set_force_new(nsc_scope->type_identifiers, name, idf);
     if(!class->is_generic_base) {
         scope_set_idf(class->scope, "CLASS", idf, p);
         array_push(b->classes, class);

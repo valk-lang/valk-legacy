@@ -253,6 +253,7 @@ int cmd_build(int argc, char *argv[]) {
     }
 
     // Build stages
+    b->parser_started = true;
     build_run_stages(b);
     stage_4_ast_main(b->nsc_main->unit);
 

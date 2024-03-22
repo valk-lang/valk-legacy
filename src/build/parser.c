@@ -29,7 +29,14 @@ Parser* parser_make(Allocator* alc, Unit* u) {
 void parser_new_context(Parser** ref) {
     Parser* p = *ref;
     Parser *p2 = pool_get_parser(p->unit);
+
+    // Copy everything except chunk
+    Chunk* ch = p2->chunk;
+    *p2 = *p;
+    p2->chunk = ch;
     p2->prev = p;
+
+    // Set variable
     *ref = p2;
 }
 void parser_pop_context(Parser** ref) {

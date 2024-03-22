@@ -2,6 +2,7 @@
 #include "../all.h"
 
 Array* get_link_dirs(Build* b);
+void stage_link_libs_all(Str *cmd, Build *b);
 
 void stage_6_link(Build* b, Array* o_files) {
 
@@ -151,9 +152,7 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     // Link libs
-    // stage_link_libs_all(cmd, b);
-    str_append_chars(cmd, "-lpthread -lc -l:libc_nonshared.a -l:ld-linux-x86-64.so.2 ");
-    // str_append_chars(cmd, "-lpthread -lc -lm -ldl ");
+    stage_link_libs_all(cmd, b);
 
     // End
     if (is_linux) {
@@ -174,33 +173,33 @@ void stage_6_link(Build* b, Array* o_files) {
     b->time_link += microtime() - start;
 }
 
-// void stage_link_libs_all(Str *cmd, Build *b) {
-//     //
-//     bool is_win = b->target_os == os_win;
-//     bool is_macos = b->target_os == os_macos;
+void stage_link_libs_all(Str *cmd, Build *b) {
+    //
+    bool is_win = b->target_os == os_win;
+    bool is_macos = b->target_os == os_macos;
 
-//     for (int i = 0; i < b->links->length; i++) {
-//         Link *link = array_get_index(b->links, i);
+    for (int i = 0; i < b->links->length; i++) {
+        Link *link = array_get_index(b->links, i);
 
-//         char *prefix = "";
-//         char *suffix = "";
-//         bool is_static = link->type == link_static;
-//         if (!is_win) {
-//             prefix = "-l";
-//             if (is_static && !is_macos) {
-//                 prefix = "-l:lib";
-//                 suffix = ".a";
-//             }
-//         } else {
-//             suffix = ".lib";
-//         }
+        char *prefix = "";
+        char *suffix = "";
+        bool is_static = link->type == link_static;
+        if (!is_win) {
+            prefix = "-l";
+            if (is_static && !is_macos) {
+                prefix = "-l:lib";
+                suffix = ".a";
+            }
+        } else {
+            suffix = ".lib";
+        }
 
-//         str_append_chars(cmd, prefix);
-//         str_append_chars(cmd, link->name);
-//         str_append_chars(cmd, suffix);
-//         str_append_chars(cmd, " ");
-//     }
-// }
+        str_append_chars(cmd, prefix);
+        str_append_chars(cmd, link->name);
+        str_append_chars(cmd, suffix);
+        str_append_chars(cmd, " ");
+    }
+}
 
 Array* get_link_dirs(Build* b) {
     Array* list = array_make(b->alc, 20);

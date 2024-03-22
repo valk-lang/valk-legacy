@@ -14,7 +14,6 @@ struct Scope {
     Scope* parent;
     Scope* idf_parent;
     Map* identifiers;
-    Map* type_identifiers;
     Array* ast;
     Type* rett;
     Array* decls;
