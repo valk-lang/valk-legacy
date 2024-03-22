@@ -6,6 +6,7 @@ value SOCK_NONBLOCK (2048)
 value SOL_SOCKET (1)
 value SOL_TCP (6)
 value SO_REUSEADDR (2)
+value SO_RCVTIMEO (20)
 
 value AF_INET (2)
 value AF_UNIX (1)

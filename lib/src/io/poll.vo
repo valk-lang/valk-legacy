@@ -11,7 +11,7 @@ class Poll[T] {
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
     - lsn_by_index: ptr
     - lsn_by_index_size: uint (20)
-    - event_buf: sys:cstruct_epoll_event (sys:cstruct_epoll_event{
+    - event_buf: sys:libc_epoll_event (sys:libc_epoll_event{
         events: 0
         data: null
     })
@@ -21,7 +21,7 @@ class Poll[T] {
         let fd = sys:epoll_create(1)
         let poll = CLASS {
             epoll_fd: fd
-            epoll_buffer: mem:alloc(40 * sizeof(inline sys:cstruct_epoll_event))
+            epoll_buffer: mem:alloc(40 * sizeof(inline sys:libc_epoll_event))
             lsn_by_index: null
         }
         return poll
@@ -40,7 +40,7 @@ class Poll[T] {
         let count = count_ @as uint
         let i : uint = 0
         while i < count {
-            let ev = (ebuf + (i * sizeof(inline sys:cstruct_epoll_event))) @as sys:cstruct_epoll_event
+            let ev = (ebuf + (i * sizeof(inline sys:libc_epoll_event))) @as sys:libc_epoll_event
             let lsn = ev.data @as Listener[T]
             lsn.set_events(ev.events)
             if lsn.has_stopped_the_connection() {
@@ -83,7 +83,7 @@ class Listener[T] {
     ~ detect_write: bool (false)
     - detect_events: u32 (0)
     - events: u32 (0)
-    - event_buf: sys:cstruct_epoll_event (sys:cstruct_epoll_event{
+    - event_buf: sys:libc_epoll_event (sys:libc_epoll_event{
         events: 0
         data: null
     })
@@ -114,12 +114,26 @@ class Listener[T] {
     fn update_epoll() {
         let ev : u32 = 0
         if this.detect_read {
+            #if OS == linux
             ev = ev | sys:EPOLLIN
+            #else
+            ev = ev | sys:POLLIN
+            #end
         }
         if this.detect_write {
+            #if OS == linux
             ev = ev | sys:EPOLLOUT
+            #else
+            ev = ev | sys:POLLOUT
+            #end
         }
+        #if OS == linux
         ev = ev | sys:EPOLLRDHUP
+        #elif OS == win
+        //ev = ev | sys.OS.POLLHUP;
+        #else
+        ev = ev | sys.OS.POLLRDHUP;
+        #end
 
         this.detect_events = ev
 
