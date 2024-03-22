@@ -114,7 +114,7 @@ class SocketTCP {
             throw bind
         }
 
-        err = sys:listen(this.fd, 2000000)
+        err = sys:listen(this.fd @autocast, 2000000)
         if err != 0 {
             throw listen
         }

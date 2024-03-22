@@ -594,16 +594,27 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         tok(p, true, true, true);
     } else {
         while (true) {
-            Value *arg = read_value(alc, p, true, 0);
             Type *arg_type = array_get_index(func_args, arg_i++);
-            if (arg_type) {
-                arg = try_convert(alc, b, p->scope, arg, arg_type);
-                type_check(p, arg_type, arg->rett);
+            if (!arg_type) {
+                parse_err(p, -1, "Too many arguments");
             }
+
+            Value *arg = read_value(alc, p, true, 0);
+            arg = try_convert(alc, b, p->scope, arg, arg_type);
+
+            char t = tok(p, true, true, true);
+            if (t == tok_at_word && str_is(p->tkn, "@autocast")) {
+                char* reason;
+                if(!type_compat(arg_type, arg->rett, &reason)) {
+                    arg = vgen_cast(alc, arg, arg_type);
+                }
+                t = tok(p, true, true, true);
+            }
+
+            type_check(p, arg_type, arg->rett);
 
             array_push(args, arg);
 
-            char t = tok(p, true, true, true);
             if (t == tok_comma)
                 continue;
             if (t == tok_bracket_close)
