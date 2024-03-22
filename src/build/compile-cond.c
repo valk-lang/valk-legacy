@@ -27,7 +27,7 @@ void cc_parse(Parser* p) {
         if(prev_result == 1) {
             cc_skip_to_next_cond(p);
         } else {
-            p->cc_results[cci] = result;
+            p->cc_results[cci - 1] = result;
             if (result == 1) {
                 tok_expect_newline(p);
             } else {

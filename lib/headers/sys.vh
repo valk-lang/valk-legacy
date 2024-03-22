@@ -35,6 +35,6 @@ link_dynamic "libvcruntime"
 header "win/structs"
 header "win/abi"
 //header "win-[ARCH]/enum"
-header "win-x64/enum"
+header "win/x64/enum"
 
 #end

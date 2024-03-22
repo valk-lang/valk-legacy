@@ -77,7 +77,8 @@ void tok_expect_newline(Parser* p) {
     if(t != tok_newline) {
         parse_err(p, -1, "Expected a new line here, found: '%s'", tokens + i + 1);
     }
-    p->chunk->i = i + 1;
+    // p->chunk->i = i + 1;
+    // p->on_newline = true;
 }
 
 bool tok_next_is_whitespace(Parser* p) {

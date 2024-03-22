@@ -1,5 +1,5 @@
 
-struct cstruct_stat {
+struct libc_stat {
     st_dev: uint
     st_ino: uint
     st_nlink: uint
@@ -22,34 +22,34 @@ struct cstruct_stat {
     __unused_3: int
 }
 
-struct cstruct_timespec {
+struct libc_timespec {
     tv_sec: int // seconds
     tv_nsec: int // nanoseconds
 }
 
-struct cstruct_timeval {
+struct libc_timeval {
     tv_sec: int // seconds
     tv_usec: int // microseconds
 }
 
-struct cstruct_pollfd {
-    fd: uint
+struct libc_poll_item {
+    fd: SOCKET
     events: i16  // detect events
     revents: i16 // detected events
 }
 
-struct cstruct_addrinfo {
+struct libc_addrinfo {
     ai_flags: i32
     ai_family: i32
     ai_socktype: i32
     ai_protocol: i32
     ai_addrlen: uint
-    ai_canonname: c_string
-    ai_addr: cstruct_sockaddr
-    ai_next: ?cstruct_addrinfo
+    ai_canonname: cstring
+    ai_addr: libc_sockaddr
+    ai_next: ?libc_addrinfo
 }
 
-struct cstruct_sockaddr {
+struct libc_sockaddr {
     sa_family: u16
     sa_data_1: u32
     sa_data_2: u32
@@ -57,14 +57,14 @@ struct cstruct_sockaddr {
     sa_data_4: u16
 }
 
-struct cstruct_sockaddr_in {
-    sin_family: i16
-    sin_port: u16
-    sin_addr: .cstruct_in_addr
-    sin_zero: .u8[8]
-}
+//struct libc_sockaddr_in {
+//    sin_family: i16
+//    sin_port: u16
+//    sin_addr: .libc_in_addr
+//    sin_zero: .u8[8]
+//}
 
-struct cstruct_in_addr {
+struct libc_in_addr {
     S_addr: u32
 }
 
@@ -75,7 +75,7 @@ struct cstruct_in_addr {
 //    // 64-bit fields
 //    iMaxSockets: u16
 //    iMaxUdpDg: u16
-//    lpVendorInfo: c_string
+//    lpVendorInfo: cstring
 //    szDescription: inline u8[257] // WSADESCRIPTION_LEN + 1
 //    szSystemStatus: inline u8[257]
 //
@@ -84,29 +84,29 @@ struct cstruct_in_addr {
 //    //szSystemStatus: inline u8[257]
 //    //iMaxSockets: u16
 //    //iMaxUdpDg: u16
-//    //lpVendorInfo: c_string
+//    //lpVendorInfo: cstring
 //}
 
-struct cstruct_timezone {
+struct libc_timezone {
     tz_minuteswest: i32 // Minutes west of GMT
     tz_dsttime: i32 // Nonzero if DST is ever in effect
 }
 
-struct WIN32_FIND_DATAA {
-    dwFileAttributes: i32
-    ftCreationTime: .FILETIME
-    ftLastAccessTime: .FILETIME
-    ftLastWriteTime: .FILETIME
-    nFileSizeHigh: i32
-    nFileSizeLow: i32
-    dwReserved0: i32
-    dwReserved1: i32
-    cFileName: .i8[260]
-    cAlternateFileName: .i8[14]
-    dwFileType: i32 // Obsolete. Do not use.
-    dwCreatorType: i32 // Obsolete. Do not use
-    wFinderFlags: i16 // Obsolete. Do not use
-}
+// struct WIN32_FIND_DATAA {
+//     dwFileAttributes: i32
+//     ftCreationTime: .FILETIME
+//     ftLastAccessTime: .FILETIME
+//     ftLastWriteTime: .FILETIME
+//     nFileSizeHigh: i32
+//     nFileSizeLow: i32
+//     dwReserved0: i32
+//     dwReserved1: i32
+//     cFileName: .i8[260]
+//     cAlternateFileName: .i8[14]
+//     dwFileType: i32 // Obsolete. Do not use.
+//     dwCreatorType: i32 // Obsolete. Do not use
+//     wFinderFlags: i16 // Obsolete. Do not use
+// }
 
 struct FILETIME {
     dwLowDateTime: i32
@@ -171,36 +171,36 @@ struct _GUID {
   Data4: u64 // or .u8[8]
 }
 
-struct WSAPROTOCOLCHAIN {
-  ChainLen: i32
-  ChainEntries: .u32[7] //DWORD ChainEntries[MAX_PROTOCOL_CHAIN]
-}
+// struct WSAPROTOCOLCHAIN {
+//   ChainLen: i32
+//   ChainEntries: .u32[7] //DWORD ChainEntries[MAX_PROTOCOL_CHAIN]
+// }
 
-struct WSAPROTOCOL_INFOA {
-  dwServiceFlags1: u32
-  dwServiceFlags2: u32
-  dwServiceFlags3: u32
-  dwServiceFlags4: u32
-  dwProviderFlags: u32
-  ProviderId: ._GUID
-  dwCatalogEntryId: u32
-  ProtocolChain: .WSAPROTOCOLCHAIN
-  iVersion: i32
-  iAddressFamily: i32
-  iMaxSockAddr: i32
-  iMinSockAddr: i32
-  iSocketType: i32
-  iProtocol: i32
-  iProtocolMaxOffset: i32
-  iNetworkByteOrder: i32
-  iSecurityScheme: i32
-  dwMessageSize: u32
-  dwProviderReserved: u32
-  szProtocol: .u8[256] //CHAR szProtocol[WSAPROTOCOL_LEN + 1]
-}
+// struct WSAPROTOCOL_INFOA {
+//   dwServiceFlags1: u32
+//   dwServiceFlags2: u32
+//   dwServiceFlags3: u32
+//   dwServiceFlags4: u32
+//   dwProviderFlags: u32
+//   ProviderId: ._GUID
+//   dwCatalogEntryId: u32
+//   ProtocolChain: .WSAPROTOCOLCHAIN
+//   iVersion: i32
+//   iAddressFamily: i32
+//   iMaxSockAddr: i32
+//   iMinSockAddr: i32
+//   iSocketType: i32
+//   iProtocol: i32
+//   iProtocolMaxOffset: i32
+//   iNetworkByteOrder: i32
+//   iSecurityScheme: i32
+//   dwMessageSize: u32
+//   dwProviderReserved: u32
+//   szProtocol: .u8[256] //CHAR szProtocol[WSAPROTOCOL_LEN + 1]
+// }
 
-struct WSPDATA {
-  wVersion: u16
-  wHighVersion: u16
-  szDescription: .u16[256] //WCHAR szDescription[WSPDESCRIPTION_LEN + 1]
-}
+// struct WSPDATA {
+//   wVersion: u16
+//   wHighVersion: u16
+//   szDescription: .u16[256] //WCHAR szDescription[WSPDESCRIPTION_LEN + 1]
+// }

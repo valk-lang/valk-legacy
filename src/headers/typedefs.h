@@ -46,6 +46,7 @@ typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 typedef struct Trait Trait;
 typedef struct ValueAlias ValueAlias;
+typedef struct Alias Alias;
 typedef struct Test Test;
 // Tokens
 typedef struct Token Token;

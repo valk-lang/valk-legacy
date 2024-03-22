@@ -17,3 +17,6 @@ value POLLIN (768)
 value POLLOUT (16)
 value POLLERR (1)
 value POLLHUP (2)
+
+value WSAENOBUFS (10055)
+value FIONBIO (2148034174)

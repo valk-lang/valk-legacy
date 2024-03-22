@@ -34,3 +34,18 @@ void skip_type(Parser* p) {
         skip_body(p);
     }
 }
+
+void skip_id(Parser* p) {
+    char t = tok(p, true, true, true);
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid identifier syntax, unexpected: '%s'", p->tkn);
+    }
+    t = tok(p, false, false, false);
+    if(t == tok_colon) {
+        tok(p, false, false, true);
+        t = tok(p, false, false, true);
+        if (t != tok_id) {
+            parse_err(p, -1, "Invalid identifier syntax, unexpected: '%s'", p->tkn);
+        }
+    }
+}

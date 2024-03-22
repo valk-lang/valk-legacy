@@ -418,13 +418,15 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     }
 
     if (prio == 0 || prio > 35) {
-        while (t == tok_bit_and || t == tok_bit_or) {
+        while (t == tok_bit_and || t == tok_bit_or || t == tok_bit_xor) {
             tok(p, true, true, true);
             int op;
             if(t == tok_bit_and)
                 op = op_bit_and;
             else if(t == tok_bit_or)
                 op = op_bit_or;
+            else if(t == tok_bit_xor)
+                op = op_bit_xor;
             else
                 break;
             Value *right = read_value(alc, p, true, 35);

@@ -8,7 +8,7 @@ use utils;
 
 class Connection {
     netcon: net:Connection
-    fd: i32
+    fd: uint
     // uploads: ?Array[String] (null)
     read_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     parse_result: ParseResult (ParseResult{})
@@ -105,14 +105,14 @@ class Connection {
         let pos = this.out_pos;
         let bytes = out.length - pos;
         if bytes > 0 {
-            // #if OS == win
-            // let wbytes = sys.send(this.fd, out.data + pos, bytes @as i32, 0);
-            // if wbytes < 0 : wbytes = 0;
-            // this.out_pos += wbytes @as uint;
-            // #else
+            #if OS == win
+            let wbytes = sys:send(this.fd, out.data + pos, bytes @as i32, 0);
+            if wbytes < 0 : wbytes = 0;
+            this.out_pos += wbytes @as uint;
+            #else
             let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) ? 0;
             this.out_pos += wbytes;
-            // #end
+            #end
         }
     }
 }

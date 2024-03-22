@@ -82,7 +82,7 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
         } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map")) {
             Nsc* ns = get_volt_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        } else if(str_is(name, "print") || str_is(name, "println")) {
+        } else if(str_is(name, "print") || str_is(name, "println") || str_is(name, "FD")) {
             Nsc* ns = get_volt_nsc(p->b, "io");
             idf = scope_find_idf(ns->scope, name, true);
         }

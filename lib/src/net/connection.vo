@@ -6,7 +6,7 @@ use io;
 use utils;
 
 struct Connection {
-    ~ fd: i32
+    ~ fd: uint
     ~ open: bool (true)
     // ~ ssl_enabled: bool = false;
     // - ssl: ?SSL = null;
@@ -56,29 +56,30 @@ struct Connection {
 
         // } else {
             // No SSL
-            // #if OS == win
-            // let wbytes = sys.send(this.fd, buffer.data + buffer.read_index, bytes_to_send @as i32, 0);
-            // #else
-            let wbytes = sys:send(this.fd, buffer.data + buffer.read_index, bytes_to_send, 0);
-            // #end
+            #if OS == win
+            let wbytes = sys:send(this.fd, buffer.data + buffer.read_index, bytes_to_send @as i32, 0);
+            #else
+            let wbytes = sys:send(this.fd @as i32, buffer.data + buffer.read_index, bytes_to_send, 0);
+            #end
+
             if wbytes < 0 {
-                // #if OS == win
-                // let err = sys.WSAGetLastError();
-                // if err == sys.OS.WSAENOBUFS {
-                //     // EAGAIN
-                //     throw e_again;
-                // }
-                // #else
-                // #if OS == macos
-                // let err = @ptrv(sys.__error(), i32, 0);
-                // #else
+                #if OS == win
+                let err = sys:WSAGetLastError();
+                if err == sys:WSAENOBUFS {
+                    // EAGAIN
+                    throw e_again;
+                }
+                #else
+                #if OS == macos
+                let err = @ptrv(sys:__error(), i32, 0);
+                #else
                 let err = @ptrv(sys:__errno_location(), i32, 0);
-                // #end
+                #end
                 if err == sys:EAGAIN {
                     // EAGAIN
                     throw e_again;
                 }
-                // #end
+                #end
                 throw connection_error;
             }
             if wbytes == 0 {
@@ -122,29 +123,29 @@ struct Connection {
         //     count = rcvd @as uint;
 
         // } else {
-            // #if OS == win
-            // let rcvd = sys.recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
-            // #else
-            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, buf_size, 0);
-            // #end
+            #if OS == win
+            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
+            #else
+            let rcvd = sys:recv(this.fd @as i32, buffer.data + buffer.length, buf_size, 0);
+            #end
             if (rcvd < 0) {
-                // #if OS == win
-                // let err = sys.WSAGetLastError();
-                // if err == sys.OS.WSAENOBUFS {
-                //     // EAGAIN
-                //     throw e_again;
-                // }
-                // #else
-                // #if OS == macos
-                // let err = @ptrv(sys.__error(), i32, 0);
-                // #else
+                #if OS == win
+                let err = sys:WSAGetLastError();
+                if err == sys:WSAENOBUFS {
+                    // EAGAIN
+                    throw e_again;
+                }
+                #else
+                #if OS == macos
+                let err = @ptrv(sys.__error(), i32, 0);
+                #else
                 let err = @ptrv(sys:__errno_location(), i32, 0);
-                // #end
+                #end
                 if err == sys:EAGAIN {
                     // EAGAIN
                     throw e_again;
                 }
-                // #end
+                #end
                 throw connection_error;
             }
             if (rcvd == 0) {
@@ -157,7 +158,7 @@ struct Connection {
         return count;
     }
 
-    // fn __before_free() {
-    //     this.close();
-    // }
+    fn _gc_free() {
+        this.close()
+    }
 }
