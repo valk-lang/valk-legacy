@@ -366,7 +366,13 @@ test "My test" {
 ```
 
 ```sh
-volt build ./my-tests/*.vo --test --run
+volt build src/*.v --test --run
+```
+
+Or we can put our tests in a different directory.
+
+```sh
+volt build src/*.v ./my-tests/*.vo --test --run
 ```
 
 ## Unsafe
