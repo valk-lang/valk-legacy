@@ -10,5 +10,5 @@ char* arch_str(int arch);
 char* os_str(int os);
 
 #ifdef WIN32
-int gettimeofday(struct timeval *tv, struct timezone *tz);
+int gettimeofday(struct timeval *tv, void *tz);
 #endif
