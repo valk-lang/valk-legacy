@@ -173,25 +173,25 @@ void stage_set_target(Build* b, CompileData* data) {
     char *triple = NULL;
     char *cpu = "generic";
     triple = "x86_64-unknown-linux-gnu";
-    // if (b->target_os == os_linux) {
-    //     if (b->target_arch == arch_x64) {
-    //         triple = "x86_64-unknown-linux-gnu";
-    //     } else if (b->target_arch == arch_arm64) {
-    //         triple = "aarch64-unknown-linux-gnu";
-    //     }
-    // } else if (b->target_os == os_macos) {
-    //     if (b->target_arch == arch_x64) {
-    //         triple = "x86_64-apple-darwin";
-    //     } else if (b->target_arch == arch_arm64) {
-    //         triple = "arm64-apple-darwin";
-    //     }
-    // } else if (b->target_os == os_win) {
-    //     if (b->target_arch == arch_x64) {
-    //         triple = "x86_64-pc-windows-msvc";
-    //     } else if (b->target_arch == arch_arm64) {
-    //         triple = "aarch64-pc-windows-msvc";
-    //     }
-    // }
+    if (b->target_os == os_linux) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-unknown-linux-gnu";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "aarch64-unknown-linux-gnu";
+        }
+    } else if (b->target_os == os_macos) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-apple-darwin";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "arm64-apple-darwin";
+        }
+    } else if (b->target_os == os_win) {
+        if (b->target_arch == arch_x64) {
+            triple = "x86_64-pc-windows-msvc";
+        } else if (b->target_arch == arch_arm64) {
+            triple = "aarch64-pc-windows-msvc";
+        }
+    }
     if (!triple) {
         build_err(b, "❌ Could not figure out the LLVM triple");
     }

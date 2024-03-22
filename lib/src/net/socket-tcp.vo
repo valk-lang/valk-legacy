@@ -160,7 +160,7 @@ class SocketTCP {
         }
         #end
         #if OS == win
-        let ufd = os:WSA_unix_fd(fd)
+        let ufd = os:WSA_unix_fd(os_fd)
         let fd = os_fd
         let nonblock_v = 1 // 1 = non-blocking, 0 = blocking
         if !this.blocking : sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock_v))

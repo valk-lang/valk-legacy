@@ -1,5 +1,6 @@
 
 header "pthread" as pt;
+header "sys" as sys;
 
 use volt:mem;
 
@@ -39,8 +40,12 @@ struct Thread {
             has_data: has_data
         }
 
+        #if OS == win
+		let thr = sys:CreateThread(null, 0, Thread.entry, e, 0, null);
+		#else
         let thr = pt:pthread_t{ data: 0 @as uint };
         let err = pt:pthread_create(thr, null, Thread.entry, e);
+        #end
         // if err != 0 {
         // 	throw fail;
         // }
@@ -48,7 +53,11 @@ struct Thread {
     }
 
     static fn start_without_gc(start_func: ptr) void {
+        #if OS == win
+		let thr = sys:CreateThread(null, 0, start_func, null, 0, null);
+		#else
         let thr = pt:pthread_t{ data: 0 @as uint };
         let err = pt:pthread_create(thr, null, start_func, null);
+        #end
     }
 }

@@ -135,8 +135,10 @@ int cmd_build(int argc, char *argv[]) {
         return 1;
     }
 
-    map_set(cc_defs, "OS", os_str(target_os));
-    map_set(cc_defs, "ARCH", arch_str(target_arch));
+    char* os_name = os_str(target_os);
+    char* arch_name = os_str(target_arch);
+    map_set(cc_defs, "OS", os_name);
+    map_set(cc_defs, "ARCH", arch_name);
 
     // Build
     Build *b = al(alc, sizeof(Build));
@@ -194,8 +196,8 @@ int cmd_build(int argc, char *argv[]) {
     char *cache_dir = al(alc, VOLT_PATH_MAX);
     strcpy(cache_buf, main_dir ? main_dir : ".");
     strcat(cache_buf, "||");
-    // strcat(cache_buf, os);
-    // strcat(cache_buf, arch);
+    strcat(cache_buf, os_name);
+    strcat(cache_buf, arch_name);
     strcat(cache_buf, optimize ? "1" : "0");
     // strcat(cache_buf, debug ? "1" : "0");
     strcat(cache_buf, is_test ? "1" : "0");
