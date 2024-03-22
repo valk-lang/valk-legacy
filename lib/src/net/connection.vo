@@ -137,7 +137,7 @@ struct Connection {
                 }
                 #else
                 #if OS == macos
-                let err = @ptrv(sys.__error(), i32, 0);
+                let err = @ptrv(sys:__error(), i32, 0);
                 #else
                 let err = @ptrv(sys:__errno_location(), i32, 0);
                 #end

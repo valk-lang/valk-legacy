@@ -61,7 +61,7 @@ void stage_6_link(Build* b, Array* o_files) {
     if (is_win) {
         str_append_chars(cmd, "/out:\"");
     } else {
-        str_append_chars(cmd, "-pie -g ");
+        str_append_chars(cmd, "-pie ");
         str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);

@@ -62,7 +62,11 @@ class Poll[T] {
         let i : uint = 0
         each this.listeners as lsn {
             let item = (buf + (i * sizeof(inline sys:libc_poll_item))) @as sys:libc_poll_item
+            #if OS == macos
+            item.fd = lsn.fd @as i32
+            #else
             item.fd = lsn.fd
+            #end
             item.events = lsn.detect_events @as i16
             item.revents = 0
             @ptrv(by_index, ptr, i) = lsn @as ptr

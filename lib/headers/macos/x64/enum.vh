@@ -1,6 +1,9 @@
 
 value EAGAIN (35)
 value SOCK_STREAM (1)
+value F_GETFL (3)
+value F_SETFL (4)
+value O_NONBLOCK (4)
 
 value SOL_SOCKET (65535)
 value SO_REUSEADDR (4)

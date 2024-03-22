@@ -29,10 +29,10 @@ class SocketTCP {
 
         // Win & macos
         #if OS == macos
-        let fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
-        let ufd = fd @as FD
-        let flags = sys:fcntl(fd, sys:F_GETFL, 0)
-        if flags >= 0 && !blocking : sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+        let ufd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
+        let fd = ufd @as FD
+        let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
+        if flags >= 0 && !blocking : sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
 
         #elif OS == win
         let sock_fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
@@ -155,8 +155,8 @@ class SocketTCP {
         let ufd = os_fd
         let fd = os_fd @as FD
         if !this.blocking {
-        	let flags = sys:fcntl(fd, sys:F_GETFL, 0)
-        	if flags >= 0 : sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+        	let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
+        	if flags >= 0 : sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
         }
         #end
         #if OS == win

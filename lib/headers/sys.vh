@@ -19,9 +19,9 @@ header "macos/structs"
 header "macos/abi"
 //header "macos-[ARCH]/enum"
 #if ARCH == arm64
-header "macos-arm64/enum"
+header "macos/arm64/enum"
 #else
-header "macos-x64/enum"
+header "macos/x64/enum"
 #end
 
 #elif OS == win

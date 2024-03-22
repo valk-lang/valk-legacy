@@ -1,5 +1,5 @@
 
-//struct cstruct_dirent {
+//struct libc_dirent {
 //    d_ino: uint // Inode number
 //    d_off: uint // Not an offset see below
 //    d_reclen: u16 // Length of this record
@@ -9,7 +9,7 @@
 //    d_name: .u8[256]
 //}
 
-struct cstruct_stat {
+struct libc_stat {
     st_dev: uint
     st_ino: uint
     st_nlink: uint
@@ -32,34 +32,34 @@ struct cstruct_stat {
     __unused_3: int
 }
 
-struct cstruct_timespec {
+struct libc_timespec {
 	tv_sec: int // seconds
 	tv_nsec: int // nanoseconds
 }
 
-struct cstruct_timeval {
+struct libc_timeval {
 	tv_sec: int // seconds
 	tv_usec: int // microseconds
 }
 
-struct cstruct_pollfd {
+struct libc_poll_item {
 	fd: i32
 	events: i16  // detect events
 	revents: i16 // detected events
 }
 
-struct cstruct_addrinfo {
+struct libc_addrinfo {
     ai_flags: i32
     ai_family: i32
     ai_socktype: i32
     ai_protocol: i32
     ai_addrlen: u32
-    ai_canonname: c_string
-    ai_addr: cstruct_sockaddr
-    ai_next: ?cstruct_addrinfo
+    ai_canonname: cstring
+    ai_addr: libc_sockaddr
+    ai_next: ?libc_addrinfo
 }
 
-struct cstruct_sockaddr {
+struct libc_sockaddr {
 	sa_family: u16
 	sa_data_1: u32
 	sa_data_2: u32
@@ -67,7 +67,7 @@ struct cstruct_sockaddr {
 	sa_data_4: u16
 }
 
-struct cstruct_timezone {
+struct libc_timezone {
 	tz_minuteswest: i32 // Minutes west of GMT
 	tz_dsttime: i32 // Nonzero if DST is ever in effect
 }

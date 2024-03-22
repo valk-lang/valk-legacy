@@ -9,3 +9,6 @@ size_t get_mem_usage();
 char* arch_str(int arch);
 char* os_str(int os);
 
+#ifdef WIN32
+int gettimeofday(struct timeval *tv, struct timezone *tz)
+#endif
