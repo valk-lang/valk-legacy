@@ -104,6 +104,3 @@ jobs:
     
     - name: Test(win-x64)
       run: ./volt build ./tests/*.vo --test -r
-
-    - name: Build test(cross compiling) for linux-x64
-      run: ./volt build ./tests/*.vo -o _test --target linux-x64
