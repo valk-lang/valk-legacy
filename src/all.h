@@ -26,7 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#if __APPLE__
+#else
 #include <malloc.h>
+#endif
 
 ////////////////////////////
 

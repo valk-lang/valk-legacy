@@ -149,6 +149,8 @@ void ctxhash(char *content_, char *buf_) {
 size_t get_mem_usage() {
     #ifdef WIN32
     return 0;
+    #elif __APPLE__
+    return 0;
     #else
     struct mallinfo2 info = mallinfo2();
     return info.arena + info.hblkhd;
