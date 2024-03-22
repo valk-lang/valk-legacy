@@ -23,6 +23,7 @@ typedef struct Stage Stage;
 typedef struct CompileData CompileData;
 typedef struct Parser Parser;
 typedef struct Unit Unit;
+typedef struct Thread Thread;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;

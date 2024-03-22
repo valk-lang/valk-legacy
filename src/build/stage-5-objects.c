@@ -18,9 +18,9 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/lto.h>
 
-void stage_build_o_file(Build* b, Unit* u, Array* ir_files);
+void stage_build_o_file(Build* b, Unit* u, Array* threads);
 void stage_set_target(Build* b, CompileData* data);
-void llvm_build_o_file(void* data);
+void* llvm_build_o_file(void* data);
 void stage_5_optimize(LLVMModuleRef mod);
 
 void stage_5_objects(Build* b) {
@@ -31,6 +31,7 @@ void stage_5_objects(Build* b) {
     usize start = microtime();
 
     Array *o_files = array_make(b->alc, 100);
+    Array *threads = array_make(b->alc, 32);
     Array *units = b->units;
     for (int i = 0; i < units->length; i++) {
 
@@ -39,21 +40,24 @@ void stage_5_objects(Build* b) {
 
         // Build o file if needed
         if(b->is_clean || u->ir_changed || !file_exists(u->path_o)) {
-            Array *ir_files = array_make(b->alc, 2);
-            array_push(ir_files, u->path_ir);
-            stage_build_o_file(b, u, ir_files);
+            stage_build_o_file(b, u, threads);
         }
     }
+
+    thread_wait_all(threads);
 
     b->time_llvm += microtime() - start;
 
     stage_6_link(b, o_files);
 }
 
-void stage_build_o_file(Build* b, Unit* u, Array* ir_files) {
+void stage_build_o_file(Build* b, Unit* u, Array* threads) {
 
     if(b->verbose > 1)
         printf("⚙ Compile o file: %s\n", u->path_o);
+
+    Array *ir_files = array_make(b->alc, 2);
+    array_push(ir_files, u->path_ir);
 
     struct CompileData *data = al(b->alc, sizeof(struct CompileData));
     data->b = b;
@@ -61,7 +65,8 @@ void stage_build_o_file(Build* b, Unit* u, Array* ir_files) {
     data->path_o = u->path_o;
     stage_set_target(b, data);
 
-    llvm_build_o_file(data);
+    thread_make(b->alc, llvm_build_o_file, data, threads, 8);
+    // llvm_build_o_file(data);
 
     // Update cache
     usize start = microtime();
@@ -70,7 +75,8 @@ void stage_build_o_file(Build* b, Unit* u, Array* ir_files) {
     b->time_io += microtime() - start;
 }
 
-void llvm_build_o_file(void* data_) {
+void* llvm_build_o_file(void* data_) {
+
     struct CompileData *data = (struct CompileData *)data_;
     Build *b = data->b;
     Array *ir_files = data->ir_files;
@@ -100,9 +106,9 @@ void llvm_build_o_file(void* data_) {
 
         LLVMParseIRInContext(ctx, buf, &mod, &msg);
         if (msg) {
-            Str *code = str_make(b->alc, 1000);
-            file_get_contents(code, ir_path);
-            printf("IR Code:\n%s\n", str_to_chars(b->alc, code));
+            // Str *code = str_make(b->alc, 1000);
+            // file_get_contents(code, ir_path);
+            // printf("IR Code:\n%s\n", str_to_chars(b->alc, code));
             printf("LLVM IR parse error: %s\n", msg);
             exit(1);
         }
@@ -149,8 +155,9 @@ void llvm_build_o_file(void* data_) {
     LLVMContextDispose(ctx);
 
 #ifndef WIN32
-    // pthread_exit(NULL);
+    pthread_exit(NULL);
 #endif
+    return NULL;
 }
 
 void stage_set_target(Build* b, CompileData* data) {
