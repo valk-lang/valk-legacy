@@ -229,7 +229,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
             continue;
         char var[32];
         strcpy(var, "prop_");
-        itoa(i, var + 5, 10);
+        itos(i, var + 5, 10);
 
         str_flat(code, "let ");
         str_add(code, var);
@@ -290,7 +290,7 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
             continue;
         char var[32];
         strcpy(var, "prop_");
-        itoa(i, var + 5, 10);
+        itos(i, var + 5, 10);
 
         str_flat(code, "let ");
         str_add(code, var);
@@ -363,7 +363,7 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
             continue;
         char var[32];
         strcpy(var, "prop_");
-        itoa(i, var + 5, 10);
+        itos(i, var + 5, 10);
 
         str_flat(code, "let ");
         str_add(code, var);

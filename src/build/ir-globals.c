@@ -19,7 +19,7 @@ void ir_gen_globals(IR* ir) {
         // VTables
         int gc_vtables = b->gc_vtables;
         char gc_vt_count[20];
-        itoa((gc_vtables + 1) * 5, gc_vt_count, 10);
+        itos((gc_vtables + 1) * 5, gc_vt_count, 10);
         char gc_vt_name_buf[256];
         Array* classes = b->classes;
 
@@ -153,9 +153,9 @@ char *ir_string(IR *ir, VString *str) {
     int blen = len + 1;
 
     char blen_str[32];
-    itoa(blen, blen_str, 10);
+    itos(blen, blen_str, 10);
     char len_str[32];
-    itoa(len, len_str, 10);
+    itos(len, len_str, 10);
 
     bool external = false;
 
@@ -184,7 +184,7 @@ char *ir_string(IR *ir, VString *str) {
             ((char *)code->data)[code->length] = '\\';
             code->length++;
             //
-            unsigned char hex[3];
+            char hex[3];
             char_to_hex(ch, hex);
             ((char *)code->data)[code->length] = hex[0];
             ((char *)code->data)[code->length + 1] = hex[1];
@@ -210,7 +210,7 @@ char *ir_string(IR *ir, VString *str) {
         str_flat(code, " { i8 8, i8 0, i8 0, i8 0, i32 ");
 
         char vt[32];
-        itoa(stype->class->gc_vtable_index, vt, 10);
+        itos(stype->class->gc_vtable_index, vt, 10);
         str_add(code, vt);
 
         str_flat(code, ", ptr ");

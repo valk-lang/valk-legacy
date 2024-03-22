@@ -9,7 +9,7 @@ Parser* pool_get_parser(Unit* u) {
     }
     return p;
 }
-Parser* pool_return_parser(Unit* u, Parser* p) {
+void pool_return_parser(Unit* u, Parser* p) {
     array_push(u->pool_parsers, p);
 }
 

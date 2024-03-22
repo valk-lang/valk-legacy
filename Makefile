@@ -6,8 +6,8 @@ SUB_UNAME := $(findstring MINGW64, $(UNAME))
 
 ifeq ($(UNAME), Linux)
 # From linux
-CC=gcc
-LCC=gcc
+CC=clang-15
+LCC=clang-15
 LLVM_CFG=llvm-config-15
 else ifeq ($(SUB_UNAME), MINGW64)
 # Mingw

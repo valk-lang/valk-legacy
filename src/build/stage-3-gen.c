@@ -155,7 +155,7 @@ void stage_generate_mark_functions(Build* b) {
             //
             char buf[512];
             char nr[16];
-            itoa(globalc++, nr, 10);
+            itos(globalc++, nr, 10);
             //
             strcpy(buf, "VOLT_GLOBAL_IDF_");
             strcat(buf, nr);
@@ -210,7 +210,7 @@ void stage_generate_mark_functions(Build* b) {
             //
             char buf[512];
             char nr[16];
-            itoa(globalc++, nr, 10);
+            itos(globalc++, nr, 10);
             //
             strcpy(buf, "VOLT_GLOBAL_IDF_");
             strcat(buf, nr);

@@ -270,7 +270,7 @@ void char_to_hex(const unsigned char ch, char* buf) {
     buf[2] = 0;
 }
 
-char* itoa(long int val, char* buf, const int base){
+char* itos(long int val, char* buf, const int base){
     if(val == 0) {
         strcpy(buf, "0");
         return buf;

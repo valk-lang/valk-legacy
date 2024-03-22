@@ -5,6 +5,6 @@
 #include "typedefs.h"
 
 Parser* pool_get_parser(Unit* u);
-Parser* pool_return_parser(Unit* u, Parser* p);
+void pool_return_parser(Unit* u, Parser* p);
 
 #endif

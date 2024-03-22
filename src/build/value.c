@@ -1102,9 +1102,6 @@ Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* typ
     return val;
 }
 
-bool try_auto_cast_number(Value* val, Type* type) {
-}
-
 bool try_convert_number(Value* val, Type* to_type) {
     int tto = to_type->type;
     if(val->type != v_number || (tto != type_int && tto != type_float))

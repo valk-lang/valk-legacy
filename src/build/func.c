@@ -170,6 +170,8 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
 
         return var;
     }
+
+    return NULL;
 }
 
 

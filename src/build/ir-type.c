@@ -92,6 +92,6 @@ char *ir_type_align(IR *ir, Type *type, char* result) {
     if (abytes > ir->b->ptr_size) {
         abytes = ir->b->ptr_size;
     }
-    itoa(abytes, result, 10);
+    itos(abytes, result, 10);
     return result;
 }

@@ -279,15 +279,15 @@ Value *vgen_string(Allocator *alc, Unit *u, char *body) {
     u->string_count++;
     char var[64];
     strcpy(var, "@.str.object.");
-    itoa(u->id, (char *)((intptr_t)var + 13), 10);
+    itos(u->id, (char *)((intptr_t)var + 13), 10);
     strcat(var, "_");
-    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
+    itos(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
     char *object_name = dups(b->alc, var);
 
     strcpy(var, "@.str.body.");
-    itoa(u->id, (char *)((intptr_t)var + 11), 10);
+    itos(u->id, (char *)((intptr_t)var + 11), 10);
     strcat(var, "_");
-    itoa(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
+    itos(u->string_count, (char *)((intptr_t)var + strlen(var)), 10);
     char *body_name = dups(b->alc, var);
 
     VString *str = al(b->alc, sizeof(VString));

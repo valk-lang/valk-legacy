@@ -146,6 +146,7 @@ Func *get_volt_func(Build *b, char *namespace, char *name) {
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+    return NULL;
 }
 Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn) {
     Idf* idf = get_volt_idf(b, namespace, class_name, true);
@@ -157,6 +158,7 @@ Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn)
     }
     printf("Identifier: '%s:%s->%s'\n", namespace, class_name, fn);
     build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+    return NULL;
 }
 Class *get_volt_class(Build *b, char *namespace, char *name) {
     Idf* idf = get_volt_idf(b, namespace, name, true);
@@ -165,6 +167,7 @@ Class *get_volt_class(Build *b, char *namespace, char *name) {
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a class (compiler bug)");
+    return NULL;
 }
 
 Global *get_volt_global(Build *b, char *namespace, char *name) {
@@ -174,6 +177,7 @@ Global *get_volt_global(Build *b, char *namespace, char *name) {
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a global variable (compiler bug)");
+    return NULL;
 }
 
 ValueAlias *get_volt_value_alias(Build *b, char *namespace, char *name) {
@@ -183,6 +187,7 @@ ValueAlias *get_volt_value_alias(Build *b, char *namespace, char *name) {
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a 'value alias' (compiler bug)");
+    return NULL;
 }
 
 Snippet *get_volt_snippet(Build *b, char *namespace, char *name) {
@@ -192,4 +197,5 @@ Snippet *get_volt_snippet(Build *b, char *namespace, char *name) {
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
     build_err(b, "Volt identifier was found but is not a snippet (compiler bug)");
+    return NULL;
 }

@@ -5,7 +5,7 @@ char *ir_var(IRFunc* func) {
     char *res = al(func->ir->alc, 10);
     res[0] = '%';
     res[1] = '.';
-    itoa(func->var_count++, res + 2, 10);
+    itos(func->var_count++, res + 2, 10);
     return res;
 }
 
@@ -33,7 +33,7 @@ char *ir_int(IR* ir, long int value) {
         res[0] = '-';
         v = v * -1;
     }
-    itoa(v, res + (value < 0 ? 1 : 0), 10);
+    itos(v, res + (value < 0 ? 1 : 0), 10);
     return res;
 }
 char *ir_float(IR* ir, double value) {
@@ -169,7 +169,7 @@ void ir_store(IR *ir, char *var, char *val, char* type, int type_size) {
     char bytes[20];
     if(type_size > ir->b->ptr_size)
         type_size = ir->b->ptr_size;
-    itoa(type_size, bytes, 10);
+    itos(type_size, bytes, 10);
 
     str_flat(code, "  store ");
     str_add(code, type);
@@ -492,7 +492,7 @@ char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
     str_preserve(code, 512);
 
     char index[20];
-    itoa(prop->index, index, 10);
+    itos(prop->index, index, 10);
 
     ir_define_struct(ir, class);
 
@@ -576,7 +576,7 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
 char* ir_ptrv(IR* ir, char* on, char* type, int index) {
 
     char index_buf[20];
-    itoa(index, index_buf, 10);
+    itos(index, index_buf, 10);
 
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
@@ -597,7 +597,7 @@ char* ir_ptrv(IR* ir, char* on, char* type, int index) {
 char* ir_ptr_offset(IR* ir, char* on, char* index, char* index_type, int size) {
 
     char size_buf[20];
-    itoa(size, size_buf, 10);
+    itos(size, size_buf, 10);
 
     char *result = ir_var(ir->func);
     Str *code = ir->block->code;
