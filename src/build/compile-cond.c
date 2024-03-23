@@ -27,7 +27,7 @@ void cc_parse(Parser* p) {
         if(prev_result == 1) {
             cc_skip_to_next_cond(p);
         } else {
-            p->cc_results[cci] = result;
+            p->cc_results[cci - 1] = result;
             if (result == 1) {
                 tok_expect_newline(p);
             } else {
@@ -140,12 +140,13 @@ void cc_skip_to_next_cond(Parser* p) {
             char* tkn = p->tkn;
             if(str_is(tkn, "if")) {
                 depth++;
-            } else if(str_is(tkn, "end") || str_is(tkn, "else") || str_is(tkn, "elif")) {
+            } else if(str_is(tkn, "end") || str_is(tkn, "elif") || str_is(tkn, "else")) {
                 if(depth == 0) {
                     ch->i = before;
                     break;
                 }
-                depth--;
+                if (str_is(tkn, "end"))
+                    depth--;
             }
         }
     }

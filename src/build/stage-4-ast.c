@@ -90,6 +90,9 @@ void read_ast(Parser *p, bool single_line) {
             continue;
         }
 
+        if(scope->did_return)
+            continue;
+
         if (t == tok_id) {
             if (str_is(tkn, "let")){
                 Array *names = array_make(alc, 2);
@@ -177,7 +180,7 @@ void read_ast(Parser *p, bool single_line) {
                 }
                 array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, p->loop_scope));
                 scope->did_return = true;
-                break;
+                continue;
             }
             if (str_is(tkn, "return")){
                 Value* val = NULL;
@@ -247,7 +250,7 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
-                break;
+                continue;
             }
             if (str_is(tkn, "throw")){
                 char t = tok(p, true, false, true);
@@ -267,7 +270,7 @@ void read_ast(Parser *p, bool single_line) {
 
                 array_push(scope->ast, tgen_throw(alc, b, p->unit, err, name));
                 scope->did_return = true;
-                break;
+                continue;
             }
             if (str_is(tkn, "each")){
                 Value* on = read_value(alc, p, true, 0);

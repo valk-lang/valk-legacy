@@ -27,7 +27,15 @@ struct TestResult {
 
 fn test_init() TestResult {
     println("-----------------------")
-    return TestResult{};
+
+    let tr = TestResult{
+        name: null
+
+        as_count: 0
+        as_failed: 0
+    }
+
+    return tr
 }
 
 fn test_assert(check: bool, result: TestResult, path: String, line: uint) {

@@ -237,7 +237,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             v = vgen_float(alc, fv, type_gen_volt(alc, b, "float"));
         } else {
             p->chunk->i = before;
-            long int iv = atol(num);
+            v_i64 iv = atol(num);
             if (negative) {
                 iv *= -1;
             }
@@ -418,13 +418,15 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     }
 
     if (prio == 0 || prio > 35) {
-        while (t == tok_bit_and || t == tok_bit_or) {
+        while (t == tok_bit_and || t == tok_bit_or || t == tok_bit_xor) {
             tok(p, true, true, true);
             int op;
             if(t == tok_bit_and)
                 op = op_bit_and;
             else if(t == tok_bit_or)
                 op = op_bit_or;
+            else if(t == tok_bit_xor)
+                op = op_bit_xor;
             else
                 break;
             Value *right = read_value(alc, p, true, 35);
@@ -592,16 +594,27 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         tok(p, true, true, true);
     } else {
         while (true) {
-            Value *arg = read_value(alc, p, true, 0);
             Type *arg_type = array_get_index(func_args, arg_i++);
-            if (arg_type) {
-                arg = try_convert(alc, b, p->scope, arg, arg_type);
-                type_check(p, arg_type, arg->rett);
+            if (!arg_type) {
+                parse_err(p, -1, "Too many arguments");
             }
+
+            Value *arg = read_value(alc, p, true, 0);
+            arg = try_convert(alc, b, p->scope, arg, arg_type);
+
+            char t = tok(p, true, true, true);
+            if (t == tok_at_word && str_is(p->tkn, "@autocast")) {
+                char* reason;
+                if(!type_compat(arg_type, arg->rett, &reason)) {
+                    arg = vgen_cast(alc, arg, arg_type);
+                }
+                t = tok(p, true, true, true);
+            }
+
+            type_check(p, arg_type, arg->rett);
 
             array_push(args, arg);
 
-            char t = tok(p, true, true, true);
             if (t == tok_comma)
                 continue;
             if (t == tok_bracket_close)
@@ -777,10 +790,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);
             }
 
-            Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope);
-
-            val = try_convert(alc, b, p->scope, val, prop->type);
-            type_check(p, prop->type, val->rett);
+            Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope, prop->type);
 
             map_set_force_new(values, name, val);
         }
@@ -1106,17 +1116,22 @@ bool try_convert_number(Value* val, Type* to_type) {
     int tto = to_type->type;
     if(val->type != v_number || (tto != type_int && tto != type_float))
         return false;
+
     int bytes = to_type->size;
+    if(bytes > sizeof(intptr_t)) {
+        bytes = sizeof(intptr_t);
+    }
+
     int bits = bytes * 8;
     VNumber *number = val->item;
     if (tto == type_int && val->rett->type != type_float) {
-        long int one = 1;
-        long int max = bytes < sizeof(intptr_t) ? (one << (bits - 1)) : INTPTR_MAX;
-        long int min = 0;
+        v_i64 one = 1;
+        v_i64 max = one << (bits - (bytes == sizeof(intptr_t) ? 2 : (to_type->is_signed ? 2 : 1)));
+        v_i64 min = 0;
         if (to_type->is_signed) {
             min = max * -1;
         }
-        long int value = number->value_int;
+        v_i64 value = number->value_int;
         // printf("try:%ld\n", value);
         if (value >= min && value <= max) {
             // printf("conv:%ld\n", value);

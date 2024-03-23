@@ -26,9 +26,9 @@ void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else) {
     str_flat(code, "\n");
 }
 
-char *ir_int(IR* ir, long int value) {
+char *ir_int(IR* ir, v_i64 value) {
     char *res = al(ir->alc, 32);
-    long int v = value;
+    v_i64 v = value;
     if (value < 0) {
         res[0] = '-';
         v = v * -1;

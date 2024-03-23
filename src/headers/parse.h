@@ -51,5 +51,11 @@ struct ValueAlias {
     Fc* fc;
     int act;
 };
+struct Alias {
+    char* name;
+    Idf* idf;
+    Chunk* chunk;
+    Scope* scope;
+};
 
 #endif

@@ -86,7 +86,7 @@ Pkc* pkc_load_from_dir(Build* b, char* dir, char* name_suggestion) {
     return pkc;
 }
 
-Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p) {
+Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header) {
     Build *b = pkc->b;
     if(pkc->headers_by_fn) {
         Fc *hfc = map_get(pkc->headers_by_fn, fn);
@@ -112,7 +112,8 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p) {
         char* dir = array_get_index(dirs, i);
         sprintf(path, "%s%s.vh", dir, fn);
         if(file_exists(path)) {
-            Fc* hfc = fc_make(b->nsc_main, dups(b->alc, path));
+            Fc* hfc = fc_make(b->nsc_main, dups(b->alc, path), is_sub_header);
+            hfc->header_pkc = pkc;
             map_set_force_new(pkc->headers_by_fn, fn, hfc);
             return hfc;
         }

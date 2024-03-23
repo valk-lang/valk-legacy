@@ -270,14 +270,14 @@ void char_to_hex(const unsigned char ch, char* buf) {
     buf[2] = 0;
 }
 
-char* itos(long int val, char* buf, const int base){
+char* itos(v_i64 val, char* buf, const int base){
     if(val == 0) {
         strcpy(buf, "0");
         return buf;
     }
     int i = 0;
     bool negative = false;
-    char rev[32];
+    char rev[64];
     if(val < 0) {
         val *= -1;
         negative = true;

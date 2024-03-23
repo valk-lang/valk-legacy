@@ -31,7 +31,7 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
     return value_make(alc, v_func_call, item, on->rett->func_rett);
 }
 
-Value *vgen_int(Allocator *alc, long int value, Type *type) {
+Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
     VNumber *item = al(alc, sizeof(VNumber));
     item->value_int = value;
     return value_make(alc, v_number, item, type);

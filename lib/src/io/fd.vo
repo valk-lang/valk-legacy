@@ -1,16 +1,18 @@
 
 header "sys" as sys;
 
-fn open(path: String, flags: i32, mode: i32) i32 !open {
-    let fd = sys:open(path, flags, mode);
+alias FD as uint;
+
+fn open(path: String, flags: i32, mode: i32) FD !open {
+    let fd = sys:open(path.data, flags, mode);
     if fd < 0 {
         throw open;
     }
-    return fd;
+    return fd @as FD;
 }
 
-fn write(fd: i32, str: String) void !failed !again {
-    let c = sys:write(fd, str.data, str.bytes);
+fn write(fd: FD, str: String) void !failed !again {
+    let c = sys:write(fd @as i32, str.data, str.bytes);
     if c == -2 {
         throw again;
     }
@@ -19,8 +21,8 @@ fn write(fd: i32, str: String) void !failed !again {
     }
 }
 
-fn write_from_ptr(fd: i32, data: ptr, length: uint) uint !failed !again {
-    let c = sys:write(fd, data, length);
+fn write_from_ptr(fd: FD, data: ptr, length: uint) uint !failed !again {
+    let c = sys:write(fd @as i32, data, length);
     if c == -2 {
         throw again;
     }
@@ -30,8 +32,8 @@ fn write_from_ptr(fd: i32, data: ptr, length: uint) uint !failed !again {
     return c @as uint;
 }
 
-fn read(fd: i32, buffer: ptr, buffer_size: uint) uint !failed !again {
-    let rcvd = sys:read(fd, buffer, buffer_size);
+fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
+    let rcvd = sys:read(fd @as i32, buffer, buffer_size);
     if rcvd == -2 {
         throw again;
     }
@@ -41,6 +43,6 @@ fn read(fd: i32, buffer: ptr, buffer_size: uint) uint !failed !again {
     return rcvd @as uint;
 }
 
-fn close(fd: i32) void {
-    let c = sys:close(fd);
+fn close(fd: FD) void {
+    let c = sys:close(fd @as i32);
 }

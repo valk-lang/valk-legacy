@@ -3,14 +3,16 @@
 
 void stage_parse(Parser* p, Unit* u, Fc* fc);
 void stage_1_func(Parser* p, Unit* u, int act, Fc* fc);
-void stage_1_header(Parser* p, Unit* u);
+void stage_1_header(Parser* p, Unit* u, Fc* fc);
 void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc);
 void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared, int act, Fc* fc);
 void stage_1_value_alias(Parser* p, Unit* u, int act, Fc* fc);
+void stage_1_alias(Parser* p, Unit* u, Fc* fc);
 void stage_1_test(Parser* p, Unit* u, Fc* fc);
 void stage_1_snippet(Parser* p, Unit* u);
+void stage_1_link(Parser* p, Unit* u, int link_dynamic);
 
 void stage_1_parse(Fc* fc) {
     Unit* u = fc->nsc->unit;
@@ -42,6 +44,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             break;
         }
         if (t == tok_semi) {
+            continue;
+        }
+        if (t == tok_hashtag && p->on_newline) {
+            cc_parse(p);
             continue;
         }
 
@@ -108,13 +114,17 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_value_alias(p, u, act, fc);
                 continue;
             }
+            if (str_is(tkn, "alias")) {
+                stage_1_alias(p, u, fc);
+                continue;
+            }
 
             if (act != act_public) {
                 parse_err(p, -1, "Unexpected '%s' before '%s'", act_tkn, tkn);
             }
 
             if (str_is(tkn, "header")) {
-                stage_1_header(p, u);
+                stage_1_header(p, u, fc);
                 continue;
             }
             if (str_is(tkn, "use")) {
@@ -127,6 +137,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             }
             if (str_is(tkn, "snippet")) {
                 stage_1_snippet(p, u);
+                continue;
+            }
+            if (str_is(tkn, "link_dynamic")) {
+                stage_1_link(p, u, link_dynamic);
                 continue;
             }
         }
@@ -162,17 +176,26 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
     parse_handle_func_args(p, func);
 }
 
-void stage_1_header(Parser *p, Unit *u){
+void stage_1_header(Parser *p, Unit *u, Fc* fc){
     Build* b = p->b;
     
     char t = tok(p, true, false, true);
     if(t != tok_string) {
         parse_err(p, -1, "Expected a header name here wrapped in double-quotes");
     }
-
     char* fn = p->tkn;
+
+    if(p->in_header) {
+        Fc *hfc = pkc_load_header(fc->header_pkc, fn, p, true);
+        parser_new_context(&p);
+        *p->chunk = *hfc->content;
+        stage_parse(p, u, hfc);
+        parser_pop_context(&p);
+        return;
+    }
+
     Pkc *pkc = u->nsc->pkc;
-    Fc *hfc = pkc_load_header(pkc, fn, p);
+    Fc *hfc = pkc_load_header(pkc, fn, p, false);
 
     tok_expect(p, "as", true, false);
 
@@ -229,9 +252,6 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
     array_push(u->classes, class);
-    if(!nsc_scope->type_identifiers)
-        nsc_scope->type_identifiers = map_make(b->alc);
-    map_set_force_new(nsc_scope->type_identifiers, name, idf);
     if(!class->is_generic_base) {
         scope_set_idf(class->scope, "CLASS", idf, p);
         array_push(b->classes, class);
@@ -389,7 +409,7 @@ void stage_1_value_alias(Parser *p, Unit *u, int act, Fc* fc) {
     char t = tok(p, true, false, true);
     char* name = p->tkn;
     if(t != tok_id) {
-        parse_err(p, -1, "Invalid value alias name: '%s'", name);
+        parse_err(p, -1, "Invalid value name: '%s'", name);
     }
 
     tok_expect(p, "(", true, false);
@@ -405,6 +425,27 @@ void stage_1_value_alias(Parser *p, Unit *u, int act, Fc* fc) {
 
     Idf* idf = idf_make(b->alc, idf_value_alias, va);
     scope_set_idf(u->nsc->scope, name, idf, p);
+}
+
+void stage_1_alias(Parser* p, Unit* u, Fc* fc) {
+    Build *b = u->b;
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid alias name: '%s'", name);
+    }
+
+    tok_expect(p, "as", true, false);
+
+    Alias* a = al(b->alc, sizeof(Alias));
+    a->name = name;
+    a->idf = NULL;
+    a->chunk = chunk_clone(b->alc, p->chunk);
+    a->scope = p->scope;
+
+    array_push(u->aliasses, a);
+
+    skip_id(p);
 }
 
 void stage_1_test(Parser* p, Unit* u, Fc* fc){
@@ -512,4 +553,36 @@ void stage_1_snippet(Parser *p, Unit *u) {
         }
         snip->exports = exports;
     }
+}
+
+void stage_1_link(Parser* p, Unit* u, int type) {
+    //
+    Build* b = u->b;
+    Allocator* alc = b->alc;
+
+    char t = tok(p, true, false, true);
+    if(t != tok_string) {
+        parse_err(p, -1, "Expected a library name here wrapped in dubbel-quotes, e.g. \"pthread\"");
+    }
+    char* fn = p->tkn;
+    if (type == link_default) {
+        // type = b->link_static ? link_static : link_dynamic;
+        type = link_dynamic;
+    }
+
+    Link *link = map_get(b->link_settings, fn);
+    if (!link) {
+        link = al(alc, sizeof(Link));
+        link->type = type;
+        link->name = fn;
+        map_set(b->link_settings, fn, link);
+    }
+    if (type == link_dynamic && link->type != link_dynamic) {
+        link->type = link_dynamic;
+    }
+
+    link = al(alc, sizeof(Link));
+    link->type = type;
+    link->name = fn;
+    array_push(b->links, link);
 }

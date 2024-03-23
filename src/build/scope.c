@@ -8,7 +8,6 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->idf_parent = parent;
 
     sc->identifiers = map_make(alc);
-    sc->type_identifiers = NULL;
 
     sc->ast = NULL;
     sc->decls = type == sc_func ? array_make(alc, 20) : NULL;

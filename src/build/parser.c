@@ -29,7 +29,14 @@ Parser* parser_make(Allocator* alc, Unit* u) {
 void parser_new_context(Parser** ref) {
     Parser* p = *ref;
     Parser *p2 = pool_get_parser(p->unit);
+
+    // Copy everything except chunk
+    Chunk* ch = p2->chunk;
+    *p2 = *p;
+    p2->chunk = ch;
     p2->prev = p;
+
+    // Set variable
     *ref = p2;
 }
 void parser_pop_context(Parser** ref) {
@@ -38,7 +45,7 @@ void parser_pop_context(Parser** ref) {
     *ref = p;
 }
 
-Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope) {
+Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope, Type* check_type) {
 
     Scope *sub = scope_sub_make(alc, sc_default, p->scope);
     if (idf_scope)
@@ -49,6 +56,11 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
     *p2->chunk = *chunk;
     p2->scope = sub;
     Value *val = read_value(alc, p2, true, 0);
+
+    if (check_type) {
+        val = try_convert(alc, p->b, p->scope, val, check_type);
+        type_check(p, check_type, val->rett);
+    }
 
     pool_return_parser(p->unit, p2);
 

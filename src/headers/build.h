@@ -12,13 +12,13 @@ Map* build_cc_defs(Allocator* alc, Map* options);
 Pkc *pkc_make(Allocator *alc, Build *b, char *name_suggestion);
 void pkc_set_dir(Pkc *pkc, char *dir);
 Pkc *pkc_load_pkc(Pkc *pkc, char *name, Parser* p);
-Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p);
+Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header);
 
 Nsc *nsc_make(Allocator *alc, Pkc *pkc, char *name, char *dir);
 Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Parser* p);
 Nsc *get_volt_nsc(Build *b, char *name);
 
-Fc *fc_make(Nsc *nsc, char *path);
+Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header);
 
 // Stage functions
 void build_set_stages(Build *b);
@@ -88,15 +88,17 @@ struct Build {
     Array *pool_str;
     ErrorCollection* errors;
     Array *strings;
+    Array *links;
+    Map *link_settings;
     //
     Map* cc_defs;
     //
     size_t mem_parse;
     size_t mem_objects;
     //
-    int os;
+    int host_os;
     int target_os;
-    int arch;
+    int host_arch;
     int target_arch;
     //
     int ptr_size;
@@ -118,6 +120,7 @@ struct Fc {
     //
     Allocator *alc;
     Nsc *nsc;
+    Pkc *header_pkc;
     Scope *scope;
     //
     Chunk *content;
@@ -155,6 +158,10 @@ struct CompileData {
     void* target_data;
     char* triple;
     char* data_layout;
+};
+struct Link {
+    char* name;
+    int type;
 };
 
 #endif

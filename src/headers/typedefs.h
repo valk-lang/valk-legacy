@@ -24,6 +24,7 @@ typedef struct CompileData CompileData;
 typedef struct Parser Parser;
 typedef struct Unit Unit;
 typedef struct Thread Thread;
+typedef struct Link Link;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;
@@ -45,6 +46,7 @@ typedef struct Class Class;
 typedef struct ClassProp ClassProp;
 typedef struct Trait Trait;
 typedef struct ValueAlias ValueAlias;
+typedef struct Alias Alias;
 typedef struct Test Test;
 // Tokens
 typedef struct Token Token;

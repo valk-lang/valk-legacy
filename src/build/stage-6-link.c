@@ -2,6 +2,7 @@
 #include "../all.h"
 
 Array* get_link_dirs(Build* b);
+void stage_link_libs_all(Str *cmd, Build *b);
 
 void stage_6_link(Build* b, Array* o_files) {
 
@@ -11,30 +12,23 @@ void stage_6_link(Build* b, Array* o_files) {
     usize start = microtime();
 
     Str *cmd = str_make(b->alc, 1000);
-    bool is_linux = true;
-    bool is_macos = false;
-    bool is_win = false;
-    bool is_x64 = true;
-    bool is_arm64 = false;
-    bool host_os_is_target = true;
-    bool host_arch_is_target = true;
 
-    // bool is_linux = b->target_os == os_linux;
-    // bool is_macos = b->target_os == os_macos;
-    // bool is_win = b->target_os == os_win;
+    bool is_linux = b->target_os == os_linux;
+    bool is_macos = b->target_os == os_macos;
+    bool is_win = b->target_os == os_win;
 
-    // bool is_x64 = strcmp(b->arch, "x64") == 0;
-    // bool is_arm64 = strcmp(b->arch, "arm64") == 0;
+    bool is_x64 = b->target_arch == arch_x64;
+    bool is_arm64 = b->target_arch == arch_arm64;
 
-    // bool host_os_is_target = b->host_os == b->target_os;
-    // bool host_arch_is_target = b->host_arch == b->target_arch;
+    bool host_os_is_target = b->host_os == b->target_os;
+    bool host_arch_is_target = b->host_arch == b->target_arch;
     bool host_system_is_target = host_os_is_target && host_arch_is_target;
 
     char *linker = NULL;
     char linker_buf[VOLT_PATH_MAX];
     if (host_system_is_target) {
         if (is_linux) {
-            linker = "gcc";
+            linker = "ld";
         } else if (is_macos) {
             linker = "ld";
         } else if (is_win) {
@@ -67,7 +61,7 @@ void stage_6_link(Build* b, Array* o_files) {
     if (is_win) {
         str_append_chars(cmd, "/out:\"");
     } else {
-        str_append_chars(cmd, "-pie -g ");
+        str_append_chars(cmd, "-pie ");
         str_append_chars(cmd, "-o \"");
     }
     str_append_chars(cmd, b->path_out);
@@ -87,38 +81,38 @@ void stage_6_link(Build* b, Array* o_files) {
     str_append_chars(cmd, "\" ");
 
     // Link dirs
-    // Array *link_dirs = get_link_dirs(b);
-    // for (int i = 0; i < link_dirs->length; i++) {
-    //     char *path = array_get_index(link_dirs, i);
-    //     str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
-    //     str_append_chars(cmd, path);
-    //     str_append_chars(cmd, b->os);
-    //     str_append_chars(cmd, "-");
-    //     str_append_chars(cmd, b->arch);
-    //     str_append_chars(cmd, "\" ");
-    // }
+    Array *link_dirs = get_link_dirs(b);
+    for (int i = 0; i < link_dirs->length; i++) {
+        char *path = array_get_index(link_dirs, i);
+        str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
+        str_append_chars(cmd, path);
+        str_append_chars(cmd, os_str(b->target_os));
+        str_append_chars(cmd, "-");
+        str_append_chars(cmd, arch_str(b->target_arch));
+        str_append_chars(cmd, "\" ");
+    }
 
     // Details
     if (is_linux) {
-        // str_append_chars(cmd, "--sysroot=");
-        // str_append_chars(cmd, volt_lib_dir);
-        // str_append_chars(cmd, "root ");
+        str_append_chars(cmd, "--sysroot=");
+        str_append_chars(cmd, volt_lib_dir);
+        str_append_chars(cmd, "root ");
 
-        // if (is_x64) {
-        //     str_append_chars(cmd, "-m elf_x86_64 ");
-        //     str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
-        // } else if (is_arm64) {
-        //     str_append_chars(cmd, "-m aarch64linux ");
-        //     str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
+        if (is_x64) {
+            str_append_chars(cmd, "-m elf_x86_64 ");
+            str_append_chars(cmd, "--dynamic-linker /lib64/ld-linux-x86-64.so.2 ");
+        } else if (is_arm64) {
+            str_append_chars(cmd, "-m aarch64linux ");
+            str_append_chars(cmd, "--dynamic-linker /lib/ld-linux-aarch64.so.1 ");
+        }
+
+        // if (b->type == build_t_exe) {
+            str_append_chars(cmd, "-l:Scrt1.o ");
+            str_append_chars(cmd, "-l:crti.o ");
+            str_append_chars(cmd, "-l:crtbeginS.o ");
+        // } else if (b->type == build_t_shared_lib) {
+        //     str_append_chars(cmd, "--shared ");
         // }
-
-        // // if (b->type == build_t_exe) {
-        //     str_append_chars(cmd, "-l:Scrt1.o ");
-        //     str_append_chars(cmd, "-l:crti.o ");
-        //     str_append_chars(cmd, "-l:crtbeginS.o ");
-        // // } else if (b->type == build_t_shared_lib) {
-        // //     str_append_chars(cmd, "--shared ");
-        // // }
 
     } else if (is_macos) {
         str_append_chars(cmd, "-syslibroot ");
@@ -158,14 +152,12 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     // Link libs
-    // stage_link_libs_all(cmd, b);
-    // str_append_chars(cmd, "-lpthread -lc -l:libc_nonshared.a -l:ld-linux-x86-64.so.2 ");
-    str_append_chars(cmd, "-lpthread -lc -lm -ldl ");
+    stage_link_libs_all(cmd, b);
 
     // End
     if (is_linux) {
-        // str_append_chars(cmd, "-l:crtendS.o ");
-        // str_append_chars(cmd, "-l:crtn.o ");
+        str_append_chars(cmd, "-l:crtendS.o ");
+        str_append_chars(cmd, "-l:crtn.o ");
     }
 
     // Run command
@@ -179,6 +171,34 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     b->time_link += microtime() - start;
+}
+
+void stage_link_libs_all(Str *cmd, Build *b) {
+    //
+    bool is_win = b->target_os == os_win;
+    bool is_macos = b->target_os == os_macos;
+
+    for (int i = 0; i < b->links->length; i++) {
+        Link *link = array_get_index(b->links, i);
+
+        char *prefix = "";
+        char *suffix = "";
+        bool is_static = link->type == link_static;
+        if (!is_win) {
+            prefix = "-l";
+            if (is_static && !is_macos) {
+                prefix = "-l:lib";
+                suffix = ".a";
+            }
+        } else {
+            suffix = ".lib";
+        }
+
+        str_append_chars(cmd, prefix);
+        str_append_chars(cmd, link->name);
+        str_append_chars(cmd, suffix);
+        str_append_chars(cmd, " ");
+    }
 }
 
 Array* get_link_dirs(Build* b) {

@@ -216,3 +216,9 @@ enum TARGET {
     arch_arm64,
     arch_other,
 };
+
+enum LINK {
+    link_default,
+    link_dynamic,
+    link_static,
+};

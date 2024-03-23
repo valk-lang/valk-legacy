@@ -7,7 +7,7 @@
 Parser* parser_make(Allocator* alc, Unit* u);
 void parser_new_context(Parser** ref);
 void parser_pop_context(Parser** ref);
-Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope);
+Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope, Type* type_check);
 
 struct Parser {
     Build* b;
