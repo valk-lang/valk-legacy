@@ -69,21 +69,21 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
     if(!idf && !ns) {
         if(name[0] == 'u' && str_is(name, "uint")){
             char* name = get_number_type_name(b, b->ptr_size, false, false);
-            Nsc* ns = get_volt_nsc(p->b, "type");
+            Nsc* ns = get_vali_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(name[0] == 'i' && str_is(name, "int")){
             char* name = get_number_type_name(b, b->ptr_size, false, true);
-            Nsc* ns = get_volt_nsc(p->b, "type");
+            Nsc* ns = get_vali_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(name[0] == 'f' && str_is(name, "float")){
             char* name = get_number_type_name(b, b->ptr_size, true, false);
-            Nsc* ns = get_volt_nsc(p->b, "type");
+            Nsc* ns = get_vali_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map")) {
-            Nsc* ns = get_volt_nsc(p->b, "type");
+            Nsc* ns = get_vali_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(str_is(name, "print") || str_is(name, "println") || str_is(name, "FD")) {
-            Nsc* ns = get_volt_nsc(p->b, "io");
+            Nsc* ns = get_vali_nsc(p->b, "io");
             idf = scope_find_idf(ns->scope, name, true);
         }
     }
@@ -111,33 +111,33 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
 }
 
 
-Idf* get_volt_idf(Build* b, char* ns, char* name, bool must_exist) {
-    Nsc* nsc = get_volt_nsc(b, ns);
+Idf* get_vali_idf(Build* b, char* ns, char* name, bool must_exist) {
+    Nsc* nsc = get_vali_nsc(b, ns);
     if(!nsc) {
         if(!must_exist)
             return NULL;
         printf("Namespace: '%s'\n", ns);
-        build_err(b, "Volt namespace not found (compiler bug)");
+        build_err(b, "Vali namespace not found (compiler bug)");
     }
     Idf* idf = scope_find_idf(nsc->scope, name, false);
     if(!idf && must_exist) {
         printf("Identifier: '%s:%s'\n", ns, name);
-        build_err(b, "Volt identifier not found (compiler bug)");
+        build_err(b, "Vali identifier not found (compiler bug)");
     }
     return idf;
 }
 
-Func *get_volt_func(Build *b, char *namespace, char *name) {
-    Idf* idf = get_volt_idf(b, namespace, name, true);
+Func *get_vali_func(Build *b, char *namespace, char *name) {
+    Idf* idf = get_vali_idf(b, namespace, name, true);
     if(idf->type == idf_func) {
         return idf->item;
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
-    build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a function (compiler bug)");
     return NULL;
 }
-Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn) {
-    Idf* idf = get_volt_idf(b, namespace, class_name, true);
+Func *get_vali_class_func(Build *b, char *namespace, char *class_name, char* fn) {
+    Idf* idf = get_vali_idf(b, namespace, class_name, true);
     if(idf->type == idf_class) {
         Class* class = idf->item;
         Func* func = map_get(class->funcs, fn);
@@ -145,45 +145,45 @@ Func *get_volt_class_func(Build *b, char *namespace, char *class_name, char* fn)
             return func;
     }
     printf("Identifier: '%s:%s->%s'\n", namespace, class_name, fn);
-    build_err(b, "Volt identifier was found but is not a function (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a function (compiler bug)");
     return NULL;
 }
-Class *get_volt_class(Build *b, char *namespace, char *name) {
-    Idf* idf = get_volt_idf(b, namespace, name, true);
+Class *get_vali_class(Build *b, char *namespace, char *name) {
+    Idf* idf = get_vali_idf(b, namespace, name, true);
     if(idf->type == idf_class) {
         return idf->item;
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
-    build_err(b, "Volt identifier was found but is not a class (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a class (compiler bug)");
     return NULL;
 }
 
-Global *get_volt_global(Build *b, char *namespace, char *name) {
-    Idf* idf = get_volt_idf(b, namespace, name, true);
+Global *get_vali_global(Build *b, char *namespace, char *name) {
+    Idf* idf = get_vali_idf(b, namespace, name, true);
     if(idf->type == idf_global) {
         return idf->item;
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
-    build_err(b, "Volt identifier was found but is not a global variable (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a global variable (compiler bug)");
     return NULL;
 }
 
-ValueAlias *get_volt_value_alias(Build *b, char *namespace, char *name) {
-    Idf* idf = get_volt_idf(b, namespace, name, true);
+ValueAlias *get_vali_value_alias(Build *b, char *namespace, char *name) {
+    Idf* idf = get_vali_idf(b, namespace, name, true);
     if(idf->type == idf_value_alias) {
         return idf->item;
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
-    build_err(b, "Volt identifier was found but is not a 'value alias' (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a 'value alias' (compiler bug)");
     return NULL;
 }
 
-Snippet *get_volt_snippet(Build *b, char *namespace, char *name) {
-    Idf* idf = get_volt_idf(b, namespace, name, true);
+Snippet *get_vali_snippet(Build *b, char *namespace, char *name) {
+    Idf* idf = get_vali_idf(b, namespace, name, true);
     if(idf->type == idf_snippet) {
         return idf->item;
     }
     printf("Identifier: '%s:%s'\n", namespace, name);
-    build_err(b, "Volt identifier was found but is not a snippet (compiler bug)");
+    build_err(b, "Vali identifier was found but is not a snippet (compiler bug)");
     return NULL;
 }

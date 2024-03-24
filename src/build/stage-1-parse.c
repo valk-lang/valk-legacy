@@ -465,8 +465,8 @@ void stage_1_test(Parser* p, Unit* u, Fc* fc){
         test->body = chunk_clone(alc, p->chunk);
 
         char *buf = b->char_buf;
-        strcpy(buf, "volt_test_gen_");
-        sprintf(buf, "volt_test_gen_%d_%s", u->tests->length, u->unique_hash);
+        strcpy(buf, "vali_test_gen_");
+        sprintf(buf, "vali_test_gen_%d_%s", u->tests->length, u->unique_hash);
         char *fn = dups(alc, buf);
 
         Func *func = func_make(b->alc, u, p->scope, fn, NULL);

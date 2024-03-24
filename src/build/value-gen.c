@@ -11,7 +11,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
 }
 
 Value* vgen_bool(Allocator *alc, Build* b, bool value) {
-    return vgen_int(alc, value, type_gen_volt(alc, b, "bool"));
+    return vgen_int(alc, value, type_gen_vali(alc, b, "bool"));
 }
 
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
@@ -51,7 +51,7 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
 
 Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) {
     if(!index) {
-        index = vgen_int(alc, 0, type_gen_volt(alc, b, "int"));
+        index = vgen_int(alc, 0, type_gen_vali(alc, b, "int"));
     }
     VPtrv *item = al(alc, sizeof(VPtrv));
     item->on = on;
@@ -64,7 +64,7 @@ Value *vgen_ptr_offset(Allocator *alc, Build* b, Value *on, Value* index, int si
     item->on = on;
     item->index = index;
     item->size = size;
-    return value_make(alc, v_ptr_offset, item, type_gen_volt(alc, b, "ptr"));
+    return value_make(alc, v_ptr_offset, item, type_gen_vali(alc, b, "ptr"));
 }
 
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett) {
@@ -88,10 +88,10 @@ Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
 }
 
 Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
-    Func *func = get_volt_func(b, "mem", "alloc");
+    Func *func = get_vali_func(b, "mem", "alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *vint = vgen_int(alc, size, type_gen_volt(alc, b, "uint"));
+    Value *vint = vgen_int(alc, size, type_gen_vali(alc, b, "uint"));
     array_push(alloc_values, vint);
     Value *res = vgen_func_call(alc, fptr, alloc_values);
     if(cast_as)
@@ -103,20 +103,20 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     Value* pool = NULL;
     int index = class->pool_index;
     if(index > -1) {
-        Global *g_pools = get_volt_global(b, "mem", "pools");
+        Global *g_pools = get_vali_global(b, "mem", "pools");
         Value *pools = value_make(alc, v_global, g_pools, g_pools->type);
-        pool = vgen_ptrv(alc, b, pools, type_gen_class(alc, get_volt_class(b, "mem", "GcPool")), vgen_int(alc, index, type_gen_volt(alc, b, "i32")));
+        pool = vgen_ptrv(alc, b, pools, type_gen_class(alc, get_vali_class(b, "mem", "GcPool")), vgen_int(alc, index, type_gen_vali(alc, b, "i32")));
     }
     if(!pool){
         build_err(b, "Cannot find correct pool to allocate class");
     }
 
-    Func *func = get_volt_func(b, "mem", "gc_alloc_class");
+    Func *func = get_vali_func(b, "mem", "gc_alloc_class");
 
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
     array_push(alloc_values, pool);
-    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_volt(alc, b, "u32"));
+    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_vali(alc, b, "u32"));
     array_push(alloc_values, v_index);
     Value *res = vgen_func_call(alc, fptr, alloc_values);
     if(class)
@@ -124,7 +124,7 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     return res;
 }
 Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right) {
-    Func *func = get_volt_class_func(b, "mem", "Stack", "link");
+    Func *func = get_vali_class_func(b, "mem", "Stack", "link");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
     array_push(alloc_values, left);
@@ -191,7 +191,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     sub->ast = array_make(alc, 10);
 
     // Disable gc
-    Global* g_disable = get_volt_global(b, "mem", "disable_gc");
+    Global* g_disable = get_vali_global(b, "mem", "disable_gc");
     Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
     Value *var_disable = vgen_var(alc, b, disable);
     array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
@@ -228,7 +228,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
 }
 
 Value *vgen_isset(Allocator *alc, Build *b, Value *on) {
-    return value_make(alc, v_isset, on, type_gen_volt(alc, b, "bool"));
+    return value_make(alc, v_isset, on, type_gen_vali(alc, b, "bool"));
 }
 
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) {
@@ -236,7 +236,7 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
     item->op = op;
     item->left = left;
     item->right = right;
-    Type *rett = type_gen_volt(alc, b, "bool");
+    Type *rett = type_gen_vali(alc, b, "bool");
 
     Value *result = value_make(alc, v_and_or, item, rett);
 
@@ -297,5 +297,5 @@ Value *vgen_string(Allocator *alc, Unit *u, char *body) {
 
     array_push(b->strings, str);
 
-    return value_make(alc, v_string, str, type_gen_volt(alc, b, "String"));
+    return value_make(alc, v_string, str, type_gen_vali(alc, b, "String"));
 }

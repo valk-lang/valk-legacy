@@ -29,10 +29,10 @@
 - package management
 - debug info
 - language server
-- volt make command (like: npm run)
-- run command: volt run ...
+- vali make command (like: npm run)
+- run command: vali run ...
 - dont disable_gc in gc_share, instead disable inside hooks 
-- 'clone' functions for classes in volt pkg
+- 'clone' functions for classes in vali pkg
 - more compile condition functions
 ```
 

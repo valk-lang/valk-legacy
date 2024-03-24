@@ -23,14 +23,14 @@ Vali is a programming language aimed to be fast & simple at the same time. It ca
 ## Basic example
 
 ```rust
-// main.vo
+// main.va
 fn main() {
     println("Hello world!" + " 🎉")
 }
 ```
 
 ```sh
-vali build main.vo -o ./main
+vali build main.va -o ./main
 ./main
 ```
 

@@ -8,11 +8,11 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->dir = dir;
     nsc->scope = scope_make(alc, sc_default, NULL);
 
-    char *path_o = al(alc, VOLT_PATH_MAX);
+    char *path_o = al(alc, VALI_PATH_MAX);
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_ir = al(alc, VOLT_PATH_MAX);
+    char *path_ir = al(alc, VALI_PATH_MAX);
     sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_cache = al(alc, VOLT_PATH_MAX);
+    char *path_cache = al(alc, VALI_PATH_MAX);
     sprintf(path_cache, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
 
     char uh[64];
@@ -93,7 +93,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
     Array* files = get_subfiles(b->alc, dir, false, true);
     for(int i = 0; i < files->length; i++) {
         char* path = array_get_index(files, i);
-        if(ends_with(path, ".vo"))
+        if(ends_with(path, ".va"))
             fc_make(nsc, path, false);
     }
 
@@ -102,9 +102,9 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
 }
 
 
-Nsc* get_volt_nsc(Build* b, char* name) {
+Nsc* get_vali_nsc(Build* b, char* name) {
     //
-    Pkc* pkc = b->pkc_volt;
+    Pkc* pkc = b->pkc_vali;
     if(!pkc)
         return NULL;
     return nsc_load(pkc, name, true, NULL);

@@ -12,15 +12,15 @@ else
 fi
 
 dir=$(dirname -- "$0";)
-volt_dir="/opt/volt/__VERSION__"
+vali_dir="/opt/vali/__VERSION__"
 
-sudo mkdir -p "$volt_dir"
-sudo cp $dir/volt "$volt_dir/volt"
-if [ ! -f "$volt_dir/lib" ]; then
-	sudo rm -rf "$volt_dir/lib"
+sudo mkdir -p "$vali_dir"
+sudo cp $dir/vali "$vali_dir/vali"
+if [ ! -f "$vali_dir/lib" ]; then
+	sudo rm -rf "$vali_dir/lib"
 fi
-sudo cp -r $dir/lib "$volt_dir/"
+sudo cp -r $dir/lib "$vali_dir/"
 sudo mkdir -p /usr/local/bin
-sudo ln -s -f "$volt_dir/volt" /usr/local/bin/volt
+sudo ln -s -f "$vali_dir/vali" /usr/local/bin/vali
 
 echo "# Done"

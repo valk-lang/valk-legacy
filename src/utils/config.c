@@ -3,9 +3,9 @@
 
 PkgConfig* load_config(Allocator* alc, char* dir, Str* str_buf, bool must_exist) {
 
-    char buf[VOLT_PATH_MAX + 100];
+    char buf[VALI_PATH_MAX + 100];
     strcpy(buf, dir);
-    strcat(buf, "volt.json");
+    strcat(buf, "vali.json");
     char* path = dups(alc, buf);
 
     PkgConfig* cfg = al(alc, sizeof(PkgConfig));
@@ -59,7 +59,7 @@ char* cfg_get_nsc_dir(PkgConfig *cfg, char *name, Allocator* alc) {
     if (!item || !cJSON_IsString(item))
         return NULL;
     char* sub = item->valuestring;
-    char buf[VOLT_PATH_MAX];
+    char buf[VALI_PATH_MAX];
     strcpy(buf, cfg->dir);
     strcat(buf, sub);
     fix_slashes(buf, true);
@@ -77,7 +77,7 @@ Array* cfg_get_header_dirs(PkgConfig *cfg, Allocator* alc, char* pkg_dir) {
     if (!dirs)
         return result;
 
-    char fullpath[VOLT_PATH_MAX];
+    char fullpath[VALI_PATH_MAX];
     cJSON *cdir = dirs->child;
     while (cdir) {
         strcpy(fullpath, pkg_dir);

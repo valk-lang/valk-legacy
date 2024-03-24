@@ -1,7 +1,7 @@
 
 header "sys" as sys
 
-use volt:mem;
+use vali:mem;
 
 global str_buf : ?ptr
 global str_rev : ?ptr

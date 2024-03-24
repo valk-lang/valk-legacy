@@ -1,7 +1,7 @@
 
 header "sys" as sys
 
-use volt:mem
+use vali:mem
 
 fn print(str: String) {
     sys:write(1 @as i32, str.data, str.bytes);

@@ -226,7 +226,7 @@ void read_ast(Parser *p, bool single_line) {
                     int extra_c = func->rett_types->length - 1;
                     int i = 1;
                     // Disable gc
-                    Global* g_disable = get_volt_global(b, "mem", "disable_gc");
+                    Global* g_disable = get_vali_global(b, "mem", "disable_gc");
                     Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
                     Value *var_disable = vgen_var(alc, b, disable);
                     array_push(scope->ast, token_make(alc, t_set_var, var_disable->item));
@@ -327,7 +327,7 @@ void read_ast(Parser *p, bool single_line) {
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
                 // Index
-                Decl *index = decl_make(alc, NULL, type_gen_volt(alc, b, "uint"), false);
+                Decl *index = decl_make(alc, NULL, type_gen_vali(alc, b, "uint"), false);
                 index->is_mut = true;
                 scope_add_decl(alc, scope, index);
                 Value* vindex = value_make(alc, v_decl, index, index->type);
@@ -372,7 +372,7 @@ void read_ast(Parser *p, bool single_line) {
                 }
                 tok_expect(p, ")", true, true);
 
-                Func *share = get_volt_func(b, "mem", "gc_share");
+                Func *share = get_vali_func(b, "mem", "gc_share");
                 Array* args = array_make(alc, 2);
                 array_push(args, v);
                 Value *on = vgen_func_ptr(alc, share, NULL);
@@ -380,7 +380,7 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
-            if (str_is(tkn, "@volt_gc_mark_globals")) {
+            if (str_is(tkn, "@vali_gc_mark_globals")) {
                 Func *func = b->func_mark_globals;
                 Array* args = array_make(alc, 2);
                 Value *on = vgen_func_ptr(alc, func, NULL);
@@ -388,7 +388,7 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
-            if (str_is(tkn, "@volt_gc_mark_shared")) {
+            if (str_is(tkn, "@vali_gc_mark_shared")) {
                 Func *func = b->func_mark_shared;
                 Array* args = array_make(alc, 2);
                 Value *on = vgen_func_ptr(alc, func, NULL);
@@ -440,7 +440,7 @@ void read_ast(Parser *p, bool single_line) {
                     right = vgen_var(alc, b, right);
                     array_push(scope->ast, token_make(alc, t_set_var, right->item));
                     // call gc_share(right)
-                    Func *share = get_volt_func(b, "mem", "gc_share");
+                    Func *share = get_vali_func(b, "mem", "gc_share");
                     Array *args = array_make(alc, 2);
                     array_push(args, right);
                     Value *on = vgen_func_ptr(alc, share, NULL);
@@ -532,12 +532,12 @@ void read_ast(Parser *p, bool single_line) {
     }
 
     if(is_main_func_scope) {
-        Scope *boot = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "boot"), map_make(alc), scope);
+        Scope *boot = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "boot"), map_make(alc), scope);
         array_push(start->ast, token_make(alc, t_ast_scope, boot));
     }
 
     if(scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)){
-        Scope *gcscope = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        Scope *gcscope = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
         array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
     }
 
@@ -549,7 +549,7 @@ void read_ast(Parser *p, bool single_line) {
         map_set(idfs, "amount", idf);
 
         // Cache stack & stack_adr variable
-        Scope *cache = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_cache"), idfs, start);
+        Scope *cache = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "stack_cache"), idfs, start);
         array_push(start->ast, token_make(alc, t_ast_scope, cache));
 
         idf = map_get(cache->identifiers, "STACK_ADR");
@@ -557,7 +557,7 @@ void read_ast(Parser *p, bool single_line) {
 
         if (scope->type == sc_func) {
             // Stack reserve
-            Scope *reserve = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_reserve"), idfs, start);
+            Scope *reserve = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "stack_reserve"), idfs, start);
             array_push(start->ast, token_make(alc, t_ast_scope, reserve));
 
             // Set stack offset for varables
@@ -567,7 +567,7 @@ void read_ast(Parser *p, bool single_line) {
                 Decl *decl = array_get_index(decls, i);
                 if (!decl->is_gc)
                     continue;
-                Value *offset = vgen_ptrv(alc, b, stack_adr, type_gen_volt(alc, b, "ptr"), vgen_int(alc, x++, type_gen_volt(alc, b, "i32")));
+                Value *offset = vgen_ptrv(alc, b, stack_adr, type_gen_vali(alc, b, "ptr"), vgen_int(alc, x++, type_gen_vali(alc, b, "i32")));
                 TDeclare *item = al(alc, sizeof(TDeclare));
                 item->decl = decl;
                 item->value = offset;
@@ -580,7 +580,7 @@ void read_ast(Parser *p, bool single_line) {
             Scope* reduce_scope = scope_sub_make(alc, sc_default, scope);
             reduce_scope->ast = array_make(alc, 10);
             func->scope_stack_reduce = reduce_scope;
-            Scope *scope_end = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "stack_reduce"), idfs, scope);
+            Scope *scope_end = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "stack_reduce"), idfs, scope);
             array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
 
         } else {
@@ -594,7 +594,7 @@ void read_ast(Parser *p, bool single_line) {
     }
     //
     if(is_main_func_scope) {
-        Scope *shutdown = gen_snippet_ast(alc, p, get_volt_snippet(b, "mem", "shutdown"), map_make(alc), scope);
+        Scope *shutdown = gen_snippet_ast(alc, p, get_vali_snippet(b, "mem", "shutdown"), map_make(alc), scope);
         array_push(end->ast, token_make(alc, t_ast_scope, shutdown));
     }
 }

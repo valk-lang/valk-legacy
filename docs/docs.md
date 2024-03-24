@@ -10,8 +10,8 @@ macOS: `brew install llvm@15 && brew link llvm@15`
 Ubuntu / Debian: `sudo apt-get install llvm-15 clang-15 lld libcurl4-openssl-dev`
 
 ```
-git clone https://github.com/volt-lang/volt.git
-cd volt
+git clone https://github.com/vali-lang/vali.git
+cd vali
 make
 ```
 
@@ -62,29 +62,29 @@ make
 ## Basic example
 
 ```rust
-// main.vo
+// main.va
 fn main() {
     println("Hello world!" + " 🎉")
 }
 ```
 
 ```sh
-volt build main.vo -o ./main
+vali build main.va -o ./main
 ./main
 ```
 
 ## Multiple files
 
-To build multiple files into a program, you simply add them to the build command. However, we recommend to use only 1 file (e.g. main.vo) and put all other files into a namespace. (See next chapter)
+To build multiple files into a program, you simply add them to the build command. However, we recommend to use only 1 file (e.g. main.va) and put all other files into a namespace. (See next chapter)
 
 ```sh
-volt build file-1.vo file-2.vo -o ./main
+vali build file-1.va file-2.va -o ./main
 ./main
 ```
 
 ## Namespaces
 
-To organize your code we group files into different directories. Each namespace represents 1 directory. To create a namespace, you must define it in your config file `volt.json`. Which should be located in the root of your project.
+To organize your code we group files into different directories. Each namespace represents 1 directory. To create a namespace, you must define it in your config file `vali.json`. Which should be located in the root of your project.
 
 ```json
 {
@@ -97,7 +97,7 @@ To organize your code we group files into different directories. Each namespace 
 ```
 
 ```rust
-// main.vo
+// main.va
 use my_namespace
 
 fn main() {
@@ -107,7 +107,7 @@ fn main() {
 ```
 
 ```rust
-// src/my-namespace/demo.vo
+// src/my-namespace/demo.va
 fn thumbs_up() {
     println("👍")
 }
@@ -366,13 +366,13 @@ test "My test" {
 ```
 
 ```sh
-volt build src/*.v --test --run
+vali build src/*.v --test --run
 ```
 
 Or we can put our tests in a different directory.
 
 ```sh
-volt build src/*.v ./my-tests/*.vo --test --run
+vali build src/*.v ./my-tests/*.va --test --run
 ```
 
 ## Unsafe
@@ -397,7 +397,7 @@ fn main() {
 }
 ```
 
-Volt allocates these objects using `volt:mem:alloc` and you can use `volt:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
+Vali allocates these objects using `vali:mem:alloc` and you can use `vali:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
 
 ```rust
 let ob = my_alloc(sizeof(inline MyStruct))

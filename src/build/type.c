@@ -199,7 +199,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     t->func_can_error = func->errors ? true : false;
     return t;
 }
-Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
+Type* type_gen_vali(Allocator* alc, Build* b, char* name) {
     if (name[0] == 'u' && str_is(name, "uint")) {
         name = get_number_type_name(b, b->ptr_size, false, false);
     } else if (name[0] == 'i' && str_is(name, "int")) {
@@ -207,12 +207,12 @@ Type* type_gen_volt(Allocator* alc, Build* b, char* name) {
     } else if (name[0] == 'f' && str_is(name, "float")) {
         name = get_number_type_name(b, b->ptr_size, true, false);
     }
-    Nsc* nsc = get_volt_nsc(b, "type");
+    Nsc* nsc = get_vali_nsc(b, "type");
     Idf* idf = scope_find_idf(nsc->scope, name, false);
     if(idf && idf->type == idf_class) {
         return type_gen_class(alc, idf->item);
     }
-    printf("VOLT TYPE NOT FOUND: '%s'", name);
+    printf("VALI TYPE NOT FOUND: '%s'", name);
     exit(1);
 }
 
@@ -238,7 +238,7 @@ char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed) {
 Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed) {
     char* name = get_number_type_name(b, size, is_float, is_signed);
     if(name) {
-        return type_gen_volt(alc, b, name);
+        return type_gen_vali(alc, b, name);
     }
     return NULL;
 }
@@ -389,7 +389,7 @@ int type_get_size(Build* b, Type* type) {
 
 Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable) {
     Array* types = array_make(alc, 2);
-    Type* t1 = type_gen_volt(alc, b, type1);
+    Type* t1 = type_gen_vali(alc, b, type1);
     t1->nullable = nullable;
     array_push(types, t1);
     return types;
@@ -397,11 +397,11 @@ Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable) {
 Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2) {
     Array* types = array_make(alc, 2);
 
-    Type* t1 = type1 ? type_gen_volt(alc, b, type1) : type_gen_void(alc);
+    Type* t1 = type1 ? type_gen_vali(alc, b, type1) : type_gen_void(alc);
     t1->nullable = nullable1;
     array_push(types, t1);
 
-    Type* t2 = type2 ? type_gen_volt(alc, b, type2) : type_gen_void(alc);
+    Type* t2 = type2 ? type_gen_vali(alc, b, type2) : type_gen_void(alc);
     t2->nullable = nullable2;
     array_push(types, t2);
 

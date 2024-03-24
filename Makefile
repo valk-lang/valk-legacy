@@ -35,9 +35,9 @@ OBJECTS_LINUX_X64=$(patsubst %.c, debug/build-linux-x64/%.o, $(SRC))
 OBJECTS_LINUX_ARM64=$(patsubst %.c, debug/build-linux-arm64/%.o, $(SRC))
 OBJECTS_MACOS_X64=$(patsubst %.c, debug/build-macos-x64/%.o, $(SRC))
 OBJECTS_MACOS_ARM64=$(patsubst %.c, debug/build-macos-arm64/%.o, $(SRC))
-TARGET=volt
+TARGET=vali
 
-volt: $(OBJECTS)
+vali: $(OBJECTS)
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
 
 $(OBJECTS): debug/build/%.o: %.c
@@ -45,10 +45,10 @@ $(OBJECTS): debug/build/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -f volt $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
+	rm -f vali $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
-test: volt
-	@./volt build tests/*.vo --test --run -vv || exit 1
+test: vali
+	@./vali build tests/*.va --test --run -vv || exit 1
 
 ##############
 # DIST BULDS
@@ -95,11 +95,11 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
 	-L$(CURDIR)/dist/libraries/win-curl-x64/lib \
 	-Wl,-machine:x64 \
-	-o dist/dists/win-x64/volt.exe \
+	-o dist/dists/win-x64/vali.exe \
 	$(OBJECTS_WIN_X64) \
 	$(LLVM_LIBS) -nostdlib -llibcurl -lcrypt32 -lws2_32 -lzlib
 
-	cd dist/dists/win-x64 && rm -f ../volt-$(VERSION)-win-x64.zip && zip -r ../volt-$(VERSION)-win-x64.zip volt.exe lib install.bat lld-link.exe
+	cd dist/dists/win-x64 && rm -f ../vali-$(VERSION)-win-x64.zip && zip -r ../vali-$(VERSION)-win-x64.zip vali.exe lib install.bat lld-link.exe
 
 ##############
 # LINUX
@@ -125,11 +125,11 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	-L$(CURDIR)/dist/toolchains/linux-x64/lib \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-x64/lib \
 	-L$(CURDIR)/dist/libraries/linux-curl-x64/lib \
-	-o dist/dists/linux-x64/volt \
+	-o dist/dists/linux-x64/vali \
 	$(OBJECTS_LINUX_X64) \
 	$(LLVM_LIBS_LINUX) -lcurl -lcrypto -lssl -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
 
-	cd dist/dists/linux-x64 && rm -f ../volt-$(VERSION)-linux-x64.tar.gz && tar -czf ../volt-$(VERSION)-linux-x64.tar.gz volt lib install.sh
+	cd dist/dists/linux-x64 && rm -f ../vali-$(VERSION)-linux-x64.tar.gz && tar -czf ../vali-$(VERSION)-linux-x64.tar.gz vali lib install.sh
 
 
 $(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
@@ -149,11 +149,11 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld -static \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
 	-L$(CURDIR)/dist/libraries/linux-llvm-15-arm64/lib \
-	-o dist/dists/linux-arm64/volt \
+	-o dist/dists/linux-arm64/vali \
 	$(OBJECTS_LINUX_ARM64) \
 	$(LLVM_LIBS_LINUX) -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
 
-	cd dist/dists/linux-arm64 && rm -f ../volt-$(VERSION)-linux-arm64.tar.gz && tar -czf ../volt-$(VERSION)-linux-arm64.tar.gz volt lib install.sh
+	cd dist/dists/linux-arm64 && rm -f ../vali-$(VERSION)-linux-arm64.tar.gz && tar -czf ../vali-$(VERSION)-linux-arm64.tar.gz vali lib install.sh
 
 ##############
 # MACOS
@@ -178,12 +178,12 @@ dist_macos_x64: $(OBJECTS_MACOS_X64)
 	$(LCC) -arch=x86_64 --target=x86_64-apple-darwin-macho -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-L$(CURDIR)/dist/libraries/macos-llvm-15-x64/lib \
-	-o dist/dists/macos-x64/volt \
+	-o dist/dists/macos-x64/vali \
 	-Wl,-platform_version,macos,11.6.0,11.3 \
 	$(OBJECTS_MACOS_X64) \
 	$(LLVM_LIBS) -lcurl -lcurses -lc++ -lz
 
-	cd dist/dists/macos-x64 && rm -f ../volt-$(VERSION)-macos-x64.tar.gz && tar -czf ../volt-$(VERSION)-macos-x64.tar.gz volt lib install.sh
+	cd dist/dists/macos-x64 && rm -f ../vali-$(VERSION)-macos-x64.tar.gz && tar -czf ../vali-$(VERSION)-macos-x64.tar.gz vali lib install.sh
 
 
 $(OBJECTS_MACOS_ARM64): debug/build-macos-arm64/%.o: %.c
@@ -205,12 +205,12 @@ dist_macos_arm64: $(OBJECTS_MACOS_ARM64)
 	$(LCC) -arch=arm64 --target=arm64-apple-darwin-macho -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-L$(CURDIR)/dist/libraries/macos-llvm-15-arm64/lib \
-	-o dist/dists/macos-arm64/volt \
+	-o dist/dists/macos-arm64/vali \
 	-Wl,-platform_version,macos,11.6.0,11.3 \
 	$(OBJECTS_MACOS_ARM64) \
 	$(LLVM_LIBS)  -lcurl -lcurses -lc++ -lz
 
-	cd dist/dists/macos-arm64 && rm -f ../volt-$(VERSION)-macos-arm64.tar.gz && tar -czf ../volt-$(VERSION)-macos-arm64.tar.gz volt lib install.sh
+	cd dist/dists/macos-arm64 && rm -f ../vali-$(VERSION)-macos-arm64.tar.gz && tar -czf ../vali-$(VERSION)-macos-arm64.tar.gz vali lib install.sh
 
 ##############
 

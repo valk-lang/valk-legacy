@@ -8,7 +8,7 @@
 bool get_fullpath(char *filepath, char *buf) {
     char *fullpath = NULL;
 #ifdef WIN32
-    char *res = _fullpath(buf, filepath, VOLT_PATH_MAX);
+    char *res = _fullpath(buf, filepath, VALI_PATH_MAX);
 #else
     char *res = realpath(filepath, buf);
 #endif
@@ -157,22 +157,22 @@ char *get_binary_dir() {
         return g_binary_dir;
     }
 
-    char *buf = malloc(VOLT_PATH_MAX);
+    char *buf = malloc(VALI_PATH_MAX);
     strcpy(buf, "");
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    GetModuleFileName(NULL, buf, VOLT_PATH_MAX);
+    GetModuleFileName(NULL, buf, VALI_PATH_MAX);
 #elif defined(__APPLE__)
-    uint32_t size = VOLT_PATH_MAX;
+    uint32_t size = VALI_PATH_MAX;
     if (_NSGetExecutablePath(buf, &size) < 0) {
-        fprintf(stderr, "Could not determine macos volt executable path\n");
+        fprintf(stderr, "Could not determine macos vali executable path\n");
         exit(1);
     }
-    char *full = malloc(VOLT_PATH_MAX);
+    char *full = malloc(VALI_PATH_MAX);
     get_fullpath(buf, full);
     free(buf);
     buf = full;
 #else
-    int len = readlink("/proc/self/exe", buf, VOLT_PATH_MAX);
+    int len = readlink("/proc/self/exe", buf, VALI_PATH_MAX);
     buf[len] = '\0';
 #endif
 
@@ -197,19 +197,19 @@ char *get_storage_path() {
     if (g_storage_path != NULL) {
         return g_storage_path;
     }
-    g_storage_path = malloc(VOLT_PATH_MAX);
+    g_storage_path = malloc(VALI_PATH_MAX);
     char *homedir;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     homedir = getenv("USERPROFILE");
-    const char *voltdir = "\\.volt";
+    const char *validir = "\\.vali";
 #else
     homedir = getenv("HOME");
-    const char *voltdir = "/.volt";
+    const char *validir = "/.vali";
 #endif
 
     strcpy(g_storage_path, homedir);
-    strcat(g_storage_path, voltdir);
+    strcat(g_storage_path, validir);
 
     if (!file_exists(g_storage_path)) {
         makedir(g_storage_path, 0700);
@@ -224,7 +224,7 @@ Array *get_subfiles(Allocator *alc, char *dir, bool dirs, bool files) {
     int dir_len = strlen(dir);
 
 #ifdef WIN32
-    char pattern[VOLT_PATH_MAX];
+    char pattern[VALI_PATH_MAX];
     strcpy(pattern, dir);
     strcat(pattern, "*");
 
@@ -329,7 +329,7 @@ int mod_time(char *path) {
 void write_file(char *filepath, char *content, bool append) {
     FILE *fp = fopen(filepath, append ? "a" : "w+");
     if (!fp) {
-        char msg[VOLT_PATH_MAX];
+        char msg[VALI_PATH_MAX];
         sprintf(msg, "Failed to write file: %s\n", filepath);
         die(msg);
     }

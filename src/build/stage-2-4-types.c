@@ -45,14 +45,14 @@ void stage_types_func(Parser* p, Func* func) {
     Allocator* alc = p->b->alc;
 
     if(func->is_test) {
-        Type* type = type_gen_class(alc, get_volt_class(b, "core", "TestResult"));
+        Type* type = type_gen_class(alc, get_vali_class(b, "core", "TestResult"));
         FuncArg* arg = func_arg_make(alc, type);
-        map_set_force_new(func->args, "VOLT_TEST_RESULT", arg);
+        map_set_force_new(func->args, "VALI_TEST_RESULT", arg);
         array_push(func->arg_types, type);
 
-        Decl* decl = decl_make(alc, "VOLT_TEST_RESULT", type, true);
+        Decl* decl = decl_make(alc, "VALI_TEST_RESULT", type, true);
         Idf* idf = idf_make(alc, idf_decl, decl);
-        scope_set_idf(func->scope, "VOLT_TEST_RESULT", idf, p);
+        scope_set_idf(func->scope, "VALI_TEST_RESULT", idf, p);
         arg->decl = decl;
 
         func->rett = type_gen_void(alc);

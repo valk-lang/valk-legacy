@@ -123,26 +123,26 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "stack"));
+        idf = idf_make(b->alc, idf_global, get_vali_global(b, "mem", "stack"));
         scope_set_idf(class->scope, "STACK", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "pools"));
+        idf = idf_make(b->alc, idf_global, get_vali_global(b, "mem", "pools"));
         scope_set_idf(class->scope, "POOLS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "POOL_INDEX", idf, p);
         //
-        idf = idf_make(b->alc, idf_class, get_volt_class(b, "mem", "GcPool"));
+        idf = idf_make(b->alc, idf_class, get_vali_class(b, "mem", "GcPool"));
         scope_set_idf(class->scope, "POOL_CLASS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_transfer_size"));
+        idf = idf_make(b->alc, idf_global, get_vali_global(b, "mem", "gc_transfer_size"));
         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_mark_size"));
+        idf = idf_make(b->alc, idf_global, get_vali_global(b, "mem", "gc_mark_size"));
         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_volt_global(b, "mem", "gc_age"));
+        idf = idf_make(b->alc, idf_global, get_vali_global(b, "mem", "gc_age"));
         scope_set_idf(class->scope, "GC_AGE", idf, p);
 
         // Transfer

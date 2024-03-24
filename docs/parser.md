@@ -9,7 +9,7 @@
 - A parser object (in case we switch to multi threading: 1 parser per thread)
 -- A parser keeps track of what and where we are parsing
 - ~6 stages
-# We look at our cli arguments and add the .vo files to stage-1 of the build
+# We look at our cli arguments and add the .va files to stage-1 of the build
 # We can now start building by looping every stage and passing the file to a parser
 # If a parser is done with a certain stage, it passes the file to the next stage in the build 
 # Once all files have gone through all stages, we now have all our IR files

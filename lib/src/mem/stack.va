@@ -1,7 +1,7 @@
 
-use volt:mem
-use volt:os
-use volt:io
+use vali:mem
+use vali:os
+use vali:io
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
@@ -151,7 +151,7 @@ struct Stack {
             // Mark
             this.update_age()
             this.mark_stack_age()
-            @volt_gc_mark_globals
+            @vali_gc_mark_globals
             // Clean
             GcPool.clean_old_all(this.age)
             this.clear_unknown = false

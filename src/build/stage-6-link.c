@@ -25,7 +25,7 @@ void stage_6_link(Build* b, Array* o_files) {
     bool host_system_is_target = host_os_is_target && host_arch_is_target;
 
     char *linker = NULL;
-    char linker_buf[VOLT_PATH_MAX];
+    char linker_buf[VALI_PATH_MAX];
     if (host_system_is_target) {
         if (is_linux) {
             linker = "ld";
@@ -54,7 +54,7 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     //
-    char *volt_lib_dir = b->pkc_volt->dir;
+    char *vali_lib_dir = b->pkc_vali->dir;
 
     str_append_chars(cmd, linker);
     str_append_chars(cmd, " ");
@@ -95,7 +95,7 @@ void stage_6_link(Build* b, Array* o_files) {
     // Details
     if (is_linux) {
         str_append_chars(cmd, "--sysroot=");
-        str_append_chars(cmd, volt_lib_dir);
+        str_append_chars(cmd, vali_lib_dir);
         str_append_chars(cmd, "root ");
 
         if (is_x64) {
@@ -116,7 +116,7 @@ void stage_6_link(Build* b, Array* o_files) {
 
     } else if (is_macos) {
         str_append_chars(cmd, "-syslibroot ");
-        str_append_chars(cmd, volt_lib_dir);
+        str_append_chars(cmd, vali_lib_dir);
         str_append_chars(cmd, "root ");
 
         // ppc, ppc64, i386, x86_64
@@ -214,7 +214,7 @@ Array* get_link_dirs(Build* b) {
         if (link) {
             cJSON *dirs = cJSON_GetObjectItemCaseSensitive(link, "dirs");
             if (dirs) {
-                char fullpath[VOLT_PATH_MAX];
+                char fullpath[VALI_PATH_MAX];
                 cJSON *cdir = dirs->child;
                 while (cdir) {
 
