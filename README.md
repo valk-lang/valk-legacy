@@ -12,7 +12,7 @@
 
 Vali is a programming language aimed to be fast & simple at the same time. It can be used for high & low level programming. Vali is unique because of its new way of doing garbage collection. It's much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
-**Features**: Super fast non-blocking GC 🙌, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
+**Features**: Super fast non-blocking GC ⚡, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
 ## Install
 
@@ -25,7 +25,7 @@ Vali is a programming language aimed to be fast & simple at the same time. It ca
 ```rust
 // main.va
 fn main() {
-    println("Hello world!" + " 🎉")
+    println("Hello Vali! 🎉")
 }
 ```
 
