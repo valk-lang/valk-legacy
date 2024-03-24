@@ -13,7 +13,6 @@
 
 ```
 // v0.0.1
-- ci
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
