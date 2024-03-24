@@ -7,7 +7,7 @@ LIB_DIR="$DIST_DIR/libraries"
 LIN_X64="$TC_DIR/linux-x64"
 LIN_ARM64="$TC_DIR/linux-arm64"
 MAC_ANY="$TC_DIR/macos-11-3"
-WIN_ANY="$TC_DIR/win-sdk"
+WIN_X64="$TC_DIR/win-sdk-x64"
 
 LLVM_LIN_X64="$LIB_DIR/linux-llvm-15-x64"
 LLVM_MAC_X64="$LIB_DIR/macos-llvm-15-x64"
@@ -27,7 +27,7 @@ mkdir -p $TC_DIR
 if [ ! -d "$LIN_X64" ]; then
 	echo "Download linux-x64 toolchain"
 	cd $TC_DIR
-	wget "https://cdn.voltc.dev/toolchains/linux-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/linux-x64.tar.gz"
 	tar -xf "linux-x64.tar.gz" --checkpoint=.100
 	rm "linux-x64.tar.gz"
 fi
@@ -35,7 +35,7 @@ fi
 if [ ! -d "$LIN_ARM64" ]; then
 	echo "Download linux-aarch64 toolchain"
 	cd $TC_DIR
-	wget "https://cdn.voltc.dev/toolchains/linux-arm64.tar.bz2"
+	wget "https://cdn.vali.dev/toolchains/linux-arm64.tar.bz2"
 	tar -xf "linux-arm64.tar.bz2" --checkpoint=.100
 	rm "linux-arm64.tar.bz2"
 	mv "aarch64--glibc--stable-2022.08-1" "linux-arm64" 
@@ -44,18 +44,18 @@ fi
 if [ ! -d "$MAC_ANY" ]; then
 	echo "Download macos toolchain"
 	cd $TC_DIR
-	wget "https://cdn.voltc.dev/toolchains/macos-sdk-11-3.tar.xz"
+	wget "https://cdn.vali.dev/toolchains/macos-sdk-11-3.tar.xz"
 	tar -xf "macos-sdk-11-3.tar.xz" --checkpoint=.100
 	rm "macos-sdk-11-3.tar.xz"
 	mv "MacOSX11.3.sdk" "macos-11-3" 
 fi
 
-if [ ! -d "$WIN_ANY" ]; then
+if [ ! -d "$WIN_X64" ]; then
 	echo "Download windows toolchain"
 	cd $TC_DIR
-	wget "https://cdn.voltc.dev/toolchains/win-sdk.tar.gz"
-	tar -xf "win-sdk.tar.gz" --checkpoint=.100
-	rm "win-sdk.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/win-sdk-x64.tar.gz"
+	tar -xf "win-sdk-x64.tar.gz" --checkpoint=.100
+	rm "win-sdk-x64.tar.gz"
 fi
 
 #########
@@ -65,7 +65,7 @@ fi
 if [ ! -d "$LLVM_LIN_X64" ]; then
 	echo "Download LLVM linux x64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/linux-llvm-15-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/linux-llvm-15-x64.tar.gz"
 	tar -xf "linux-llvm-15-x64.tar.gz" --checkpoint=.100
 	rm "linux-llvm-15-x64.tar.gz"
 fi
@@ -73,7 +73,7 @@ fi
 if [ ! -d "$LLVM_MAC_X64" ]; then
 	echo "Download LLVM macos x64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/macos-llvm-15-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/macos-llvm-15-x64.tar.gz"
 	tar -xf "macos-llvm-15-x64.tar.gz" --checkpoint=.100
 	rm "macos-llvm-15-x64.tar.gz"
 fi
@@ -81,7 +81,7 @@ fi
 if [ ! -d "$LLVM_MAC_ARM64" ]; then
 	echo "Download LLVM macos arm64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/macos-llvm-15-arm64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/macos-llvm-15-arm64.tar.gz"
 	tar -xf "macos-llvm-15-arm64.tar.gz" --checkpoint=.100
 	rm "macos-llvm-15-arm64.tar.gz"
 fi
@@ -89,7 +89,7 @@ fi
 if [ ! -d "$LLVM_WIN_X64" ]; then
 	echo "Download LLVM windows x64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/win-llvm-15-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/win-llvm-15-x64.tar.gz"
 	tar -xf "win-llvm-15-x64.tar.gz" --checkpoint=.100
 	rm "win-llvm-15-x64.tar.gz"
 fi
@@ -102,7 +102,7 @@ fi
 if [ ! -d "$CURL_LIN_X64" ]; then
 	echo "Download Curl linux x64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/linux-curl-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/linux-curl-x64.tar.gz"
 	tar -xf "linux-curl-x64.tar.gz" --checkpoint=.100
 	rm "linux-curl-x64.tar.gz"
 fi
@@ -110,7 +110,7 @@ fi
 if [ ! -d "$CURL_WIN_X64" ]; then
 	echo "Download Curl windows x64"
 	cd $LIB_DIR
-	wget "https://cdn.voltc.dev/toolchains/win-curl-x64.tar.gz"
+	wget "https://cdn.vali.dev/toolchains/win-curl-x64.tar.gz"
 	tar -xf "win-curl-x64.tar.gz" --checkpoint=.100
 	rm "win-curl-x64.tar.gz"
 fi

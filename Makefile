@@ -71,11 +71,11 @@ $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	-DWIN32 -D_WIN32 -D_MT -D_DLL \
 	-Xclang -disable-llvm-verifier -Xclang '--dependent-lib=msvcrt' -Xclang '--dependent-lib=ucrt' -Xclang '--dependent-lib=oldnames' -Xclang '--dependent-lib=vcruntime' \
 	-U__GNUC__ -U__gnu_linux__ -U__GNUC_MINOR__ -U__GNUC_PATCHLEVEL__ -U__GNUC_STDC_INLINE__ \
-	--sysroot=$(CURDIR)/dist/toolchains/win-sdk -fuse-ld=lld \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/ucrt \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/um \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/shared \
-	-I$(CURDIR)/dist/toolchains/win-sdk/MSVC/14.36.32532/include \
+	--sysroot=$(CURDIR)/dist/toolchains/win-sdk-x64 -fuse-ld=lld \
+	-I$(CURDIR)/dist/toolchains/win-sdk-x64/Include/10.0.22621.0/ucrt \
+	-I$(CURDIR)/dist/toolchains/win-sdk-x64/Include/10.0.22621.0/um \
+	-I$(CURDIR)/dist/toolchains/win-sdk-x64/Include/10.0.22621.0/shared \
+	-I$(CURDIR)/dist/toolchains/win-sdk-x64/MSVC/14.36.32532/include \
 	-I$(CURDIR)/dist/libraries/win-llvm-15-x64/include \
 	-I$(CURDIR)/dist/libraries/win-curl-x64/include \
 	-o $@ -c $<
@@ -89,10 +89,9 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/win-x64/install.bat
 
 	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld -static \
-	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/ucrt/x64 \
-	-L$(CURDIR)/dist/toolchains/win-sdk/Lib/10.0.22621.0/um/x64 \
-	-I$(CURDIR)/dist/toolchains/win-sdk/Include/10.0.22621.0/shared \
-	-L$(CURDIR)/dist/toolchains/win-sdk/MSVC/14.36.32532/lib/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/ucrt/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/um/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/MSVC/14.36.32532/lib/x64 \
 	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
 	-L$(CURDIR)/dist/libraries/win-curl-x64/lib \
 	-Wl,-machine:x64 \
