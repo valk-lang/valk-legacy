@@ -1,0 +1,14 @@
+
+test "Strings: _add" {
+    assert("test" + " " + "concat" == "test concat")
+}
+
+test "Strings: auto convert integers to string" {
+    let str : String = -10203
+    assert(str == "-10203")
+}
+
+test "Strings: auto convert floats to string" {
+    let str : String = -0.129
+    assert(str == "-0.12")
+}

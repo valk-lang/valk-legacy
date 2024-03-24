@@ -472,7 +472,7 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
     Str *code = ir->block->code;
     str_flat(code, "  ");
     str_add(code, var_result);
-    str_flat(code, " = icmp ");
+    str_add(code, is_float ? " = fcmp " : " = icmp ");
     str_add(code, sign);
     str_flat(code, " ");
     str_add(code, type);
