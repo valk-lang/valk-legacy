@@ -1,0 +1,42 @@
+
+test "Array String tests" {
+    let arr = Array[String].new()
+    arr.push("1")
+    arr.push("2")
+    arr.push("3")
+    //
+    assert(arr.contains("0") == false)
+    assert(arr.contains("1"))
+    assert(arr.contains("2"))
+    assert(arr.contains("3"))
+    assert((arr.get(0) ? "0") == "1")
+    assert((arr.get(1) ? "0") == "2")
+    assert((arr.get(2) ? "0") == "3")
+    assert((arr.get(3) ? "0") == "0")
+    assert(arr.length == 3)
+    arr.remove_value("1")
+    assert(arr.length == 2)
+    arr.remove_value("0")
+    assert(arr.length == 2)
+}
+
+test "Array integer tests" {
+    let arr = Array[int].new()
+    arr.push(1)
+    arr.push(2)
+    arr.push(3)
+    //
+    assert(arr.contains(0) == false)
+    assert(arr.contains(1))
+    assert(arr.contains(2))
+    assert(arr.contains(3))
+    assert((arr.get(0) ? 0) == 1)
+    assert((arr.get(1) ? 0) == 2)
+    assert((arr.get(2) ? 0) == 3)
+    assert((arr.get(3) ? 0) == 0)
+    assert(arr.length == 3)
+    arr.remove_value(1)
+    assert(arr.length == 2)
+    arr.remove_value(0)
+    assert(arr.length == 2)
+}

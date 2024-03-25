@@ -82,6 +82,13 @@ class Array[T] {
         @ptrv(data, T, index) = @gc_link(this, value)
     }
 
+    fn contains(value: T) bool {
+        let index = this.index_of(value) ! {
+            return false
+        }
+        return true
+    }
+
     fn remove_index(index: uint) {
         let len = this.length;
         if index >= len { return }
@@ -94,8 +101,8 @@ class Array[T] {
 
         this.length--;
     }
-    fn remove_item(item: T) {
-        let index = this.index_of(item) ! {
+    fn remove_value(value: T) {
+        let index = this.index_of(value) ! {
             return
         }
         this.remove_index(index);
