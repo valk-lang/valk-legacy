@@ -41,4 +41,6 @@
 - defer token
 - interfaces
 - multi-threaded compiling
+- success chain: let str = ->r : a()->b(100, r)->c(r) ? "fail"
+-- each '->' passes the return value (r) to the next function, if any fails, go to the error handler at the end
 ```
