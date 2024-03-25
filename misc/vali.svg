@@ -1,27 +1,26 @@
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="340" xmlns="http://www.w3.org/2000/svg" height="293" id="screenshot-3ab8d9d9-68ca-8014-8004-111a27809400" viewBox="0 0 340 293" style="-webkit-print-color-adjust: exact;" fill="none" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="342.993" xmlns="http://www.w3.org/2000/svg" height="318.666" id="screenshot-c88ba5d5-c07d-8052-8004-18e637c2545c" viewBox="0 0 342.993 318.666" style="-webkit-print-color-adjust: exact;" fill="none" version="1.1">
+<g id="shape-c88ba5d5-c07d-8052-8004-18e65249979f" rx="0" ry="0">
 
-<g id="shape-3ab8d9d9-68ca-8014-8004-111a27809400" rx="0" ry="0">
-
-<g id="shape-3ab8d9d9-68ca-8014-8004-111a27809401">
-<g class="fills" id="fills-3ab8d9d9-68ca-8014-8004-111a27809401">
-<path rx="0" ry="0" d="M0.000,0.000L170.000,193.000L340.000,0.000L210.000,57.000L170.000,181.000L130.000,57.000L0.000,0.000Z" style="fill: rgb(98, 69, 193); fill-opacity: 1;">
-<animate id="top" attributeName="fill" values="rgb(98, 69, 193);#9170ff;rgb(98, 69, 193)" begin="mid.begin+0.05" dur="0.2s" />
+<g id="shape-c88ba5d5-c07d-8052-8004-18e6524997a0">
+<g class="fills" id="fills-c88ba5d5-c07d-8052-8004-18e6524997a0">
+<path rx="0" ry="0" d="M4.349,2.666C-3.176,9.251,1.349,17.666,1.349,17.666L171.349,216.666L341.349,17.666C341.349,17.666,346.375,9.251,338.849,2.666C330.849,-4.334,310.349,4.666,310.349,4.666L231.349,33.666C231.349,33.666,220.409,36.331,213.849,42.666C207.822,48.487,206.349,54.666,206.349,54.666L171.349,188.666L136.349,54.666C136.349,54.666,134.349,48.166,128.349,42.666C121.308,36.211,111.349,33.666,111.349,33.666L32.349,4.666C32.349,4.666,12.349,-4.334,4.349,2.666Z" style="fill: rgb(58, 129, 233); fill-opacity: 1;">
+<animate id="top" attributeName="fill" values="#3a81e9;#6ca3f3;#3a81e9" begin="mid.begin+0.05" dur="0.2s" />
 </path>
 </g>
 </g>
 
-<g id="shape-3ab8d9d9-68ca-8014-8004-111a27809402">
-<g class="fills" id="fills-3ab8d9d9-68ca-8014-8004-111a27809402">
-<path rx="0" ry="0" d="M0.000,0.000L65.500,135.500L170.000,277.000L274.500,135.500L340.000,0.000L170.000,185.000L0.000,0.000Z" style="fill: rgb(60, 24, 115); fill-opacity: 1;">
-<animate id="mid" attributeName="fill" values="rgb(60, 24, 115);#7043c1;rgb(60, 24, 115)" begin="bot.begin+0.05" dur="0.2s" />
+<g id="shape-c88ba5d5-c07d-8052-8004-18e6524997a1">
+<g class="fills" id="fills-c88ba5d5-c07d-8052-8004-18e6524997a1">
+<path rx="0" ry="0" d="M1.349,17.666L111.349,276.666L171.349,284.666L231.349,276.666L341.349,17.666L171.349,192.666L1.349,17.666Z" style="fill: rgb(59, 97, 193); fill-opacity: 1;">
+<animate id="mid" attributeName="fill" values="#3b61c1;#567ad4;#3b61c1" begin="bot.begin+0.05" dur="0.2s" />
 </path>
 </g>
 </g>
 
-<g id="shape-3ab8d9d9-68ca-8014-8004-111a27809403">
-<g class="fills" id="fills-3ab8d9d9-68ca-8014-8004-111a27809403">
-<path rx="0" ry="0" d="M65.500,135.500L130.000,269.000C130.000,269.000,143.333,293.000,170.000,293.000C196.000,293.000,210.000,269.000,210.000,269.000L274.500,135.500L170.000,267.000L65.500,135.500Z" style="fill: rgb(31, 7, 71); fill-opacity: 1;">
-<animate id="bot" attributeName="fill" values="rgb(31, 7, 71);#663aaa;rgb(31, 7, 71)" begin="2s;top.end+4s" dur="0.2s" />
+<g id="shape-c88ba5d5-c07d-8052-8004-18e6524997a2">
+<g class="fills" id="fills-c88ba5d5-c07d-8052-8004-18e6524997a2">
+<path rx="0" ry="0" d="M54.349,142.666L111.349,276.666C111.349,276.666,128.349,318.666,172.349,318.666C214.349,318.666,231.349,276.666,231.349,276.666L288.349,142.666L171.349,274.666L54.349,142.666Z" style="fill: rgb(65, 71, 172); fill-opacity: 1;">
+<animate id="bot" attributeName="fill" values="#4147ac;#5b61bd;#4147ac" begin="2s;top.end+4s" dur="0.2s" />
 </path>
 </g>
 </g>
