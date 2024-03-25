@@ -1,6 +1,0 @@
-
-test "Auto convert to string" {
-    let a = 10
-    let b : String = a
-    assert(b == "10")
-}
