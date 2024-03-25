@@ -432,9 +432,9 @@ char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_si
 
     char *var_result = ir_var(ir->func);
 
-    char *sign = "eq";
+    char *sign = is_float ? "oeq" : "eq";
     if (op == op_ne) {
-        sign = "ne";
+        sign = is_float ? "one" : "ne";
     } else if (op == op_lt) {
         if (is_float) {
             sign = "olt";

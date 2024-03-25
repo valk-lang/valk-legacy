@@ -9,6 +9,14 @@ test "Strings: auto convert integers to string" {
 }
 
 test "Strings: auto convert floats to string" {
-    let str : String = -0.129
-    assert(str == "-0.12")
+    let f1 : String = -0.129
+    assert(f1 == "-0.12")
+    let f2 : String = -1.40
+    assert(f2 == "-1.39")
+    let f3 : String = -0.0
+    assert(f3 == "0.00")
+    let f4 : String = 1.0
+    assert(f4 == "1.00")
+    let f5 : String = 1.129
+    assert(f5 == "1.12")
 }
