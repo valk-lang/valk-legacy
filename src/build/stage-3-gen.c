@@ -51,15 +51,15 @@ void stage_generate_main(Build *b) {
         int count = 0;
         char* buf = b->char_buf;
 
-        Idf *idf = idf_make(b->alc, idf_func, get_vali_func(b, "core", "test_init"));
-        scope_set_idf(func->scope, "VALI_TEST_INIT", idf, NULL);
-        idf = idf_make(b->alc, idf_func, get_vali_func(b, "core", "test_result"));
-        scope_set_idf(func->scope, "VALI_TEST_RESULT", idf, NULL);
-        idf = idf_make(b->alc, idf_func, get_vali_func(b, "core", "test_final_result"));
-        scope_set_idf(func->scope, "VALI_TEST_FINAL_RESULT", idf, NULL);
+        Idf *idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "test_init"));
+        scope_set_idf(func->scope, "VALK_TEST_INIT", idf, NULL);
+        idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "test_result"));
+        scope_set_idf(func->scope, "VALK_TEST_RESULT", idf, NULL);
+        idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "test_final_result"));
+        scope_set_idf(func->scope, "VALK_TEST_FINAL_RESULT", idf, NULL);
 
         // Init test result
-        str_flat(code, "let result = VALI_TEST_INIT()\n");
+        str_flat(code, "let result = VALK_TEST_INIT()\n");
         // Call tests
         Array* units = b->units;
         for(int i = 0; i < units->length; i++) {
@@ -69,7 +69,7 @@ void stage_generate_main(Build *b) {
                 Test* t = array_get_index(tests, o);
                 Func* tf = t->func;
                 // Set name
-                sprintf(buf, "VALI_TEST_NAME_%d", count);
+                sprintf(buf, "VALK_TEST_NAME_%d", count);
                 char* name_idf = dups(b->alc, buf);
                 Idf *idf = idf_make(b->alc, idf_value, vgen_string(b->alc, u, t->name));
                 scope_set_idf(func->scope, name_idf, idf, NULL);
@@ -77,20 +77,20 @@ void stage_generate_main(Build *b) {
                 str_add(code, name_idf);
                 str_flat(code, ")\n");
                 // Call test
-                sprintf(buf, "VALI_TEST_FUNC_%d", count);
+                sprintf(buf, "VALK_TEST_FUNC_%d", count);
                 char* func_idf_name = dups(b->alc, buf);
                 idf = idf_make(b->alc, idf_func, tf);
                 scope_set_idf(func->scope, func_idf_name, idf, NULL);
                 str_add(code, func_idf_name);
                 str_flat(code, "(result)\n");
                 // Result
-                str_flat(code, "VALI_TEST_RESULT(result)\n");
+                str_flat(code, "VALK_TEST_RESULT(result)\n");
                 //
                 count++;
             }
         }
         // Result
-        str_flat(code, "VALI_TEST_FINAL_RESULT(result)\n");
+        str_flat(code, "VALK_TEST_FINAL_RESULT(result)\n");
         str_flat(code, "return 0;\n");
     } else {
         if (b->func_main) {
@@ -126,16 +126,16 @@ void stage_generate_mark_functions(Build* b) {
     Scope* scope = scope_make(b->alc, sc_default, NULL);
     Parser* p = u->parser;
 
-    Idf *idf = idf_make(b->alc, idf_func, get_vali_func(b, "mem", "gc_mark_item"));
-    scope_set_idf(scope, "VALI_GC_MARK_ITEM", idf, p);
-    idf = idf_make(b->alc, idf_func, get_vali_func(b, "mem", "gc_mark_shared_item"));
-    scope_set_idf(scope, "VALI_GC_MARK_SHARED_ITEM", idf, p);
+    Idf *idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_item"));
+    scope_set_idf(scope, "VALK_GC_MARK_ITEM", idf, p);
+    idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_shared_item"));
+    scope_set_idf(scope, "VALK_GC_MARK_SHARED_ITEM", idf, p);
 
     //////////////////////////////
     // Non-shared
     //////////////////////////////
 
-    Func* func = func_make(b->alc, u, scope, "vali_gc_mark_globals", NULL);
+    Func* func = func_make(b->alc, u, scope, "valk_gc_mark_globals", NULL);
     b->func_mark_globals = func;
 
     Str *code = b->str_buf;
@@ -157,7 +157,7 @@ void stage_generate_mark_functions(Build* b) {
             char nr[16];
             itos(globalc++, nr, 10);
             //
-            strcpy(buf, "VALI_GLOBAL_IDF_");
+            strcpy(buf, "VALK_GLOBAL_IDF_");
             strcat(buf, nr);
             idf = idf_make(b->alc, idf_global, g);
             scope_set_idf(scope, buf, idf, p);
@@ -172,7 +172,7 @@ void stage_generate_mark_functions(Build* b) {
                 str_add(code, nr);
                 str_flat(code, ") : ");
             }
-            str_flat(code, "VALI_GC_MARK_ITEM(var_");
+            str_flat(code, "VALK_GC_MARK_ITEM(var_");
             str_add(code, nr);
             str_flat(code, ")\n");
         }
@@ -192,7 +192,7 @@ void stage_generate_mark_functions(Build* b) {
     // Shared
     //////////////////////////////
 
-    func = func_make(b->alc, u, scope, "vali_gc_mark_shared", NULL);
+    func = func_make(b->alc, u, scope, "valk_gc_mark_shared", NULL);
     b->func_mark_shared = func;
 
     str_clear(code);
@@ -212,7 +212,7 @@ void stage_generate_mark_functions(Build* b) {
             char nr[16];
             itos(globalc++, nr, 10);
             //
-            strcpy(buf, "VALI_GLOBAL_IDF_");
+            strcpy(buf, "VALK_GLOBAL_IDF_");
             strcat(buf, nr);
             idf = idf_make(b->alc, idf_global, g);
             scope_set_idf(scope, buf, idf, p);
@@ -227,7 +227,7 @@ void stage_generate_mark_functions(Build* b) {
                 str_add(code, nr);
                 str_flat(code, ") : ");
             }
-            str_flat(code, "VALI_GC_MARK_SHARED_ITEM(var_");
+            str_flat(code, "VALK_GC_MARK_SHARED_ITEM(var_");
             str_add(code, nr);
             str_flat(code, ")\n");
         }

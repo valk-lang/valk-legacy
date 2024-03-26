@@ -109,7 +109,7 @@ struct GcManager {
 
     fn clean_unused() {
         // Mark shared globals
-        @vali_gc_mark_shared
+        @valk_gc_mark_shared
         // Clean
         let stacks = this.stacks
         let si = this.stack_count

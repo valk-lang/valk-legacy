@@ -97,9 +97,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_throw) {
             TThrow* tt = t->item;
-            ir_store_old(ir, type_gen_vali(alc, ir->b, "i32"), "@vali_err_code", ir_int(ir, tt->err->value));
+            ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->err->value));
             char *msg = ir_string(ir, tt->msg);
-            ir_store_old(ir, type_gen_vali(alc, ir->b, "ptr"), "@vali_err_msg", msg);
+            ir_store_old(ir, type_gen_valk(alc, ir->b, "ptr"), "@valk_err_msg", msg);
             ir_func_return_nothing(ir);
             continue;
         }
@@ -165,7 +165,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Decl* vd = item->vd;
             Decl* index = item->index;
 
-            Type* type_ptr = type_gen_vali(ir->alc, ir->b, "ptr");
+            Type* type_ptr = type_gen_valk(ir->alc, ir->b, "ptr");
             Array *types = array_make(ir->alc, 4);
             array_push(types, item->on->rett);
             array_push(types, index->type);
@@ -194,11 +194,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
             char* incr = ir_op(ir, scope, op_add, ir_value(ir, scope, vgen_decl(alc, index)), ir_int(ir, 1), index->type);
             ir_store(ir, ir_assign_value(ir, scope, vgen_decl(alc, index)), incr, ir_type(ir, index->type), index->type->size);
             // Cond
-            Type *type_i32 = type_gen_vali(ir->alc, ir->b, "i32");
-            char *load = ir_load(ir, type_i32, "@vali_err_code");
+            Type *type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
+            char *load = ir_load(ir, type_i32, "@valk_err_code");
             char *lcond = ir_compare(ir, op_eq, load, "0", "i32", false, false);
             // Clear error
-            ir_store_old(ir, type_i32, "@vali_err_code", "0");
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
             ir_cond_jump(ir, lcond, block_code, block_after);
             //
             ir->block = block_code;
@@ -235,8 +235,8 @@ void ir_write_ast(IR* ir, Scope* scope) {
 char* ir_gc_link(IR* ir, char* on, char* to) {
     Build* b = ir->b;
 
-    Type* type_u8 = type_gen_vali(ir->alc, b, "u8");
-    Type* type_ptr = type_gen_vali(ir->alc, b, "ptr");
+    Type* type_u8 = type_gen_valk(ir->alc, b, "u8");
+    Type* type_ptr = type_gen_valk(ir->alc, b, "ptr");
 
     char* on_state_var = ir_ptrv(ir, on, "i8", -8);
     char* on_state = ir_load(ir, type_u8, on_state_var);
@@ -260,7 +260,7 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
 
     // Link
     ir->block = block_link;
-    Func *func = get_vali_class_func(b, "mem", "Stack", "link");
+    Func *func = get_valk_class_func(b, "mem", "Stack", "link");
     Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
     //
     Array* types = array_make(ir->alc, 2);

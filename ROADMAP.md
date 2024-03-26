@@ -28,10 +28,10 @@
 - package management
 - debug info
 - language server
-- vali make command (like: npm run)
-- run command: vali run ...
+- valk make command (like: npm run)
+- run command: valk run ...
 - dont disable_gc in gc_share, instead disable inside hooks 
-- 'clone' functions for classes in vali pkg
+- 'clone' functions for classes in valk pkg
 - more compile condition functions
 ```
 

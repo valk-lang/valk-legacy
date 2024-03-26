@@ -1,9 +1,9 @@
 @echo off
 
-set VALI_PATH=%~dp0\
+set VALK_PATH=%~dp0\
 
-echo ;%PATH%; | find /C /I ";%VALI_PATH%;" > nul
+echo ;%PATH%; | find /C /I ";%VALK_PATH%;" > nul
 if not errorlevel 1 goto jump
-set PATH=%PATH%;%VALI_PATH%
-setx /M PATH "%PATH%;%VALI_PATH%"
+set PATH=%PATH%;%VALK_PATH%
+setx /M PATH "%PATH%;%VALK_PATH%"
 :jump

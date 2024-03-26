@@ -1,7 +1,7 @@
 
 header "sys" as sys
 
-use vali:mem;
+use valk:mem;
 
 global str_buf : ?ptr
 global str_rev : ?ptr

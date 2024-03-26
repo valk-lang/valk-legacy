@@ -1,7 +1,7 @@
 
-use vali:mem
-use vali:os
-use vali:io
+use valk:mem
+use valk:os
+use valk:io
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
@@ -151,7 +151,7 @@ struct Stack {
             // Mark
             this.update_age()
             this.mark_stack_age()
-            @vali_gc_mark_globals
+            @valk_gc_mark_globals
             // Clean
             GcPool.clean_old_all(this.age)
             this.clear_unknown = false

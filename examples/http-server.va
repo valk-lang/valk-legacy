@@ -1,5 +1,5 @@
 
-use vali:http
+use valk:http
 
 fn handler(req: http:Request, res: http:Response) {
     // Set output to html 200 "Hello world"

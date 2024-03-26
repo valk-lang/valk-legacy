@@ -38,7 +38,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                     decl->is_mut = true;
                 }
             }
-            v = value_make(alc, v_ptr_of, from, type_gen_vali(alc, b, "ptr"));
+            v = value_make(alc, v_ptr_of, from, type_gen_valk(alc, b, "ptr"));
 
         } else if (str_is(tkn, "@ptr_offset")) {
             tok_expect(p, "(", false, false);
@@ -89,7 +89,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Value* index = read_value(alc, p, true, 0);
             tok_expect(p, ")", true, true);
-            v = value_make(alc, v_gc_get_table, index, type_gen_vali(alc, b, "ptr"));
+            v = value_make(alc, v_gc_get_table, index, type_gen_valk(alc, b, "ptr"));
         }
     } else if (t == tok_string) {
         char *body = tkn;
@@ -97,7 +97,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         v = vgen_string(alc, p->unit, body);
     } else if (t == tok_char) {
 
-        v = vgen_int(alc, tkn[0], type_gen_vali(alc, b, "u8"));
+        v = vgen_int(alc, tkn[0], type_gen_valk(alc, b, "u8"));
 
     } else if (t == tok_not) {
 
@@ -143,7 +143,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = vgen_int(alc, type->size, type_gen_vali(alc, b, "int"));
+            v = vgen_int(alc, type->size, type_gen_valk(alc, b, "int"));
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_bool(alc, b, str_is(tkn, "true"));
         } else if (str_is(tkn, "null")) {
@@ -193,18 +193,18 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
             tok_expect(p, ")", true, true);
             // Get test result variable
-            Idf *idf = scope_find_idf(p->scope, "VALI_TEST_RESULT", true);
+            Idf *idf = scope_find_idf(p->scope, "VALK_TEST_RESULT", true);
             if(!idf) {
                 parse_err(p, -1, "Missing test result variable while parsing 'assert' (compiler bug)");
             }
             Value* result = value_handle_idf(alc, p, idf);
             // 
-            Func* test_assert = get_vali_func(b, "core", "test_assert");
+            Func* test_assert = get_valk_func(b, "core", "test_assert");
             Array* args = array_make(alc, 2);
             array_push(args, val);
             array_push(args, result);
             array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
-            array_push(args, vgen_int(alc, p->line, type_gen_vali(alc, b, "uint")));
+            array_push(args, vgen_int(alc, p->line, type_gen_valk(alc, b, "uint")));
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
             v = vgen_func_call(alc, fptr, args);
 
@@ -234,14 +234,14 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             char* deci = p->tkn;
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
             double fv = atof(buf);
-            v = vgen_float(alc, fv, type_gen_vali(alc, b, "float"));
+            v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
         } else {
             p->chunk->i = before;
             v_i64 iv = atol(num);
             if (negative) {
                 iv *= -1;
             }
-            v = vgen_int(alc, iv, type_gen_vali(alc, b, "int"));
+            v = vgen_int(alc, iv, type_gen_valk(alc, b, "int"));
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -840,7 +840,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     Type* rt = right->rett;
 
     if (op == op_add) {
-        Class* str_class = get_vali_class(b, "type", "String");
+        Class* str_class = get_valk_class(b, "type", "String");
         // Try make both string if neither are nullable
         if (!lt->nullable && !rt->nullable) {
             if (lt->class == str_class || rt->class == str_class) {
@@ -883,11 +883,11 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     bool is_signed = lt->is_signed || rt->is_signed;
     if(lt->type == type_ptr) {
         is_ptr = true;
-        left = vgen_cast(alc, left, type_gen_vali(alc, b, is_signed ? "int" : "uint"));
+        left = vgen_cast(alc, left, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
     if(rt->type == type_ptr) {
         is_ptr = true;
-        right = vgen_cast(alc, right, type_gen_vali(alc, b, is_signed ? "int" : "uint"));
+        right = vgen_cast(alc, right, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
     if(left->type == v_number && right->type != v_number) {
         try_convert_number(left, right->rett);
@@ -921,7 +921,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     Value* v = vgen_op(alc, op, left, right, t1);
 
     if(is_ptr) {
-        v = vgen_cast(alc, v, type_gen_vali(alc, b, "ptr"));
+        v = vgen_cast(alc, v, type_gen_valk(alc, b, "ptr"));
     }
 
     return v;
@@ -989,10 +989,10 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
     if(is_ptr) {
         // Pointers
         if(lt->type == type_int) {
-            left = vgen_cast(alc, left, type_gen_vali(alc, b, "ptr"));
+            left = vgen_cast(alc, left, type_gen_valk(alc, b, "ptr"));
         }
         if(rt->type == type_int) {
-            right = vgen_cast(alc, right, type_gen_vali(alc, b, "ptr"));
+            right = vgen_cast(alc, right, type_gen_valk(alc, b, "ptr"));
         }
     } else {
         // Numbers
@@ -1016,7 +1016,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
         parse_err(p, -1, "Operator values are not compatible: %s <-> %s", type_to_str(lt, t1b), type_to_str(rt, t2b));
     }
 
-    return vgen_comp(alc, op, left, right, type_gen_vali(alc, b, "bool"));
+    return vgen_comp(alc, op, left, right, type_gen_valk(alc, b, "bool"));
 }
 
 bool value_is_assignable(Value *v) {
@@ -1056,7 +1056,7 @@ void value_is_mutable(Value* v) {
 
 Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* type) {
 
-    Class* str_class = get_vali_class(b, "type", "String");
+    Class* str_class = get_valk_class(b, "type", "String");
     Class* from_class = val->rett->class;
     if(type->class == str_class && from_class != str_class && from_class != NULL && !val->rett->nullable) {
         // To string
@@ -1103,7 +1103,7 @@ Value* try_convert(Allocator* alc, Build* b, Scope* scope, Value* val, Type* typ
     }
 
     // If to ptr, just change value return type to ptr
-    Class* ptr = get_vali_class(b, "type", "ptr");
+    Class* ptr = get_valk_class(b, "type", "ptr");
     if (val->rett->class != ptr && type->class == ptr) {
         bool nullable = val->rett->nullable;
         val->rett = type_gen_class(alc, ptr);

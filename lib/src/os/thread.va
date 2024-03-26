@@ -2,7 +2,7 @@
 header "pthread" as pt;
 header "sys" as sys;
 
-use vali:mem;
+use valk:mem;
 
 struct ThreadEntry {
     func: ptr

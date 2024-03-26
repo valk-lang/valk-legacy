@@ -34,8 +34,8 @@
 
 ////////////////////////////
 
-#define VALI_PATH_MAX 4096
-#define VALI_TOKEN_MAX 256
+#define VALK_PATH_MAX 4096
+#define VALK_TOKEN_MAX 256
 #define PATH_SLASH_CHAR '/'
 #define PATH_SLASH "/"
 

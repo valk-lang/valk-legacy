@@ -12,15 +12,15 @@ else
 fi
 
 dir=$(dirname -- "$0";)
-vali_dir="/opt/vali/__VERSION__"
+valk_dir="/opt/valk/__VERSION__"
 
-sudo mkdir -p "$vali_dir"
-sudo cp $dir/vali "$vali_dir/vali"
-if [ ! -f "$vali_dir/lib" ]; then
-	sudo rm -rf "$vali_dir/lib"
+sudo mkdir -p "$valk_dir"
+sudo cp $dir/valk "$valk_dir/valk"
+if [ ! -f "$valk_dir/lib" ]; then
+	sudo rm -rf "$valk_dir/lib"
 fi
-sudo cp -r $dir/lib "$vali_dir/"
+sudo cp -r $dir/lib "$valk_dir/"
 sudo mkdir -p /usr/local/bin
-sudo ln -s -f "$vali_dir/vali" /usr/local/bin/vali
+sudo ln -s -f "$valk_dir/valk" /usr/local/bin/vali
 
 echo "# Done"

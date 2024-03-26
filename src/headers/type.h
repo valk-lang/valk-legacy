@@ -10,7 +10,7 @@ Type* type_gen_void(Allocator* alc);
 Type* type_gen_null(Allocator* alc, Build* b);
 Type* type_gen_class(Allocator* alc, Class* class);
 Type* type_gen_func(Allocator* alc, Func* func);
-Type* type_gen_vali(Allocator* alc, Build* b, char* name);
+Type* type_gen_valk(Allocator* alc, Build* b, char* name);
 char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed);
 Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed);
 Type* type_merge(Allocator* alc, Type* t1, Type* t2);

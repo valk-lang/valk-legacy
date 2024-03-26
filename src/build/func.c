@@ -121,12 +121,12 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     IRBlock *block_else = fcall->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
     IRBlock *after = ir_block_make(ir, ir->func, "if_err_after_");
 
-    Type* type_i32 = type_gen_vali(ir->alc, ir->b, "i32");
-    char *load = ir_load(ir, type_i32, "@vali_err_code");
+    Type* type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
+    char *load = ir_load(ir, type_i32, "@valk_err_code");
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
     // Clear error
-    ir_store_old(ir, type_i32, "@vali_err_code", "0");
+    ir_store_old(ir, type_i32, "@valk_err_code", "0");
 
     ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
 

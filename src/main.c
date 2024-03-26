@@ -25,14 +25,14 @@ int main(int argc, char *argv[]) {
 void help() {
     //
     printf("-------------------------\n");
-    printf(" ⚡ Vali v0.0.1\n");
+    printf(" ⚡ Valk v0.0.1\n");
     printf("-------------------------\n\n");
 
-    printf(" vali build -h       Build vali code to an executable\n");
+    printf(" valk build -h       Build valk code to an executable\n");
 
     // printf("\n");
-    // printf(" vali fmt -h         Format vali code\n");
-    // printf(" vali ls -h          Run language server\n");
+    // printf(" valk fmt -h         Format valk code\n");
+    // printf(" valk ls -h          Run language server\n");
 
     printf("\n");
     exit(1);

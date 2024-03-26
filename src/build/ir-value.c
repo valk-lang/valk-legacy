@@ -62,7 +62,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         Value* index = v->item;
         char* i = ir_value(ir, scope, index);
         char* mul = ir_op(ir, scope, op_mul, i, "5", index->rett);
-        char* result = ir_ptrv_dyn(ir, "@vali_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
+        char* result = ir_ptrv_dyn(ir, "@valk_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
         return result;
     }
     if (vt == v_gc_link) {

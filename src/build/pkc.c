@@ -51,9 +51,9 @@ Pkc* pkc_load_pkc(Pkc* pkc, char* name, Parser* p) {
     Build* b = pkc->b;
 
     char* dir;
-    if(str_is(name, "vali")){
-        // Get default vali package
-        dir = al(b->alc, VALI_PATH_MAX);
+    if(str_is(name, "valk")){
+        // Get default valk package
+        dir = al(b->alc, VALK_PATH_MAX);
         strcpy(dir, get_binary_dir());
         strcat(dir, "lib/");
     } else {
@@ -107,7 +107,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header) {
         parse_err(p, -1, "Package config has no header directories defined in 'headers.dirs' | config: '%s'", pkc->config->path);
     }
 
-    char path[VALI_PATH_MAX];
+    char path[VALK_PATH_MAX];
     for (int i = 0; i < dirs->length; i++) {
         char* dir = array_get_index(dirs, i);
         sprintf(path, "%s%s.vh", dir, fn);

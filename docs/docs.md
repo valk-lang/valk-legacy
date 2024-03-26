@@ -10,7 +10,7 @@ macOS: `brew install llvm@15 && brew link llvm@15`
 Ubuntu / Debian: `sudo apt-get install llvm-15 clang-15 lld libcurl4-openssl-dev`
 
 ```
-git clone https://github.com/vali-lang/vali.git
+git clone https://github.com/valk-lang/valk.git
 cd vali
 make
 ```
@@ -69,7 +69,7 @@ fn main() {
 ```
 
 ```sh
-vali build main.va -o ./main
+valk build main.va -o ./main
 ./main
 ```
 
@@ -78,13 +78,13 @@ vali build main.va -o ./main
 To build multiple files into a program, you simply add them to the build command. However, we recommend to use only 1 file (e.g. main.va) and put all other files into a namespace. (See next chapter)
 
 ```sh
-vali build file-1.va file-2.va -o ./main
+valk build file-1.va file-2.va -o ./main
 ./main
 ```
 
 ## Namespaces
 
-To organize your code we group files into different directories. Each namespace represents 1 directory. To create a namespace, you must define it in your config file `vali.json`. Which should be located in the root of your project.
+To organize your code we group files into different directories. Each namespace represents 1 directory. To create a namespace, you must define it in your config file `valk.json`. Which should be located in the root of your project.
 
 ```json
 {
@@ -366,13 +366,13 @@ test "My test" {
 ```
 
 ```sh
-vali build src/*.v --test --run
+valk build src/*.v --test --run
 ```
 
 Or we can put our tests in a different directory.
 
 ```sh
-vali build src/*.v ./my-tests/*.va --test --run
+valk build src/*.v ./my-tests/*.va --test --run
 ```
 
 ## Unsafe
@@ -397,7 +397,7 @@ fn main() {
 }
 ```
 
-Vali allocates these objects using `vali:mem:alloc` and you can use `vali:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
+Valk allocates these objects using `valk:mem:alloc` and you can use `valk:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
 
 ```rust
 let ob = my_alloc(sizeof(inline MyStruct))

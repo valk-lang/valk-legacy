@@ -8,11 +8,11 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->dir = dir;
     nsc->scope = scope_make(alc, sc_default, NULL);
 
-    char *path_o = al(alc, VALI_PATH_MAX);
+    char *path_o = al(alc, VALK_PATH_MAX);
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_ir = al(alc, VALI_PATH_MAX);
+    char *path_ir = al(alc, VALK_PATH_MAX);
     sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_cache = al(alc, VALI_PATH_MAX);
+    char *path_cache = al(alc, VALK_PATH_MAX);
     sprintf(path_cache, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
 
     char uh[64];
@@ -102,9 +102,9 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
 }
 
 
-Nsc* get_vali_nsc(Build* b, char* name) {
+Nsc* get_valk_nsc(Build* b, char* name) {
     //
-    Pkc* pkc = b->pkc_vali;
+    Pkc* pkc = b->pkc_valk;
     if(!pkc)
         return NULL;
     return nsc_load(pkc, name, true, NULL);

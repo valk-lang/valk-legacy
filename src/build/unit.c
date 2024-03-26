@@ -20,7 +20,7 @@ void unit_validate(Unit *u, Parser *p) {
 
             if(main->arg_types->length > 0) {
                 Array *types = array_make(b->alc, 2);
-                Class *class_array = get_vali_class(b, "type", "Array");
+                Class *class_array = get_valk_class(b, "type", "Array");
                 Class *gclass = get_generic_class(p, class_array, gen_type_array_1(alc, b, "String", false));
                 array_push(types, type_gen_class(b->alc, gclass));
 

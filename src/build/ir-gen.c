@@ -56,7 +56,7 @@ Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs) {
             Value *v = array_get_index(rett_refs, i);
             char *val = v ? ir_assign_value(ir, scope, v) : "null";
             array_push(ir_values, val);
-            array_push(types, type_gen_vali(ir->alc, ir->b, "ptr"));
+            array_push(types, type_gen_valk(ir->alc, ir->b, "ptr"));
         }
     }
     return ir_fcall_ir_args(ir, ir_values, types);

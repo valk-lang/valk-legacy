@@ -16,7 +16,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header);
 
 Nsc *nsc_make(Allocator *alc, Pkc *pkc, char *name, char *dir);
 Nsc *nsc_load(Pkc *pkc, char *name, bool must_exist, Parser* p);
-Nsc *get_vali_nsc(Build *b, char *name);
+Nsc *get_valk_nsc(Build *b, char *name);
 
 Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header);
 
@@ -75,7 +75,7 @@ struct Build {
     Array *pkcs;
     //
     Pkc *pkc_main;
-    Pkc *pkc_vali;
+    Pkc *pkc_valk;
     Nsc *nsc_main;
     //
     Func *func_main;

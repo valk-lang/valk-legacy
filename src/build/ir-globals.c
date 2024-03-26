@@ -13,8 +13,8 @@ void ir_gen_globals(IR* ir) {
 
     if (is_main_fc) {
         str_preserve(code, 500);
-        str_flat(code, "@vali_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
-        str_flat(code, "@vali_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
+        str_flat(code, "@valk_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
+        str_flat(code, "@valk_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
 
         // VTables
         int gc_vtables = b->gc_vtables;
@@ -25,7 +25,7 @@ void ir_gen_globals(IR* ir) {
 
         // Gen vtable
         str_preserve(code, 500);
-        str_flat(code, "@vali_gc_vtable = unnamed_addr constant [");
+        str_flat(code, "@valk_gc_vtable = unnamed_addr constant [");
         str_add(code, gc_vt_count);
         str_flat(code, " x ptr] [\n");
         str_flat(code, "ptr null, ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
@@ -56,9 +56,9 @@ void ir_gen_globals(IR* ir) {
         str_flat(code, "\n], align 8\n");
     } else {
         str_preserve(code, 500);
-        str_flat(code, "@vali_err_code = external thread_local(initialexec) global i32, align 4\n");
-        str_flat(code, "@vali_err_msg = external thread_local(initialexec) global i8*, align 8\n");
-        str_flat(code, "@vali_gc_vtable = external constant ptr, align 8\n");
+        str_flat(code, "@valk_err_code = external thread_local(initialexec) global i32, align 4\n");
+        str_flat(code, "@valk_err_msg = external thread_local(initialexec) global i8*, align 8\n");
+        str_flat(code, "@valk_gc_vtable = external constant ptr, align 8\n");
     }
 
     for (int i = 0; i < u->globals->length; i++) {
@@ -197,8 +197,8 @@ char *ir_string(IR *ir, VString *str) {
 
     // Define object global
     str_preserve(code, 512);
-    Type* stype = type_gen_vali(ir->alc, ir->b, "String");
-    Type* ctype = type_gen_vali(ir->alc, ir->b, "StringConst");
+    Type* stype = type_gen_valk(ir->alc, ir->b, "String");
+    Type* ctype = type_gen_valk(ir->alc, ir->b, "StringConst");
     ctype->is_pointer = false;
     char *ltype = ir_type(ir, ctype);
     str_add(code, object_name);

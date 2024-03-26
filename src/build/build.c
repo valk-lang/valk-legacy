@@ -32,7 +32,7 @@ int cmd_build(int argc, char *argv[]) {
                 printf("File not found: '%s'\n", arg);
                 return 1;
             }
-            char *fullpath = al(alc, VALI_PATH_MAX);
+            char *fullpath = al(alc, VALK_PATH_MAX);
             get_fullpath(arg, fullpath);
             array_push(vo_files, fullpath);
             continue;
@@ -48,7 +48,7 @@ int cmd_build(int argc, char *argv[]) {
             printf(char_buf, "You cannot pass 2 directories in the arguments: '%s' | '%s'\n", main_dir, arg);
             return 1;
         }
-        char *dir_buf = al(alc, VALI_PATH_MAX);
+        char *dir_buf = al(alc, VALK_PATH_MAX);
         get_fullpath(arg, dir_buf);
         main_dir = dir_buf;
     }
@@ -193,7 +193,7 @@ int cmd_build(int argc, char *argv[]) {
     // Cache dir
     char *cache_buf = al(alc, 1000);
     char *cache_hash = al(alc, 64);
-    char *cache_dir = al(alc, VALI_PATH_MAX);
+    char *cache_dir = al(alc, VALK_PATH_MAX);
     strcpy(cache_buf, main_dir ? main_dir : ".");
     strcat(cache_buf, "||");
     strcat(cache_buf, os_name);
@@ -221,7 +221,7 @@ int cmd_build(int argc, char *argv[]) {
 
     // Generate out path if needed
     if(!b->path_out) {
-        path_out = al(alc, VALI_PATH_MAX);
+        path_out = al(alc, VALK_PATH_MAX);
         strcpy(path_out, b->cache_dir);
         strcat(path_out, "tmp_build");
         b->path_out = path_out;
@@ -244,12 +244,12 @@ int cmd_build(int argc, char *argv[]) {
     nsc_main->unit->is_main = true;
 
     // Load core dependencies
-    Pkc *vlt = pkc_load_pkc(pkc_main, "vali", NULL);
+    Pkc *vlt = pkc_load_pkc(pkc_main, "valk", NULL);
     Nsc *core = nsc_load(vlt, "core", true, NULL);
     Nsc *io = nsc_load(vlt, "io", true, NULL);
     Nsc *mem = nsc_load(vlt, "mem", true, NULL);
     Nsc *type = nsc_load(vlt, "type", true, NULL);
-    b->pkc_vali = vlt;
+    b->pkc_valk = vlt;
 
     // Build
     usize start = microtime();
@@ -312,7 +312,7 @@ int cmd_build(int argc, char *argv[]) {
 
     if(autorun) {
 
-        char cmd[VALI_PATH_MAX];
+        char cmd[VALK_PATH_MAX];
         strcpy(cmd, "\"");
         strcat(cmd, b->path_out);
         strcat(cmd, "\"");
@@ -421,7 +421,7 @@ int default_arch() {
 }
 
 void cmd_build_help() {
-    printf("\n# vali build {.va-file|config-dir} [{more .va-files}] -o {outpath}\n\n");
+    printf("\n# valk build {.va-file|config-dir} [{more .va-files}] -o {outpath}\n\n");
 
     printf(" --run -r            run program after compiling\n");
     // printf(" --watch             watch files & rebuild when code changes\n");
