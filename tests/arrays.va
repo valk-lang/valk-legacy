@@ -1,5 +1,5 @@
 
-test "Array String tests" {
+test "Array[String] tests" {
     let arr = Array[String].new()
     arr.push("1")
     arr.push("2")
@@ -20,7 +20,7 @@ test "Array String tests" {
     assert(arr.length == 2)
 }
 
-test "Array integer tests" {
+test "Array[int] tests" {
     let arr = Array[int].new()
     arr.push(1)
     arr.push(2)
