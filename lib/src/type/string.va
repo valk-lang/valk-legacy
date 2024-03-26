@@ -1,7 +1,7 @@
 
 use mem;
 
-struct StringConst {
+- struct StringConst {
     v1: u8 (0)
     v2: u8 (0)
     v3: u8 (0)
@@ -15,50 +15,83 @@ class String {
     data: ptr
     bytes: uint
 
-	/////////////////////
-	// Clean
-	/////////////////////
+    /////////////////////
+    // UTF8
+    /////////////////////
 
-	fn trim(part: String) String {
-		let res = this.ltrim(part);
-		return res.rtrim(part);
-	}
+    fn utf8_count() uint {
+        let count : uint = 0
+        let pos : uint = 0
+        let adr = this.data
+        let bytes = this.bytes
+        while pos < bytes {
+            let bytec : u8 = 1
+            let byte : u8 = @ptrv(adr, u8, pos)
+            if((byte & 128) > 0){
+                byte = byte << 1
+                while (byte & 128) > 0 {
+                    bytec++
+                    byte = byte << 1
+                }
+            }
+            if(bytec > 4) : bytec = 4
+            count++
+            pos += bytec
+        }
+        return count
+    }
 
-	fn rtrim(part: String) String {
+    // fn utf8_string() StringUtf8 {
+    //     return 0
+    // }
 
-		let part_bytes = part.bytes
-		let part_data = part.data
+    // fn utf8_clean_corrupt_characters() {
+    // }
 
-		let data = this.data
-		let len = this.bytes
-		let data_end = data + len
-		let offset : uint = 0
-		while (offset + part_bytes <= len) && mem:equal(data_end - offset - part_bytes, part_data, part_bytes) {
+    /////////////////////
+    // Clean
+    /////////////////////
+
+    fn trim(part: String) String {
+        let res = this.ltrim(part);
+        return res.rtrim(part);
+    }
+
+    fn rtrim(part: String) String {
+
+        let part_bytes = part.bytes
+        let part_data = part.data
+
+        let data = this.data
+        let len = this.bytes
+        let data_end = data + len
+        let offset : uint = 0
+        while (offset + part_bytes <= len) && mem:equal(data_end - offset - part_bytes, part_data, part_bytes) {
             offset += part_bytes
-		}
+        }
         if offset == 0 : return this
 
         return String.make_from_ptr(data, len - offset)
-	}
+    }
 
-	fn ltrim(part: String) String {
-		let part_bytes = part.bytes
-		let part_data = part.data
+    fn ltrim(part: String) String {
+        let part_bytes = part.bytes
+        let part_data = part.data
 
-		let data = this.data
-		let len = this.bytes
-		let offset : uint = 0
-		while (offset + part_bytes <= len) && mem:equal(data + offset, part_data, part_bytes) {
+        let data = this.data
+        let len = this.bytes
+        let offset : uint = 0
+        while (offset + part_bytes <= len) && mem:equal(data + offset, part_data, part_bytes) {
             offset += part_bytes
-		}
+        }
         if offset == 0 : return this
 
         return String.make_from_ptr(data + offset, len - offset)
-	}
+    }
 
-	/////////////////////
-	// Convert
-	/////////////////////
+    /////////////////////
+    // Convert
+    /////////////////////
 
     fn to_uint() uint !not_a_number {
         return 0
@@ -67,9 +100,9 @@ class String {
         return this
     }
 
-	/////////////////////
-	// Partials
-	/////////////////////
+    /////////////////////
+    // Partials
+    /////////////////////
     
     fn byte(index: uint) u8 {
         if index >= this.bytes : return 0
@@ -94,9 +127,9 @@ class String {
         return res;
     }
 
-	/////////////////////
-	// Create
-	/////////////////////
+    /////////////////////
+    // Create
+    /////////////////////
 
     fn clone() String {
         return String.make_from_ptr(this.data, this.bytes)
@@ -122,9 +155,9 @@ class String {
         return s
     }
 
-	/////////////////////
-	// Internals
-	/////////////////////
+    /////////////////////
+    // Internals
+    /////////////////////
 
     fn _add(add: String) String {
         let this_len = this.bytes

@@ -3,8 +3,8 @@ header "sys" as sys
 
 use mem
 
-global EXE_PATH : ?String
-global EXE_DIR : ?String
+- global EXE_PATH : ?String
+- global EXE_DIR : ?String
 
 value PATH_MAX (4096)
 
@@ -75,7 +75,7 @@ fn exe_path() String {
 	return str
 }
 
-fn ext(path: String) String {
+fn ext(path: String, with_dot: bool (false)) String {
 	let len = path.bytes
 	let start = len
 	let found = false
@@ -83,7 +83,7 @@ fn ext(path: String) String {
 		start--
 		let ch = path.byte(start)
 		if ch == '.' {
-			start++
+            if with_dot == false : start++
 			found = true
 			break
 		}
