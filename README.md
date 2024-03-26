@@ -10,7 +10,7 @@
 [Website](https://valk-lang.dev) | [Documentation](https://github.com/valk-lang/valk/blob/main/docs/docs.md) | [Roadmap](https://github.com/valk-lang/valk/blob/main/ROADMAP.md) | [Discord](https://discord.gg/RwEGqdSERA)
 
 
-Valk (🔊 val-e) is a programming language aimed to be fast & simple at the same time. It can be used for high & mid level programming. Valk is unique because of its new way of doing garbage collection. Its runtime is much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
+Valk is a programming language aimed to be fast & simple at the same time. It can be used for high & mid level programming. Valk is unique because of its new way of doing garbage collection. Its runtime is much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
 **Features**: Super fast non-pausing GC ⚡, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
