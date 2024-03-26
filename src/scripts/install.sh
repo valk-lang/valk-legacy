@@ -21,6 +21,6 @@ if [ ! -f "$valk_dir/lib" ]; then
 fi
 sudo cp -r $dir/lib "$valk_dir/"
 sudo mkdir -p /usr/local/bin
-sudo ln -s -f "$valk_dir/valk" /usr/local/bin/vali
+sudo ln -s -f "$valk_dir/valk" /usr/local/bin/valk
 
 echo "# Done"

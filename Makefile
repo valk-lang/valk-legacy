@@ -35,7 +35,7 @@ OBJECTS_LINUX_X64=$(patsubst %.c, debug/build-linux-x64/%.o, $(SRC))
 OBJECTS_LINUX_ARM64=$(patsubst %.c, debug/build-linux-arm64/%.o, $(SRC))
 OBJECTS_MACOS_X64=$(patsubst %.c, debug/build-macos-x64/%.o, $(SRC))
 OBJECTS_MACOS_ARM64=$(patsubst %.c, debug/build-macos-arm64/%.o, $(SRC))
-TARGET=vali
+TARGET=valk
 
 valk: $(OBJECTS)
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
@@ -47,7 +47,7 @@ $(OBJECTS): debug/build/%.o: %.c
 clean:
 	rm -f valk $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
-test: vali
+test: valk
 	@./valk build tests/*.va --test --run -vv || exit 1
 
 ##############

@@ -42,7 +42,7 @@ Ubuntu / Debian: `sudo apt-get install llvm-15 clang-15 lld libcurl4-openssl-dev
 
 ```bash
 git clone https://github.com/valk-lang/valk.git
-cd vali
+cd valk
 make
 ```
 
