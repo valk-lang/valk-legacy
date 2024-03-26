@@ -3,135 +3,123 @@ header "sys" as sys
 
 use mem
 use io
+use utils
+
+fn open(path: String, writable: bool, append_on_write: bool) FD !open {
+    return open_extend(path, writable, append_on_write, false) ! throw open
+}
+// TODO: use octal number for permissions
+fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_if_doesnt_exist: bool (false), create_file_permissions: u32 (420)) FD !open {
+
+    let flags : i32 = sys:O_RDONLY
+    if writable : flags = sys:O_RDWR
+    if create_file_if_doesnt_exist : flags = flags | sys:O_CREATE
+    if append_on_write : flags = flags | sys:O_APPEND
+
+    let fd = sys:open(path.data, flags, create_file_permissions);
+    if fd < 0 {
+        throw open;
+    }
+    return fd @as FD;
+}
 
 fn stat(path: String, buf: sys:libc_stat) void !failed {
-	let plen = path.bytes()
-	let cstr_ptr = @stack_alloc(plen + 1)
-	mem:copy(path.data(), cstr_ptr, plen)
-	@ptrv(cstr_ptr, u8, plen) = '\0'
-	let cstr = cstr_ptr @as c_string
-	let res = sys:stat(cstr, buf)
+	let res = sys:stat(path.data, buf)
 	if res == -1 : throw failed
 }
-fn size(path: String) uxx {
-	let buf = @stack_alloc(sizeof_class(sys:libc_stat)) @as sys:libc_stat
-	stat(path, buf) !! return 0
-	return buf.st_size @as uxx
+fn size(path: String) uint {
+	let buf = @stack(sys:libc_stat)
+	stat(path, buf) ! return 0
+	return buf.st_size @as uint
 }
 
-fn open_fd(path: String, read: bool, write: bool) i32 !open {
+// fn read(path: String) String !open !read !close {
 
-	let cstr = path.to_c_string()
-	let fd = sys:open(cstr, 0, 0)
-	if fd == -1 {
-		throw open
-	}
-	return fd
-}
-fn fd_close(fd: i32) void !close {
-	let check = sys:close(fd)
-	if(check != 0){
-		throw close
-	}
-}
+// 	let fd = open(path, true, false) ! throw open
 
-fn read(path: String) String !open !read !close {
+// 	let res = utils:ByteBuffer.new(4096)
+// 	while true {
+//         res.minimum_free_space(4096)
+// 		let readcount = sys:read(fd, res.data + res.length, 4096)
+// 		if(readcount < 0){
+// 			throw read
+// 		}
+//         res.length += readcount @as uint;
+// 		if(readcount != 4096) {
+// 			break
+// 		}
+// 	}
 
-	let fd = open_fd(path, true, false) !! throw open
+// 	let check = sys:close(fd)
+// 	if(check != 0){
+// 		//throw close
+// 	}
 
-	let res = ByteBuffer.new(4096)
-	let buf = @stack_alloc(4096)
-	let readcount_ : ixx = 4096
-	while true {
-		let readcount = sys:read(fd, buf, 4096)
-		if(readcount < 0){
-			throw read
-		}
-		res.append_from_ptr(buf, readcount @as uxx)
-		if(readcount != readcount_) {
-			break
-		}
-	}
+// 	return res.to_string()
+// }
 
-	let check = sys:close(fd)
-	if(check != 0){
-		//throw close
-	}
+// TODO: !open instead of !open_err (err identifiers need to be split)
+fn write(path: String, content: String, append: bool (true)) void !open_err {
 
-	return res.to_str()
-}
+    let flags = sys:O_TRUNC
+    if append : flags = sys:O_APPEND
 
-fn write(path: String, content: String, append: bool = true) void !open {
+    let fd = open_extend(path, true, append, true) ! throw open_err
 
-	let cpath = path.to_c_string()
-
-    let flags = sys:OS.O_TRUNC
-    if append : flags = sys:OS.O_APPEND
-
-    let fd = io:open(cpath, sys:OS.O_RDWR | sys:OS.O_CREAT | flags, 0744) !! throw open
-
-    io:write(fd, content)!
+    // TODO: ignore error handler
+    io:write(fd, content) ! {
+        io:close(fd)
+        return
+    }
     io:close(fd)
 }
 
 fn exists(path: String) bool {
-	let fd = open_fd(path, true, false) !! return false
-	fd_close(fd)!
+	let fd = open(path, false, false) ! return false
+	io:close(fd)
 	return true
 }
 fn delete(path: String) void !failed {
-
-	let plen = path.bytes()
-	let cstr_ptr = @stack_alloc(plen + 1)
-	mem:copy(path.data(), cstr_ptr, plen)
-	@ptrv(cstr_ptr, u8, plen) = '\0'
-	let cstr = cstr_ptr @as c_string
-
-	let res = sys:unlink(cstr)
+	let res = sys:unlink(path.data)
 	if res == -1 {
 		throw failed
 	}
 }
 fn mkdir(path: String) void !failed {
 
-	let plen = path.bytes()
-	let cstr_ptr = @stack_alloc(plen + 1)
-	mem:copy(path.data(), cstr_ptr, plen)
-	@ptrv(cstr_ptr, u8, plen) = '\0'
-	let cstr = cstr_ptr @as c_string
-
-	let res = sys:mkdir(cstr, 448) // 0700
+    // TODO: use octal numbers
+	let res = sys:mkdir(path.data, 493) // 0755
 	if res == -1 {
 		throw failed
 	}
 }
 
 fn is_file(path: String) bool {
-	let buf = @stack_alloc(sizeof_class(sys:libc_stat)) @as sys:libc_stat
-	stat(path, buf) !! return false
-	return (buf.st_mode & sys:OS.S_IFMT) == sys:OS.S_IFREG
+	let buf = @stack(sys:libc_stat)
+	stat(path, buf) ! return false
+	return (buf.st_mode & sys:S_IFMT) == sys:S_IFREG
 }
 fn is_dir(path: String) bool {
-	let buf = @stack_alloc(sizeof_class(sys:libc_stat)) @as sys:libc_stat
-	stat(path, buf) !! return false
-	return (buf.st_mode & sys:OS.S_IFMT) == sys:OS.S_IFDIR
+	let buf = @stack(sys:libc_stat)
+	stat(path, buf) ! return false
+	return (buf.st_mode & sys:S_IFMT) == sys:S_IFDIR
 }
 
-fn files_in(directory: String, files: bool = true, dirs: bool = true) Array[String] {
+fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[String] {
 	let result = Array[String].new()
-	let path = directory.rtrim("/") + "/"
 
 	#if OS == win
 
-	let pattern = (path + "*").to_c_string()
-	let data = @stack_alloc(sizeof_class(sys:WIN32_FIND_DATAA)) @as sys:WIN32_FIND_DATAA
+	let path = directory.rtrim("/") + "/*"
+	let pattern = path.data
+	let data = @stack(sys:WIN32_FIND_DATAA)
     let hFind = sys:FindFirstFileA(pattern, data)
     if hFind != -1 @as ptr {
 		let loop = true
 		while loop {
 			let fn = (@ptr_of(data.cFileName) @as c_string).to_str()
 
-			if fn.bytes() < 3 && (fn == "." || fn == "..") {
+			if fn.bytes < 3 && (fn == "." || fn == "..") {
 				loop = sys:FindNextFileA(hFind, data)
 				continue
 			}
@@ -147,19 +135,18 @@ fn files_in(directory: String, files: bool = true, dirs: bool = true) Array[Stri
 		}
         sys:FindClose(hFind)
 	}
-	pattern.free()
 
 	#else
 
-	let dir = path.to_c_string()
-	let d = sys:opendir(dir)
+	let dir = directory.rtrim("/") + "/"
+	let d = sys:opendir(path.data)
 
     if d != null {
 		let ent = sys:readdir(d)
         while ent != null {
 
 			let fn = (@ptr_of(ent.d_name) @as c_string).to_str()
-			if fn.bytes() < 3 && (fn == "." || fn == "..") {
+			if fn.bytes < 3 && (fn == "." || fn == "..") {
 				ent = sys:readdir(d)
 				continue
 			}
@@ -175,8 +162,6 @@ fn files_in(directory: String, files: bool = true, dirs: bool = true) Array[Stri
         }
         sys:closedir(d)
     }
-
-	dir.free()
 
 	#end
 

@@ -16,6 +16,12 @@
 - make prebuilt releases (version 0.0.1)
 
 // v0.0.2
+- split error identifiers & scope identifiers
+- ignore error handler if void return
+- octal integers
+- use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
+- func_ref type to str
+
 - macros (e.g. array, map)
 - string functions
 - format string

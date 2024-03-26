@@ -105,7 +105,7 @@ class ByteBuffer {
     // String functions
     /////////////////////////
 
-    fn to_str() String {
+    fn to_string() String {
         if(this.length == 0){
             return "";
         }

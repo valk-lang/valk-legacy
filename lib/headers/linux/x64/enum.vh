@@ -33,3 +33,17 @@ value EPOLL_CTL_ADD (1)
 value EPOLL_CTL_DEL (2)
 value EPOLL_CTL_MOD (3)
 value EPOLL_NONBLOCK (2048)
+
+value O_RDONLY (0)
+value O_RDWR (2)
+value O_WRONLY (1)
+//
+value O_APPEND (1023)
+value O_CREATE (64)
+value O_EXCL (128)
+value O_SYNC (1052672)
+value O_TRUNC (512)
+
+value S_IFDIR (16384)
+value S_IFREG (32768)
+value S_IFMT (61440)
