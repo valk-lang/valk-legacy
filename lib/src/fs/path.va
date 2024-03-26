@@ -52,8 +52,8 @@ fn exe_dir() String {
         return dir
     }
     let d = dir_of(exe_path())
-	EXE_DIR = d
-	return d
+    EXE_DIR = d
+    return d
 }
 
 fn exe_path() String {
@@ -61,40 +61,36 @@ fn exe_path() String {
     if isset(p) {
         return p
     }
-	let str = String.make_empty(PATH_MAX)
-	let data = str.data
+    let str = String.make_empty(PATH_MAX)
+    let data = str.data
 
-	#if OS == win
-   	let len = sys:GetModuleFileNameA(null, data, PATH_MAX)
-	#else
-	let link = "/proc/self/exe".data @as cstring
-   	let len = sys:readlink(link, data, PATH_MAX)
-	#end
+    #if OS == win
+       let len = sys:GetModuleFileNameA(null, data, PATH_MAX)
+    #else
+    let link = "/proc/self/exe".data @as cstring
+       let len = sys:readlink(link, data, PATH_MAX)
+    #end
 
     EXE_PATH = str
-	return str
+    return str
 }
 
 fn ext(path: String, with_dot: bool (false)) String {
-	let len = path.bytes
-	let start = len
-	let found = false
-	while start > 0 {
-		start--
-		let ch = path.byte(start)
-		if ch == '.' {
+    let len = path.bytes
+    let start = len
+    let found = false
+    while start > 0 {
+        start--
+        let ch = path.byte(start)
+        if ch == '.' {
             if with_dot == false : start++
-			found = true
-			break
-		}
-		if ch == '/' || ch == '\\' {
-			break
-		}
-	}
-	if found == false {
-		return ""
-	}
-	return path.sub_str_bytes(start, len - start)
+            found = true
+            break
+        }
+        if ch == '/' || ch == '\\' : break
+    }
+    if found == false : return ""
+    return path.sub_str_bytes(start, len - start)
 }
 
 // e.g. /etc/nginx/nginx.conf -> /etc/nginx
@@ -103,18 +99,17 @@ fn ext(path: String, with_dot: bool (false)) String {
 // e.g. "" -> ""
 // e.g. etc -> etc
 fn dir_of(path: String) String {
-	let end = path.bytes - 1
-	while(end > 0){
-		end--
-		let ch = path.byte(end)
-		if(ch == '/' || ch == '\\'){
-			if end == 0 {
-				end++
-			}
-			return path.sub_str_bytes(0, end)
-		}
-	}
-	return path + ""
+    let bytes = path.bytes
+    if bytes == 0 : return ""
+    let end = bytes - 1
+    while end-- > 0 {
+        let ch = path.byte(end)
+        if ch == '/' || ch == '\\' {
+            if end == 0 : end++
+            return path.sub_str_bytes(0, end)
+        }
+    }
+    return path
 }
 
 // e.g. /etc/nginx/nginx.conf -> nginx.conf
@@ -122,15 +117,24 @@ fn dir_of(path: String) String {
 // e.g. / -> ""
 // e.g. "" -> ""
 fn basename(path: String) String {
-	let len = path.bytes
-	let start = len
-	while(start > 0){
-		start--
-		let ch = path.byte(start)
-		if(ch == '/' || ch == '\\'){
-			start++
-			break
-		}
-	}
-	return path.sub_str_bytes(start, len - start)
+    let len = path.bytes
+    let start = len
+    let rtrim : uint = 0
+    while start > 0 {
+        let ch = path.byte(start - 1)
+        if ch == '/' || ch == '\\' {
+            start--
+            rtrim++
+            continue
+        }
+        break
+    }
+    while start-- > 0 {
+        let ch = path.byte(start)
+        if(ch == '/' || ch == '\\'){
+            start++
+            break
+        }
+    }
+    return path.sub_str_bytes(start, len - start - rtrim)
 }

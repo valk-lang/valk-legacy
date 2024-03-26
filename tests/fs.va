@@ -1,0 +1,21 @@
+
+use valk:fs
+
+test "fs:dir_of" {
+    assert(fs:dir_of("/etc/nginx/nginx.conf") == "/etc/nginx")
+    assert(fs:dir_of("/etc/nginx/") == "/etc")
+    assert(fs:dir_of("/etc/nginx") == "/etc")
+    assert(fs:dir_of("/etc") == "/")
+    assert(fs:dir_of("/") == "/")
+    assert(fs:dir_of("etc") == "etc")
+    assert(fs:dir_of("") == "")
+    // TODO windows paths
+}
+
+test "fs:basename" {
+    assert(fs:basename("/etc/nginx/nginx.conf") == "nginx.conf")
+    assert(fs:basename("/etc/nginx/") == "nginx")
+    assert(fs:basename("/") == "")
+    assert(fs:basename("") == "")
+    // TODO windows paths
+}
