@@ -8,6 +8,7 @@ char *ir_type(IR *ir, Type *type) {
 
     Class *class = type->class;
     char name[256];
+    char array_len[64];
 
     if (type_is_void(type)) {
         return "void";
@@ -27,6 +28,14 @@ char *ir_type(IR *ir, Type *type) {
     } else if (type->type == type_float) {
         int bytes = type->size;
         return ir_type_float(ir, bytes);
+    } else if (type->type == type_static_array) {
+        char* sub_type = ir_type(ir, type->array_type);
+        strcpy(name, "[ ");
+        strcat(name, itos(type->array_size, array_len, 10));
+        strcat(name, " x ");
+        strcat(name, sub_type);
+        strcat(name, " ]");
+        return dups(ir->alc, name);
     }
 
     printf("Type: %s\n", type_to_str(type, name));

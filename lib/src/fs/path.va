@@ -69,7 +69,6 @@ fn exe_path() String {
 	#else
 	let link = "/proc/self/exe".data @as cstring
    	let len = sys:readlink(link, data, PATH_MAX)
-	mem:free(link)
 	#end
 
     EXE_PATH = str

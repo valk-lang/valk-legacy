@@ -350,51 +350,58 @@ bool type_is_void(Type* type) { return type->type == type_void; }
 bool type_is_bool(Type* type) { return type->type == type_bool; }
 bool type_is_gc(Type* type) { return type->is_pointer && type->type == type_struct && type->class->type == ct_class; }
 
+void type_to_str_append(Type* t, char* res, bool use_export_name) {
+    if (t->type == type_void) {
+        strcat(res, "void");
+        return;
+    } else if (t->type == type_null) {
+        strcat(res, "null");
+        return;
+    }
+    if (t->nullable) {
+        strcat(res, use_export_name ? "NULL_" : "?");
+    }
+    if (t->type == type_func) {
+        strcat(res, "fn(");
+        Array * types = t->func_args;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, ")(");
+        types = t->func_rett_types;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, ")");
+    } else if (t->class) {
+        Class *class = t->class;
+        strcat(res, use_export_name ? class->ir_name : class->name);
+    }
+}
 char* type_to_str(Type* t, char* res) {
-
     strcpy(res, "");
-    if (t->nullable) {
-        strcat(res, "?");
-    }
-    if (t->type == type_void) {
-        strcpy(res, "void");
-    } else if (t->type == type_null) {
-        strcpy(res, "null");
-    } else if (t->class) {
-        Class *class = t->class;
-        strcat(res, class->name);
-    }
+    type_to_str_append(t, res, false);
     return res;
 }
-
 char* type_to_str_export(Type* t, char* res) {
-
     strcpy(res, "");
-    if (t->nullable) {
-        strcat(res, "NULL_");
-    }
-    if (t->type == type_void) {
-        strcpy(res, "void");
-    } else if (t->type == type_null) {
-        strcpy(res, "null");
-    } else if (t->class) {
-        Class *class = t->class;
-        strcat(res, class->ir_name);
-    }
+    type_to_str_append(t, res, true);
     return res;
 }
 
-void type_to_str_append(Type* t, Str* buf) {
-    if (t->nullable) {
-        str_flat(buf, "?");
-    }
-    if (t->type == type_void) {
-        str_flat(buf, "void");
-    } else if (t->type == type_null) {
-        str_flat(buf, "null");
-    } else if (t->class) {
-        str_add(buf, t->class->ir_name);
-    }
+void type_to_str_buf_append(Type* t, Str* buf) {
+    char* tmp = ((char*)(buf->data)) + buf->length;
+    tmp[0] = 0;
+    type_to_str_append(t, tmp, true);
+    buf->length += strlen(tmp);
 }
 
 int type_get_size(Build* b, Type* type) {
