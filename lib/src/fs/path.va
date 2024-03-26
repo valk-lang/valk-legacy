@@ -6,6 +6,8 @@ use mem
 global EXE_PATH : ?String
 global EXE_DIR : ?String
 
+value PATH_MAX (4096)
+
 // class Path {
 // 	parts: Array[String]
 
@@ -59,14 +61,14 @@ fn exe_path() String {
     if isset(p) {
         return p
     }
-	let str = String.make_empty(sys:OS.PATHMAX)
-	let data = str.data()
+	let str = String.make_empty(PATH_MAX)
+	let data = str.data
 
 	#if OS == win
-   	let len = sys:GetModuleFileNameA(null, data, sys:OS.PATHMAX)
+   	let len = sys:GetModuleFileNameA(null, data, PATH_MAX)
 	#else
 	let link = "/proc/self/exe".data @as cstring
-   	let len = sys:readlink(link, data, sys:OS.PATHMAX)
+   	let len = sys:readlink(link, data, PATH_MAX)
 	mem:free(link)
 	#end
 
@@ -102,7 +104,7 @@ fn ext(path: String) String {
 // e.g. "" -> ""
 // e.g. etc -> etc
 fn dir_of(path: String) String {
-	let end = path.bytes() - 1
+	let end = path.bytes - 1
 	while(end > 0){
 		end--
 		let ch = path.byte(end)
@@ -121,7 +123,7 @@ fn dir_of(path: String) String {
 // e.g. / -> ""
 // e.g. "" -> ""
 fn basename(path: String) String {
-	let len = path.bytes()
+	let len = path.bytes
 	let start = len
 	while(start > 0){
 		start--

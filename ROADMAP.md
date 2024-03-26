@@ -21,6 +21,7 @@
 - octal integers
 - use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
 - func_ref type to str
+- declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
 
 - macros (e.g. array, map)
 - string functions

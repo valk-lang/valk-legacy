@@ -34,8 +34,10 @@ struct Type {
     Map* func_errors;
     Type* func_rett;
     Array* func_rett_types;
+    Type* array_type;
     int type;
     int size;
+    int array_size;
     bool nullable;
     bool is_pointer;
     bool is_signed;

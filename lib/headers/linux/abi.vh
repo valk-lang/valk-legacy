@@ -1,4 +1,6 @@
 
+alias DIR as ptr
+
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) i32;
 
@@ -39,9 +41,13 @@ fn stat(path: cstring, stat_buf: libc_stat) i32;
 fn fstat(fd: i32, stat_buf: libc_stat) i32;
 fn lstat(path: cstring, stat_buf: libc_stat) i32;
 
-fn rename(oldpath: cstring, newpath: cstring) i32;
+fn opendir(name: cstring) ?DIR;
+fn readdir(dirp: DIR) ?libc_dirent;
+fn closedir(dirp: DIR) i32;
 fn mkdir(pathname: cstring, mode: u32) i32;
 fn rmdir(pathname: cstring) i32;
+
+fn rename(oldpath: cstring, newpath: cstring) i32;
 fn link(oldpath: cstring, newpath: cstring) i32;
 fn unlink(pathname: cstring) i32;
 fn symlink(target: cstring, linkpath: cstring) i32;

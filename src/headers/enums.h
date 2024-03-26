@@ -106,6 +106,7 @@ enum TYPES {
     type_bool,
     type_undefined,
     type_null,
+    type_static_array,
 };
 
 enum CLASSTYPES {

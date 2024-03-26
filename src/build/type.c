@@ -5,12 +5,14 @@ Type* type_make(Allocator* alc, int type) {
     Type* t = al(alc, sizeof(Type));
     t->type = type;
     t->size = 0;
+    t->array_size = 0;
     t->class = NULL;
     t->func_args = NULL;
     t->func_default_values = NULL;
     t->func_errors = NULL;
     t->func_rett = NULL;
     t->func_rett_types = NULL;
+    t->array_type = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
@@ -90,6 +92,26 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             is_inline = true;
             t = tok(p, true, false, true);
             tkn = p->tkn;
+        }
+
+        if (t == tok_sq_bracket_open) {
+            Type* array_type = read_type(p, alc, false);
+            tok_expect(p, ",", true, false);
+            t = tok(p, true, false, true);
+            if(t != tok_number) {
+                parse_err(p, -1, "Expected a valid number here to define the length of the static array");
+            }
+            int itemc = atoi(p->tkn);
+            if(itemc == 0) {
+                parse_err(p, -1, "Static array size must be larger than 0, size: '%s'", p->tkn);
+            }
+            tok_expect(p, "]", true, false);
+            Type *t = type_make(alc, type_static_array);
+            t->array_type = array_type;
+            t->is_pointer = !is_inline;
+            t->size = is_inline ? (array_type->size * itemc) : b->ptr_size;
+            t->array_size = itemc;
+            return t;
         }
 
         if (t == tok_id) {

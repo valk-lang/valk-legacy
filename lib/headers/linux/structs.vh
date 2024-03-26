@@ -1,11 +1,11 @@
 
-//struct libc_dirent {
-//    d_ino: uint // Inode number
-//    d_off: uint // Not an offset see below
-//    d_reclen: u16 // Length of this record
-//    d_type: u8 // Type of file not suppor
-//    d_name: .u8[256] // Null-terminated filename
-//}
+struct libc_dirent {
+    d_ino: uint // Inode number
+    d_off: uint // Not an offset see below
+    d_reclen: u16 // Length of this record
+    d_type: u8 // Type of file not suppor
+    d_name: inline [u8, 256] // Null-terminated filename
+}
 
 struct libc_stat {
     st_dev: uint
