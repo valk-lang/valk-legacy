@@ -51,7 +51,7 @@ class Poll[T] {
             let lsn = ev.data @as Listener[T]
             lsn.set_events(ev.events)
             if lsn.has_stopped_the_connection() {
-                this.listeners.remove_item(lsn)
+                this.listeners.remove_value(lsn)
             }
             events.push(lsn)
             i++
@@ -90,7 +90,7 @@ class Poll[T] {
             let lsn = @ptrv(by_index, ptr, i) @as Listener[T]
             lsn.set_events(item.revents @as u32)
             if lsn.has_stopped_the_connection() {
-                this.listeners.remove_item(lsn)
+                this.listeners.remove_value(lsn)
             }
             events.push(lsn)
             i++
