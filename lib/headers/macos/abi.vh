@@ -107,8 +107,6 @@ fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 
 //int sysinfo(struct sysinfo info);
 
-fn sync() void;
-
 fn gettid() i32;
 
 fn exit(status: i32) void;
