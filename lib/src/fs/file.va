@@ -33,30 +33,28 @@ fn size(path: String) uint {
     return buf.st_size @as uint
 }
 
-// fn read(path: String) String !open !read !close {
+// TODO: !open instead of !open_err (err identifiers need to be split)
+fn read(path: String) String !open_err !read !close {
 
-// 	let fd = open(path, true, false) ! throw open
+	let fd = open(path, false, false) ! throw open_err
 
-// 	let res = utils:ByteBuffer.new(4096)
-// 	while true {
-//         res.minimum_free_space(4096)
-// 		let readcount = sys:read(fd, res.data + res.length, 4096)
-// 		if(readcount < 0){
-// 			throw read
-// 		}
-//         res.length += readcount @as uint;
-// 		if(readcount != 4096) {
-// 			break
-// 		}
-// 	}
+	let res = utils:ByteBuffer.new(4096)
+	while true {
+        res.minimum_free_space(4096)
+		let readcount = io:read(fd, res.data + res.length, 4096) ! throw read
+        res.length += readcount
+		if(readcount != 4096) {
+			break
+		}
+	}
 
-// 	let check = sys:close(fd)
-// 	if(check != 0){
-// 		//throw close
-// 	}
+	let check = io:close(fd)
+	// if check != 0 {
+	// 	throw close
+	// }
 
-// 	return res.to_string()
-// }
+	return res.to_string()
+}
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
 fn write(path: String, content: String, append: bool (true)) !open_err {

@@ -33,18 +33,32 @@ test "fs: create / delete directories & files" {
     assert(fd > 0)
     assert(fs:exists(file))
 
+    // Files in dir
+    let files = fs:files_in(dir)
+    assert(files.length == 1)
+    let fn = files.get(0) ? ""
+    assert(fs:basename(fn) == "test.txt")
+
     // Write to FD
     if fd > 0 {
         io:write(fd, "hello") ! {
             assert(false)
         }
+        io:write(fd, "-world") ! {
+            assert(false)
+        }
+        let content = fs:read(file) ? ""
+        assert(content == "hello-world")
     }
     io:close(fd)
 
+    // Delete file
     if fs:exists(file) {
         fs:remove(file)
     }
+    assert(fs:exists(file) == false)
 
+    // Delete dir
     fs:rmdir(dir)
     assert(fs:exists(dir) == false)
 }

@@ -38,7 +38,7 @@ value O_RDONLY (0)
 value O_RDWR (2)
 value O_WRONLY (1)
 //
-value O_APPEND (1023)
+value O_APPEND (1024)
 value O_CREATE (64)
 value O_EXCL (128)
 value O_SYNC (1052672)
