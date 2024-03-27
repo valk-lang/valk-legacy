@@ -27,6 +27,6 @@ fn libc_errno() i32 {
     sys:_get_errno(@ptr_of(i))
     return i
     #else
-    return sys:errno;
+    return sys:errno
     #end
 }

@@ -1,5 +1,5 @@
 
-global errno: i32;
+shared errno: i32;
 shared stderr : ?ptr;
 shared stdin : ?ptr;
 shared stdout : ?ptr;
