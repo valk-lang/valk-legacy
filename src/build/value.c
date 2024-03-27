@@ -237,7 +237,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
         } else {
             p->chunk->i = before;
-            v_i64 iv = atol(num);
+            v_i64 iv = atoll(num);
             if (negative) {
                 iv *= -1;
             }

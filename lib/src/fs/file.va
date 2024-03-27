@@ -20,10 +20,6 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
     let fd = sys:open(path.data, flags, create_file_permissions);
     if fd < 0 {
         // let err = os:libc_errno()
-        println(os:libc_errno())
-        println(">" + path + "<")
-        println(@ptrv(path.data, u8, path.bytes))
-        println(flags)
         throw open;
     }
     return fd @as FD;
@@ -84,10 +80,7 @@ fn write(path: String, content: String, append: bool (true)) !open_err {
 
 fn exists(path: String) bool {
 	#if OS == win
-    println(path)
 	let dwAttrib = sys:GetFileAttributesA(path.data);
-    println(dwAttrib)
-    println(">>" + sys:INVALID_FILE_ATTRIBUTES)
     return dwAttrib != sys:INVALID_FILE_ATTRIBUTES
 	#else
     let fd = open(path, false, false) ! return false

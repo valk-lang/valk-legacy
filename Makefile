@@ -50,7 +50,7 @@ clean:
 test: valk
 	@./valk build tests/*.va --test --run -vv -c || exit 1
 
-win:
+win: $(OBJECTS_WIN_X64)
 	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \
 	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/ucrt/x64 \
 	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/um/x64 \

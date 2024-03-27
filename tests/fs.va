@@ -32,16 +32,13 @@ test "fs: create / delete directories & files" {
     // Open & create file
     let file = dir + "test.txt"
     let fd = fs:open_extend(file, true, true, true) ? 10000
-    println(fd)
     assert(fd != 10000)
     assert(fs:exists(file))
 
     // Files in dir
     let files = fs:files_in(dir)
-    println(files.length)
     assert(files.length == 1)
     let fn = files.get(0) ? ""
-    println(fn)
     assert(fs:basename(fn) == "test.txt")
 
     // Write to FD
@@ -62,7 +59,6 @@ test "fs: create / delete directories & files" {
     if fs:exists(file) {
         fs:remove(file)
     }
-    os:sleep_ms(100)
     assert(fs:exists(file) == false)
 
     // Delete dir
