@@ -1,5 +1,8 @@
 
 /valk
+/valk.exe
+/valk.lib
+/lld-link.exe
 /valk.json
 /debug
 /packages

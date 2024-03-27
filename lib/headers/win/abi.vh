@@ -1,5 +1,4 @@
 
-global errno: i32;
 shared stderr : ?ptr;
 shared stdin : ?ptr;
 shared stdout : ?ptr;
@@ -16,6 +15,7 @@ alias read as _read;
 alias write as _write;
 alias open as _open;
 alias close as _close;
+alias sync as _flushall;
 
 alias stat as _stat;
 alias mkdir as _mkdir;
@@ -31,7 +31,7 @@ fn malloc(size: uint) ptr;
 fn free(adr: ptr) void;
 
 fn _read(fd: i32, buf: cstring, size: uint) int;
-fn _write(fd: i32, buf: cstring, size: uint) int;
+fn _write(fd: i32, buf: cstring, size: u32) int;
 fn _open(path: cstring, flags: i32, mode: u32) i32;
 fn _close(fd: i32) i32;
 
@@ -106,6 +106,7 @@ fn link(oldpath: cstring, newpath: cstring) i32;
 fn _unlink(pathname: cstring) i32;
 fn symlink(target: cstring, linkpath: cstring) i32;
 fn GetModuleFileNameA(hmodule: ?ptr, buf: ptr, len: u32) u32;
+fn GetFileAttributesA(path: cstring) u32;
 
 fn chmod(pathname: cstring, mode: u32) i32;
 fn fchmod(fd: i32, mode: u32) i32;
@@ -121,13 +122,14 @@ fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 
 //int sysinfo(struct sysinfo info);
 
-fn sync() void;
+fn _flushall() void;
 
 fn gettid() i32;
 
 fn exit(status: i32) void;
 fn signal(signum: i32, handler: ?fn(i32)(void)) void;
 fn raise(sig: i32) i32;
+fn _get_errno(int_ref: ptr) ptr;
 
 fn CreateThread(lpThreadAttributes: ?ptr, dwStackSize: uint, lpStartAddress: ptr, lpParameter: ?ptr, dwCreationFlags: u32, lpThreadId: ?ptr) ?ptr;
 fn TerminateThread(handle: ptr, exit_code: i32) bool;

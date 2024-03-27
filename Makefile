@@ -50,6 +50,18 @@ clean:
 test: valk
 	@./valk build tests/*.va --test --run -vv -c || exit 1
 
+win:
+	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/ucrt/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/Lib/10.0.22621.0/um/x64 \
+	-L$(CURDIR)/dist/toolchains/win-sdk-x64/MSVC/14.36.32532/lib/x64 \
+	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
+	-L$(CURDIR)/dist/libraries/win-curl-x64/lib \
+	-Wl,-machine:x64 \
+	-o valk.exe \
+	$(OBJECTS_WIN_X64) \
+	$(LLVM_LIBS) -nostdlib -llibcurl -lcrypt32 -lws2_32 -lzlib
+
 ##############
 # DIST BULDS
 ##############
@@ -214,4 +226,4 @@ dist_macos_arm64: $(OBJECTS_MACOS_ARM64)
 
 ##############
 
-.PHONY: clean test dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+.PHONY: clean test win dist_setup dist_all dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64

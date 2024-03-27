@@ -3,6 +3,7 @@ header "sys" as sys
 
 use mem
 use io
+use os
 use utils
 
 fn open(path: String, writable: bool, append_on_write: bool) FD !open {
@@ -18,6 +19,11 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
 
     let fd = sys:open(path.data, flags, create_file_permissions);
     if fd < 0 {
+        // let err = os:libc_errno()
+        println(os:libc_errno())
+        println(">" + path + "<")
+        println(@ptrv(path.data, u8, path.bytes))
+        println(flags)
         throw open;
     }
     return fd @as FD;
@@ -31,6 +37,10 @@ fn size(path: String) uint {
     let buf = @stack(sys:libc_stat)
     stat(path, buf) ! return 0
     return buf.st_size @as uint
+}
+
+fn sync() {
+    sys:sync()
 }
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
@@ -73,9 +83,17 @@ fn write(path: String, content: String, append: bool (true)) !open_err {
 }
 
 fn exists(path: String) bool {
+	#if OS == win
+    println(path)
+	let dwAttrib = sys:GetFileAttributesA(path.data);
+    println(dwAttrib)
+    println(">>" + sys:INVALID_FILE_ATTRIBUTES)
+    return dwAttrib != sys:INVALID_FILE_ATTRIBUTES
+	#else
     let fd = open(path, false, false) ! return false
     io:close(fd)
     return true
+    #end
 }
 fn remove(path: String) !failed {
     let res = sys:unlink(path.data)
@@ -113,8 +131,9 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
 
     #if OS == win
 
-    let path = directory.rtrim("/") + "/*"
-    let pattern = path.data
+    let path = directory.rtrim("\\").rtrim("//") + "\\"
+    let pat = path + "*"
+    let pattern = pat.data
     let data = @stack(sys:WIN32_FIND_DATAA)
     let hFind = sys:FindFirstFileA(pattern, data)
     if hFind != -1 @as ptr {

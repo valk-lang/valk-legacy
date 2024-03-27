@@ -20,3 +20,13 @@ fn signal_ignore(sig: int) void {
 fn raise(sig: int) void {
     sys:raise(sig @as i32);
 }
+
+fn libc_errno() i32 {
+    #if OS == win
+    let i : i32 = 0
+    sys:_get_errno(@ptr_of(i))
+    return i
+    #else
+    return sys:errno;
+    #end
+}
