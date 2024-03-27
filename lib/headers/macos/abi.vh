@@ -17,6 +17,7 @@ fn __error() ptr;
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) void;
 
+fn sync() void;
 fn read(fd: i32, buf: cstring, size: uint) int;
 fn write(fd: i32, buf: cstring, size: uint) int;
 fn open(path: cstring, flags: i32, mode: u32) i32;
