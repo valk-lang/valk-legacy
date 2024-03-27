@@ -24,7 +24,11 @@ char* gen_export_name(Nsc* nsc, char* suffix) {
     char name[512];
     Pkc* pkc = nsc->pkc;
     Build* b = pkc->b;
-    sprintf(name, "%s__%s__%s_%d", pkc->name, nsc->name, suffix, nsc->unit->export_count++);
+    if(nsc == b->nsc_main) {
+        sprintf(name, "%s", suffix);
+    } else {
+        sprintf(name, "%s__%s__%s_%d", pkc->name, nsc->name, suffix, nsc->unit->export_count++);
+    }
     return dups(b->alc, name);
 }
 

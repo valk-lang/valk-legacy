@@ -43,8 +43,8 @@
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 #define str_flat(str, chars) str_add_x(str, chars, sizeof(chars) - 1)
 
-#define v_i64 long long
-#define v_u64 unsigned long long
+#define v_i64 long long int
+#define v_u64 unsigned long long int
 
 // Base
 #include "headers/enums.h"

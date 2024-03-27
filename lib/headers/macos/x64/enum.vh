@@ -21,3 +21,17 @@ value POLLOUT (4)
 value POLLERR (8)
 value POLLHUP (16)
 value POLLRDHUP (8192)
+
+value O_RDONLY (0)
+value O_RDWR (2)
+value O_WRONLY (1)
+
+value O_APPEND (8)
+value O_CREATE (512)
+value O_EXCL (2048)
+value O_SYNC (128)
+value O_TRUNC (1024)
+
+value S_IFDIR (16384)
+value S_IFREG (32768)
+value S_IFMT (61440)

@@ -1,7 +1,7 @@
 
 use mem;
 
-struct StringConst {
+- struct StringConst {
     v1: u8 (0)
     v2: u8 (0)
     v3: u8 (0)
@@ -15,14 +15,98 @@ class String {
     data: ptr
     bytes: uint
 
+    /////////////////////
+    // UTF8
+    /////////////////////
+
+    fn utf8_count() uint {
+        let count : uint = 0
+        let pos : uint = 0
+        let adr = this.data
+        let bytes = this.bytes
+        while pos < bytes {
+            let bytec : u8 = 1
+            let byte : u8 = @ptrv(adr, u8, pos)
+            if((byte & 128) > 0){
+                byte = byte << 1
+                while (byte & 128) > 0 {
+                    bytec++
+                    byte = byte << 1
+                }
+            }
+            if(bytec > 4) : bytec = 4
+            count++
+            pos += bytec
+        }
+        return count
+    }
+
+    // fn utf8_string() StringUtf8 {
+    //     return 0
+    // }
+
+    // fn utf8_clean_corrupt_characters() {
+    // }
+
+    /////////////////////
+    // Clean
+    /////////////////////
+
+    fn trim(part: String) String {
+        let res = this.ltrim(part);
+        return res.rtrim(part);
+    }
+
+    fn rtrim(part: String) String {
+
+        let part_bytes = part.bytes
+        let part_data = part.data
+
+        let data = this.data
+        let len = this.bytes
+        let data_end = data + len
+        let offset : uint = 0
+        while (offset + part_bytes <= len) && mem:equal(data_end - offset - part_bytes, part_data, part_bytes) {
+            offset += part_bytes
+        }
+        if offset == 0 : return this
+
+        return String.make_from_ptr(data, len - offset)
+    }
+
+    fn ltrim(part: String) String {
+        let part_bytes = part.bytes
+        let part_data = part.data
+
+        let data = this.data
+        let len = this.bytes
+        let offset : uint = 0
+        while (offset + part_bytes <= len) && mem:equal(data + offset, part_data, part_bytes) {
+            offset += part_bytes
+        }
+        if offset == 0 : return this
+
+        return String.make_from_ptr(data + offset, len - offset)
+    }
+
+    /////////////////////
+    // Convert
+    /////////////////////
+
     fn to_uint() uint !not_a_number {
         return 0
     }
     fn to_lower() String {
         return this
     }
-    fn _gc_free() {
-        mem:free(this.data)
+
+    /////////////////////
+    // Partials
+    /////////////////////
+    
+    fn byte(index: uint) u8 {
+        if index >= this.bytes : return 0
+        return @ptrv(this.data, u8, index)
     }
 
     fn sub_str_bytes(byte_start_index: uint, byte_length: uint) String {
@@ -43,7 +127,17 @@ class String {
         return res;
     }
 
+    /////////////////////
+    // Create
+    /////////////////////
+
+    fn clone() String {
+        return String.make_from_ptr(this.data, this.bytes)
+    }
+
+    // TODO: mark unsafe
     static fn make_empty(length: uint) String {
+        if length == 0 : return ""
         let d = mem:alloc(length + 1)
         @ptrv(d, u8, length) = 0 // trailing 0 byte
         let str = String {
@@ -53,11 +147,17 @@ class String {
         return str
     }
 
+    // TODO: mark unsafe
     static fn make_from_ptr(data: ptr, length: uint) String {
+        if length == 0 : return ""
         let s = String.make_empty(length);
         mem:copy(data, s.data, length)
         return s
     }
+
+    /////////////////////
+    // Internals
+    /////////////////////
 
     fn _add(add: String) String {
         let this_len = this.bytes
@@ -73,5 +173,9 @@ class String {
     fn _eq(cmp: String) bool {
         if this.bytes != cmp.bytes : return false 
         return mem:equal(this.data, cmp.data, this.bytes)
+    }
+
+    fn _gc_free() {
+        mem:free(this.data)
     }
 }

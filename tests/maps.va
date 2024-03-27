@@ -1,5 +1,5 @@
 
-test "Maps" {
+test "Map: initialization & get-by-key" {
     let m = Map[String]{}
     m.set("a", "1")
     m.set("b", "2")

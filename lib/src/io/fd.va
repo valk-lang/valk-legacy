@@ -3,16 +3,13 @@ header "sys" as sys;
 
 alias FD as uint;
 
-fn open(path: String, flags: i32, mode: i32) FD !open {
-    let fd = sys:open(path.data, flags, mode);
-    if fd < 0 {
-        throw open;
-    }
-    return fd @as FD;
-}
-
-fn write(fd: FD, str: String) void !failed !again {
-    let c = sys:write(fd @as i32, str.data, str.bytes);
+fn write(fd: FD, str: String) !failed !again {
+    #if OS == win
+    let bytes = str.bytes @as u32;
+    #else
+    let bytes = str.bytes;
+    #end
+    let c = sys:write(fd @as i32, str.data, bytes);
     if c == -2 {
         throw again;
     }
@@ -22,7 +19,12 @@ fn write(fd: FD, str: String) void !failed !again {
 }
 
 fn write_from_ptr(fd: FD, data: ptr, length: uint) uint !failed !again {
-    let c = sys:write(fd @as i32, data, length);
+    #if OS == win
+    let bytes = length @as u32
+    #else
+    let bytes = length
+    #end
+    let c = sys:write(fd @as i32, data, bytes);
     if c == -2 {
         throw again;
     }
@@ -43,6 +45,6 @@ fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
     return rcvd @as uint;
 }
 
-fn close(fd: FD) void {
+fn close(fd: FD) {
     let c = sys:close(fd @as i32);
 }

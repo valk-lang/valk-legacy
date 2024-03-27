@@ -166,8 +166,9 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);
 
-    if (str_is(name, "main")) {
+    if (fc->nsc == b->nsc_main && str_is(name, "main")) {
         b->func_main = func;
+        func->export_name = "VALK_MAIN";
     }
     if (p->in_header) {
         func->export_name = name;

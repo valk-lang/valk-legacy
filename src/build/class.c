@@ -404,7 +404,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Str* hash = build_get_str_buf(b);
     for (int i = 0; i < generic_types->length; i++) {
         Type* type = array_get_index(generic_types, i);
-        type_to_str_append(type, hash);
+        type_to_str_buf_append(type, hash);
         str_flat(hash, "|");
     }
     char* h = str_temp_chars(hash);

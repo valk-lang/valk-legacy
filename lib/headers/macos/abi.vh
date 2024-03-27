@@ -1,5 +1,5 @@
 
-global errno: i32;
+shared errno: i32;
 shared stderr : ?ptr;
 shared stdin : ?ptr;
 shared stdout : ?ptr;
@@ -17,9 +17,10 @@ fn __error() ptr;
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) void;
 
+fn sync() void;
 fn read(fd: i32, buf: cstring, size: uint) int;
 fn write(fd: i32, buf: cstring, size: uint) int;
-fn open(path: cstring, flags: i32, mode: i32) i32;
+fn open(path: cstring, flags: i32, mode: u32) i32;
 fn close(fd: i32) i32;
 
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
@@ -32,8 +33,8 @@ fn stat(path: cstring, stat_buf: libc_stat) i32;
 fn fstat(fd: i32, stat_buf: libc_stat) i32;
 fn lstat(path: cstring, stat_buf: libc_stat) i32;
 
-fn opendir(name: cstring) ptr;
-fn readdir(dirp: ptr) ptr;
+fn opendir(name: cstring) ?ptr;
+fn readdir(dirp: ptr) ?libc_dirent;
 fn closedir(dirp: ptr) i32;
 
 // OS
@@ -106,10 +107,10 @@ fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 
 //int sysinfo(struct sysinfo info);
 
-fn sync() void;
-
 fn gettid() i32;
 
 fn exit(status: i32) void;
 fn signal(signum: i32, handler: ?fn(i32)(void)) void;
 fn raise(sig: i32) i32;
+
+fn _NSGetExecutablePath(buf: ptr, len_u32_ptr: ptr) i32;

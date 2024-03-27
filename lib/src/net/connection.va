@@ -52,7 +52,7 @@ struct Connection {
         //         }
         //         return 0;
         //     }
-        //     bytes_sent = wbytes @as uxx;
+        //     bytes_sent = wbytes @as uint;
 
         // } else {
             // No SSL

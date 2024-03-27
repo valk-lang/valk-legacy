@@ -237,7 +237,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
         } else {
             p->chunk->i = before;
-            v_i64 iv = atol(num);
+            v_i64 iv = atoll(num);
             if (negative) {
                 iv *= -1;
             }
@@ -665,8 +665,10 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         char t;
         if(void_rett){
             t = tok(p, true, false, false);
-            if(t == tok_not || t == tok_qmark) {
+            if(t == tok_not) {
                 t = tok(p, true, false, true);
+            } else {
+                t = 0;
             }
         } else {
             t = tok_expect_two(p, "!", "?", true, false);
@@ -694,7 +696,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             if(!single)
                 p->chunk->i = scope_end_i;
 
-            if(!err_scope->did_return) {
+            if(!void_rett && !err_scope->did_return) {
                 parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
             }
 

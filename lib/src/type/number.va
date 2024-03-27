@@ -1,7 +1,8 @@
 
 header "sys" as sys
 
-use valk:mem;
+use valk:mem
+use valk:io
 
 global str_buf : ?ptr
 global str_rev : ?ptr
@@ -89,7 +90,8 @@ trait Number {
         let rev = str_rev
 
         if this == 0 || base == 0 {
-            sys:write(1 @as i32, chars, 1);
+            io:write_from_ptr(1, chars, 1) ? 0
+            return
         }
 
         let val = this
@@ -107,6 +109,6 @@ trait Number {
             @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
         }
 
-        sys:write(1, buf, len);
+        io:write_from_ptr(1, buf, len) ? 0
     }
 }

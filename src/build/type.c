@@ -5,12 +5,14 @@ Type* type_make(Allocator* alc, int type) {
     Type* t = al(alc, sizeof(Type));
     t->type = type;
     t->size = 0;
+    t->array_size = 0;
     t->class = NULL;
     t->func_args = NULL;
     t->func_default_values = NULL;
     t->func_errors = NULL;
     t->func_rett = NULL;
     t->func_rett_types = NULL;
+    t->array_type = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
@@ -90,6 +92,26 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             is_inline = true;
             t = tok(p, true, false, true);
             tkn = p->tkn;
+        }
+
+        if (t == tok_sq_bracket_open) {
+            Type* array_type = read_type(p, alc, false);
+            tok_expect(p, ",", true, false);
+            t = tok(p, true, false, true);
+            if(t != tok_number) {
+                parse_err(p, -1, "Expected a valid number here to define the length of the static array");
+            }
+            int itemc = atoi(p->tkn);
+            if(itemc == 0) {
+                parse_err(p, -1, "Static array size must be larger than 0, size: '%s'", p->tkn);
+            }
+            tok_expect(p, "]", true, false);
+            Type *t = type_make(alc, type_static_array);
+            t->array_type = array_type;
+            t->is_pointer = !is_inline;
+            t->size = is_inline ? (array_type->size * itemc) : b->ptr_size;
+            t->array_size = itemc;
+            return t;
         }
 
         if (t == tok_id) {
@@ -328,51 +350,58 @@ bool type_is_void(Type* type) { return type->type == type_void; }
 bool type_is_bool(Type* type) { return type->type == type_bool; }
 bool type_is_gc(Type* type) { return type->is_pointer && type->type == type_struct && type->class->type == ct_class; }
 
+void type_to_str_append(Type* t, char* res, bool use_export_name) {
+    if (t->type == type_void) {
+        strcat(res, "void");
+        return;
+    } else if (t->type == type_null) {
+        strcat(res, "null");
+        return;
+    }
+    if (t->nullable) {
+        strcat(res, use_export_name ? "NULL_" : "?");
+    }
+    if (t->type == type_func) {
+        strcat(res, "fn(");
+        Array * types = t->func_args;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, ")(");
+        types = t->func_rett_types;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, ")");
+    } else if (t->class) {
+        Class *class = t->class;
+        strcat(res, use_export_name ? class->ir_name : class->name);
+    }
+}
 char* type_to_str(Type* t, char* res) {
-
     strcpy(res, "");
-    if (t->nullable) {
-        strcat(res, "?");
-    }
-    if (t->type == type_void) {
-        strcpy(res, "void");
-    } else if (t->type == type_null) {
-        strcpy(res, "null");
-    } else if (t->class) {
-        Class *class = t->class;
-        strcat(res, class->name);
-    }
+    type_to_str_append(t, res, false);
     return res;
 }
-
 char* type_to_str_export(Type* t, char* res) {
-
     strcpy(res, "");
-    if (t->nullable) {
-        strcat(res, "NULL_");
-    }
-    if (t->type == type_void) {
-        strcpy(res, "void");
-    } else if (t->type == type_null) {
-        strcpy(res, "null");
-    } else if (t->class) {
-        Class *class = t->class;
-        strcat(res, class->ir_name);
-    }
+    type_to_str_append(t, res, true);
     return res;
 }
 
-void type_to_str_append(Type* t, Str* buf) {
-    if (t->nullable) {
-        str_flat(buf, "?");
-    }
-    if (t->type == type_void) {
-        str_flat(buf, "void");
-    } else if (t->type == type_null) {
-        str_flat(buf, "null");
-    } else if (t->class) {
-        str_add(buf, t->class->ir_name);
-    }
+void type_to_str_buf_append(Type* t, Str* buf) {
+    char* tmp = ((char*)(buf->data)) + buf->length;
+    tmp[0] = 0;
+    type_to_str_append(t, tmp, true);
+    buf->length += strlen(tmp);
 }
 
 int type_get_size(Build* b, Type* type) {
