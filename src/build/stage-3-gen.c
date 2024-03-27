@@ -47,6 +47,13 @@ void stage_generate_main(Build *b) {
     str_flat(code, "i++\n");
     str_flat(code, "}\n");
 
+    Nsc* nsc_fs = map_get(b->pkc_valk->namespaces, "fs");
+    if(b->target_os == os_macos && nsc_fs) {
+        Idf *idf = idf_make(b->alc, idf_scope, nsc_fs->scope);
+        scope_set_idf(func->scope, "FS_NSC", idf, NULL);
+        str_flat(code, "FS_NSC:FIRST_ARG = arr.get(0) ? null @as String\n");
+    }
+
     if (b->is_test) {
         int count = 0;
         char* buf = b->char_buf;

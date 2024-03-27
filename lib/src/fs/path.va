@@ -3,6 +3,9 @@ header "sys" as sys
 
 use mem
 
+#if OS == macos
+- global FIRST_ARG : ?String
+#end
 - global EXE_PATH : ?String
 - global EXE_DIR : ?String
 
@@ -65,10 +68,22 @@ fn exe_path() String {
     let data = str.data
 
     #if OS == win
-       let len = sys:GetModuleFileNameA(null, data, PATH_MAX)
+    let len = sys:GetModuleFileNameA(null, data, PATH_MAX)
+    str.bytes = len
+       
+    #elif OS == macos
+    EXE_PATH = FIRST_ARG
+    return FIRST_ARG @as String
+    //let len : u32 = 0
+    //if sys:_NSGetExecutablePath(data, @ptr_of(len)) < 0 {
+    //    return "fail"
+    //}
+    //str.bytes = len
+
     #else
     let link = "/proc/self/exe".data @as cstring
-       let len = sys:readlink(link, data, PATH_MAX)
+    let len = sys:readlink(link, data, PATH_MAX)
+    str.bytes = len
     #end
 
     EXE_PATH = str

@@ -150,7 +150,7 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
             let ent = sys:readdir(d)
             if isset(ent) {
                 let fn = (@ptr_of(ent.d_name) @as cstring).to_string()
-                if fn.bytes < 3 && (fn == "." || fn == "..") {
+                if fn.bytes < 3 && (fn == "." || fn == ".." || fn == "") {
                     continue
                 }
                 let fpath = dir + fn
