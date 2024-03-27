@@ -20,3 +20,17 @@ value POLLHUP (2)
 
 value WSAENOBUFS (10055)
 value FIONBIO (2148034174)
+
+value O_RDONLY (0)
+value O_RDWR (2)
+value O_WRONLY (1)
+
+value O_APPEND (1024)
+value O_CREATE (64)
+value O_EXCL (128)
+value O_SYNC (4096)
+value O_TRUNC (512)
+
+value S_IFDIR (16384)
+value S_IFREG (32768)
+value S_IFMT (126976)

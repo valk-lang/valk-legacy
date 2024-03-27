@@ -19,7 +19,7 @@ fn free(adr: ptr) void;
 
 fn read(fd: i32, buf: cstring, size: uint) int;
 fn write(fd: i32, buf: cstring, size: uint) int;
-fn open(path: cstring, flags: i32, mode: i32) i32;
+fn open(path: cstring, flags: i32, mode: u32) i32;
 fn close(fd: i32) i32;
 
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
@@ -32,8 +32,8 @@ fn stat(path: cstring, stat_buf: libc_stat) i32;
 fn fstat(fd: i32, stat_buf: libc_stat) i32;
 fn lstat(path: cstring, stat_buf: libc_stat) i32;
 
-fn opendir(name: cstring) ptr;
-fn readdir(dirp: ptr) ptr;
+fn opendir(name: cstring) ?ptr;
+fn readdir(dirp: ptr) ?libc_dirent;
 fn closedir(dirp: ptr) i32;
 
 // OS

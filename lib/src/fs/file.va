@@ -120,14 +120,15 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
     if hFind != -1 @as ptr {
         let loop = true
         while loop {
-            let fn = (@ptr_of(data.cFileName) @as c_string).to_str()
+            let fn = (@ptr_of(data.cFileName) @as cstring).to_string()
 
             if fn.bytes < 3 && (fn == "." || fn == "..") {
                 loop = sys:FindNextFileA(hFind, data)
                 continue
             }
 
-            let is_dir = (data.dwFileAttributes & 0x10) > 0
+            // TODO: use 0x10, instead of 16
+            let is_dir = (data.dwFileAttributes & 16) > 0
             let is_file = !is_dir
 
             if (dirs && is_dir) || (files && is_file) {
@@ -148,7 +149,7 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
         while true {
             let ent = sys:readdir(d)
             if isset(ent) {
-                let fn = (@ptr_of(ent.d_name) @as cstring).to_str()
+                let fn = (@ptr_of(ent.d_name) @as cstring).to_string()
                 if fn.bytes < 3 && (fn == "." || fn == "..") {
                     continue
                 }

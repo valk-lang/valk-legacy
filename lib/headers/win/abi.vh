@@ -19,6 +19,7 @@ alias close as _close;
 
 alias stat as _stat;
 alias mkdir as _mkdir;
+alias rmdir as _rmdir;
 alias unlink as _unlink;
 
 alias popen as _popen;
@@ -31,7 +32,7 @@ fn free(adr: ptr) void;
 
 fn _read(fd: i32, buf: cstring, size: uint) int;
 fn _write(fd: i32, buf: cstring, size: uint) int;
-fn _open(path: cstring, flags: i32, mode: i32) i32;
+fn _open(path: cstring, flags: i32, mode: u32) i32;
 fn _close(fd: i32) i32;
 
 fn recv(fd: uint, buf: ptr, len: i32, flags: i32) i32;
@@ -100,7 +101,7 @@ fn getcwd(buf: cstring, size: uint) cstring;
 
 fn rename(oldpath: cstring, newpath: cstring) i32;
 fn _mkdir(pathname: cstring, mode: u32) i32;
-fn rmdir(pathname: cstring) i32;
+fn _rmdir(pathname: cstring) i32;
 fn link(oldpath: cstring, newpath: cstring) i32;
 fn _unlink(pathname: cstring) i32;
 fn symlink(target: cstring, linkpath: cstring) i32;

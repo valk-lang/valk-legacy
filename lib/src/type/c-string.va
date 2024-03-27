@@ -8,7 +8,7 @@ pointer cstring {
         }
         return i;
     }
-    fn to_str() String {
+    fn to_string() String {
         return String.make_from_ptr(this, this.length())
     }
     fn _string() String {
