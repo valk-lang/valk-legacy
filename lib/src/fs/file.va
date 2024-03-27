@@ -23,7 +23,7 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
     return fd @as FD;
 }
 
-fn stat(path: String, buf: sys:libc_stat) void !failed {
+fn stat(path: String, buf: sys:libc_stat) !failed {
     let res = sys:stat(path.data, buf)
     if res == -1 : throw failed
 }
@@ -59,7 +59,7 @@ fn size(path: String) uint {
 // }
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
-fn write(path: String, content: String, append: bool (true)) void !open_err {
+fn write(path: String, content: String, append: bool (true)) !open_err {
 
     let flags = sys:O_TRUNC
     if append : flags = sys:O_APPEND
@@ -79,17 +79,22 @@ fn exists(path: String) bool {
     io:close(fd)
     return true
 }
-fn delete(path: String) void !failed {
+fn remove(path: String) !failed {
     let res = sys:unlink(path.data)
     if res == -1 {
         throw failed
     }
 }
-fn mkdir(path: String) void !failed {
 
-    // TODO: use octal numbers
-    let res = sys:mkdir(path.data, 493) // 0755
-    if res == -1 {
+// TODO: use octal numbers
+// 493 = 0755
+fn mkdir(path: String, permissions: u32 (493)) !failed {
+    if sys:mkdir(path.data, permissions) == -1 {
+        throw failed
+    }
+}
+fn rmdir(path: String) !failed {
+    if sys:rmdir(path.data) == -1 {
         throw failed
     }
 }

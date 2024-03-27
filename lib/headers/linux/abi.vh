@@ -1,4 +1,10 @@
 
+global errno: i32;
+shared stderr : ?FILE;
+shared stdin : ?FILE;
+shared stdout : ?FILE;
+
+alias FILE as ptr;
 alias DIR as ptr
 
 fn malloc(size: uint) ptr;

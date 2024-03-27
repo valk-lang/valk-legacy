@@ -9,6 +9,8 @@ fn write(fd: FD, str: String) !failed !again {
         throw again;
     }
     if c < 0 {
+        println(c)
+        println(sys:errno)
         throw failed;
     }
 }

@@ -135,6 +135,9 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         Scope* err_scope = fcall->err_scope;
         ir->block = block_err;
         ir_write_ast(ir, err_scope);
+        if(!err_scope->did_return) {
+            ir_jump(ir, after);
+        }
         ir->block = after;
 
         return res;
