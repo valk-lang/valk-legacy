@@ -58,7 +58,7 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
     Value *val = read_value(alc, p2, true, 0);
 
     if (check_type) {
-        val = try_convert(alc, p->b, p->scope, val, check_type);
+        val = try_convert(alc, p, p->scope, val, check_type);
         type_check(p, check_type, val->rett);
     }
 
