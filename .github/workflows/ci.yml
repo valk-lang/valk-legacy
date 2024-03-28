@@ -23,6 +23,9 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - name: Install LLVM/Clang 15
       run: sudo apt-get update && sudo apt-get install llvm-15 clang-15
 
@@ -55,6 +58,9 @@ jobs:
       fail-fast: false
     runs-on: macos-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - run: brew install llvm@15 && brew link llvm@15
     
     - name: Build valk
@@ -91,6 +97,7 @@ jobs:
           mingw-w64-x86_64-llvm-15
           mingw-w64-x86_64-clang-15
           mingw-w64-x86_64-lld
+    - uses: actions/checkout@v3
 
     - name: Build valk
       run: make
