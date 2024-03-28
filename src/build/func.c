@@ -159,6 +159,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
 
         ir->block = block_err;
         char* alt_val = ir_value(ir, scope, val);
+        IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);
 
         ir->block = block_else;
@@ -178,7 +179,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         str_flat(code, " ], [ ");
         str_add(code, alt_val);
         str_flat(code, ", %");
-        str_add(code, block_err->name);
+        str_add(code, block_err_val->name);
         str_flat(code, " ]\n");
 
         return var;
