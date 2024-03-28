@@ -516,6 +516,9 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_global) {
         Global* g = idf->item;
+        if(g->type->class && p->func) {
+            array_push(p->func->used_classes, g->type->class);
+        }
         value_check_act(g->act, g->fc, p, "global");
         return value_make(alc, v_global, g, g->type);
     }

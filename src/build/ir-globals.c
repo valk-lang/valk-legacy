@@ -7,9 +7,7 @@ void ir_gen_globals(IR* ir) {
     Build *b = ir->b;
     Str *code = ir->code_global;
 
-    bool is_main_fc = u->is_main;
-
-    if (is_main_fc) {
+    if (u->is_main) {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
         str_flat(code, "@valk_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");

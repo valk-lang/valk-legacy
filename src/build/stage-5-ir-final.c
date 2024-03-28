@@ -129,7 +129,7 @@ void stage_5_vtable_ir(Str* code, Build* b) {
         Func *share = map_get(class->funcs, "_v_share");
         Func *gc_free = map_get(class->funcs, "_gc_free");
 
-        str_preserve(code, 500);
+        str_preserve(code, 1000);
         str_flat(code, ",\n");
         str_flat(code, "ptr ");
         str_add(code, ir_vtable_func_name(transfer, gc_vt_name_buf));
