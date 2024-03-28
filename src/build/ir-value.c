@@ -121,15 +121,37 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         // v1
         ir->block = block_v1;
         char* v1 = ir_value(ir, scope, item->v1);
+        block_v1 = ir->block;
         ir_jump(ir, block_after);
         // v2
         ir->block = block_v2;
         char* v2 = ir_value(ir, scope, item->v2);
+        block_v2 = ir->block;
         ir_jump(ir, block_after);
         // After
         ir->block = block_after;
         char* type = ir_type(ir, v->rett);
         return ir_this_or_that(ir, v1, block_v1, v2, block_v2, type);
+    }
+    if (vt == v_null_alt_value) {
+        VPair* item = v->item;
+        char* left = ir_value(ir, scope, item->left);
+        char* cmp = ir_compare(ir, op_eq, left, "null", "ptr", false, false);
+        IRBlock *current = ir->block;
+        IRBlock *block_alt = ir_block_make(ir, ir->func, "null_alt_");
+        IRBlock *block_after = ir_block_make(ir, ir->func, "null_after_");
+        ir_cond_jump(ir, cmp, block_alt, block_after);
+
+        ir->block = block_alt;
+        char* alt = ir_value(ir, scope, item->right);
+        block_alt = ir->block;
+        ir_jump(ir, block_after);
+
+        ir->block = block_after;
+        char* type = ir_type(ir, v->rett);
+        return ir_this_or_that(ir, left, current, alt, block_alt, type);
+
+        Value* right = item->right;
     }
     if (vt == v_ir_cached) {
         VIRCached* item = v->item;

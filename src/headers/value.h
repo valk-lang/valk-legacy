@@ -42,6 +42,7 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett);
 Value *vgen_decl(Allocator *alc, Decl* decl);
 Value *vgen_string(Allocator *alc, Unit *u, char *body);
+Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
 
 struct Value {
     int type;

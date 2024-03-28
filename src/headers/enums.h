@@ -53,9 +53,10 @@ enum LEX_TOKENS {
     tok_bit_or,
     tok_bit_and,
     tok_bit_xor,
-    // ! ? : ; @ . ~ , #
+    // ! ? ?? : ; @ . ~ , # --- =>
     tok_not,
     tok_qmark,
+    tok_qqmark,
     tok_colon,
     tok_semi,
     tok_at,
@@ -149,6 +150,7 @@ enum VALUES {
     v_not,
     v_this_or_that,
     v_vscope,
+    v_null_alt_value, // 30
 };
 
 enum TOKENS {

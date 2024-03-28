@@ -337,6 +337,10 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             }
         } else if (ch == '?') {
             op = tok_qmark;
+            if(next == '?') {
+                op = tok_qqmark;
+                i++;
+            }
         } else if (ch == '^') {
             op = tok_bit_xor;
         } else if (ch == ':') {

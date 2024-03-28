@@ -299,3 +299,10 @@ Value *vgen_string(Allocator *alc, Unit *u, char *body) {
 
     return value_make(alc, v_string, str, type_gen_valk(alc, b, "String"));
 }
+
+Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right) {
+    VPair* item = al(alc, sizeof(VPair));
+    item->left = left;
+    item->right = right;
+    return value_make(alc, v_null_alt_value, item, right->rett);
+}

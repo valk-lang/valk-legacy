@@ -498,6 +498,22 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         }
     }
 
+
+    if (prio == 0 || prio > 60) {
+        while (t == tok_qqmark) {
+            tok(p, true, true, true);
+            if(!v->rett->nullable) {
+                parse_err(p, -1, "Left side value of '\?\?' can never be 'null'");
+            }
+            Value *right = read_value(alc, p, true, 60);
+            type_check(p, v->rett, right->rett);
+
+            v = vgen_null_alt_value(alc, v, right);
+
+            t = tok(p, true, true, false);
+        }
+    }
+
     return v;
 }
 
