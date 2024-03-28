@@ -6,8 +6,8 @@ use net
 use io
 use fs
 
-fn test(req: Request, res: Response) {
-    res.html("Hello world!")
+fn test(req: Request) Response {
+    return Response.html("Hello world!")
 }
 
 class Server {
@@ -15,11 +15,11 @@ class Server {
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
-    - handler: fn(Request, Response)() (test)
+    - handler: fn(Request)(Response) (test)
     // - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
 
-    static fn new(host: String, port: u16, handler: fn(Request, Response)()) Server !socket_init_error !socket_bind_error {
+    static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
 
         let max_connections : uint = 10000
         let socket = net:Socket.new_tcp(host, port, false) ! { throw socket_init_error }
@@ -174,9 +174,7 @@ class Server {
         }
     }
 
-    - static fn respond(server: Server, http_con: Connection, handler: fn(Request, Response)()) void !read_error !sent_error {
-
-        let resp = http_con.response
+    - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
         while true {
 
@@ -196,9 +194,7 @@ class Server {
                     }
                 }
                 Parser.parse_request(read_buf, res) ! {
-                    resp.reset()
-                    resp.error(400)
-                    http_con.respond(resp)
+                    http_con.respond(Response.error(400))
                     http_con.send_response_bytes()
                     throw read_error //, "Invalid request"
                 }
@@ -235,8 +231,7 @@ class Server {
                 body: res.body,
                 path: res.path,
             }
-            resp.reset()
-            handler(req, resp)
+            let resp = handler(req)
             http_con.respond(resp)
         }
 
