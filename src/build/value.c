@@ -291,10 +291,10 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             } else {
                 // Check functions
                 Func* func = map_get(class->funcs, prop_name);
-                func_mark_used(p->func, func);
                 if (!func) {
                     parse_err(p, -1, "Class '%s' has no property/function named: '%s'", class->name, prop_name);
                 }
+                func_mark_used(p->func, func);
                 value_check_act(func->act, class->fc, p, "function");
                 if(func->is_static) {
                     parse_err(p, -1, "Accessing a static class in a non-static way: '%s.%s'\n", class->name, prop_name);
@@ -985,6 +985,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
     if (op == op_eq && !lt->nullable) {
         Func *eq = lt->class ? map_get(lt->class->funcs, "_eq") : NULL;
         if (eq && eq->is_static == false && eq->arg_types->length == 2) {
+            func_mark_used(p->func, eq);
             Type *arg_type = array_get_index(eq->arg_types, 1);
             Array *args = array_make(alc, 2);
             array_push(args, left);
