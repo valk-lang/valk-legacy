@@ -200,6 +200,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Value* result = value_handle_idf(alc, p, idf);
             // 
             Func* test_assert = get_valk_func(b, "core", "test_assert");
+            func_mark_used(p->func, test_assert);
             Array* args = array_make(alc, 2);
             array_push(args, val);
             array_push(args, result);
