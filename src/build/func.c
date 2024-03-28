@@ -19,6 +19,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
     f->rett_types = array_make(alc, 1);
+    f->used_functions = array_make(alc, 4);
 
     f->class = NULL;
     f->cached_values = NULL;
@@ -32,6 +33,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->has_rett = false;
     f->multi_rett = false;
     f->is_test = false;
+    f->is_used = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

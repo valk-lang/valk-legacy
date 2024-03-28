@@ -36,6 +36,7 @@ struct Func {
     Class* class;
     Array* cached_values;
     Map* errors;
+    Array* used_functions;
     //
     int act;
     //
@@ -47,6 +48,7 @@ struct Func {
     bool has_rett;
     bool multi_rett;
     bool is_test;
+    bool is_used;
 };
 struct FuncArg {
     Type* type;
