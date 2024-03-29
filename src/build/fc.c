@@ -16,6 +16,7 @@ Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header) {
     fc->header_pkc = NULL;
     fc->scope = scope_make(alc, sc_default, nsc->scope);
     fc->is_header = is_header;
+    fc->ignore_access_types = false;
 
     // Load content
     if (!file_exists(path)) {

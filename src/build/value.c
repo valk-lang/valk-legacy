@@ -1222,6 +1222,8 @@ void value_check_act(int act, Fc* fc, Parser* p, char* name) {
     }
     if(!cfc)
         return;
+    if(cfc->ignore_access_types)
+        return;
     if(act == act_private_fc) {
         if(fc != cfc) {
             parse_err(p, -1, "You cannot access this %s from this file", name);

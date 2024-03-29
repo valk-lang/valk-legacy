@@ -129,6 +129,7 @@ struct Fc {
     Chunk *content;
     //
     bool is_header;
+    bool ignore_access_types;
 };
 struct Nsc {
     Pkc *pkc;

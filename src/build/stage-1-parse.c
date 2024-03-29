@@ -148,6 +148,12 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 continue;
             }
         }
+        if (t == tok_at_word) {
+            if (str_is(tkn, "@ignore_access_types")) {
+                fc->ignore_access_types = true;
+                continue;
+            }
+        }
 
         parse_err(p, -1, "Unexpected token: '%s'", tkn);
     }
