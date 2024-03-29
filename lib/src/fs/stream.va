@@ -1,0 +1,48 @@
+
+use mem
+use io
+
+fn stream(path: String, read: bool, write: bool) FileStream !err_open {
+    let fd = open(path, read, write) ! throw err_open
+    return FileStream{ path: path, fd: fd, can_read: read, can_write: write }
+}
+
+class FileStream {
+    ~path: String
+    -fd: FD 
+    -can_read: bool
+    -can_write: bool
+    ~reading: bool (true)
+
+    fn read(bytes: uint (10240)) String !read_err {
+        if(this.can_read == false){
+            return ""
+        }
+        if(this.reading == false) {
+            return ""
+        }
+
+        let buf = @stack_bytes(bytes)
+        let rcount = io:read(this.fd, buf, bytes) ! throw read_err
+
+        let str = String.make_empty(rcount)
+        mem:copy(buf, str.data, rcount)
+
+        if(rcount < bytes) {
+            this.close()
+            this.reading = false
+        }
+
+        return str
+    }
+
+    fn close() {
+        if this.reading {
+            let check = io:close(this.fd)
+        }
+    }
+
+    fn _gc_free() {
+        this.close()
+    }
+}

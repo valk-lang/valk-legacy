@@ -8,6 +8,9 @@ char* ir_vtable_func_name(Func* func, char* buf);
 
 void stage_5_ir_final(Build* b) {
 
+    if(b->verbose > 2)
+        printf("> Stage 5 | Generate final IR\n");
+
     // Mark main func as used (recursive)
     if(b->func_main)
         stage_5_mark_used_rec(b->func_main);

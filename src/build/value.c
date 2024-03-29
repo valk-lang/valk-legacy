@@ -72,7 +72,17 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type* type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = value_make(alc, v_stack, NULL, type);
+            int size = (type->class ? type->class->size : type->size);
+            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), type);
+
+        } else if (str_is(tkn, "@stack_bytes")) {
+            tok_expect(p, "(", false, false);
+            Value* val = read_value(alc, p , true, 0);
+            if(val->rett->type != type_int) {
+                parse_err(p, -1, "The first argument for @stack_bytes must be a valid integer value");
+            }
+            tok_expect(p, ")", true, true);
+            v = value_make(alc, v_stack, val, type_gen_valk(alc, b, "ptr"));
 
         } else if (str_is(tkn, "@gc_link")){
             tok_expect(p, "(", false, false);

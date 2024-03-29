@@ -16,7 +16,7 @@ class Server {
     - socket: net:SocketTCP
     - max_connections: uint
     - handler: fn(Request)(Response) (test)
-    // - static_dirs: Array[String] (Array[String].new())
+    - static_dirs: Array[String] (Array[String].new())
     show_info: bool (false)
 
     static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
@@ -212,17 +212,17 @@ class Server {
 
             http_con.reset_parser()
 
-            // if data.static_dirs.length > 0 {
-            //     let path = res.path.trim("/")
-            //     each data.static_dirs as dir {
-            //         let fullpath = dir + path 
-            //         if fs:is_file(fullpath) {
-            //             let stream = fs:open(fullpath, true, false) !! continue
-            //             http_con.send_file(stream, null)
-            //             return
-            //         }
-            //     }
-            // }
+            if server.static_dirs.length > 0 {
+                let path = res.path.trim("/")
+                each server.static_dirs as dir {
+                    let fullpath = dir + path 
+                    if fs:is_file(fullpath) {
+                        let stream = fs:stream(fullpath, true, false) ! continue
+                        http_con.send_file(stream, null)
+                        return
+                    }
+                }
+            }
 
             let req = Request{
                 http_con: http_con,
@@ -239,15 +239,15 @@ class Server {
     }
 
     fn add_static_dir(path: String, relative_to_exe: bool (false)) void {
-        // let full = path
-        // if relative_to_exe {
-        //     full = fs:exe_dir() + "/" + path.trim("/")
-        // }
-        // full = full.rtrim("/") + "/"
-        // if this.show_info {
-        //     // println("[+] Add static dir: " + full)
-        // }
-        // this.static_dirs.push(full)
+        let full = path
+        if relative_to_exe {
+            full = fs:exe_dir() + "/" + path.trim("/")
+        }
+        full = full.rtrim("/") + "/"
+        if this.show_info {
+            println("[+] Add static dir: " + full)
+        }
+        this.static_dirs.push(full)
     }
 }
 

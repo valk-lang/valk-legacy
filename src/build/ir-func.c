@@ -109,6 +109,8 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     Array *args = vfunc->args->values;
     int argc = args->length;
 
+    str_preserve(code, 1000);
+
     if (is_extern) {
         str_flat(code, "declare ");
     } else {
@@ -122,6 +124,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     // Args
     for (int i = 0; i < argc; i++) {
         FuncArg *arg = array_get_index(args, i);
+        str_preserve(code, 1000);
         if (i > 0)
             str_flat(code, ", ");
         str_add(code, ir_type(ir, arg->type));
@@ -140,6 +143,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     // Return value references
     Array *retts = vfunc->rett_types;
     for (int i = 1; i < retts->length; i++) {
+        str_preserve(code, 1000);
         if (i > 1 || argc > 0)
             str_flat(code, ", ");
         str_flat(code, "ptr noundef");
@@ -192,14 +196,16 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type) {
     return var;
 }
 
-char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size) {
+char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size) {
     IRBlock *block = func->block_start;
     Str *code = block->code;
 
     char *var = ir_var(func);
     str_flat(code, "  ");
     str_add(code, var);
-    str_flat(code, " = alloca i8, i32 ");
+    str_flat(code, " = alloca i8, ");
+    str_add(code, type);
+    str_flat(code, " ");
     str_add(code, size);
     str_flat(code, ", align 8\n");
 

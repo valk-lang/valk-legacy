@@ -82,10 +82,10 @@ class Router[T] {
 			if part.bytes == 0 {
 				continue
 			}
-			parts.push(part + "")
+			parts.push(part)
 		}
 
-		parts.prepend(method + "")
+		parts.prepend(method)
 		let arg_c = parts.length
 
 		let r = Router[T].find_route(this.block, 0, arg_c @as u8, parts)

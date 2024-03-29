@@ -22,6 +22,7 @@ void ir_gen_final(IR* ir) {
         // Blocks
         if(func->block_code->code->length > 0) {
             for (int o = 0; o < func->blocks->length; o++) {
+                str_preserve(code, 1000);
                 IRBlock *block = array_get_index(func->blocks, o);
                 str_preserve(code, block->code->length + 100);
                 str_add(code, block->name);

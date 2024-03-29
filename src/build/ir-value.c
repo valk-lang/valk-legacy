@@ -54,9 +54,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return ir_assign_value(ir, scope, v->item);
     }
     if (vt == v_stack) {
-        Type* type = v->rett;
-        Class* class = type->class;
-        return ir_alloca_by_size(ir, ir->func, ir_int(ir, class->size));
+        Value* val = v->item;
+        char* size = ir_value(ir, scope, val);
+        char* type = ir_type(ir, val->rett);
+        return ir_alloca_by_size(ir, ir->func, type, size);
     }
     if (vt == v_gc_get_table) {
         Value* index = v->item;

@@ -19,7 +19,7 @@ char *ir_type_align(IR *ir, Type *type, char* result);
 void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs);
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
-char *ir_alloca_by_size(IR *ir, IRFunc* func, char* size);
+char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size);
 void ir_func_return_nothing(IR* ir);
 void ir_func_return(IR* ir, char* type, char* value);
 char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall);
