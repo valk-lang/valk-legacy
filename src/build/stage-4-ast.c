@@ -399,6 +399,16 @@ void read_ast(Parser *p, bool single_line) {
                 continue;
             }
         }
+        if (t == tok_curly_open) {
+            Scope* sub = scope_sub_make(alc, sc_default, scope);
+            p->scope = sub;
+            read_ast(p, false);
+            p->scope = scope;
+            if(sub->did_return)
+                scope->did_return = true;
+            array_push(scope->ast, token_make(alc, t_ast_scope, sub));
+            continue;
+        }
 
         p->chunk->i = before_i;
 

@@ -189,18 +189,18 @@ struct Stack {
         let transfer = this.transfer
 
         // Globals
-        let g = null @as ptr
-        let item = null @as ptr
         #loop_globals as G, T
         #if @type_is_gc(T) && !@global_is_shared(G)
-        g = G @as ptr
-        if g != null {
-            let state = @ptrv(g, u8, -8)
-            if state <= state_used {
-                // Transfer new items
-                transfer.add_item(g)
-                @ptrv(g, u8, -8) = state_transfer @as u8
-            } 
+        {
+            let g = G @as ptr
+            if g != null {
+                let state = @ptrv(g, u8, -8)
+                if state <= state_used {
+                    // Transfer new items
+                    transfer.add_item(g)
+                    @ptrv(g, u8, -8) = state_transfer @as u8
+                } 
+            }
         }
         #end
         #endloop
