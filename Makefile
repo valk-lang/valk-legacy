@@ -42,7 +42,7 @@ valk: $(OBJECTS)
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< -DVALK_VERSION=\"$(VERSION)\"
 
 clean:
 	rm -f valk $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
@@ -90,6 +90,7 @@ $(OBJECTS_WIN_X64): debug/build-win-x64/%.o: %.c
 	-I$(CURDIR)/dist/toolchains/win-sdk-x64/MSVC/14.36.32532/include \
 	-I$(CURDIR)/dist/libraries/win-llvm-15-x64/include \
 	-I$(CURDIR)/dist/libraries/win-curl-x64/include \
+	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
 dist_win_x64: $(OBJECTS_WIN_X64)
@@ -123,6 +124,7 @@ $(OBJECTS_LINUX_X64): debug/build-linux-x64/%.o: %.c
 	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
 	-I$(CURDIR)/dist/libraries/linux-llvm-15-x64/include \
 	-I$(CURDIR)/dist/libraries/linux-curl-x64/include \
+	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
 dist_linux_x64: $(OBJECTS_LINUX_X64)
@@ -149,6 +151,7 @@ $(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
 	$(CC) -g -O2 --target=aarch64-unknown-linux-gnu \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
 	-I$(CURDIR)/dist/libraries/linux-llvm-15-arm64/include \
+	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
 dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
@@ -176,6 +179,7 @@ $(OBJECTS_MACOS_X64): debug/build-macos-x64/%.o: %.c
 	$(CC) -g -O2 --target=x86_64-apple-darwin-macho \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-I$(CURDIR)/dist/libraries/macos-llvm-15-x64/include \
+	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
 dist_macos_x64: $(OBJECTS_MACOS_X64)
@@ -203,6 +207,7 @@ $(OBJECTS_MACOS_ARM64): debug/build-macos-arm64/%.o: %.c
 	$(CC) -g -O2 --target=arm64-apple-darwin-macho \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-I$(CURDIR)/dist/libraries/macos-llvm-15-arm64/include \
+	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
 dist_macos_arm64: $(OBJECTS_MACOS_ARM64)

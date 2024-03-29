@@ -39,6 +39,10 @@
 #define PATH_SLASH_CHAR '/'
 #define PATH_SLASH "/"
 
+#ifndef VALK_VERSION
+#define VALK_VERSION "no_version"
+#endif
+
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 #define str_flat(str, chars) str_add_x(str, chars, sizeof(chars) - 1)

@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 void help() {
     //
     printf("-------------------------\n");
-    printf(" ⚡ Valk v0.0.1\n");
+    printf(" 🦅 Valk v%s\n", VALK_VERSION);
     printf("-------------------------\n\n");
 
     printf(" valk build -h       Build valk code to an executable\n");
