@@ -14,11 +14,13 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->scope = NULL;
     p->loop_scope = NULL;
     p->vscope_values = NULL;
+    p->cc_loops = array_make(alc, 10);
 
     p->line = 0;
     p->col = 0;
     p->scope_end_i = 0;
     p->cc_index = 0;
+    p->cc_loop_index = 0;
 
     p->in_header = false;
     p->on_newline = false;

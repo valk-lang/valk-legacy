@@ -21,6 +21,7 @@ struct Parser {
     Scope* scope;
     Scope* loop_scope;
     Array* vscope_values;
+    Array* cc_loops;
     //
     char cc_results[100];
     //
@@ -30,6 +31,7 @@ struct Parser {
     int col;
     int scope_end_i;
     int cc_index;
+    int cc_loop_index;
     //
     bool in_header;
     bool on_newline;

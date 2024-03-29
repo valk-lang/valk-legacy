@@ -160,8 +160,8 @@ void stage_generate_mark_functions(Build* b) {
             if(!type_is_gc(g->type))
                 continue;
             //
-            char buf[512];
-            char nr[16];
+            char buf[64];
+            char nr[32];
             itos(globalc++, nr, 10);
             //
             strcpy(buf, "VALK_GLOBAL_IDF_");

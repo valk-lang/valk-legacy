@@ -38,12 +38,20 @@ Id *read_id(Parser *p, char *first_part, Id *buf) {
     char* name = first_part;
     Build* b = p->b;
 
+    if(first_part == NULL) {
+        char t = tok(p, true, true, true);
+        if(t != tok_id) {
+            parse_err(p, -1, "Invalid identifier name syntax");
+        }
+        name = p->tkn;
+    }
+
     char t = tok(p, false, false, false);
     if(t == tok_colon) {
         tok(p, false, false, true);
         t = tok(p, false, false, true);
         if(t != tok_id) {
-            parse_err(p, -1, "Invalid name syntax");
+            parse_err(p, -1, "Invalid identifier name syntax");
         }
         ns = name;
         name = p->tkn;

@@ -304,14 +304,10 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
         if(p->type->nullable) {
             str_flat(code, "if isset(");
             str_add(code, var);
-            str_flat(code, ") {\n");
+            str_flat(code, ") : ");
         }
-        str_flat(code, "  ");
         str_add(code, var);
         str_flat(code, "._v_mark(age)\n");
-        if(p->type->nullable) {
-            str_flat(code, "}\n");
-        }
     }
 
     if(shared) {

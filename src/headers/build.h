@@ -75,6 +75,8 @@ struct Build {
     Array *used_pkc_names;
     Array *pkcs;
     //
+    Array *globals;
+    //
     Pkc *pkc_main;
     Pkc *pkc_valk;
     Nsc *nsc_main;

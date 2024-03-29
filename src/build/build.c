@@ -154,6 +154,8 @@ int cmd_build(int argc, char *argv[]) {
     b->nsc_by_path = map_make(alc);
     b->pkcs = array_make(alc, 20);
 
+    b->globals = array_make(alc, 40);
+
     b->units = array_make(alc, 40);
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);

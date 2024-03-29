@@ -395,6 +395,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
     Idf* idf = idf_make(b->alc, idf_global, g);
     scope_set_idf(u->nsc->scope, name, idf, p);
     array_push(u->globals, g);
+    array_push(b->globals, g); // TODO: fill up b->globals in stage_3_gen by looping units (otherwise its not thread-safe)
 
     tok_expect(p, ":", true, false);
 
