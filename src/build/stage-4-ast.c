@@ -504,6 +504,24 @@ void read_ast(Parser *p, bool single_line) {
 
         //
         array_push(scope->ast, token_make(alc, t_statement, left));
+        //
+        if(scope->did_return && p->func) {
+            // Value contains an exit function call
+            Value* retv = NULL;
+            Type* rett = p->func->rett;
+            if(!type_is_void(rett)) {
+                if(rett->is_pointer) {
+                    retv = vgen_null(alc, b);
+                } else {
+                    if(rett->type == type_float) {
+                        retv = vgen_float(alc, 0, rett);
+                    } else {
+                        retv = vgen_int(alc, 0, rett);
+                    }
+                }
+            }
+            array_push(scope->ast, token_make(alc, t_return, retv));
+        }
     }
 
     if(scope->must_return && !scope->did_return) {

@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_parse(Parser* p, Unit* u, Fc* fc);
-void stage_1_func(Parser* p, Unit* u, int act, Fc* fc);
+void stage_1_func(Parser* p, Unit* u, int act, Fc* fc, bool exits);
 void stage_1_header(Parser* p, Unit* u, Fc* fc);
 void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc);
 void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc);
@@ -71,7 +71,11 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {
-                stage_1_func(p, u, act, fc);
+                stage_1_func(p, u, act, fc, false);
+                continue;
+            }
+            if (str_is(tkn, "exit_fn")) {
+                stage_1_func(p, u, act, fc, true);
                 continue;
             }
             if (str_is(tkn, "struct")) {
@@ -149,7 +153,7 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
     }
 }
 
-void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
+void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits) {
     Build* b = p->b;
 
     char t = tok(p, true, false, true);
@@ -162,6 +166,7 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc) {
     func->act = act;
     func->fc = fc;
     func->in_header = p->in_header;
+    func->exits = exits;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);

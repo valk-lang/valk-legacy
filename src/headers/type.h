@@ -43,6 +43,7 @@ struct Type {
     bool is_signed;
     bool func_can_error;
     bool ignore_null;
+    bool func_will_exit;
 };
 
 #endif

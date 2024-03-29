@@ -682,6 +682,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
 
     Value* fcall = vgen_func_call(alc, on, args);
+    if(on->rett->func_will_exit) {
+        p->scope->did_return = true;
+    }
 
     if(ont->func_errors) {
         VFuncCall* f = fcall->item;

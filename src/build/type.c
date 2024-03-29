@@ -17,6 +17,7 @@ Type* type_make(Allocator* alc, int type) {
     t->is_signed = false;
     t->nullable = false;
     t->func_can_error = false;
+    t->func_will_exit = false;
     return t;
 }
 
@@ -220,6 +221,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
     t->size = func->b->ptr_size;
     t->is_pointer = true;
     t->func_can_error = func->errors ? true : false;
+    t->func_will_exit = func->exits;
     return t;
 }
 Type* type_gen_valk(Allocator* alc, Build* b, char* name) {

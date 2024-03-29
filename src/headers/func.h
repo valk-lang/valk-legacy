@@ -52,6 +52,7 @@ struct Func {
     bool is_test;
     bool is_used;
     bool use_if_class_is_used;
+    bool exits;
 };
 struct FuncArg {
     Type* type;

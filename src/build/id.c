@@ -89,6 +89,9 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
         } else if(str_is(name, "print") || str_is(name, "println") || str_is(name, "FD")) {
             Nsc* ns = get_valk_nsc(p->b, "io");
             idf = scope_find_idf(ns->scope, name, true);
+        } else if(str_is(name, "panic") || str_is(name, "exit")) {
+            Nsc* ns = get_valk_nsc(p->b, "os");
+            idf = scope_find_idf(ns->scope, name, true);
         }
     }
 

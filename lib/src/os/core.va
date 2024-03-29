@@ -1,10 +1,10 @@
 
 header "sys" as sys
 
-fn exit(code: int) {
+exit_fn exit(code: int) {
     sys:exit(code @as i32)
 }
-fn panic(msg: String) {
+exit_fn panic(msg: String) {
     println("PANIC: " + msg)
     sys:exit(1)
 }
