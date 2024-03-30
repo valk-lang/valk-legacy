@@ -382,22 +382,6 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
-            if (str_is(tkn, "@valk_gc_mark_globals")) {
-                Func *func = b->func_mark_globals;
-                Array* args = array_make(alc, 2);
-                Value *on = vgen_func_ptr(alc, func, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
-                array_push(scope->ast, token_make(alc, t_statement, fcall));
-                continue;
-            }
-            if (str_is(tkn, "@valk_gc_mark_shared")) {
-                Func *func = b->func_mark_shared;
-                Array* args = array_make(alc, 2);
-                Value *on = vgen_func_ptr(alc, func, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
-                array_push(scope->ast, token_make(alc, t_statement, fcall));
-                continue;
-            }
         }
         if (t == tok_curly_open) {
             Scope* sub = scope_sub_make(alc, sc_default, scope);

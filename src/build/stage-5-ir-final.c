@@ -14,8 +14,6 @@ void stage_5_ir_final(Build* b) {
     // Mark main func as used (recursive)
     if(b->func_main)
         stage_5_mark_used_rec(b->func_main);
-    stage_5_mark_used_rec(b->func_mark_globals);
-    stage_5_mark_used_rec(b->func_mark_shared);
     stage_5_mark_used_rec(b->func_main_gen);
 
     Func *gac_func = get_valk_func(b, "mem", "gc_alloc_class");

@@ -83,8 +83,6 @@ struct Build {
     //
     Func *func_main;
     Func *func_main_gen;
-    Func *func_mark_globals;
-    Func *func_mark_shared;
     //
     Array *units;
     Array *classes;
