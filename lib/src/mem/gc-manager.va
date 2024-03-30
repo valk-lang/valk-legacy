@@ -108,8 +108,24 @@ struct GcManager {
     }
 
     fn clean_unused() {
+        let age = gc_age
         // Mark shared globals
-        @valk_gc_mark_shared
+        #loop_globals as G, T
+        #if @type_is_gc(T) && @global_is_shared(G)
+        {
+            let item = G @as ptr
+            if item != null {
+                if @ptrv(item, u8, byte_gc_age_rel) != age {
+                    let vtable = @ptrv(item, u32, -1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    func(item, age);
+                }
+            }
+        }
+        #end
+        #endloop
+
         // Clean
         let stacks = this.stacks
         let si = this.stack_count

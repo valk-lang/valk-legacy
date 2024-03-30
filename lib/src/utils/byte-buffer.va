@@ -41,6 +41,7 @@ class ByteBuffer {
         let new_bytes : uint = bytes + length;
         this.minimum_size(new_bytes);
         let to : ptr = this.data + bytes;
+        // TODO: use @ptr_offset
         mem:copy(data, to, length);
         this.length = new_bytes;
     }
@@ -52,6 +53,7 @@ class ByteBuffer {
             this.minimum_size(new_bytes)
         }
         let to : ptr = this.data + bytes
+        // TODO: use @ptr_offset
         @ptrv(to, u8, 0) = byte
         this.length = new_bytes
     }
@@ -126,6 +128,7 @@ class ByteBuffer {
             length = len - start_index;
         }
         let str = String.make_empty(length);
+        // TODO: use @ptr_offset
         mem:copy(this.data + start_index, str.data, length);
         return str;
     }
@@ -141,6 +144,7 @@ class ByteBuffer {
         if index == 0 : return
         let bytes = len - index;
         let data = this.data;
+        // TODO: use @ptr_offset
         mem:copy(data + index, data, bytes);
         this.length -= index;
         this.read_index = 0;

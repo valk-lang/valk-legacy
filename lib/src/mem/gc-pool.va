@@ -179,9 +179,7 @@ struct GcPool {
                 }
             }
             // 
-            if b == current {
-                break
-            }
+            if b == current : break
             // Next block
             block = @ptrv(b, ptr)
         }

@@ -32,7 +32,7 @@ class Array[T] {
         return length
     }
 
-    fn prepend(item: T) void {
+    fn prepend(item: T) {
 
         let size = this.size
         let length = this.length
@@ -56,9 +56,8 @@ class Array[T] {
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data : ptr = null @as ptr
 
-        new_data = mem:alloc(new_size * sizeof(T));
+        let new_data = mem:alloc(new_size * sizeof(T));
         mem:copy(data, new_data, size * sizeof(T));
         mem:free(data)
 
@@ -203,21 +202,28 @@ class Array[T] {
             let data = this.data
             let x = this.length
             while x-- > 0 {
-                mem:gc_transfer_item(@ptrv(data, T, x))
+                mem:gc_transfer_item(@ptrv(data, ptr, x))
             }
         }
         fn _gc_mark() {
             let data = this.data
             let x = this.length
             while x-- > 0 {
-                mem:gc_mark_item(@ptrv(data, T, x))
+                mem:gc_mark_item(@ptrv(data, ptr, x))
             }
         }
         fn _gc_mark_shared() {
             let data = this.data
             let x = this.length
             while x-- > 0 {
-                mem:gc_mark_shared_item(@ptrv(data, T, x))
+                mem:gc_mark_shared_item(@ptrv(data, ptr, x))
+            }
+        }
+        fn _gc_share() {
+            let data = this.data
+            let x = this.length
+            while x-- > 0 {
+                mem:gc_share(@ptrv(data, ptr, x))
             }
         }
     #end

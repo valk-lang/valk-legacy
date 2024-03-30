@@ -153,14 +153,14 @@ struct Stack {
             // Mark
             this.update_age()
             this.mark_stack_age()
-            @valk_gc_mark_globals
             // Clean
             GcPool.clean_old_all(this.age)
             this.clear_unknown = false
             // Mark shared
             if gc_age != this.gc_age {
-                this.mark_stack_gc_age()
-                this.gc_age = gc_age
+                let age = gc_age
+                this.mark_stack_gc_age(age)
+                this.gc_age = age
             }
         }
         GcPool.reset_all()
@@ -278,9 +278,28 @@ struct Stack {
     }
 
     fn mark_stack_age() {
+        let age = this.age
+        // Globals
+        #loop_globals as G, T
+        #if @type_is_gc(T) && !@global_is_shared(G)
+        {
+            let item = G @as ptr
+            if item != null {
+                if @ptrv(item, u8, -8) < state_const {
+                    if @ptrv(item, u8, -6) != age {
+                        let vtable = @ptrv(item, u32, -1)
+                        let table = @gc_get_vtable(vtable)
+                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        func(item, age);
+                    }
+                }
+            }
+        }
+        #end
+        #endloop
+        // Stack
         let item_adr = this.stack_base
         let stack_adr = this.stack_adr
-        let age = this.age
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
@@ -296,10 +315,26 @@ struct Stack {
             item_adr = item_adr + sizeof(ptr)
         }
     }
-    fn mark_stack_gc_age() {
+    fn mark_stack_gc_age(age: u8) {
+        // Globals
+        #loop_globals as G, T
+        #if @type_is_gc(T) && !@global_is_shared(G)
+        {
+            let item = G @as ptr
+            if item != null {
+                if @ptrv(item, u8, byte_gc_age_rel) != age {
+                    let vtable = @ptrv(item, u32, -1)
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    func(item, age);
+                }
+            }
+        }
+        #end
+        #endloop
+        // Stack
         let item_adr = this.stack_base
         let stack_adr = this.stack_adr
-        let age = gc_age
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {

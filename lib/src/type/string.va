@@ -238,6 +238,7 @@ class String {
         let this_len = this.bytes
         let add_len = add.bytes
         let len = this_len + add_len
+        if len == 0 : return ""
         let s = CLASS.make_empty(len)
         let data = s.data
         mem:copy(this.data, data, this_len)

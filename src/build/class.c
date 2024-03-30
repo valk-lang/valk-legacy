@@ -208,6 +208,9 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
 
     Map* props = class->props;
+    if (class->pool_index == -1) {
+        parse_err(p, -1, "Invalid class pool index: '%s' (compiler bug)\n", class->name);
+    }
 
     Str* code = b->str_buf;
     str_clear(code);
@@ -243,14 +246,11 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
         if(p->type->nullable) {
             str_flat(code, "if isset(");
             str_add(code, var);
-            str_flat(code, ") {\n");
+            str_flat(code, ") : ");
         }
         str_flat(code, "  ");
         str_add(code, var);
         str_flat(code, "._v_transfer(to_state)\n");
-        if(p->type->nullable) {
-            str_flat(code, "}\n");
-        }
     }
 
     Func* hook = map_get(class->funcs, "_gc_transfer");
@@ -275,11 +275,11 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
     str_clear(code);
 
     str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
     if(shared) {
         str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
         str_flat(code, "  @ptrv(this, u8, -5) = age\n");
     } else {
+        str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
         str_flat(code, "  if state > 8 { return }\n");
         str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
         str_flat(code, "  @ptrv(this, u8, -6) = age\n");
@@ -307,7 +307,11 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
             str_flat(code, ") : ");
         }
         str_add(code, var);
-        str_flat(code, "._v_mark(age)\n");
+        if (shared) {
+            str_flat(code, "._v_mark_shared(age)\n");
+        } else {
+            str_flat(code, "._v_mark(age)\n");
+        }
     }
 
     if(shared) {
@@ -373,14 +377,11 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
         if(p->type->nullable) {
             str_flat(code, "if isset(");
             str_add(code, var);
-            str_flat(code, ") {\n");
+            str_flat(code, ") : ");
         }
         str_flat(code, "  ");
         str_add(code, var);
         str_flat(code, "._v_share()\n");
-        if(p->type->nullable) {
-            str_flat(code, "}\n");
-        }
     }
 
     Func* hook = map_get(class->funcs, "_gc_share");
