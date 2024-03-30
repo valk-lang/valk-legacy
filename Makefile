@@ -1,5 +1,5 @@
 
-VERSION=0.0.1
+VERSION=no-version
 UNAME=$(shell uname)
 UNAMEO=$(shell uname -o)
 SUB_UNAME := $(findstring MINGW64, $(UNAME))
