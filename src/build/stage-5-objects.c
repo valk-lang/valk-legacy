@@ -48,7 +48,17 @@ void stage_5_objects(Build* b) {
 
     b->time_llvm += microtime() - start;
 
+    // Link
     stage_6_link(b, o_files);
+
+    // Update cache
+    usize io_start = microtime();
+    for (int i = 0; i < units->length; i++) {
+        Unit *u = array_get_index(units, i);
+        if (u->hash)
+            write_file(u->path_cache, u->hash, false);
+    }
+    b->time_io += microtime() - io_start;
 }
 
 void stage_build_o_file(Build* b, Unit* u, Array* threads) {
@@ -67,12 +77,6 @@ void stage_build_o_file(Build* b, Unit* u, Array* threads) {
 
     thread_make(b->alc, llvm_build_o_file, data, threads, 8);
     // llvm_build_o_file(data);
-
-    // Update cache
-    usize start = microtime();
-    if (u->hash)
-        write_file(u->path_cache, u->hash, false);
-    b->time_io += microtime() - start;
 }
 
 void* llvm_build_o_file(void* data_) {
