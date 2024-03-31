@@ -13,7 +13,7 @@ Valk is a programming language aimed to be fast & simple at the same time. It ca
 
 **Features**: Super fast non-pausing GC ⚡, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
-**Valk is still in alpha, alot of features are not ready yet and the stdlib only contains basic functions**
+**Valk is still in alpha, alot of features are not ready yet and the stdlib only contains core functions**
 
 ## Install
 
