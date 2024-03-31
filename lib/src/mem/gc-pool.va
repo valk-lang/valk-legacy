@@ -242,7 +242,7 @@ struct GcPool {
                 if state != state_solid {
                     continue
                 }
-                if @ptrv(item, u8, 2) != age {
+                if @ptrv(item, u8, byte_age) != age {
                     if call_gc_free {
                         let vtable = @ptrv(item, u32, 1)
                         let table = @gc_get_vtable(vtable)

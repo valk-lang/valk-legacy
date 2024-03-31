@@ -1,0 +1,50 @@
+
+header "pthread" as pt;
+
+use mem;
+
+class Mutex[T] {
+	- mutex: ptr;
+
+	#if @type_is_void(T)
+
+	static fn new() CLASS { 
+		let mut = mem:calloc(64);
+		pt:pthread_mutex_init(mut);
+		return CLASS { mutex: mut };
+	}
+
+	fn lock() void {
+		pt:pthread_mutex_lock(this.mutex);
+	}
+
+	fn unlock() void {
+		pt:pthread_mutex_unlock(this.mutex);
+	}
+
+	#else
+	- value: ?T;
+
+	static fn new(value: T) CLASS { 
+		let mut = mem:calloc(pt:CONST.mutex_size);
+		pt:pthread_mutex_init(mut);
+		return CLASS { mutex: mut, value: value };
+	}
+
+	fn lock() T {
+		pt:pthread_mutex_lock(this.mutex);
+		return swap this.value with null;
+	}
+
+	fn unlock(value: T) void {
+		pt:pthread_mutex_unlock(this.mutex);
+		this.value = value;
+	}
+
+	#end
+
+	fn _gc_free() void {
+		pt:pthread_mutex_destroy(this.mutex);
+		mem:free(this.mutex);
+	}
+}

@@ -406,6 +406,24 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     }
 
     if (prio == 0 || prio > 30) {
+        while (t == tok_bit_and || t == tok_bit_or || t == tok_bit_xor) {
+            tok(p, true, true, true);
+            int op;
+            if(t == tok_bit_and)
+                op = op_bit_and;
+            else if(t == tok_bit_or)
+                op = op_bit_or;
+            else if(t == tok_bit_xor)
+                op = op_bit_xor;
+            else
+                break;
+            Value *right = read_value(alc, p, true, 30);
+            v = value_handle_op(alc, p, v, right, op);
+            t = tok(p, true, true, false);
+        }
+    }
+
+    if (prio == 0 || prio > 35) {
         while (t >= tok_eqeq && t <= tok_not_eq) {
             tok(p, true, true, true);
             int op;
@@ -423,26 +441,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_gt;
             else
                 break;
-            Value *right = read_value(alc, p, true, 30);
-            v = value_handle_compare(alc, p, v, right, op);
-            t = tok(p, true, true, false);
-        }
-    }
-
-    if (prio == 0 || prio > 35) {
-        while (t == tok_bit_and || t == tok_bit_or || t == tok_bit_xor) {
-            tok(p, true, true, true);
-            int op;
-            if(t == tok_bit_and)
-                op = op_bit_and;
-            else if(t == tok_bit_or)
-                op = op_bit_or;
-            else if(t == tok_bit_xor)
-                op = op_bit_xor;
-            else
-                break;
             Value *right = read_value(alc, p, true, 35);
-            v = value_handle_op(alc, p, v, right, op);
+            v = value_handle_compare(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
     }

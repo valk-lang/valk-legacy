@@ -1,0 +1,25 @@
+
+header "pthread" as pt;
+
+-- struct GcLock {
+	- mutex: ptr
+
+	static fn new() CLASS { 
+		let mut = calloc(64);
+		pt:pthread_mutex_init(mut, null);
+		return CLASS { mutex: mut };
+	}
+
+	fn lock() void {
+		pt:pthread_mutex_lock(this.mutex);
+	}
+
+	fn unlock() void {
+		pt:pthread_mutex_unlock(this.mutex);
+	}
+
+    fn free() {
+        free(this.mutex)
+        free(this)
+    }
+}

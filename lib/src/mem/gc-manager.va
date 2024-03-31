@@ -24,7 +24,7 @@ struct GcManager {
     stopped : bool (false)
 
     static fn init() {
-        gc_age = 1
+        gc_age = 128
         if gc_manager_instance != null {
             return
         }
@@ -96,10 +96,7 @@ struct GcManager {
             // If all up-to-date
             if up_to_date_count == sc {
                 gm.clean_unused()
-                gc_age++;
-                if gc_age == 0 {
-                    gc_age = 1
-                }
+                gc_age = (gc_age == 128) ? 64 @as u8 : 128 @as u8
             }
 
             //
@@ -115,7 +112,7 @@ struct GcManager {
         {
             let item = G @as ptr
             if item != null {
-                if @ptrv(item, u8, byte_gc_age_rel) != age {
+                if @ptrv(item, u8, byte_gc_age_rel) & 192 != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
