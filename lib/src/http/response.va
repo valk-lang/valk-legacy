@@ -9,34 +9,6 @@ class Response {
     content_type: String ("text/plain")
     headers: ?Map[String] (null)
 
-    // fn html(body: String, code: u32 (200)) {
-    //     this.body = body
-    //     this.status = code
-    //     this.content_type = "text/html"
-    // }
-    // fn json(body: String, code: u32 (200)) {
-    //     this.body = body
-    //     this.status = code
-    //     this.content_type = "application/json"
-    // }
-    // fn text(body: String, code: u32 (200)) {
-    //     this.body = body
-    //     this.status = code
-    //     this.content_type = "text/plain"
-    // }
-    // fn error(code: u32 (400)) {
-    //     this.body = ""
-    //     this.status = code
-    //     this.content_type = "text/plain"
-    // }
-
-    // static fn file(String path) Response !file_not_found {
-    // 	if(fs:exists(path) == false){
-    // 		throw file_not_found
-    // 	}
-    // 	let r = Response{ filepath: path }
-    // 	return r
-    // }
     static fn html(body: String, code: u32 (200), headers: ?Map[String] (null)) Response {
     	return Response{ body: body, status: code, content_type: "text/html", headers: headers };
     }
@@ -46,11 +18,11 @@ class Response {
     static fn text(body: String, code: u32 (200), content_type: String ("text/plain"), headers: ?Map[String] (null)) Response {
     	return Response{ body: body, status: code, content_type: content_type, headers: headers };
     }
-    // static fn redirect(location: String, code: u32 (301), headers: ?Map[String] (null)) Response {
-    // 	rep headers = headers ?? Map[String]{};
-    // 	headers.set("Location", location);
-    // 	return Response{ status: code, headers: headers };
-    // }
+    static fn redirect(location: String, code: u32 (301), headers: ?Map[String] (null)) Response {
+    	let h = headers ?? Map[String]{};
+    	h.set("Location", location);
+    	return Response{ status: code, headers: h };
+    }
     static fn error(code: u32) Response {
     	return Response{ status: code };
     }

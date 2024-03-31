@@ -17,7 +17,7 @@ Valk is a programming language aimed to be fast & simple at the same time. It ca
 ## Install
 
 ```sh
-// SOON : You can only build from source at the moment
+curl -s https://valk-lang.dev/install.sh | bash -s latest
 ```
 
 ## Basic example
