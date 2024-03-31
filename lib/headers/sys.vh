@@ -10,6 +10,7 @@ header "linux/structs"
 header "linux/abi"
 //header "linux-[ARCH]/enum"
 header "linux/x64/enum"
+header "pthread"
 
 #elif OS == macos
 
@@ -23,6 +24,7 @@ header "macos/arm64/enum"
 #else
 header "macos/x64/enum"
 #end
+header "pthread"
 
 #elif OS == win
 

@@ -1,25 +1,41 @@
 
-header "pthread" as pt;
+header "sys" as sys;
 
 -- struct GcLock {
 	- mutex: ptr
 
 	static fn new() CLASS { 
+        #if OS == win
+		let mut = sys:CreateMutexA(null, mut, null);
+        #else
 		let mut = calloc(64);
-		pt:pthread_mutex_init(mut, null);
+		sys:pthread_mutex_init(mut, null);
+        #end
 		return CLASS { mutex: mut };
 	}
 
 	fn lock() void {
-		pt:pthread_mutex_lock(this.mutex);
+        #if OS == win
+        sys:WaitForSingleObject(this.mutex, sys:INFINITE);
+        #else
+		sys:pthread_mutex_lock(this.mutex);
+        #end
 	}
 
 	fn unlock() void {
-		pt:pthread_mutex_unlock(this.mutex);
+        #if OS == win
+        sys:ReleaseMutex(this.mutex);
+        #else
+		sys:pthread_mutex_unlock(this.mutex);
+        #end
 	}
 
     fn free() {
+        #if OS == win
+        sys:CloseHandle(this.mutex)
+        #else
         free(this.mutex)
+        #end
         free(this)
     }
 }

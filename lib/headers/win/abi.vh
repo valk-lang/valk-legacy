@@ -135,3 +135,6 @@ fn CreateThread(lpThreadAttributes: ?ptr, dwStackSize: uint, lpStartAddress: ptr
 fn TerminateThread(handle: ptr, exit_code: i32) bool;
 fn WaitForSingleObject(handle: ptr, timeout_ms: u32) u32;
 fn CloseHandle(handle: ptr) bool;
+
+fn CreateMutexA(lpMutexAttributes: ?ptr, bInitialOwner: bool, lpName: ?cstring) HANDLE;
+fn ReleaseMutex(mutex: ptr);
