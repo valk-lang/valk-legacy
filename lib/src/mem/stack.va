@@ -100,19 +100,22 @@ struct Stack {
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    static fn link(on: ptr, to: ptr) ptr {
+    static fn link(on: ptr, to: ptr) {
         let to_state = @ptrv(to, u8, -8)
         let on_state = @ptrv(on, u8, -8)
         if on_state == state_shared {
-            @gc_share(to)
-            return to
+            if to_state != state_shared {
+                gc_share(to)
+            } else {
+                gc_mark_shared_item(to)
+            }
+            return
         }
         if to_state < state_transfer {
             // Transfer
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer
         }
-        return to
     }
 
     ///////////////////////
@@ -320,7 +323,7 @@ struct Stack {
         {
             let item = G @as ptr
             if item != null {
-                if @ptrv(item, u8, byte_gc_age_rel) & 192 != age {
+                if @ptrv(item, u8, byte_gc_age_rel) == 0 {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
@@ -336,7 +339,7 @@ struct Stack {
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
-                if @ptrv(item, u8, byte_gc_age_rel) & 192 != age {
+                if @ptrv(item, u8, byte_gc_age_rel) == 0 {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
@@ -364,14 +367,11 @@ struct Stack {
         while tail != head {
             let item = @ptrv(data, ptr, tail)
             let item_age = @ptrv(item, u8, byte_gc_age_rel)
-            if item_age & 192 != age {
-                if item_age & 63 > 0 {
-                    @ptrv(item, u8, byte_gc_age_rel) = age
-                } else {
-                    // Free item
-                    @ptrv(item, u8, byte_state_rel) = state_solid
-                    ring.remove(tail)
-                }
+            @ptrv(item, u8, byte_gc_age_rel) = 0
+            if item_age == 0 {
+                // Free item
+                @ptrv(item, u8, byte_state_rel) = state_solid
+                ring.remove(tail)
             }
 
             tail++
