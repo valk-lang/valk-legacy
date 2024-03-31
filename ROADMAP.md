@@ -12,22 +12,16 @@
 ## TODO
 
 ```
-// v0.0.1
-- make prebuilt releases (version 0.0.1)
-
-// v0.0.2
+// Prio
 - split error identifiers & scope identifiers
-- ignore error handler if void return
 - octal integers
 - use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
-- func_ref type to str
-- declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
-
 - macros (e.g. array, map)
-- string functions
+- watch files --watch
+// Other
+- more string functions
 - format string
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 
-- watch files --watch
 - unions
 - async / await
 - closures
@@ -40,6 +34,7 @@
 - dont disable_gc in gc_share, instead disable inside hooks 
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
+- declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
 ```
 
 ## Maybe
