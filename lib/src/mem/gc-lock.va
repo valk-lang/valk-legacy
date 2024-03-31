@@ -6,7 +6,7 @@ header "sys" as sys;
 
 	static fn new() CLASS { 
         #if OS == win
-		let mut = sys:CreateMutexA(null, mut, null);
+		let mut = sys:CreateMutexA(null, false, null);
         #else
 		let mut = calloc(64);
 		sys:pthread_mutex_init(mut, null);
@@ -16,7 +16,7 @@ header "sys" as sys;
 
 	fn lock() void {
         #if OS == win
-        sys:WaitForSingleObject(this.mutex, sys:INFINITE);
+        sys:WaitForSingleObject(this.mutex, sys:INFINITE @as u32);
         #else
 		sys:pthread_mutex_lock(this.mutex);
         #end
