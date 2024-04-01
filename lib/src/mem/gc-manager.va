@@ -55,22 +55,34 @@ struct GcManager {
     }
 
     static fn loop() {
-        let gm = gc_manager_instance;
-        let cycles = 0
-        let x = 0 @as uint;
-        while true {
-            x++
 
+        Stack.init()
+        let gcm_stack = stack
+
+        let gm = gc_manager_instance;
+        let stacks = gm.stacks;
+        let timeout_count : uint = 0
+
+        // Remove GCman stack
+        let si = gm.stack_count;
+        while si-- > 0 {
+            let s = @ptrv(stacks, ?Stack, si);
+            if s == gcm_stack {
+                @ptrv(stacks, ?Stack, si) = null
+                break
+            }
+        }
+
+        //
+        while true {
             //
             let sc = gm.stack_count;
             let up_to_date_count : uint = 0;
-            let stacks = gm.stacks;
             let age = gc_age
 
             // Loop stacks
             let si = sc;
-            while si > 0 {
-                si--
+            while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
                 if s @as ?Stack == null {
                     up_to_date_count++
@@ -97,10 +109,35 @@ struct GcManager {
             if up_to_date_count == sc {
                 gm.clean_unused()
                 gc_age = (gc_age == 128) ? 64 @as u8 : 128 @as u8
+                timeout_count = 0
+            } else {
+                timeout_count++
+                if timeout_count > 4 {
+                    let si = sc;
+                    while si-- > 0 {
+                        let s = @ptrv(stacks, ?Stack, si);
+                        if isset(s) {
+                            if s.gc_age == age {
+                                continue
+                            }
+                            s.lock.lock()
+                            if s.gc_age == age {
+                                s.lock.unlock()
+                                continue
+                            }
+                            s.mark_stack_gc_age(age)
+                            s.gc_age = age
+                            s.lock.unlock()
+                        }
+                    }
+
+                    gcm_stack.gc()
+                    timeout_count = 0
+                }
             }
 
             //
-            os:sleep_ms(500)
+            os:sleep_ms(50)
         }
     }
 
