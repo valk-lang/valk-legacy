@@ -58,13 +58,15 @@ Valk is only faster in the way it creates and manages objects, which most progra
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-http.png">
 </p></div>
 
-## Good to know
+## Language design facts
 
 - Each thread handles it's own memory, but you can still share your variables with other threads. Even when your thread has ended, the memory will still be valid and automatically freed once other threads no longer use it.
 
 - Valk does not force the user to use mutexes/locks for shared memory. Therefore the program can crash when you use multiple threads to modify the same data at the same time. Reading the same data with multiple threads is fine.
 
 - Unlike other languages, our GC has no randomness. Every run is exactly the same as the run before to the last byte. So there are no fluctuations in cpu usage and memory usage. (Except when using shared memory over multiple threads)
+
+- The GC does not guess which value on the stack is a GC'able pointer. Instead we create a custom stack and the compiler knows where to store which pointer at compile time.
 
 ## Contributions
 

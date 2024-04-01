@@ -239,14 +239,41 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         // Check if float
         int before = p->chunk->i;
         char t1 = tok(p, false, false, true);
+        char* t1tkn = p->tkn;
+        int before2 = p->chunk->i;
         char t2 = tok(p, false, false, true);
+        //
         if (t1 == tok_dot && t2 == tok_number) {
+            // Float number
             char *buf = b->char_buf;
             char* deci = p->tkn;
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
             double fv = atof(buf);
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
+        } else if (t1 == tok_id && t1tkn[0] == 'x') {
+            // Hex number
+            p->chunk->i = before2;
+            char value[64];
+            strcpy(value, t1tkn + 1);
+            if(strlen(value) == 0 || !is_valid_hex_number(value)) {
+                parse_err(p, -1, "Invalid hex number syntax: '0x%s'", value);
+            }
+            v_i64 hv = hex2int(value);
+            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
+
+        } else if (t1 == tok_id && t1tkn[0] == 'c') {
+            // Octal number
+            p->chunk->i = before2;
+            char value[64];
+            strcpy(value, t1tkn + 1);
+            if(strlen(value) == 0 || !is_valid_octal_number(value)) {
+                parse_err(p, -1, "Invalid octal number syntax: '0c%s'", value);
+            }
+            v_i64 hv = oct2int(value);
+            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
+
         } else {
+            // Decimal number
             p->chunk->i = before;
             v_i64 iv = atoll(num);
             if (negative) {
