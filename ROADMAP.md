@@ -17,6 +17,7 @@
 - use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
 - macros (e.g. array, map)
 - watch files --watch
+- http: max request size option, error handler option, parse post data, handle file uploads
 // Other
 - more string functions
 - format string
