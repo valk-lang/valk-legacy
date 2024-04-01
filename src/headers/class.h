@@ -10,9 +10,6 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
-void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func);
-void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool shared);
-void class_generate_share(Parser* p, Build* b, Class* class, Func* func);
 int get_class_pool_index(Class* class);
 
 struct Class {

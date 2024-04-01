@@ -51,8 +51,12 @@ struct Stack {
     lowest_next : ptr
 
     transfer : ObjectChain
-    shared : GcRing[ptr]
-    // bumper : GcBumper
+    shared : GcRing
+    lock : GcLock
+
+    globals: ptr (null @as ptr)
+    globalc: uint (0)
+    disable_gc_ref: ptr
 
     age: u8 (33)
     gc_age: u8 (0)
@@ -86,8 +90,10 @@ struct Stack {
             lowest_next: data + (100 * sizeof(ptr))
 
             transfer: ObjectChain.new()
-            shared: GcRing[ptr].new()
-            // bumper: GcBumper.init()
+            shared: GcRing.new()
+            lock: GcLock.new()
+
+            disable_gc_ref: @ptr_of(disable_gc)
         }
 
         stack = s;
@@ -95,26 +101,50 @@ struct Stack {
 
         GcPool.init()
 
+        s.scan_globals()
+
         let gcm = gc_manager()
         gcm.add_stack(s);
+    }
+
+    fn scan_globals() {
+        let count : uint = 0
+        #loop_globals as G, T
+        #if @type_is_gc(T) && !@global_is_shared(G)
+        count++
+        #end
+        #endloop
+
+        let globals = alloc(sizeof(ptr) * count)
+        let globalc = count
+        count = 0
+    
+        #loop_globals as G2, T2
+        #if @type_is_gc(T2) && !@global_is_shared(G2)
+        @ptrv(globals, ptr, count++) = @ptr_of(G2)
+        #end
+        #endloop
     }
 
     ///////////////////////
     // Runtime functions
     ///////////////////////
-    static fn link(on: ptr, to: ptr) ptr {
+    static fn link(on: ptr, to: ptr) {
         let to_state = @ptrv(to, u8, -8)
         let on_state = @ptrv(on, u8, -8)
         if on_state == state_shared {
-            @gc_share(to)
-            return to
+            if to_state != state_shared {
+                gc_share(to)
+            } else {
+                gc_mark_shared_item(to)
+            }
+            return
         }
         if to_state < state_transfer {
             // Transfer
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer
         }
-        return to
     }
 
     ///////////////////////
@@ -124,6 +154,8 @@ struct Stack {
         if disable_gc {
             return
         }
+        this.lock.lock()
+
         disable_gc = true
         this.run_gc = false
         gctick++
@@ -182,6 +214,7 @@ struct Stack {
         this.stack_adr_last = this.stack_adr
         this.lowest_next = this.stack_adr + (1000 * sizeof(ptr))
         disable_gc = false
+        this.lock.unlock()
     }
 
     fn mark_difference_down() {
@@ -286,7 +319,7 @@ struct Stack {
             let item = G @as ptr
             if item != null {
                 if @ptrv(item, u8, -8) < state_const {
-                    if @ptrv(item, u8, -6) != age {
+                    if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
@@ -304,7 +337,7 @@ struct Stack {
             let item = @ptrv(item_adr, ptr);
             if item != null {
                 if @ptrv(item, u8, -8) < state_const {
-                    if @ptrv(item, u8, -6) != age {
+                    if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
@@ -317,10 +350,11 @@ struct Stack {
     }
     fn mark_stack_gc_age(age: u8) {
         // Globals
-        #loop_globals as G, T
-        #if @type_is_gc(T) && !@global_is_shared(G)
-        {
-            let item = G @as ptr
+        let globals = this.globals
+        let globalc = this.globalc
+        while globalc-- > 0 {
+            let ref = @ptrv(globals, ptr, globalc)
+            let item = @ptrv(ref, ptr)
             if item != null {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
@@ -330,8 +364,6 @@ struct Stack {
                 }
             }
         }
-        #end
-        #endloop
         // Stack
         let item_adr = this.stack_base
         let stack_adr = this.stack_adr
@@ -350,10 +382,14 @@ struct Stack {
     }
 
     fn add_shared(item: ptr) {
-        this.shared.add(item)
+        let ring = this.shared
+        ring.lock.lock()
+        ring.add(item)
+        ring.lock.unlock()
     }
     fn clean_shared() {
         let ring = this.shared
+        ring.lock.lock()
         let tail = ring.last_index()
         let head = ring.index
         let size = ring.size
@@ -361,7 +397,8 @@ struct Stack {
         let age = gc_age
         while tail != head {
             let item = @ptrv(data, ptr, tail)
-            if @ptrv(item, u8, byte_gc_age_rel) != age {
+            let item_age = @ptrv(item, u8, byte_gc_age_rel)
+            if item_age != age {
                 // Free item
                 @ptrv(item, u8, byte_state_rel) = state_solid
                 ring.remove(tail)
@@ -372,6 +409,7 @@ struct Stack {
                 tail = 0
             }
         }
+        ring.lock.unlock()
     }
 
     fn shutdown() {

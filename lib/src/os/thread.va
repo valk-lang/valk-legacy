@@ -1,5 +1,4 @@
 
-header "pthread" as pt;
 header "sys" as sys;
 
 use valk:mem;
@@ -43,8 +42,8 @@ struct Thread {
         #if OS == win
 		let thr = sys:CreateThread(null, 0, Thread.entry, e, 0, null);
 		#else
-        let thr = pt:pthread_t{ data: 0 @as uint };
-        let err = pt:pthread_create(thr, null, Thread.entry, e);
+        let thr = sys:pthread_t{ data: 0 @as uint };
+        let err = sys:pthread_create(thr, null, Thread.entry, e);
         #end
         // if err != 0 {
         // 	throw fail;
@@ -56,8 +55,8 @@ struct Thread {
         #if OS == win
 		let thr = sys:CreateThread(null, 0, start_func, null, 0, null);
 		#else
-        let thr = pt:pthread_t{ data: 0 @as uint };
-        let err = pt:pthread_create(thr, null, start_func, null);
+        let thr = sys:pthread_t{ data: 0 @as uint };
+        let err = sys:pthread_create(thr, null, start_func, null);
         #end
     }
 }

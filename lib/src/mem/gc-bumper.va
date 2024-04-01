@@ -1,9 +1,9 @@
 
-value bump_block_size (100000)
+-- value bump_block_size (100000)
 
-global bumper_usage : uint
+-- global bumper_usage : uint
 
-struct GcBumper {
+-- struct GcBumper {
     - first : ptr (null @as ptr)
     - base : ptr (null @as ptr)
     - adr : ptr (null @as ptr)
