@@ -112,7 +112,7 @@ struct GcManager {
         {
             let item = G @as ptr
             if item != null {
-                if @ptrv(item, u8, byte_gc_age_rel) == 0 {
+                if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)

@@ -330,10 +330,9 @@ void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
     Str* code = b->str_buf;
     str_clear(code);
 
-    str_flat(code, "() void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -5) > 0 { return }\n");
-    str_flat(code, "  let age = atomic(@ptrv(this, u8, -5) + 1)\n");
-    str_flat(code, "  if age > 0 { return }\n");
+    str_flat(code, "(age: u8) void {\n");
+    str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -5) = age\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -356,7 +355,7 @@ void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
             str_flat(code, ") : ");
         }
         str_add(code, var);
-        str_flat(code, "._v_mark_shared()\n");
+        str_flat(code, "._v_mark_shared(age)\n");
     }
 
     if (map_get(class->funcs, "_gc_mark_shared")) {
@@ -384,7 +383,7 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
     str_flat(code, "  if state > 4 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
-    str_flat(code, "  @ptrv(this, u8, -5) = 1\n");
+    str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
     str_flat(code, "  if state < 4 {\n");
     str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
