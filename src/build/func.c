@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsigned int v);
+
 Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name) {
     Func* f = al(alc, sizeof(Func));
     f->name = name;
@@ -98,15 +100,13 @@ void parse_handle_func_args(Parser* p, Func* func) {
         if(func->in_header) {
             build_err(b, "TODO: header errors");
         } else {
-            err = map_get(b->errors->errors, name);
-            if(!err) {
-                err = al(b->alc, sizeof(FuncError));
-                err->value = ++b->error_count;
-                err->collection = b->errors;
-                map_set(b->errors->errors, name, err);
-            }
+            unsigned int v = ctxhash_u32(name);
+            if(v == 0)
+                v = 1;
+            func_check_error_dupe(p, func, errors, name, v);
+            err = al(b->alc, sizeof(FuncError));
+            err->value = v;
         }
-        Idf* idf = idf_make(b->alc, idf_error, err);
         map_set(errors, name, err);
 
         t = tok(p, true, true, false);
@@ -311,5 +311,19 @@ void func_validate_rett_void(Parser *p, Func *func) {
         char buf[512];
         type_to_str(func->rett, buf);
         parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
+    }
+}
+
+void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsigned int v) {
+    if(map_get(errors, str_v)) {
+        parse_err(p, -1, "Duplicate error name");
+    }
+    int len = errors->values->length;
+    for(int i = 0; i < len; i++) {
+        FuncError* fe = array_get_index(errors->values, i);
+        if(fe->value == v) {
+            char* prev = array_get_index(errors->keys, i);
+            parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
+        }
     }
 }

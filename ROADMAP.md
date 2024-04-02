@@ -13,7 +13,7 @@
 
 ```
 // Prio
-- use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
+- error_is(err, name)
 - macros (e.g. array, map)
 - watch files --watch
 - http: max request size option, error handler option, parse post data, handle file uploads

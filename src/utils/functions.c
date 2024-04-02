@@ -78,6 +78,18 @@ void sleep_ms(unsigned int ms) {
 #endif
 }
 
+unsigned int ctxhash_u32(char *content) {
+    int len = 32;
+    char buf[33];
+    ctxhash(content, buf);
+    unsigned int result = 0;
+    unsigned char* ref = (unsigned char*)&result;
+    while(len-- > 0) {
+        ref[len % 4] += buf[len];
+    }
+    return result;
+}
+
 // simple hash has similar speed to crc32 but returns a string instead of a number
 // by: github.com/ctxcode
 void ctxhash(char *content_, char *buf_) {
@@ -107,9 +119,8 @@ void ctxhash(char *content_, char *buf_) {
         buf[res_pos++] += str_ch + diff;
 
         if (res_pos == hash_len) {
-            if (end) {
+            if (end)
                 break;
-            }
             res_pos = 0;
         }
     }
@@ -117,9 +128,7 @@ void ctxhash(char *content_, char *buf_) {
     const char *chars = "TMpUivZnQsHw1klS3Ah5d6qr7tjKxJOIEmYP8VgGzcDR0f2uBe4aobWLNCFy9X";
 
     int i = hash_len;
-    while (i > 0) {
-        i--;
-
+    while (i-- > 0) {
         const unsigned char str_ch = buf[i];
         diff += (str_ch + i) * 0b0001011 + i;
         buf[i] = chars[(str_ch + diff) % 62];

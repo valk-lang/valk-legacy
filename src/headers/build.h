@@ -87,7 +87,6 @@ struct Build {
     Array *units;
     Array *classes;
     Array *pool_str;
-    ErrorCollection* errors;
     Array *strings;
     Array *links;
     Map *link_settings;
@@ -103,7 +102,6 @@ struct Build {
     int target_arch;
     //
     int ptr_size;
-    int error_count;
     int export_count;
     int string_count;
     int gc_vtables;

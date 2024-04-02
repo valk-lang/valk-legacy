@@ -62,11 +62,7 @@ struct FuncArg {
     Decl* decl;
 };
 struct FuncError {
-    ErrorCollection* collection;
-    int value;
-};
-struct ErrorCollection {
-    Map* errors;
+    unsigned int value;
 };
 
 #endif

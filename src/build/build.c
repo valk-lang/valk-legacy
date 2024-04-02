@@ -159,8 +159,6 @@ int cmd_build(int argc, char *argv[]) {
     b->units = array_make(alc, 40);
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);
-    b->errors = al(alc, sizeof(ErrorCollection));
-    b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
     b->links = array_make(alc, 10);
     b->link_settings = map_make(alc);
@@ -178,7 +176,6 @@ int cmd_build(int argc, char *argv[]) {
     b->target_os = target_os;
 
     b->ptr_size = 8;
-    b->error_count = 0;
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
