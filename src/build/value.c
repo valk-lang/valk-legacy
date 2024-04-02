@@ -630,9 +630,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
     
     Build* b = p->b;
-    Array* func_args = ont->func_args;
-    Array* func_default_values = ont->func_default_values;
-    Type *rett = ont->func_rett;
+    Array* func_args = ont->func_info->args;
+    Array* func_default_values = ont->func_info->default_values;
+    Type *rett = ont->func_info->rett;
 
     if (!func_args || !rett) {
         parse_err(p, -1, "Function pointer value is missing function type information (compiler bug)\n");
@@ -719,23 +719,28 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
 
     Value* fcall = vgen_func_call(alc, on, args);
-    if(on->rett->func_will_exit) {
+    if(on->rett->func_info->will_exit) {
         p->scope->did_return = true;
     }
 
-    if(ont->func_errors) {
+    if(ont->func_info->err_names && ont->func_info->err_names->length > 0) {
         VFuncCall* f = fcall->item;
         bool void_rett = type_is_void(fcall->rett);
-        char t;
-        if(void_rett){
-            t = tok(p, true, false, false);
-            if(t == tok_not) {
-                t = tok(p, true, false, true);
-            } else {
-                t = 0;
+        bool ignore = false;
+        char t = tok(p, true, false, true);
+        char* name = NULL;
+        if(t == tok_id && !str_is(p->tkn, "_")) {
+            name = p->tkn;
+            t = tok(p, true, false, true);
+        }
+        if(void_rett) {
+            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?") && !str_is(p->tkn, "_")){
+                parse_err(p, -1, "Expected one the following error handler tokens: ! ? _ (Found: '%s')", p->tkn);
             }
         } else {
-            t = tok_expect_two(p, "!", "?", true, false);
+            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?")){
+                parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
+            }
         }
 
         if(t == tok_not) {
@@ -754,6 +759,14 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             Scope* err_scope = scope_sub_make(alc, sc_default, scope);
             f->err_scope = err_scope;
 
+            if(name) {
+                // Error identifier
+                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
+                Idf* idf = idf_make(alc, idf_error, decl);
+                scope_set_idf(err_scope, name, idf, p);
+                scope_add_decl(alc, err_scope, decl);
+            }
+
             p->scope = err_scope;
             read_ast(p, single);
             p->scope = scope;
@@ -768,8 +781,18 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             if (void_rett) {
                 parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
             }
+            Scope* sub_scope = scope_sub_make(alc, sc_default, p->scope);
+
+            if(name) {
+                // Error identifier
+                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
+                Idf* idf = idf_make(alc, idf_error, decl);
+                scope_set_idf(sub_scope, name, idf, p);
+                scope_add_decl(alc, sub_scope, decl);
+            }
+
             Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, p, p->scope, errv, fcall->rett);
+            errv = try_convert(alc, p, sub_scope, errv, fcall->rett);
             // Mix nullable
             if(fcall->rett->is_pointer && errv->rett->nullable) {
                 Type* t = type_clone(alc, fcall->rett);

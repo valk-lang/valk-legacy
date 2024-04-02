@@ -128,5 +128,11 @@ struct VThisOrThat {
     Value* v1;
     Value* v2;
 };
+struct VError {
+    Array* err_names;
+    Array* err_values;
+    Decl* decl;
+    bool has_unknown;
+};
 
 #endif

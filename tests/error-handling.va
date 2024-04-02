@@ -18,7 +18,7 @@ test "Error handling" {
     let v2 = test_errh_error() ? 10
     assert(v2 == 10)
     // Ignore error
-    test_errh_error3()_
+    test_errh_error3() _
     // 
     let v3 = test_errh_error() err ? <{
         assert(error_is(err, !err))

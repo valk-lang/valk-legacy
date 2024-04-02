@@ -108,6 +108,7 @@ enum TYPES {
     type_undefined,
     type_null,
     type_static_array,
+    type_error,
 };
 
 enum CLASSTYPES {
