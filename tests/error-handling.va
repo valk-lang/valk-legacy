@@ -1,0 +1,17 @@
+
+fn test_errh_success() uint !err {
+    return 5
+}
+fn test_errh_error() uint !err {
+    throw err
+}
+fn test_errh_error2() uint !err !err2 {
+    throw err2
+}
+
+test "Error handling" {
+    let v1 = test_errh_success() ? 10
+    assert(v1 == 5)
+    let v2 = test_errh_error() ? 10
+    assert(v2 == 10)
+}

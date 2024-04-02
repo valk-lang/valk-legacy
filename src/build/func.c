@@ -108,7 +108,6 @@ void parse_handle_func_args(Parser* p, Func* func) {
         }
         Idf* idf = idf_make(b->alc, idf_error, err);
         map_set(errors, name, err);
-        scope_set_idf(func->scope, name, idf, p);
 
         t = tok(p, true, true, false);
     }

@@ -13,7 +13,6 @@
 
 ```
 // Prio
-- split error identifiers & scope identifiers
 - use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
 - macros (e.g. array, map)
 - watch files --watch
