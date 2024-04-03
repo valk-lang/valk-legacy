@@ -30,4 +30,10 @@ void array_shift(Array *arr, void *item);
 void *array_get_index(Array *, int);
 void array_set_index(Array *, int, void *);
 
+// Integer values
+void array_push_u32(Array *arr, unsigned int value);
+bool array_contains_i32(Array *arr, int value);
+bool array_contains_u32(Array *arr, unsigned int value);
+unsigned int array_get_index_u32(Array *arr, int index);
+
 #endif

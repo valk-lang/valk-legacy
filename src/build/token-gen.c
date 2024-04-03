@@ -35,7 +35,7 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while) {
     return token_make(alc, t_while, item);
 }
 
-Token *tgen_throw(Allocator *alc, Build* b, Unit* u, FuncError* err, char* msg) {
+Token *tgen_throw(Allocator *alc, Build* b, Unit* u, unsigned int value, char* msg) {
 
     u->string_count++;
     char var[64];
@@ -59,7 +59,7 @@ Token *tgen_throw(Allocator *alc, Build* b, Unit* u, FuncError* err, char* msg) 
     array_push(b->strings, str);
 
     TThrow *item = al(alc, sizeof(TThrow));
-    item->err = err;
+    item->value = value;
     item->msg = str;
     return token_make(alc, t_throw, item);
 }

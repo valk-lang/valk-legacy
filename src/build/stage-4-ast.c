@@ -261,11 +261,11 @@ void read_ast(Parser *p, bool single_line) {
                 char* name = p->tkn;
                 Func* func = p->func;
                 Scope* fscope = func->scope;
-                FuncError* err = NULL;
+                unsigned int err = 0;
                 if (func->errors) {
-                    err = map_get(func->errors, name);
+                    err = (unsigned int)(intptr_t)map_get(func->errors, name);
                 }
-                if(!err) {
+                if(err == 0) {
                     parse_err(p, -1, "Function has no error defined named: '%s'", name);
                 }
 

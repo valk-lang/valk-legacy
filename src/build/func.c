@@ -96,7 +96,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
         }
         // Get error value
         char* name = p->tkn;
-        FuncError* err = NULL;
+        unsigned int err = 0;
         if(func->in_header) {
             build_err(b, "TODO: header errors");
         } else {
@@ -104,10 +104,9 @@ void parse_handle_func_args(Parser* p, Func* func) {
             if(v == 0)
                 v = 1;
             func_check_error_dupe(p, func, errors, name, v);
-            err = al(b->alc, sizeof(FuncError));
-            err->value = v;
+            err = v;
         }
-        map_set(errors, name, err);
+        map_set(errors, name, (void*)(uintptr_t)err);
 
         t = tok(p, true, true, false);
     }
@@ -320,8 +319,8 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
     }
     int len = errors->values->length;
     for(int i = 0; i < len; i++) {
-        FuncError* fe = array_get_index(errors->values, i);
-        if(fe->value == v) {
+        unsigned int ev = array_get_index_u32(errors->values, i);
+        if(ev == v) {
             char* prev = array_get_index(errors->keys, i);
             parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
         }
