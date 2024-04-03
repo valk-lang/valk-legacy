@@ -1,8 +1,6 @@
 
 #include "../all.h"
 
-void stage_5_mark_used_rec(Func* func);
-void stage_5_mark_class_used(Class* class);
 void stage_5_vtable_ir(Str* code, Build* b);
 char* ir_vtable_func_name(Func* func, char* buf);
 
@@ -10,14 +8,6 @@ void stage_5_ir_final(Build* b) {
 
     if(b->verbose > 2)
         printf("> Stage 5 | Generate final IR\n");
-
-    // Mark main func as used (recursive)
-    if(b->func_main)
-        stage_5_mark_used_rec(b->func_main);
-    stage_5_mark_used_rec(b->func_main_gen);
-
-    Func *gac_func = get_valk_func(b, "mem", "gc_alloc_class");
-    stage_5_mark_used_rec(gac_func);
 
     Str *code = str_make(b->alc, 50000);
     Str *hash_buf = str_make(b->alc, 100);
@@ -39,7 +29,7 @@ void stage_5_ir_final(Build* b) {
         // Func IR
         for (int i = 0; i < func_irs->length; i++) {
             IRFuncIR* irf = array_get_index(func_irs, i);
-            if(irf->func->is_used) {
+            if(irf->func->parsed) {
                 str_append_chars(code, irf->ir);
             }
         }
@@ -66,40 +56,6 @@ void stage_5_ir_final(Build* b) {
             if (b->verbose > 2)
                 printf("> IR changed: %s\n", u->path_ir);
             b->time_io += microtime() - start;
-        }
-    }
-}
-
-void stage_5_mark_used_rec(Func* func) {
-    if(func->is_used)
-        return;
-    func->is_used = true;
-    if(func->class && !func->class->is_used) {
-        stage_5_mark_class_used(func->class);
-    }
-
-    Array* classes = func->used_classes;
-    for(int i = 0; i < classes->length; i++) {
-        Class* class = array_get_index(classes, i);
-        stage_5_mark_class_used(class);
-    }
-
-    Array* funcs = func->used_functions;
-    for(int i = 0; i < funcs->length; i++) {
-        Func* func = array_get_index(funcs, i);
-        stage_5_mark_used_rec(func);
-    }
-}
-
-void stage_5_mark_class_used(Class* class) {
-    if (class->is_used)
-        return;
-    class->is_used = true;
-    Array *funcs = class->funcs->values;
-    for (int i = 0; i < funcs->length; i++) {
-        Func *cf = array_get_index(funcs, i);
-        if (cf->use_if_class_is_used) {
-            stage_5_mark_used_rec(cf);
         }
     }
 }
@@ -147,7 +103,7 @@ void stage_5_vtable_ir(Str* code, Build* b) {
 }
 
 char* ir_vtable_func_name(Func* func, char* buf) {
-    if(!func || !func->is_used)
+    if(!func || !func->parsed)
         return "null";
     buf[0] = '@';
     buf[1] = '\0';

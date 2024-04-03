@@ -26,9 +26,7 @@ void stage_1_parse(Fc* fc) {
     p->in_header = fc->is_header;
     p->scope = fc->scope;
 
-    usize start = microtime();
     stage_parse(p, u, fc);
-    b->time_parse += microtime() - start;
 
     p->in_header = false;
     p->scope = NULL;

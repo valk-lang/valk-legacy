@@ -5,9 +5,8 @@
 #include "typedefs.h"
 
 // Core
-IR* ir_make(Unit* u, Parser* p);
+IR* ir_make(Unit* u);
 void ir_gen_globals(IR* ir);
-void ir_gen_functions(IR* ir);
 void ir_gen_final(IR* ir);
 // Type
 char *ir_type(IR *ir, Type *type);
@@ -16,6 +15,7 @@ char *ir_type_float(IR *ir, int bytes);
 void ir_define_struct(IR *ir, Class* class);
 char *ir_type_align(IR *ir, Type *type, char* result);
 // Func
+void ir_gen_ir_for_func(IR *ir, Func *vfunc);
 void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs);
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
@@ -74,7 +74,6 @@ struct IR {
     char* char_buf;
     Str* str_buf;
     //
-    Str* code_final;
     Str* code_struct;
     Str* code_global;
     Str* code_extern;
