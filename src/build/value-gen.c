@@ -28,6 +28,7 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
     item->rett_refs = NULL;
     item->err_scope = NULL;
     item->err_value = NULL;
+    item->err_decl = NULL;
     return value_make(alc, v_func_call, item, on->rett->func_info->rett);
 }
 

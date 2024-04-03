@@ -796,6 +796,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
                 Idf* idf = idf_make(alc, idf_error, decl);
                 scope_set_idf(err_scope, name, idf, p);
                 scope_add_decl(alc, err_scope, decl);
+                f->err_decl = decl;
             }
 
             p->scope = err_scope;
@@ -822,6 +823,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
                 Idf* idf = idf_make(alc, idf_error, decl);
                 scope_set_idf(sub_scope, name, idf, p);
                 scope_add_decl(alc, sub_scope, decl);
+                f->err_decl = decl;
             }
 
             Value* errv = read_value(alc, p, false, 0);

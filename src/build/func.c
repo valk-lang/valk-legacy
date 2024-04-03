@@ -134,8 +134,8 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     char *load = ir_load(ir, type_i32, "@valk_err_code");
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
-    // Clear error
-    ir_store_old(ir, type_i32, "@valk_err_code", "0");
+    if (fcall->err_decl)
+        fcall->err_decl->ir_var = load;
 
     ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
 
@@ -143,6 +143,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
 
         Scope* err_scope = fcall->err_scope;
         ir->block = block_err;
+        ir_store_old(ir, type_i32, "@valk_err_code", "0");
         ir_write_ast(ir, err_scope);
         if(!err_scope->did_return) {
             ir_jump(ir, after);
@@ -157,6 +158,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         char* ltype = ir_type(ir, val->rett);
 
         ir->block = block_err;
+        ir_store_old(ir, type_i32, "@valk_err_code", "0");
         char* alt_val = ir_value(ir, scope, val);
         IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);

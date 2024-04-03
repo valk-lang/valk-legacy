@@ -64,6 +64,7 @@ struct VFuncCall {
     Array *rett_refs;
     Scope *err_scope;
     Value *err_value;
+    Decl* err_decl;
     int line;
     int col;
 };
