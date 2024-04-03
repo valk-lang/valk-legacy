@@ -28,6 +28,7 @@ test "Error handling" {
     let v4 = test_errh_error2() err ? <{
         assert(!error_is(err, !err))
         assert(error_is(err, !err2))
+        assert(error_is(err, !err, !err2))
         return 5 @as uint
     } 
     assert(v4 == 5)
