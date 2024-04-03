@@ -26,9 +26,7 @@ void stage_1_parse(Fc* fc) {
     p->in_header = fc->is_header;
     p->scope = fc->scope;
 
-    usize start = microtime();
     stage_parse(p, u, fc);
-    b->time_parse += microtime() - start;
 
     p->in_header = false;
     p->scope = NULL;
@@ -263,10 +261,10 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Scope* nsc_scope = u->nsc->scope;
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
-    array_push(u->classes, class);
     if(!class->is_generic_base) {
         scope_set_idf(class->scope, "CLASS", idf, p);
         array_push(b->classes, class);
+        array_push(u->classes, class);
         if(class->type == ct_class) {
             class->gc_vtable_index = ++b->gc_vtables;
         }

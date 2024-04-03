@@ -625,8 +625,6 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_class) {
         Class* class = idf->item;
-        if(p->func)
-            array_push(p->func->used_classes, class);
         value_check_act(class->act, class->fc, p, "class");
         return value_handle_class(alc, p, class);
     }
@@ -870,6 +868,8 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
         class = get_generic_class(p, class, generic_types);
     }
+    if (p->func)
+        array_push(p->func->used_classes, class);
 
     char t = tok(p, false, false, false);
     if(t == tok_dot) {

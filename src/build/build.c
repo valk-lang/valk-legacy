@@ -182,6 +182,7 @@ int cmd_build(int argc, char *argv[]) {
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
+    b->building_ast = true;
 
     b->is_test = is_test;
     b->is_clean = is_clean;
@@ -259,7 +260,6 @@ int cmd_build(int argc, char *argv[]) {
     // Build stages
     b->parser_started = true;
     build_run_stages(b);
-    stage_4_ast_main(b->nsc_main->unit);
 
     // Object files + Linking
     alc_delete(b->alc_ast);

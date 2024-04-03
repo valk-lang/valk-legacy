@@ -13,8 +13,6 @@ void stage_3_values(Unit* u) {
     usize start = microtime();
     stage_values(p, u);
     b->time_parse += microtime() - start;
-
-    stage_add_item(b->stage_4_ast, u);
 }
 
 void stage_values(Parser* p, Unit* u) {

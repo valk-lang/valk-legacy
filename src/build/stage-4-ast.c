@@ -1,59 +1,116 @@
 
 #include "../all.h"
 
-void stage_ast(Unit *u);
+void stage_ast_func(Func *func);
+void stage_ast_class(Class *class);
+void ir_vtable_define_extern(Unit* u);
 
-void stage_4_ast(Unit *u) {
+void stage_4_ast(Build *b) {
 
-    Build *b = u->b;
+    Array* units = b->units;
+    for (int i = 0; i < units->length; i++) {
+        Unit* u = array_get_index(units, i);
+        u->ir = ir_make(u);
+        ir_gen_globals(u->ir);
+    }
 
-    if(u->is_main)
+    b->building_ast = true;
+
+    stage_ast_func(b->func_main_gen);
+    stage_ast_func(get_valk_func(b, "mem", "gc_alloc_class"));
+    stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
+
+    b->building_ast = false;
+
+    Unit* um = b->nsc_main->unit;
+    ir_vtable_define_extern(um);
+
+    for (int i = 0; i < units->length; i++) {
+        Unit* u = array_get_index(units, i);
+
+        // Parse functions from main package, just for validation
+        if(u->nsc->pkc == b->pkc_main) {
+            Array* funcs = u->funcs;
+            for (int o = 0; o < funcs->length; o++) {
+                Func* func = array_get_index(funcs, o);
+                stage_ast_func(func);
+            }
+        }
+
+        if (b->verbose > 2)
+            printf("Stage 4 | Generate IR: %s\n", u->nsc->name);
+
+        usize start = microtime();
+        ir_gen_final(u->ir);
+        b->time_ir += microtime() - start;
+    }
+}
+
+void stage_ast_func(Func *func) {
+
+    if (func->parsed || func->in_header)
         return;
+    func->parsed = true;
+    func->is_used = func->b->building_ast;
 
-    usize start = microtime();
-
-    stage_ast(u);
-
-    b->time_parse += microtime() - start;
-
-    stage_4_ir(u);
-}
-
-void stage_4_ast_main(Unit *u) {
-
-    Build *b = u->b;
-
-    usize start = microtime();
-    stage_ast(u);
-    b->time_parse += microtime() - start;
-
-    stage_4_ir(u);
-}
-
-void stage_ast(Unit *u) {
+    Unit* u = func->unit;
     Build* b = u->b;
-    Parser *p = u->parser;
-    //
-    Array *funcs = u->funcs;
+    Parser* p = u->parser;
+
+    if (u->b->verbose > 2)
+        printf("Stage 4 | Parse AST: %s\n", func->export_name);
+
+    // Parse function code
+    usize start = microtime();
+
+    *p->chunk = *func->chunk_body;
+    p->func = func;
+    p->scope = func->scope;
+    p->loop_scope = NULL;
+    p->vscope_values = NULL;
+    read_ast(p, false);
+
+    if (p->cc_index > 0) {
+        parse_err(p, -1, "Missing #end token");
+    }
+
+    b->time_parse += microtime() - start;
+
+    // Generate IR
+    if(func->b->building_ast) {
+        start = microtime();
+        ir_gen_ir_for_func(u->ir, func);
+        b->time_ir += microtime() - start;
+    }
+
+    // Clear AST allocator
+    Allocator *alc = func->b->alc_ast;
+    alc_wipe(alc);
+
+    // Generate AST for sub functions
+    if(func->class && !func->class->is_used) {
+        stage_ast_class(func->class);
+    }
+    Array* used = func->used_functions;
+    for (int i = 0; i < used->length; i++) {
+        Func* f = array_get_index(used, i);
+        stage_ast_func(f);
+    }
+    Array *classes = func->used_classes;
+    for(int i = 0; i < classes->length; i++) {
+        Class* class = array_get_index(classes, i);
+        stage_ast_class(class);
+    }
+}
+void stage_ast_class(Class *class) {
+    if (class->is_used)
+        return;
+    class->is_used = true;
+    Array *funcs = class->funcs->values;
     for (int i = 0; i < funcs->length; i++) {
-
-        Func *func = array_get_index(funcs, i);
-
-        if (func->in_header)
-            continue;
-
-        if (u->b->verbose > 2)
-            printf("Stage 4 | Parse AST: %s\n", func->name);
-
-        *p->chunk = *func->chunk_body;
-        p->func = func;
-        p->scope = func->scope;
-        p->loop_scope = NULL;
-        p->vscope_values = NULL;
-        read_ast(p, false);
-
-        if(p->cc_index > 0) {
-            parse_err(p, -1, "Missing #end token");
+        Func *cf = array_get_index(funcs, i);
+        if (cf->use_if_class_is_used) {
+            stage_ast_func(cf);
         }
     }
 }
