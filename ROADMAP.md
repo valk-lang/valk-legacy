@@ -14,11 +14,11 @@
 ```
 // Prio
 - alternative for used_functions: just parse main() ast, and every function we see add to the ast parser queue.
-- error_is(err, name)
 - macros (e.g. array, map)
 - watch files --watch
 - http: max request size option, error handler option, parse post data, handle file uploads
 // Other
+- error messages
 - doc generator
 - more string functions
 - format string
