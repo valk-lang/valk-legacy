@@ -7,17 +7,24 @@ Type* type_make(Allocator* alc, int type) {
     t->size = 0;
     t->array_size = 0;
     t->class = NULL;
-    t->func_args = NULL;
-    t->func_default_values = NULL;
-    t->func_errors = NULL;
-    t->func_rett = NULL;
-    t->func_rett_types = NULL;
+    t->func_info = NULL;
     t->array_type = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
-    t->func_can_error = false;
-    t->func_will_exit = false;
+    return t;
+}
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett) {
+    TypeFuncInfo* t = al(alc, sizeof(TypeFuncInfo));
+    t->args = args;
+    t->default_values = default_values;
+    t->err_names = err_names;
+    t->err_values = err_values;
+    t->rett_types = rett_types;
+    t->rett = rett;
+    t->has_unknown_errors = false;
+    t->can_error = false;
+    t->will_exit = false;
     return t;
 }
 
@@ -76,13 +83,14 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
                 array_push(return_types, rett);
                 tt = tok_expect_two(p, ",", ")", true, false);
             }
+            // Errors
+            // TODO
+
+            // Generate type
             Type* rett = array_get_index(return_types, 0);
             rett = rett ? rett : type_gen_void(alc);
-            //
             Type *t = type_make(alc, type_func);
-            t->func_rett = rett;
-            t->func_rett_types = return_types;
-            t->func_args = args;
+            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, return_types, rett);
             t->size = b->ptr_size;
             t->is_pointer = true;
             t->nullable = nullable;
@@ -213,17 +221,21 @@ Type* type_gen_class(Allocator* alc, Class* class) {
 }
 Type* type_gen_func(Allocator* alc, Func* func) {
     Type* t = type_make(alc, type_func);
-    t->func_rett = func->rett;
-    t->func_rett_types = func->rett_types;
-    t->func_args = func->arg_types;
-    t->func_default_values = func->arg_values;
-    t->func_errors = func->errors;
     t->size = func->b->ptr_size;
     t->is_pointer = true;
-    t->func_can_error = func->errors ? true : false;
-    t->func_will_exit = func->exits;
+    t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
+    t->func_info->can_error = func->errors ? true : false;
+    t->func_info->will_exit = func->exits;
     return t;
 }
+
+Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
+    Type* t = type_make(alc, type_error);
+    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL, NULL);
+    return t;
+}
+
+
 Type* type_gen_valk(Allocator* alc, Build* b, char* name) {
     if (name[0] == 'u' && str_is(name, "uint")) {
         name = get_number_type_name(b, b->ptr_size, false, false);
@@ -308,8 +320,8 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
         return false;
     }
     if (t1->type == type_func) {
-        Array* t1s = t1->func_args;
-        Array* t2s = t2->func_args;
+        Array* t1s = t1->func_info->args;
+        Array* t2s = t2->func_info->args;
         if(t1s->length != t2s->length){
             *reason = "different amount of argument types";
             return false;
@@ -323,8 +335,8 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
             }
         }
         // Return types
-        t1s = t1->func_rett_types;
-        t2s = t2->func_rett_types;
+        t1s = t1->func_info->rett_types;
+        t2s = t2->func_info->rett_types;
         if(t1s->length != t2s->length){
             *reason = "different amount of return types";
             return false;
@@ -366,7 +378,7 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
     }
     if (t->type == type_func) {
         strcat(res, use_export_name ? "fn_" : "fn(");
-        Array * types = t->func_args;
+        Array * types = t->func_info->args;
         for(int i = 0; i < types->length; i++) {
             if(i > 0) {
                 strcat(res, use_export_name ? "_" : ", ");
@@ -375,7 +387,7 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
             type_to_str_append(sub, res, use_export_name);
         }
         strcat(res, use_export_name ? "__" : ")(");
-        types = t->func_rett_types;
+        types = t->func_info->rett_types;
         for(int i = 0; i < types->length; i++) {
             if(i > 0) {
                 strcat(res, use_export_name ? "_" : ", ");

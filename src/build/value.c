@@ -8,6 +8,7 @@ Value* value_handle_ptrv(Allocator *alc, Parser* p);
 Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right, int op);
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op);
+Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_values);
 
 void value_check_act(int act, Fc* fc, Parser* p, char* name);
 
@@ -17,7 +18,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
     char t = tok(p, true, true, true);
     char* tkn = p->tkn;
-    // char *tr = &chunk->token;
 
     Value* v = NULL;
 
@@ -193,6 +193,37 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 v->issets = issets;
                 array_push(issets, on);
             }
+
+        } else if (str_is(tkn, "error_is")) {
+            tok_expect(p, "(", false, false);
+            Id id;
+            read_id(p, NULL, &id);
+            Idf *idf = idf_by_id(p, p->scope, &id, true);
+            if(idf->type != idf_error) {
+                parse_err(p, -1, "Expected an error identifier here");
+            }
+
+            Decl* edecl = idf->item;
+            Array* err_names = edecl->type->func_info->err_names;
+            Array* err_values = edecl->type->func_info->err_values;
+
+            Value* left = value_make(alc, v_decl, edecl, type_gen_number(alc, b, 4, false, false));
+
+            tok_expect(p, ",", true, true);
+
+            Value* right = read_err_value(alc, p, err_names, err_values);
+            v = value_handle_compare(alc, p, left, right, op_eq);
+
+            t = tok(p, true, true, false);
+            while(t == tok_comma) {
+                t = tok(p, true, true, true);
+                Value* right = read_err_value(alc, p, err_names, err_values);
+                Value* next = value_handle_compare(alc, p, left, right, op_eq);
+                v = vgen_and_or(alc, b, v, next, op_or);
+                t = tok(p, true, true, false);
+            }
+
+            tok_expect(p, ")", true, true);
 
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
@@ -619,7 +650,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
 
-    parse_err(p, -1, "This identifier cannot be used inside a function (identifier-type:%d)", idf->type);
+    parse_err(p, -1, "Identifier cannot be used as a value", idf->type);
     return NULL;
 }
 
@@ -630,9 +661,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
     
     Build* b = p->b;
-    Array* func_args = ont->func_args;
-    Array* func_default_values = ont->func_default_values;
-    Type *rett = ont->func_rett;
+    Array* func_args = ont->func_info->args;
+    Array* func_default_values = ont->func_info->default_values;
+    Type *rett = ont->func_info->rett;
 
     if (!func_args || !rett) {
         parse_err(p, -1, "Function pointer value is missing function type information (compiler bug)\n");
@@ -719,23 +750,28 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
 
     Value* fcall = vgen_func_call(alc, on, args);
-    if(on->rett->func_will_exit) {
+    if(on->rett->func_info->will_exit) {
         p->scope->did_return = true;
     }
 
-    if(ont->func_errors) {
+    if(ont->func_info->err_names && ont->func_info->err_names->length > 0) {
         VFuncCall* f = fcall->item;
         bool void_rett = type_is_void(fcall->rett);
-        char t;
-        if(void_rett){
-            t = tok(p, true, false, false);
-            if(t == tok_not) {
-                t = tok(p, true, false, true);
-            } else {
-                t = 0;
+        bool ignore = false;
+        char t = tok(p, true, false, true);
+        char* name = NULL;
+        if(t == tok_id && !str_is(p->tkn, "_")) {
+            name = p->tkn;
+            t = tok(p, true, false, true);
+        }
+        if(void_rett) {
+            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?") && !str_is(p->tkn, "_")){
+                parse_err(p, -1, "Expected one the following error handler tokens: ! ? _ (Found: '%s')", p->tkn);
             }
         } else {
-            t = tok_expect_two(p, "!", "?", true, false);
+            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?")){
+                parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
+            }
         }
 
         if(t == tok_not) {
@@ -754,6 +790,15 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             Scope* err_scope = scope_sub_make(alc, sc_default, scope);
             f->err_scope = err_scope;
 
+            if(name) {
+                // Error identifier
+                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
+                Idf* idf = idf_make(alc, idf_error, decl);
+                scope_set_idf(err_scope, name, idf, p);
+                scope_add_decl(alc, err_scope, decl);
+                f->err_decl = decl;
+            }
+
             p->scope = err_scope;
             read_ast(p, single);
             p->scope = scope;
@@ -768,8 +813,24 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             if (void_rett) {
                 parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
             }
+            Scope* scope = p->scope;
+            Scope* sub_scope = scope_sub_make(alc, sc_default, p->scope);
+            p->scope = sub_scope;
+
+            if(name) {
+                // Error identifier
+                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
+                Idf* idf = idf_make(alc, idf_error, decl);
+                scope_set_idf(sub_scope, name, idf, p);
+                scope_add_decl(alc, sub_scope, decl);
+                f->err_decl = decl;
+            }
+
             Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, p, p->scope, errv, fcall->rett);
+            errv = try_convert(alc, p, sub_scope, errv, fcall->rett);
+
+            p->scope = scope;
+
             // Mix nullable
             if(fcall->rett->is_pointer && errv->rett->nullable) {
                 Type* t = type_clone(alc, fcall->rett);
@@ -1280,4 +1341,31 @@ void value_check_act(int act, Fc* fc, Parser* p, char* name) {
             parse_err(p, -1, "You cannot access this %s from this package", name);
         }
     }
+}
+
+Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_values) {
+    tok_expect(p, "!", true, true);
+    char t = tok(p, false, false, true);
+    if (t != tok_id) {
+        parse_err(p, -1, "Invalid error name syntax");
+    }
+
+    char *err_name = p->tkn;
+    int index = array_find(err_names, err_name, arr_find_str);
+    if (index == -1) {
+        Str *buf = p->b->str_buf;
+        str_clear(buf);
+        for (int i = 0; i < err_names->length; i++) {
+            char *name = array_get_index(err_names, i);
+            if (i > 0) {
+                str_append_chars(buf, ", ");
+            }
+            str_append_chars(buf, "!");
+            str_append_chars(buf, name);
+        }
+        char *options = str_to_chars(alc, buf);
+        parse_err(p, -1, "Error can never be '%s', possible errors: %s", err_name, options);
+    }
+    unsigned int errv = array_get_index_u32(err_values, index);
+    return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
 }

@@ -128,11 +128,12 @@ void read_ast(Parser *p, bool single_line) {
                         parse_err(p, -1, "Right side does not return multiple values");
                     }
                     Value* on = fcall->on;
-                    fcall_rett_types = on->rett->func_rett_types;
-                    if(!fcall_rett_types || fcall_rett_types->length < types->length) {
-                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", types->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
+                    TypeFuncInfo *fi = on->rett->func_info;
+                    if(!fi || !fi->rett_types || fi->rett_types->length < types->length) {
+                        parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", types->length, fi->rett_types ? fi->rett_types->length : (type_is_void(fi->rett) ? 0 : 1));
                     }
                     fcall->rett_refs = array_make(alc, names->length);
+                    fcall_rett_types = fi->rett_types;
                 }
                 for(int i = 0; i < names->length; i++) {
                     char *name = array_get_index(names, i);
@@ -260,11 +261,11 @@ void read_ast(Parser *p, bool single_line) {
                 char* name = p->tkn;
                 Func* func = p->func;
                 Scope* fscope = func->scope;
-                FuncError* err = NULL;
+                unsigned int err = 0;
                 if (func->errors) {
-                    err = map_get(func->errors, name);
+                    err = (unsigned int)(intptr_t)map_get(func->errors, name);
                 }
-                if(!err) {
+                if(err == 0) {
                     parse_err(p, -1, "Function has no error defined named: '%s'", name);
                 }
 
@@ -470,11 +471,13 @@ void read_ast(Parser *p, bool single_line) {
                 parse_err(p, -1, "Right side does not return multiple values");
             }
             Value *on = fcall->on;
-            Array *fcall_rett_types = on->rett->func_rett_types;
-            if (!fcall_rett_types || fcall_rett_types->length < values->length) {
-                parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", values->length, fcall_rett_types ? fcall_rett_types->length : (type_is_void(on->rett->func_rett) ? 0 : 1));
+
+            TypeFuncInfo *fi = on->rett->func_info;
+            if (!fi || !fi->rett_types || fi->rett_types->length < values->length) {
+                parse_err(p, -1, "Trying to declare %d variables, but the function only returns %d value(s)", values->length, fi->rett_types ? fi->rett_types->length : (type_is_void(fi->rett) ? 0 : 1));
             }
             fcall->rett_refs = array_make(alc, values->length);
+            Array *fcall_rett_types = fi->rett_types;
 
             for (int i = 0; i < values->length; i++) {
                 Value *v = array_get_index(values, i);

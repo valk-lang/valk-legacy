@@ -64,6 +64,7 @@ struct VFuncCall {
     Array *rett_refs;
     Scope *err_scope;
     Value *err_value;
+    Decl* err_decl;
     int line;
     int col;
 };
@@ -127,6 +128,12 @@ struct VThisOrThat {
     Value* cond;
     Value* v1;
     Value* v2;
+};
+struct VError {
+    Array* err_names;
+    Array* err_values;
+    Decl* decl;
+    bool has_unknown;
 };
 
 #endif

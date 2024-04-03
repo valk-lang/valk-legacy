@@ -61,8 +61,5 @@ struct FuncArg {
     Chunk* chunk_value;
     Decl* decl;
 };
-struct FuncError {
-    unsigned int value;
-};
 
 #endif

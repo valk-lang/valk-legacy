@@ -13,6 +13,7 @@
 
 ```
 // Prio
+- alternative for used_functions: just parse main() ast, and every function we see add to the ast parser queue.
 - error_is(err, name)
 - macros (e.g. array, map)
 - watch files --watch

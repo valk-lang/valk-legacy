@@ -25,7 +25,7 @@ test "fs:basename" {
 test "fs: create / delete directories & files" {
     // Create dir
     let dir = fs:exe_dir() + "/valk-mkdir-test/"
-    fs:mkdir(dir, 511)
+    fs:mkdir(dir, 511) _
     assert(fs:exists(dir))
 
     // Open & create file
@@ -56,11 +56,11 @@ test "fs: create / delete directories & files" {
 
     // Delete file
     if fs:exists(file) {
-        fs:remove(file)
+        fs:remove(file) _
     }
     assert(fs:exists(file) == false)
 
     // Delete dir
-    fs:rmdir(dir)
+    fs:rmdir(dir) _
     assert(fs:exists(dir) == false)
 }

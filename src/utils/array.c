@@ -22,6 +22,9 @@ void array_push(Array *arr, void *item) {
     *adr = (uintptr_t)item;
     arr->length++;
 }
+void array_push_u32(Array *arr, unsigned int value) {
+    array_push(arr, (void*)(uintptr_t)value);
+}
 
 void array_push_unique_adr(Array *arr, void *item) {
     if (!array_contains(arr, item, arr_find_adr)) {
@@ -92,6 +95,9 @@ void *array_get_index(Array *arr, int index) {
     uintptr_t *result = arr->data + (index * sizeof(void *));
     return (void *)*result;
 }
+unsigned int array_get_index_u32(Array *arr, int index) {
+    return (unsigned int)(intptr_t)array_get_index(arr, index);
+}
 
 void array_set_index(Array *arr, int index, void *item) {
     if (index > arr->max_length - 1) {
@@ -107,6 +113,12 @@ void array_set_index(Array *arr, int index, void *item) {
 bool array_contains(Array *arr, void *item, int type) {
     int index = array_find(arr, item, type);
     return index > -1;
+}
+bool array_contains_i32(Array *arr, int value) {
+    return array_find(arr, (void*)(uintptr_t)value, arr_find_int) > -1;
+}
+bool array_contains_u32(Array *arr, unsigned int value) {
+    return array_find(arr, (void*)(uintptr_t)value, arr_find_int) > -1;
 }
 
 int array_find(Array *arr, void *item, int type) {
