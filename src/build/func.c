@@ -39,6 +39,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->is_used = false;
     f->use_if_class_is_used = false;
     f->exits = false;
+    f->parsed = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
