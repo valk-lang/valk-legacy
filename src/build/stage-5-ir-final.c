@@ -29,7 +29,7 @@ void stage_5_ir_final(Build* b) {
         // Func IR
         for (int i = 0; i < func_irs->length; i++) {
             IRFuncIR* irf = array_get_index(func_irs, i);
-            if(irf->func->parsed) {
+            if(irf->func->is_used) {
                 str_append_chars(code, irf->ir);
             }
         }
@@ -103,7 +103,7 @@ void stage_5_vtable_ir(Str* code, Build* b) {
 }
 
 char* ir_vtable_func_name(Func* func, char* buf) {
-    if(!func || !func->parsed)
+    if(!func || !func->is_used)
         return "null";
     buf[0] = '@';
     buf[1] = '\0';

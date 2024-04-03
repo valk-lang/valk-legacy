@@ -4,6 +4,8 @@
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
 
+bool mark_functions_as_used;
+
 void stage_4_ast(Build *b) {
 
     Array* units = b->units;
@@ -12,13 +14,25 @@ void stage_4_ast(Build *b) {
         u->ir = ir_make(u);
     }
 
+    mark_functions_as_used = true;
+
     stage_ast_func(b->func_main_gen);
     stage_ast_func(get_valk_func(b, "mem", "gc_alloc_class"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
 
+    mark_functions_as_used = true;
 
     for (int i = 0; i < units->length; i++) {
         Unit* u = array_get_index(units, i);
+
+        // Parse functions from main package, just for validation
+        if(u->nsc->pkc == b->pkc_main) {
+            Array* funcs = u->funcs;
+            for (int o = 0; o < funcs->length; o++) {
+                Func* func = array_get_index(funcs, o);
+                stage_ast_func(func);
+            }
+        }
 
         if (b->verbose > 2)
             printf("Stage 4 | Generate IR: %s\n", u->nsc->name);
@@ -34,13 +48,14 @@ void stage_ast_func(Func *func) {
     if (func->parsed || func->in_header)
         return;
     func->parsed = true;
+    func->is_used = mark_functions_as_used;
 
     Unit* u = func->unit;
     Build* b = u->b;
     Parser* p = u->parser;
 
     if (u->b->verbose > 2)
-        printf("Stage 4 | Parse AST: %s\n", func->name);
+        printf("Stage 4 | Parse AST: %s\n", func->export_name);
 
     // Parse function code
     usize start = microtime();
@@ -59,9 +74,11 @@ void stage_ast_func(Func *func) {
     b->time_parse += microtime() - start;
 
     // Generate IR
-    start = microtime();
-    ir_gen_ir_for_func(u->ir, func);
-    b->time_ir += microtime() - start;
+    if(mark_functions_as_used) {
+        start = microtime();
+        ir_gen_ir_for_func(u->ir, func);
+        b->time_ir += microtime() - start;
+    }
 
     // Clear AST allocator
     Allocator *alc = func->b->alc_ast;

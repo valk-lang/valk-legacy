@@ -510,7 +510,8 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     // Set type identifiers
     for (int i = 0; i < generic_types->length; i++) {
         char* name = array_get_index(class->generic_names, i);
-        Type* type = array_get_index(generic_types, i);
+        Type* type_ = array_get_index(generic_types, i);
+        Type* type = type_clone(b->alc, type_);
         Idf* idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(gclass->scope, name, idf, p);
     }
