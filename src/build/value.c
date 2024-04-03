@@ -1364,7 +1364,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
             str_append_chars(buf, name);
         }
         char *options = str_to_chars(alc, buf);
-        parse_err(p, -1, "Error can never be '%s', possible errors: ", err_name, options);
+        parse_err(p, -1, "Error can never be '%s', possible errors: %s", err_name, options);
     }
     unsigned int errv = array_get_index_u32(err_values, index);
     return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
