@@ -500,9 +500,11 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     gclass->name = name;
     gclass->ir_name = export_name;
 
-    array_push(b->classes, gclass);
-    if(gclass->type == ct_class) {
-        gclass->gc_vtable_index = ++b->gc_vtables;
+    if (b->building_ast) {
+        array_push(b->classes, gclass);
+        if (gclass->type == ct_class) {
+            gclass->gc_vtable_index = ++b->gc_vtables;
+        }
     }
 
     map_set(class->generics, h, gclass);

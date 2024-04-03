@@ -110,6 +110,7 @@ struct Build {
     bool is_test;
     bool is_clean;
     bool optimize;
+    bool building_ast;
 };
 struct Fc {
     Build *b;

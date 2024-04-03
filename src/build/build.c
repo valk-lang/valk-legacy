@@ -182,6 +182,7 @@ int cmd_build(int argc, char *argv[]) {
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
+    b->building_ast = true;
 
     b->is_test = is_test;
     b->is_clean = is_clean;

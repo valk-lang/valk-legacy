@@ -41,7 +41,5 @@ IR* ir_make(Unit* u) {
 
     ir->debug = false;
 
-    ir_gen_globals(ir);
-
     return ir;
 }

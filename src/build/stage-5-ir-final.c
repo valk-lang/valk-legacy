@@ -110,3 +110,27 @@ char* ir_vtable_func_name(Func* func, char* buf) {
     strcat(buf, func->export_name);
     return buf;
 }
+
+void ir_vtable_define_extern(Unit* u) {
+    Build* b = u->b;
+    Array* classes = b->classes;
+    IR* ir = u->ir;
+
+    for (int i = 0; i < classes->length; i++) {
+        Class *class = array_get_index(classes, i);
+        if (class->type != ct_class)
+            continue;
+
+        Func *transfer = map_get(class->funcs, "_v_transfer");
+        Func *mark = map_get(class->funcs, "_v_mark");
+        Func *mark_shared = map_get(class->funcs, "_v_mark_shared");
+        Func *share = map_get(class->funcs, "_v_share");
+        Func *gc_free = map_get(class->funcs, "_gc_free");
+
+        ir_define_ext_func(ir, transfer);
+        ir_define_ext_func(ir, mark);
+        ir_define_ext_func(ir, mark_shared);
+        ir_define_ext_func(ir, share);
+        ir_define_ext_func(ir, gc_free);
+    }
+}

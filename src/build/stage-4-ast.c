@@ -3,8 +3,7 @@
 
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
-
-bool mark_functions_as_used;
+void ir_vtable_define_extern(Unit* u);
 
 void stage_4_ast(Build *b) {
 
@@ -12,15 +11,19 @@ void stage_4_ast(Build *b) {
     for (int i = 0; i < units->length; i++) {
         Unit* u = array_get_index(units, i);
         u->ir = ir_make(u);
+        ir_gen_globals(u->ir);
     }
 
-    mark_functions_as_used = true;
+    b->building_ast = true;
 
     stage_ast_func(b->func_main_gen);
     stage_ast_func(get_valk_func(b, "mem", "gc_alloc_class"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
 
-    mark_functions_as_used = true;
+    b->building_ast = false;
+
+    Unit* um = b->nsc_main->unit;
+    ir_vtable_define_extern(um);
 
     for (int i = 0; i < units->length; i++) {
         Unit* u = array_get_index(units, i);
@@ -48,7 +51,7 @@ void stage_ast_func(Func *func) {
     if (func->parsed || func->in_header)
         return;
     func->parsed = true;
-    func->is_used = mark_functions_as_used;
+    func->is_used = func->b->building_ast;
 
     Unit* u = func->unit;
     Build* b = u->b;
@@ -74,7 +77,7 @@ void stage_ast_func(Func *func) {
     b->time_parse += microtime() - start;
 
     // Generate IR
-    if(mark_functions_as_used) {
+    if(func->b->building_ast) {
         start = microtime();
         ir_gen_ir_for_func(u->ir, func);
         b->time_ir += microtime() - start;
