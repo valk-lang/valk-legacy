@@ -86,5 +86,6 @@
 #include "headers/compile-cond.h"
 #include "headers/test.h"
 #include "headers/thread.h"
+#include "headers/macro.h"
 
 #endif

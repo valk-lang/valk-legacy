@@ -82,7 +82,7 @@ void cc_parse(Parser* p) {
         // Global idf
         char t = tok(p, true, false, true);
         if(t != tok_id)
-            parse_err(p, -1, "Invalid identifier name");
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
         char* idf_name1 = p->tkn;
         // // Name idf
         // tok_expect(p, ",", true, false);
@@ -94,7 +94,7 @@ void cc_parse(Parser* p) {
         tok_expect(p, ",", true, false);
         t = tok(p, true, false, true);
         if(t != tok_id)
-            parse_err(p, -1, "Invalid identifier name");
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
         char* idf_name3 = p->tkn;
         tok_expect_newline(p);
         //
@@ -112,6 +112,41 @@ void cc_parse(Parser* p) {
             scope_set_idf(p->scope, idf_name3, cl->idf3, p);
         }
 
+    } else if(str_is(tkn, "loop_macro_items")) {
+
+        char t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* items_name = p->tkn;
+        Idf *idf = scope_find_idf(p->scope, items_name, true);
+        if(!idf || idf->type != idf_macro_items)
+            parse_err(p, -1, "Invalid identifier for macro items: '%s'", items_name);
+
+        Array* items = idf->item;
+        CCLoop* cl = cc_init_loop(b->alc, items);
+        cl->idf_type = idf_macro_item;
+        array_set_index(p->cc_loops, p->cc_loop_index++, cl);
+
+        tok_expect(p, "as", true, false);
+        // Item idf
+        t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* idf_name1 = p->tkn;
+
+        tok_expect_newline(p);
+        //
+        cl->start = chunk_clone(b->alc_ast, p->chunk);
+        //
+        if(cl->index == cl->length) {
+            // No items, skip
+            cc_skip_loop(p);
+        } else {
+            MacroItem* mi = array_get_index(cl->items, cl->index++);
+            cl->idf1 = idf_make(b->alc_ast, idf_macro_item, mi);
+            scope_set_idf(p->scope, idf_name1, cl->idf1, p);
+        }
+
     } else if(str_is(tkn, "endloop")) {
         if(p->cc_loop_index == 0) {
             parse_err(p, -1, "Using '#endloop' while not being inside a loop");
@@ -122,6 +157,9 @@ void cc_parse(Parser* p) {
                 Global* g = array_get_index(cl->items, cl->index++);
                 cl->idf1->item = g;
                 cl->idf3->item = g->type;
+            } else if(cl->idf_type == idf_macro_item) {
+                MacroItem* mi = array_get_index(cl->items, cl->index++);
+                cl->idf1->item = mi;
             } else {
                 parse_err(p, -1, "Unhandled '#endloop' type (compiler bug)");
             }

@@ -95,6 +95,9 @@ enum IDF {
     idf_cached_value,
     idf_error,
     idf_trait,
+    idf_macro,
+    idf_macro_items,
+    idf_macro_item,
 };
 
 enum TYPES {
