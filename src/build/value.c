@@ -643,6 +643,9 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_macro) {
         Macro* m = idf->item;
+        if(!m->is_value) {
+            parse_err(p, -1, "You cannot use this macro as a value");
+        }
         return macro_read_value(alc, m, p);
     }
     if (type == idf_macro_item) {

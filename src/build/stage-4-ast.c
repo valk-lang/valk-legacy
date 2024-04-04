@@ -404,6 +404,13 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, tgen_each(alc, on, func, kd, vd, scope_each, index, vindex));
                 continue;
             }
+            // Check if macro
+            Idf* idf = scope_find_idf(scope, tkn, true);
+            if(idf && idf->type == idf_macro) {
+                Macro* m = idf->item;
+                macro_read_ast(alc, m, p);
+                continue;
+            }
         }
         if (t == tok_at_word) {
             if (str_is(tkn, "@cache_value")){

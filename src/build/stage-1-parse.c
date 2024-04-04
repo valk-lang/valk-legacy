@@ -475,6 +475,7 @@ void stage_1_macro(Parser* p, Unit* u, Fc* fc) {
     Macro* m = al(b->alc, sizeof(Macro));
     m->patterns = array_make(b->alc, 2);
     m->body = NULL;
+    m->is_value = false;
 
     macro_parse(b->alc, m, p);
 

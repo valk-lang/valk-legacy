@@ -34,8 +34,12 @@ void macro_parse(Allocator* alc, Macro* m, Parser* p) {
         array_push(patterns, pat);
     }
 
-    tok_expect(p, "{", true, true);
     m->body = chunk_clone(alc, p->chunk);
+
+    char t = tok_expect_two(p, "{", "<{", true, true);
+    m->is_value = t == tok_ltcurly_open;
+    if(!m->is_value)
+        *m->body = *p->chunk;
     skip_body(p);
 }
 
@@ -141,6 +145,31 @@ Value* macro_read_value(Allocator* alc, Macro* m, Parser* p) {
     p->scope = scope;
 
     return res;
+}
+
+void macro_read_ast(Allocator* alc, Macro* m, Parser* p) {
+    //
+    Array* patterns = m->patterns;
+    Scope* scope = p->scope;
+    Scope* sub = scope_sub_make(alc, sc_default, p->scope);
+
+    for(int i = 0; i < patterns->length; i++) {
+        MacroPattern* pat = array_get_index(patterns, i);
+        macro_read_pattern(alc, p, pat, sub->identifiers);
+    }
+
+    p->scope = sub;
+    parser_new_context(&p);
+
+    *p->chunk = *m->body;
+    read_ast(p, false);
+
+    parser_pop_context(&p);
+    p->scope = scope;
+
+    if (sub->did_return)
+        scope->did_return = true;
+    array_push(scope->ast, token_make(alc, t_ast_scope, sub));
 }
 
 void macro_read_pattern(Allocator *alc, Parser *p, MacroPattern *pat, Map* identifiers) {

@@ -6,10 +6,12 @@
 
 void macro_parse(Allocator* alc, Macro* m, Parser* p);
 Value* macro_read_value(Allocator* alc, Macro* m, Parser* p);
+void macro_read_ast(Allocator* alc, Macro* m, Parser* p);
 
 struct Macro {
     Array* patterns;
     Chunk* body;
+    bool is_value;
 };
 struct MacroPattern {
     char* open_tkn;
