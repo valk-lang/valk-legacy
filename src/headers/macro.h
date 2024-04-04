@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 void macro_parse(Allocator* alc, Macro* m, Parser* p);
+Value* macro_read_value(Allocator* alc, Macro* m, Parser* p);
 
 struct Macro {
     Array* patterns;

@@ -2,6 +2,7 @@
 #include "../all.h"
 
 void macro_parse_pattern(Allocator* alc, MacroPattern* pat, char* close_tkn, Parser* p);
+void macro_read_pattern(Allocator *alc, Parser *p, MacroPattern *pat, Map* identifiers);
 
 void macro_parse(Allocator* alc, Macro* m, Parser* p) {
 
@@ -41,12 +42,16 @@ void macro_parse(Allocator* alc, Macro* m, Parser* p) {
 void macro_parse_pattern(Allocator* alc, MacroPattern* pat, char* close_tkn, Parser* p) {
 
     Array* items = pat->items;
+    bool has_repeat = false;
 
     while (true) {
         char t = tok(p, true, true, true);
         char* tkn = p->tkn;
         if (str_is(tkn, close_tkn)) {
             return;
+        }
+        if(has_repeat) {
+            parse_err(p, -1, "You cannot define more pattern items after a 'repeat'");
         }
         MacroPatternItem* item = al(alc, sizeof(MacroPatternItem));
         item->item = NULL;
@@ -76,8 +81,9 @@ void macro_parse_pattern(Allocator* alc, MacroPattern* pat, char* close_tkn, Par
         } else if(str_is(tkn, "repeat")) {
 
             MacroRepeat *rep = al(alc, sizeof(MacroRepeat));
-
             item->type = pat_repeat;
+            item->item = rep;
+
             tok_expect(p, "(", true, true);
             t = tok(p, true, true, true);
             if(t != tok_id)
@@ -90,6 +96,7 @@ void macro_parse_pattern(Allocator* alc, MacroPattern* pat, char* close_tkn, Par
             if(t != tok_char)
                 parse_err(p, -1, "Invalid repeat delimiter, expected a character between single quotes");
             rep->delimiter = p->tkn;
+            item->name = name;
 
             tok_expect(p, ",", true, true);
 
@@ -103,10 +110,82 @@ void macro_parse_pattern(Allocator* alc, MacroPattern* pat, char* close_tkn, Par
 
             macro_parse_pattern(alc, pat2, ")", p);
 
+            has_repeat = true;
+
         } else {
             item->type = pat_tkn;
             item->item = p->tkn;
         }
         array_push(items, item);
+    }
+}
+
+Value* macro_read_value(Allocator* alc, Macro* m, Parser* p) {
+    //
+    Array* patterns = m->patterns;
+    Scope* scope = p->scope;
+    Scope* sub = scope_sub_make(alc, sc_default, p->scope);
+
+    for(int i = 0; i < patterns->length; i++) {
+        MacroPattern* pat = array_get_index(patterns, i);
+        macro_read_pattern(alc, p, pat, sub->identifiers);
+    }
+
+    p->scope = sub;
+    parser_new_context(&p);
+
+    *p->chunk = *m->body;
+    Value* res = read_value(alc, p, true, 0);
+
+    parser_pop_context(&p);
+    p->scope = scope;
+
+    return res;
+}
+
+void macro_read_pattern(Allocator *alc, Parser *p, MacroPattern *pat, Map* identifiers) {
+
+    if (pat->open_tkn) {
+        tok_expect(p, pat->open_tkn, true, true);
+    }
+
+    Array *items = pat->items;
+    for (int o = 0; o < items->length; o++) {
+        MacroPatternItem *item = array_get_index(items, o);
+        if (item->type == pat_type) {
+            Type *type = read_type(p, alc, true);
+            map_set(identifiers, item->name, idf_make(alc, idf_type, type));
+        } else if (item->type == pat_value) {
+            Value *val = read_value(alc, p, true, 0);
+            map_set(identifiers, item->name, idf_make(alc, idf_value, val));
+        } else if (item->type == pat_tkn) {
+            tok_expect(p, item->item, true, true);
+        } else if (item->type == pat_repeat) {
+
+            MacroRepeat *rep = item->item;
+            Array* rep_items = array_make(alc, 4);
+
+            while (true) {
+                char t = tok(p, true, true, false);
+                if (pat->close_tkn && str_is(p->tkn, pat->close_tkn)) {
+                    break;
+                }
+                if(rep_items->length > 0 && rep->delimiter && rep->delimiter[0] != 0) {
+                    tok_expect(p, rep->delimiter, true, true);
+                }
+
+                Map *identifiers = map_make(alc);
+                MacroItem *mi = al(alc, sizeof(MacroItem));
+                mi->identifiers = identifiers;
+                macro_read_pattern(alc, p, rep->pattern, identifiers);
+                array_push(rep_items, mi);
+            }
+
+            map_set(identifiers, item->name, idf_make(alc, idf_macro_items, rep_items));
+        }
+    }
+
+    if (pat->close_tkn) {
+        tok_expect(p, pat->close_tkn, true, true);
     }
 }

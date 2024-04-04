@@ -641,6 +641,19 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         *p->chunk = ch;
         return val;
     }
+    if (type == idf_macro) {
+        Macro* m = idf->item;
+        return macro_read_value(alc, m, p);
+    }
+    if (type == idf_macro_item) {
+        MacroItem* mi = idf->item;
+        tok_expect(p, ".", false, false);
+        char t = tok(p, false, false, true);
+        Idf* sub = map_get(mi->identifiers, p->tkn);
+        if(!sub)
+            parse_err(p, -1, "Unknown macro item property: '%s'", p->tkn);
+        return value_handle_idf(alc, p, sub);
+    }
     if (type == idf_cached_value) {
         return idf->item;
     }

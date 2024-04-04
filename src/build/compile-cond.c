@@ -157,6 +157,9 @@ void cc_parse(Parser* p) {
                 Global* g = array_get_index(cl->items, cl->index++);
                 cl->idf1->item = g;
                 cl->idf3->item = g->type;
+            } else if(cl->idf_type == idf_macro_item) {
+                MacroItem* mi = array_get_index(cl->items, cl->index++);
+                cl->idf1->item = mi;
             } else {
                 parse_err(p, -1, "Unhandled '#endloop' type (compiler bug)");
             }

@@ -11,7 +11,7 @@ macro map [T:t1] { repeat(items, ',', V:v1 => V:v2) } : {
 
 macro array [T:t1] { repeat(items, ',', V:v1) } : {
   <{
-	let a = Array[T].new()
+	let a = Array[t1].new()
 	#loop_macro_items items as item
 	a.push(item.v1)
 	#endloop
