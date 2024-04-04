@@ -13,7 +13,6 @@
 
 ```
 // Prio
-- macros (e.g. array, map)
 - watch files --watch
 - http: max request size option, error handler option, parse post data, handle file uploads
 // Other
