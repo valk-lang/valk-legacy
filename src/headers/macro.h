@@ -25,6 +25,9 @@ struct MacroRepeat {
     char* delimiter;
     MacroPattern* pattern;
 };
+struct MacroItem {
+    Map* identifiers;
+};
 
 enum MACRO_PATTERNS {
     pat_type,
