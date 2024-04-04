@@ -1,0 +1,20 @@
+
+macro map [T:t1] { repeat(items, ',', V:v1 => V:v2) } : {
+  <{
+	let m = Map[t1]{}
+	#each_macro_items items as item
+	m.set(item.v1, item.v2)
+	#endloop
+	return m
+  }
+}
+
+macro array [T:t1] { repeat(items, ',', V:v1) } : {
+  <{
+	let a = Array[T].new()
+	#each_macro_items items as item
+	a.push(item.v1)
+	#endloop
+	return a
+  }
+}

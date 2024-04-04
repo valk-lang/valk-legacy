@@ -10,6 +10,7 @@ void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared, int act, Fc* fc);
 void stage_1_value_alias(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_alias(Parser* p, Unit* u, Fc* fc);
+void stage_1_macro(Parser* p, Unit* u, Fc* fc);
 void stage_1_test(Parser* p, Unit* u, Fc* fc);
 void stage_1_snippet(Parser* p, Unit* u);
 void stage_1_link(Parser* p, Unit* u, int link_dynamic);
@@ -118,6 +119,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             }
             if (str_is(tkn, "alias")) {
                 stage_1_alias(p, u, fc);
+                continue;
+            }
+            if (str_is(tkn, "macro")) {
+                stage_1_macro(p, u, fc);
                 continue;
             }
 
@@ -457,6 +462,24 @@ void stage_1_alias(Parser* p, Unit* u, Fc* fc) {
     array_push(u->aliasses, a);
 
     skip_id(p);
+}
+
+void stage_1_macro(Parser* p, Unit* u, Fc* fc) {
+    Build *b = u->b;
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid macro name: '%s'", name);
+    }
+
+    Macro* m = al(b->alc, sizeof(Macro));
+    m->patterns = array_make(b->alc, 2);
+    m->body = NULL;
+
+    macro_parse(b->alc, m, p);
+
+    Idf* idf = idf_make(b->alc, idf_macro, m);
+    scope_set_idf(u->nsc->scope, name, idf, p);
 }
 
 void stage_1_test(Parser* p, Unit* u, Fc* fc){

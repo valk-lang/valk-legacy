@@ -49,6 +49,10 @@ typedef struct ClassProp ClassProp;
 typedef struct Trait Trait;
 typedef struct ValueAlias ValueAlias;
 typedef struct Alias Alias;
+typedef struct Macro Macro;
+typedef struct MacroPattern MacroPattern;
+typedef struct MacroPatternItem MacroPatternItem;
+typedef struct MacroRepeat MacroRepeat;
 typedef struct Test Test;
 // Tokens
 typedef struct Token Token;
