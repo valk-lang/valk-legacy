@@ -21,6 +21,7 @@ class ParseResult {
     ~ has_parsed_body: bool (false)
     - stage: uint (0)
     - buffer: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+    - parse_pos: uint (0)
 
     fn clear() {
         this.stage = 0
@@ -32,6 +33,7 @@ class ParseResult {
         this.body = ""
         this.headers.clear()
         this.buffer.clear()
+        this.parse_pos = 0
     }
 }
 
@@ -56,12 +58,13 @@ struct Parser {
         }
 
         let buffer = result.buffer
-        let stage = result.stage
-        let data = bytes.data
-        let pos = bytes.read_index
-        let length = bytes.length
+        let pos = result.parse_pos
 
         buffer.append(bytes)
+
+        let stage = result.stage
+        let data = buffer.data
+        let length = buffer.length
 
         // Header
         if stage == 0 {
@@ -97,7 +100,7 @@ struct Parser {
             }
 
             pos = index + 2;
-            buffer.read_index = pos;
+            result.parse_pos = pos;
             stage = 1;
             result.stage = stage;
         }
@@ -118,7 +121,7 @@ struct Parser {
             if index == pos {
                 // End of headers
                 pos = index + 2;
-                buffer.read_index = pos;
+                result.parse_pos = pos;
                 stage = 2;
                 result.stage = stage;
 
@@ -142,8 +145,8 @@ struct Parser {
             headers.set(key.to_lower(), value);
 
             pos = index + 2;
-            let headers_length = result.headers_length + (pos - buffer.read_index)
-            buffer.read_index = pos;
+            let headers_length = result.headers_length + (pos - result.parse_pos)
+            result.parse_pos = pos;
 
             // Check max header length
             if headers_length > 8192 {
@@ -169,7 +172,7 @@ struct Parser {
             result.body = body;
             result.stage = 3;
 
-            buffer.read_index = pos;
+            result.parse_pos = pos;
         }
 
     }

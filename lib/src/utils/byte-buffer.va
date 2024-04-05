@@ -6,7 +6,6 @@ class ByteBuffer {
     ~ data: ptr
     ~ size: uint
     length: uint (0)
-    read_index: uint (0)
 
     static fn new(start_size: uint) CLASS {
         if start_size < 10 {
@@ -19,21 +18,20 @@ class ByteBuffer {
         return res
     }
 
-    fn _gc_free() void {
+    fn _gc_free() {
         mem:free(this.data);
     }
 
-    fn clear() void {
-        this.read_index = 0;
+    fn clear() {
         this.length = 0;
     }
 
     // Appending
-    fn append(buffer: CLASS) void {
+    fn append(buffer: CLASS) {
         this.append_from_ptr(buffer.data, buffer.length);
     }
 
-    fn append_from_ptr(data: ptr, length: uint) void {
+    fn append_from_ptr(data: ptr, length: uint) {
         if(length == 0) {
             return
         }
@@ -46,7 +44,7 @@ class ByteBuffer {
         this.length = new_bytes;
     }
 
-    fn append_byte(byte: u8) void {
+    fn append_byte(byte: u8) {
         let bytes : uint = this.length
         let new_bytes : uint = bytes + 1
         if new_bytes > this.size {
@@ -58,7 +56,7 @@ class ByteBuffer {
         this.length = new_bytes
     }
 
-    fn append_str(str: String) void {
+    fn append_str(str: String) {
         this.append_from_ptr(str.data, str.bytes);
     }
 
@@ -133,28 +131,11 @@ class ByteBuffer {
         return str;
     }
 
-    fn clear_before_read_index() {
-        let index = this.read_index
-        let len = this.length
-        if index == len {
-            this.read_index = 0
-            this.length = 0
-            return
-        }
-        if index == 0 : return
-        let bytes = len - index;
-        let data = this.data;
-        // TODO: use @ptr_offset
-        mem:copy(data + index, data, bytes);
-        this.length -= index;
-        this.read_index = 0;
-    }
-
     // 
-    fn minimum_free_space(length: uint) void {
+    fn minimum_free_space(length: uint) {
         this.minimum_size(this.length + length);
     }
-    fn minimum_size(minimum_size: uint) void {
+    fn minimum_size(minimum_size: uint) {
         let size : uint = this.size;
         let new_size : uint = size;
         while new_size < minimum_size {

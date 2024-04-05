@@ -13,23 +13,12 @@ class Connection {
     // uploads: ?Array[String] (null)
     read_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     parse_result: ParseResult (ParseResult{})
-    parse_pos: uint (0)
     added_active_body_size: bool (false)
 
     // Response
     out_file: ?fs:FileStream (null)
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
-
-    fn reset_parser() {
-        //
-        this.parse_result.clear()
-
-        let read_buf = this.read_buf
-        if read_buf.read_index == read_buf.length {
-            read_buf.clear()
-        }
-    }
 
     fn reset_out() void {
         let file = this.out_file
@@ -214,7 +203,8 @@ class Connection {
             this.added_active_body_size = false
         }
         this.reset_out()
-        this.reset_parser()
+        this.parse_result.clear()
+        this.read_buf.clear()
         net:Socket.close(this.fd)
     }
 

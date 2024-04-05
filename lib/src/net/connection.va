@@ -29,19 +29,6 @@ struct Connection {
         this.open = false;
     }
 
-    fn send(buffer: utils:ByteBuffer) uint !connection !again {
-        if buffer.read_index >= buffer.length { return 0 }
-        let bytes_to_send = buffer.length - buffer.read_index;
-        let bytes_sent = this.send_from_ptr(buffer.data + buffer.read_index, bytes_to_send) err ! {
-            if error_is(err, !again) {
-                throw again
-            }
-            throw connection
-        }
-        buffer.read_index += bytes_sent;
-        return bytes_sent
-    }
-
     fn send_from_ptr(data: ptr, bytes_to_send: uint) uint !connection !again {
 
         if this.open == false { throw connection }
