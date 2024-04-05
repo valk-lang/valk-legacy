@@ -506,20 +506,25 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
 
 
 void cmd_build_help() {
-    printf("\n# valk build {.va-file|config-dir} [{more .va-files}] -o {outpath}\n\n");
+    printf("\n# valk build {.va-file(s)} [{config-dir}] -o {outpath}\n");
+    printf("or\n");
+    printf("# valk build {.va-file(s)} [{config-dir}] -r|--run\n\n");
 
+    printf(" -o                  set outpath\n");
     printf(" --run -r            run program after compiling\n");
     printf(" --watch -w          watch files & rebuild when code changes\n");
     printf(" --test -t           build tests\n");
     printf(" --clean -c          ignore cache\n");
     // printf(" --debug -d          generate debug info\n");
-    printf(" --no-opt            build without optimizations\n");
+    // printf(" --no-opt            build without optimizations\n");
     printf("\n");
 
-    // printf(" --def               define compile condition variables\n");
-    // printf("                     format: VAR1=VAL,VAR2=VAL\n");
-    // printf(" --target            compile for a specific os/arch\n");
-    // printf("                     linux-x64, macos-x64, win-x64\n");
+    printf(" --def               define compile condition variables\n");
+    printf("                     format: VAR1=VAL,VAR2=VAL\n");
+    printf(" --target            compile for a specific os/arch\n");
+    printf("                     linux-x64, macos-x64, win-x64\n");
+
+    printf("\n");
     printf(" -v -vv -vvv         show compile info\n");
     printf(" --help -h           build command usage info\n");
     printf("\n");
