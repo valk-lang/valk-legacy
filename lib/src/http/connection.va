@@ -21,7 +21,7 @@ class Connection {
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
 
-    fn reset_parser() void {
+    fn reset_parser() {
         //
         this.parse_result.clear()
 
@@ -31,16 +31,12 @@ class Connection {
         }
     }
 
-    fn request_completed() {
-        if this.added_active_body_size {
-            atomic(this.server.active_body_size - this.parse_result.content_length)
-            this.added_active_body_size = false
-        }
-        // Delete uploads
-    }
-
     fn reset_out() void {
-        this.out_file = null
+        let file = this.out_file
+        if isset(file) {
+            file.close()
+            this.out_file = null
+        }
         this.out_buf.clear()
         this.out_pos = 0
     }
@@ -64,20 +60,6 @@ class Connection {
     	out.append_str("\r\n")
     }
 
-    fn respond(resp: Response) void {
-        let filepath = resp.filepath
-        if isset(filepath) {
-        	let stream = fs:stream(filepath, true, false) ! {
-        		this.respond(Response.error(404))
-        		return
-            }
-            this.send_file(stream, resp.filename)
-        	return
-        }
-
-        resp.compile(this.out_buf)
-    }
-
     fn has_data_to_send() bool {
         if this.out_pos < this.out_buf.length {
             return true
@@ -91,58 +73,6 @@ class Connection {
         return this.out_buf.length - this.out_pos
     }
 
-    fn send_response_bytes() !write !again {
-
-        let out = this.out_buf
-        let file = this.out_file
-
-        while true {
-            // Check file stream
-            if isset(file) {
-                if this.count_bytes_to_send() == 0 {
-                    if file.reading {
-                        let part = file.read(65535) ? ""
-                        out.append_str(part)
-                    }
-                }
-            }
-
-            let pos = this.out_pos
-            let bytes = out.length - pos
-            if bytes == 0 : break
-
-            // #if OS == win
-            // let wbytes = sys:send(this.fd, out.data + pos, bytes @as i32, 0)
-            // if wbytes < 0 : wbytes = 0
-            // this.out_pos += wbytes @as uint
-            // #else
-            let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) err ! {
-                if error_is(err, !again) : throw again
-                throw write
-            }
-            this.out_pos += wbytes
-            // #end
-        }
-
-        this.reset_out()
-    }
-
-    fn update_active_body_size() !overload {
-        let server = this.server
-        let result = this.parse_result
-        let content_len = result.content_length
-        if server.active_body_size + content_len > server.max_server_wide_body_size {
-            throw overload
-        }
-        this.added_active_body_size = true
-        atomic(server.active_body_size + content_len)
-    }
-
-    fn close() {
-        this.reset_parser()
-        net:Socket.close(this.fd)
-    }
-
     // Rewrite
     fn recv_and_respond() !recv !parse !send !request_size {
         let buffer = this.read_buf
@@ -151,7 +81,6 @@ class Connection {
         let max_hs = server.max_request_header_size
         let max_bs = server.max_request_body_size
         let max_sbs = server.max_server_wide_body_size
-        // let bytes_added : uint = 0
 
         while true {
             // While our out buffer > 128k, send response
@@ -172,6 +101,9 @@ class Connection {
 
             Parser.parse_bytes(buffer, result, false, true) err ! {
                 buffer.clear()
+                if error_is(err, !http413) {
+                    throw request_size, "Request header size"
+                }
                 throw parse, "Parse error"
             }
             buffer.clear()
@@ -180,10 +112,10 @@ class Connection {
                 let len = result.content_length
                 if len > 0 {
                     if len > max_bs {
-                        throw request_size, "Parse error"
+                        throw request_size, "Request body size"
                     }
                     if server.active_body_size + len > max_sbs {
-                        throw request_size, "Parse error"
+                        throw request_size, "Request body size / Server capacity"
                     }
                     if !this.added_active_body_size {
                         this.added_active_body_size = true
@@ -220,6 +152,9 @@ class Connection {
                 // Response
                 let resp = server.handler(req)
                 this.respond(resp)
+
+                // Delete uploads
+                // TODO
             }
         }
 
@@ -227,6 +162,60 @@ class Connection {
             if error_is(err, !again) : return
             throw send, "Failed sending data to connection"
         }
+    }
+
+    fn respond(resp: Response) void {
+        let filepath = resp.filepath
+        if isset(filepath) {
+        	let stream = fs:stream(filepath, true, false) ! {
+        		this.respond(Response.error(404))
+        		return
+            }
+            this.send_file(stream, resp.filename)
+        	return
+        }
+
+        resp.compile(this.out_buf)
+    }
+
+    fn send_response_bytes() !write !again {
+
+        let out = this.out_buf
+        let file = this.out_file
+
+        while true {
+            // Check file stream
+            if isset(file) {
+                if this.count_bytes_to_send() == 0 {
+                    if file.reading {
+                        let part = file.read(65535) ? ""
+                        out.append_str(part)
+                    }
+                }
+            }
+
+            let pos = this.out_pos
+            let bytes = out.length - pos
+            if bytes == 0 : break
+
+            let wbytes = this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
+                if error_is(err, !again) : throw again
+                throw write
+            }
+            this.out_pos += wbytes
+        }
+
+        this.reset_out()
+    }
+
+    fn close() {
+        if this.added_active_body_size {
+            atomic(this.server.active_body_size - this.parse_result.content_length)
+            this.added_active_body_size = false
+        }
+        this.reset_out()
+        this.reset_parser()
+        net:Socket.close(this.fd)
     }
 
 }

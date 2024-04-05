@@ -158,107 +158,38 @@ class Server {
                     }
 
                     lsn.detect_write_request(false)
+                    lsn.detect_read_request(true)
+                    continue;
                 }
                 if lsn.has_read_request() {
                     http_con.recv_and_respond() err ! {
                         if this.show_info {
                             println("[+] Invalid request: " + fd)
                         }
+                        if error_is(err, !request_size) {
+                            http_con.respond(Response.error(413, map[String]{ "Connection" => "close" }))
+                            http_con.send_response_bytes() _
+                        } else {
+                            http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
+                            http_con.send_response_bytes() _
+                        }
                         http_con.close()
                         continue
                     }
                     if http_con.has_data_to_send() {
                         lsn.detect_write_request(true)
+                        lsn.detect_read_request(false)
                     } else {
                         http_con.reset_out()
                     }
+                    continue;
                 }
+
+                // Not a read / write request, so close it
+                http_con.close()
             }
         }
     }
-
-    // - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
-
-    //     let res = http_con.parse_result
-    //     let read_buf = http_con.read_buf
-    //     let max_hs = server.max_request_header_size
-    //     let max_bs = server.max_request_body_size
-
-    //     while true {
-
-    //         while true {
-    //             // Read bytes
-    //             let bytes : uint = 1
-    //             if read_buf.read_index == read_buf.length {
-    //                 bytes = http_con.netcon.recv(read_buf) err ! {
-    //                     if error_is(err, !e_again) : return
-    //                     http_con.respond(Response.error(400, map[String]{ "Connection" => "close" }))
-    //                     http_con.send_response_bytes()
-    //                     throw read_error, "Failed reading from connection"
-    //                 }
-    //             }
-    //             // Check max active body size
-    //             if res.stage >= 2 && !http_con.added_active_body_size && res.content_length > 0 {
-    //                 http_con.update_active_body_size() ! {
-    //                     http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
-    //                     http_con.send_response_bytes()
-    //                     throw read_error, "Too much server traffic"
-    //                 }
-    //             }
-    //             // Parse bytes
-    //             Parser.parse_bytes(read_buf, res, false, true, max_hs, max_bs) err ! {
-    //                 let code : u32 = 400
-    //                 if error_is(err, !http413) {
-    //                     code = 413
-    //                 }
-    //                 http_con.respond(Response.error(code, map[String]{ "Connection" => "close" }))
-    //                 http_con.send_response_bytes()
-    //                 throw read_error, "Invalid request"
-    //             }
-
-    //             read_buf.clear_before_read_index()
-    //             if res.fully_parsed : break
-
-    //             if bytes == 0 {
-    //                 // 0 bytes received, but not fully parsed...
-    //                 http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
-    //                 http_con.send_response_bytes()
-    //                 throw read_error, "Empty request"
-    //             }
-    //         }
-
-    //         if res.fully_parsed == false {
-    //             return
-    //         }
-
-    //         if server.static_dirs.length > 0 {
-    //             let path = res.path.trim("/")
-    //             each server.static_dirs as dir {
-    //                 let fullpath = dir + path 
-    //                 if fs:is_file(fullpath) {
-    //                     let stream = fs:stream(fullpath, true, false) ! continue
-    //                     http_con.send_file(stream, null)
-    //                     return
-    //                 }
-    //             }
-    //         }
-
-    //         // Request
-    //         let req = Request{
-    //             http_con: http_con,
-    //             headers: res.headers,
-    //             method: res.method,
-    //             body: res.body,
-    //             path: res.path,
-    //         }
-    //         http_con.reset_parser()
-    //         // Response
-    //         let resp = handler(req)
-    //         http_con.respond(resp)
-    //     }
-
-    //     http_con.send_response_bytes()
-    // }
 
     fn add_static_dir(path: String, relative_to_exe: bool (false)) void {
         let full = path

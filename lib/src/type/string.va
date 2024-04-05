@@ -95,10 +95,38 @@ class String {
     /////////////////////
 
     fn to_uint() uint !not_a_number {
-        return 0
+        let i = this.bytes;
+		let result : uint = 0;
+		let mult : uint = 1;
+		while i > 0 {
+			i--;
+			let ch = this.byte(i);
+			if(ch < 48 || ch > 57){
+				throw not_a_number;
+			}
+			result += ((ch @as uint) - 48) * mult;
+			mult *= 10;
+		}
+		return result;
     }
     fn to_lower() String {
-        return this
+        let bytes = this.bytes;
+		let data = this.data;
+		let new_str = String.make_empty(bytes);
+		let new_data = new_str.data;
+		let pos : uint = 0;
+		while pos < bytes {
+			let byte : u8 = @ptrv(data, u8, pos);
+			if byte > 127 {
+				@ptrv(new_data, u8, pos) = byte;
+				pos++;
+				continue;
+			}
+			let is_upper = (byte > 64 && byte < 91) ? 1 @as u8 : 0 @as u8;
+			@ptrv(new_data, u8, pos) = byte + (is_upper * 32);
+			pos++;
+		}
+		return new_str;
     }
 
     /////////////////////

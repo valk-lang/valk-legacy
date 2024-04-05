@@ -29,13 +29,24 @@ struct Connection {
         this.open = false;
     }
 
-    fn send(buffer: utils:ByteBuffer) uint !connection_error !again {
-
-        if this.open == false { throw connection_error }
+    fn send(buffer: utils:ByteBuffer) uint !connection !again {
         if buffer.read_index >= buffer.length { return 0 }
+        let bytes_to_send = buffer.length - buffer.read_index;
+        let bytes_sent = this.send_from_ptr(buffer.data + buffer.read_index, bytes_to_send) err ! {
+            if error_is(err, !again) {
+                throw again
+            }
+            throw connection
+        }
+        buffer.read_index += bytes_sent;
+        return bytes_sent
+    }
+
+    fn send_from_ptr(data: ptr, bytes_to_send: uint) uint !connection !again {
+
+        if this.open == false { throw connection }
 
         // let ssl = this.ssl;
-        let bytes_to_send = buffer.length - buffer.read_index;
         let bytes_sent : uint = 0;
 
         // if isset(ssl) {
@@ -48,7 +59,7 @@ struct Connection {
         //             if err == 3 {
         //                 throw e_again;
         //             }
-        //             throw connection_error;
+        //             throw connection;
         //         }
         //         return 0;
         //     }
@@ -57,9 +68,9 @@ struct Connection {
         // } else {
             // No SSL
             #if OS == win
-            let wbytes = sys:send(this.fd, buffer.data + buffer.read_index, bytes_to_send @as i32, 0);
+            let wbytes = sys:send(this.fd, data, bytes_to_send @as i32, 0);
             #else
-            let wbytes = sys:send(this.fd @as i32, buffer.data + buffer.read_index, bytes_to_send, 0);
+            let wbytes = sys:send(this.fd @as i32, data, bytes_to_send, 0);
             #end
 
             if wbytes < 0 {
@@ -80,7 +91,7 @@ struct Connection {
                     throw again;
                 }
                 #end
-                throw connection_error;
+                throw connection;
             }
             if wbytes == 0 {
                 return 0;
@@ -88,12 +99,10 @@ struct Connection {
             bytes_sent = wbytes @as uint;
         // }
 
-        buffer.read_index += bytes_sent;
-
         return bytes_sent;
     }
 
-    fn recv(buffer: utils:ByteBuffer) uint !connection_error !again {
+    fn recv(buffer: utils:ByteBuffer) uint !connection !again {
 
         if this.open == false { return 0 }
 
@@ -115,7 +124,7 @@ struct Connection {
         //                 if err == 2 {
         //                     throw e_again;
         //                 }
-        //                 throw connection_error;
+        //                 throw connection;
         //             }
         //         }
         //         return 0;
@@ -146,7 +155,7 @@ struct Connection {
                     throw again;
                 }
                 #end
-                throw connection_error;
+                throw connection;
             }
             if (rcvd == 0) {
                 return 0;
