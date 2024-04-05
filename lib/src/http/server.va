@@ -15,8 +15,12 @@ class Server {
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
-    - handler: fn(Request)(Response) (test)
-    - static_dirs: Array[String] (Array[String].new())
+    -- handler: fn(Request)(Response) (test)
+    -- static_dirs: Array[String] (Array[String].new())
+    ~~ active_body_size: uint (0)
+    max_request_header_size: uint (8 * 1024) // 8 KB
+    max_request_body_size: uint (32 * 1024 * 1024) // 32 MB
+    max_server_wide_body_size: uint (2 * 1024  @as uint) // 2 GB
     show_info: bool (false)
 
     static fn new(host: String, port: u16, handler: fn(Request)(Response)) Server !socket_init_error !socket_bind_error {
@@ -106,6 +110,7 @@ class Server {
                     }
 
                     let http_con = Connection {
+                        server: this,
                         netcon: netcon,
                         fd: fd,
                     }
@@ -116,7 +121,6 @@ class Server {
                     continue
                 }
 
-                let http_con = lsn.data @as Connection
                 if lsn.data == null {
                     if this.show_info {
                         println("[x] Missing http connection for fd: " + lsn.fd)
@@ -125,10 +129,12 @@ class Server {
                     continue
                 }
 
+                let http_con = lsn.data @as Connection
                 if http_con.fd != fd {
                     if this.show_info {
                         print("[x] fd mismatch\n")
                     }
+                    http_con.close()
                     net:Socket.close(fd)
                     continue
                 }
@@ -138,30 +144,27 @@ class Server {
                     if this.show_info {
                         println("[+] Close connection: " + fd)
                     }
-                    net:Socket.close(fd)
+                    http_con.close()
                     continue
                 }
 
                 if lsn.has_write_request() {
                     // println("[+] Continue sending response: " + fd.str())
 
-                    if http_con.can_clear_out() {
-                        http_con.reset_out()
+                    http_con.send_response_bytes() err ! {
+                        if error_is(err, !again) : continue
+                        http_con.close()
+                        continue
                     }
 
-                    http_con.send_response_bytes()
-
-                    if http_con.has_data_to_send() == false {
-                        lsn.detect_write_request(false)
-                        http_con.reset_out()
-                    }
+                    lsn.detect_write_request(false)
                 }
                 if lsn.has_read_request() {
-                    Server.respond(this, http_con, handler) ! {
+                    http_con.recv_and_respond() err ! {
                         if this.show_info {
                             println("[+] Invalid request: " + fd)
                         }
-                        net:Socket.close(fd)
+                        http_con.close()
                         continue
                     }
                     if http_con.has_data_to_send() {
@@ -174,63 +177,88 @@ class Server {
         }
     }
 
-    - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
+    // - static fn respond(server: Server, http_con: Connection, handler: fn(Request)(Response)) void !read_error !sent_error {
 
-        while true {
+    //     let res = http_con.parse_result
+    //     let read_buf = http_con.read_buf
+    //     let max_hs = server.max_request_header_size
+    //     let max_bs = server.max_request_body_size
 
-            let res = http_con.parse_result
-            let read_buf = http_con.read_buf
-            while true {
-                if read_buf.read_index == read_buf.length {
-                    let bytes = http_con.netcon.recv(read_buf) err ! {
-                        if error_is(err, !e_again) : return
-                        http_con.respond(Response.error(400))
-                        http_con.send_response_bytes()
-                        throw read_error, "Failed reading from connection"
-                    }
-                }
-                Parser.parse_request(read_buf, res) ! {
-                    http_con.respond(Response.error(400))
-                    http_con.send_response_bytes()
-                    throw read_error, "Invalid request"
-                }
+    //     while true {
 
-                read_buf.clear_before_read_index()
+    //         while true {
+    //             // Read bytes
+    //             let bytes : uint = 1
+    //             if read_buf.read_index == read_buf.length {
+    //                 bytes = http_con.netcon.recv(read_buf) err ! {
+    //                     if error_is(err, !e_again) : return
+    //                     http_con.respond(Response.error(400, map[String]{ "Connection" => "close" }))
+    //                     http_con.send_response_bytes()
+    //                     throw read_error, "Failed reading from connection"
+    //                 }
+    //             }
+    //             // Check max active body size
+    //             if res.stage >= 2 && !http_con.added_active_body_size && res.content_length > 0 {
+    //                 http_con.update_active_body_size() ! {
+    //                     http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
+    //                     http_con.send_response_bytes()
+    //                     throw read_error, "Too much server traffic"
+    //                 }
+    //             }
+    //             // Parse bytes
+    //             Parser.parse_bytes(read_buf, res, false, true, max_hs, max_bs) err ! {
+    //                 let code : u32 = 400
+    //                 if error_is(err, !http413) {
+    //                     code = 413
+    //                 }
+    //                 http_con.respond(Response.error(code, map[String]{ "Connection" => "close" }))
+    //                 http_con.send_response_bytes()
+    //                 throw read_error, "Invalid request"
+    //             }
 
-                if res.fully_parsed : break
-            }
+    //             read_buf.clear_before_read_index()
+    //             if res.fully_parsed : break
 
-            if res.fully_parsed == false {
-                return
-            }
+    //             if bytes == 0 {
+    //                 // 0 bytes received, but not fully parsed...
+    //                 http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
+    //                 http_con.send_response_bytes()
+    //                 throw read_error, "Empty request"
+    //             }
+    //         }
 
-            http_con.reset_parser()
+    //         if res.fully_parsed == false {
+    //             return
+    //         }
 
-            if server.static_dirs.length > 0 {
-                let path = res.path.trim("/")
-                each server.static_dirs as dir {
-                    let fullpath = dir + path 
-                    if fs:is_file(fullpath) {
-                        let stream = fs:stream(fullpath, true, false) ! continue
-                        http_con.send_file(stream, null)
-                        return
-                    }
-                }
-            }
+    //         if server.static_dirs.length > 0 {
+    //             let path = res.path.trim("/")
+    //             each server.static_dirs as dir {
+    //                 let fullpath = dir + path 
+    //                 if fs:is_file(fullpath) {
+    //                     let stream = fs:stream(fullpath, true, false) ! continue
+    //                     http_con.send_file(stream, null)
+    //                     return
+    //                 }
+    //             }
+    //         }
 
-            let req = Request{
-                http_con: http_con,
-                headers: res.headers,
-                method: res.method,
-                body: res.body,
-                path: res.path,
-            }
-            let resp = handler(req)
-            http_con.respond(resp)
-        }
+    //         // Request
+    //         let req = Request{
+    //             http_con: http_con,
+    //             headers: res.headers,
+    //             method: res.method,
+    //             body: res.body,
+    //             path: res.path,
+    //         }
+    //         http_con.reset_parser()
+    //         // Response
+    //         let resp = handler(req)
+    //         http_con.respond(resp)
+    //     }
 
-        http_con.send_response_bytes()
-    }
+    //     http_con.send_response_bytes()
+    // }
 
     fn add_static_dir(path: String, relative_to_exe: bool (false)) void {
         let full = path

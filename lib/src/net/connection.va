@@ -29,7 +29,7 @@ struct Connection {
         this.open = false;
     }
 
-    fn send(buffer: utils:ByteBuffer) uint !connection_error !e_again {
+    fn send(buffer: utils:ByteBuffer) uint !connection_error !again {
 
         if this.open == false { throw connection_error }
         if buffer.read_index >= buffer.length { return 0 }
@@ -67,7 +67,7 @@ struct Connection {
                 let err = sys:WSAGetLastError();
                 if err == sys:WSAENOBUFS {
                     // EAGAIN
-                    throw e_again;
+                    throw again;
                 }
                 #else
                 #if OS == macos
@@ -77,7 +77,7 @@ struct Connection {
                 #end
                 if err == sys:EAGAIN {
                     // EAGAIN
-                    throw e_again;
+                    throw again;
                 }
                 #end
                 throw connection_error;
@@ -93,7 +93,7 @@ struct Connection {
         return bytes_sent;
     }
 
-    fn recv(buffer: utils:ByteBuffer) uint !connection_error !e_again {
+    fn recv(buffer: utils:ByteBuffer) uint !connection_error !again {
 
         if this.open == false { return 0 }
 
@@ -133,7 +133,7 @@ struct Connection {
                 let err = sys:WSAGetLastError();
                 if err == sys:WSAENOBUFS {
                     // EAGAIN
-                    throw e_again;
+                    throw again;
                 }
                 #else
                 #if OS == macos
@@ -143,7 +143,7 @@ struct Connection {
                 #end
                 if err == sys:EAGAIN {
                     // EAGAIN
-                    throw e_again;
+                    throw again;
                 }
                 #end
                 throw connection_error;
