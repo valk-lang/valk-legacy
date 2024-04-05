@@ -90,6 +90,20 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         }
         return decl->ir_var;
     }
+    if (vt == v_decl_overwrite) {
+        DeclOverwrite *dov = v->item;
+        Decl *decl = dov->decl;
+        if(decl->is_mut) {
+            if (!decl->ir_store_var) {
+                build_err(ir->b, "Missing decl storage variable (compiler bug)");
+            }
+            return ir_load(ir, decl->type, decl->ir_store_var);
+        }
+        if (!decl->ir_var) {
+            build_err(ir->b, "Missing decl value variable (compiler bug)");
+        }
+        return decl->ir_var;
+    }
     if (vt == v_global) {
         Global* g = v->item;
         char* var = ir_global(ir, g);
@@ -338,6 +352,11 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
     int vt = v->type;
     if (vt == v_decl) {
         Decl *decl = v->item;
+        return decl->ir_store_var;
+    }
+    if (vt == v_decl_overwrite) {
+        DeclOverwrite *dov = v->item;
+        Decl *decl = dov->decl;
         return decl->ir_store_var;
     }
     if (vt == v_global) {
