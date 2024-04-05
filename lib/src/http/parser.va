@@ -32,6 +32,8 @@ class ParseResult {
         this.status = 0
         this.body = ""
         this.headers.clear()
+    }
+    fn clear_buffer() {
         this.buffer.clear()
         this.parse_pos = 0
     }
@@ -59,6 +61,11 @@ struct Parser {
 
         let buffer = result.buffer
         let pos = result.parse_pos
+
+        if pos == buffer.length {
+            result.clear_buffer()
+            pos = 0
+        }
 
         buffer.append(bytes)
 

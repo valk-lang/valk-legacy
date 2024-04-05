@@ -35,7 +35,7 @@ class Response {
         let len = this.body.bytes;
 
         buf.append_str("HTTP/1.1 ");
-        buf.append_str(this.status.to_str());
+        buf.append_str(this.status);
         buf.append_str(" OK\r\n");
 
         buf.append_str("Content-Type: ");
@@ -43,7 +43,7 @@ class Response {
         buf.append_str("\r\n");
 
         buf.append_str("Content-Length: ");
-        buf.append_str(this.body.bytes.to_str());
+        buf.append_str(this.body.bytes);
         buf.append_str("\r\n");
 
         let headers = this.headers;

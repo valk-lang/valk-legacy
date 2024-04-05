@@ -54,7 +54,8 @@ class Connection {
             return true
         }
         let file = this.out_file
-        if isset(file) { if file.reading : return true
+        if isset(file) {
+            if file.reading : return true
         }
         return false
     }
@@ -75,7 +76,9 @@ class Connection {
             // While our out buffer > 128k, send response
             while this.count_bytes_to_send() > (128 * 1024) || this.out_file != null {
                 this.send_response_bytes() err ! {
-                    if error_is(err, !again) : return
+                    if error_is(err, !again) {
+                        return
+                    }
                     throw send, "Failed sending data to connection"
                 }
             }
@@ -88,62 +91,67 @@ class Connection {
             }
             if bytes == 0 : break
 
-            Parser.parse_bytes(buffer, result, false, true) err ! {
+            while true {
+                Parser.parse_bytes(buffer, result, false, true) err ! {
+                    buffer.clear()
+                    if error_is(err, !http413) {
+                        throw request_size, "Request header size"
+                    }
+                    throw parse, "Parse error"
+                }
                 buffer.clear()
-                if error_is(err, !http413) {
-                    throw request_size, "Request header size"
-                }
-                throw parse, "Parse error"
-            }
-            buffer.clear()
 
-            if result.has_parsed_headers {
-                let len = result.content_length
-                if len > 0 {
-                    if len > max_bs {
-                        throw request_size, "Request body size"
-                    }
-                    if server.active_body_size + len > max_sbs {
-                        throw request_size, "Request body size / Server capacity"
-                    }
-                    if !this.added_active_body_size {
-                        this.added_active_body_size = true
-                        atomic(server.active_body_size + len)
-                    }
-                }
-            }
-
-            if result.has_parsed_body {
-                if this.added_active_body_size {
-                    this.added_active_body_size = false
-                    atomic(server.active_body_size - result.content_length)
-                }
-
-                if server.static_dirs.length > 0 {
-                    let path = result.path.trim("/")
-                    each server.static_dirs as dir {
-                        let fullpath = dir + path 
-                        if fs:is_file(fullpath) {
-                            let stream = fs:stream(fullpath, true, false) ! continue
-                            this.send_file(stream, null)
-                            return
+                if result.has_parsed_headers {
+                    let len = result.content_length
+                    if len > 0 {
+                        if len > max_bs {
+                            throw request_size, "Request body size"
+                        }
+                        if server.active_body_size + len > max_sbs {
+                            throw request_size, "Request body size / Server capacity"
+                        }
+                        if !this.added_active_body_size {
+                            this.added_active_body_size = true
+                            atomic(server.active_body_size + len)
                         }
                     }
                 }
 
-                // Request
-                let req = Request{
-                    headers: result.headers,
-                    method: result.method,
-                    body: result.body,
-                    path: result.path,
-                }
-                // Response
-                let resp = server.handler(req)
-                this.respond(resp)
+                if result.has_parsed_body {
+                    if this.added_active_body_size {
+                        this.added_active_body_size = false
+                        atomic(server.active_body_size - result.content_length)
+                    }
 
-                // Delete uploads
-                // TODO
+                    if server.static_dirs.length > 0 {
+                        let path = result.path.trim("/")
+                        each server.static_dirs as dir {
+                            let fullpath = dir + path 
+                            if fs:is_file(fullpath) {
+                                let stream = fs:stream(fullpath, true, false) ! continue
+                                this.send_file(stream, null)
+                                return
+                            }
+                        }
+                    }
+
+                    // Request
+                    let req = Request{
+                        headers: result.headers,
+                        method: result.method,
+                        body: result.body,
+                        path: result.path,
+                    }
+                    // Response
+                    let resp = server.handler(req)
+                    this.respond(resp)
+
+                    // Delete uploads
+                    // TODO
+
+                    continue
+                }
+                break
             }
         }
 

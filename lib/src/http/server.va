@@ -148,7 +148,8 @@ class Server {
                     continue
                 }
 
-                if lsn.has_write_request() {
+                let is_write = lsn.has_write_request()
+                if is_write {
                     // println("[+] Continue sending response: " + fd.str())
 
                     http_con.send_response_bytes() err ! {
@@ -157,9 +158,8 @@ class Server {
                         continue
                     }
 
+                    http_con.reset_out()
                     lsn.detect_write_request(false)
-                    lsn.detect_read_request(true)
-                    continue;
                 }
                 if lsn.has_read_request() {
                     http_con.recv_and_respond() err ! {
@@ -178,15 +178,14 @@ class Server {
                     }
                     if http_con.has_data_to_send() {
                         lsn.detect_write_request(true)
-                        lsn.detect_read_request(false)
                     } else {
                         http_con.reset_out()
                     }
                     continue;
                 }
 
-                // Not a read / write request, so close it
-                http_con.close()
+                // Neither read or write
+                if !is_write : http_con.close()
             }
         }
     }
