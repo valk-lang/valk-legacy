@@ -43,21 +43,21 @@ class Connection {
 
     fn send_file(stream: fs:FileStream, filename: ?String) void {
 
-    	let out = this.out_buf
-    	let path = stream.path
-    	let fsize = fs:size(path)
-    	let ext = fs:ext(path)
-    	let mime = fs:mime(ext)
+        let out = this.out_buf
+        let path = stream.path
+        let fsize = fs:size(path)
+        let ext = fs:ext(path)
+        let mime = fs:mime(ext)
 
-    	this.out_file = stream
+        this.out_file = stream
 
-    	out.append_str("HTTP/1.1 200 OK\r\nContent-Type: " + mime + "\r\nContent-Length: " + fsize + "\r\n")
+        out.append_str("HTTP/1.1 200 OK\r\nContent-Type: " + mime + "\r\nContent-Length: " + fsize + "\r\n")
 
-    	if isset(filename) {
-    		out.append_str("Content-Disposition: attachment filename=\"" + filename + "\"\r\n")
-    	}
+        if isset(filename) {
+            out.append_str("Content-Disposition: attachment filename=\"" + filename + "\"\r\n")
+        }
 
-    	out.append_str("\r\n")
+        out.append_str("\r\n")
     }
 
     fn has_data_to_send() bool {
@@ -167,12 +167,12 @@ class Connection {
     fn respond(resp: Response) void {
         let filepath = resp.filepath
         if isset(filepath) {
-        	let stream = fs:stream(filepath, true, false) ! {
-        		this.respond(Response.error(404))
-        		return
+            let stream = fs:stream(filepath, true, false) ! {
+                this.respond(Response.error(404))
+                return
             }
             this.send_file(stream, resp.filename)
-        	return
+            return
         }
 
         resp.compile(this.out_buf)
