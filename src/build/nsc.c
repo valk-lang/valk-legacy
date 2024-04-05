@@ -8,6 +8,10 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->dir = dir;
     nsc->scope = scope_make(alc, sc_default, NULL);
 
+    if(dir && watch_dirs) {
+        array_push_unique_chars(watch_dirs, dir);
+    }
+
     char *path_o = al(alc, VALK_PATH_MAX);
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
     char *path_ir = al(alc, VALK_PATH_MAX);

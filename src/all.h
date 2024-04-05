@@ -55,6 +55,11 @@
 #include "headers/typedefs.h"
 #include "headers/structs.h"
 #include "headers/functions.h"
+
+// Globals
+extern Array* watch_dirs;
+extern bool is_watching;
+
 // Utils
 #include "headers/cJSON.h"
 #include "headers/alloc.h"
