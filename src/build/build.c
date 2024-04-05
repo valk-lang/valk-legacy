@@ -228,7 +228,7 @@ int cmd_build(int argc, char *argv[]) {
     }
 
     // Watch files
-    if (array_contains(args, "--watch", arr_find_str) && !is_watching) {
+    if ((array_contains(args, "--watch", arr_find_str) || array_contains(args, "-w", arr_find_str)) && !is_watching) {
         watch_files(alc, autorun, vo_files, b->path_out, argc, argv);
         return 0;
     }
@@ -509,7 +509,7 @@ void cmd_build_help() {
     printf("\n# valk build {.va-file|config-dir} [{more .va-files}] -o {outpath}\n\n");
 
     printf(" --run -r            run program after compiling\n");
-    printf(" --watch             watch files & rebuild when code changes\n");
+    printf(" --watch -w          watch files & rebuild when code changes\n");
     printf(" --test -t           build tests\n");
     printf(" --clean -c          ignore cache\n");
     // printf(" --debug -d          generate debug info\n");

@@ -13,7 +13,6 @@
 
 ```
 // Prio
-- watch files --watch
 - http: max request size option, error handler option, parse post data, handle file uploads
 // Other
 - error messages
