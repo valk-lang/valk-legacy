@@ -4,4 +4,11 @@ class Request {
     method: String
     path: String
     body: String
+
+    fn reset() {
+        this.headers.clear()
+        this.method = "GET"
+        this.path = ""
+        this.body = ""
+    }
 }
