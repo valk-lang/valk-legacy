@@ -20,6 +20,9 @@ class Connection {
     out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
     out_pos: uint (0)
 
+    // Cache
+    request: ?Request (null)
+
     fn reset_out() void {
         let file = this.out_file
         if isset(file) {
@@ -136,12 +139,14 @@ class Connection {
                     }
 
                     // Request
-                    let req = Request{
+                    let req = this.request ?? Request{
                         headers: result.headers,
                         method: result.method,
                         body: result.body,
                         path: result.path,
                     }
+                    this.request = req
+
                     // Response
                     let resp = server.handler(req)
                     this.respond(resp)

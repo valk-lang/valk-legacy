@@ -28,7 +28,7 @@ snippet run_gc_check() {
             s.lowest_next = sa
         }
         if sa <= s.lowest {
-            if pool_usage > 10 {
+            if pool_usage > 30 {
                 s.run_gc = true
             }
         }

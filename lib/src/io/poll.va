@@ -11,6 +11,7 @@ class Poll[T] {
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
     - lsn_by_index: ptr
     - lsn_by_index_size: uint (20)
+    - events_result: Array[Listener[T]] (array[Listener[T]]{})
 
     static fn new() CLASS !poll_create_err {
 
@@ -33,13 +34,14 @@ class Poll[T] {
         return poll
     }
 
-    fn wait(timeout: i32 (-1), buffer: ?Array[Listener[T]] (null)) Array[Listener[T]] {
+    fn wait(timeout: i32 (-1)) Array[Listener[T]] {
 
-        let events = isset(buffer) ? buffer : Array[Listener[T]].new()
+        let events = this.events_result
+        events.clear()
 
         #if OS == linux
         let ebuf = this.epoll_buffer
-        let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 10, timeout)
+        let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 30, timeout)
         if count_ <= 0 {
             os:sleep_ms(1)
             return events

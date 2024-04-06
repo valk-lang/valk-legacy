@@ -152,9 +152,7 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        if disable_gc {
-            return
-        }
+        if disable_gc : return
         this.lock.lock()
 
         disable_gc = true
@@ -176,7 +174,7 @@ struct Stack {
             this.clear_unknown = true
             this.force_full = false
         }
-        if gc_transfer_size > (gc_mark_size >> 1) {
+        if gc_transfer_size > gc_mark_size {
             this.clear_unknown = true
         }
         if this.clear_unknown {
