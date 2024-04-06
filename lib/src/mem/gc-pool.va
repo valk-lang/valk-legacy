@@ -75,7 +75,7 @@ struct GcPool {
             @ptrv(current, ptr) = next
         }
 
-        let usage = this.items_used * 100 / this.items_total_last
+        let usage = this.items_used * 100 / (this.items_total_last + 100)
 
         if usage > pool_usage {
             pool_usage = usage
