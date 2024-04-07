@@ -139,17 +139,24 @@ class Connection {
                     }
 
                     // Request
-                    let req = this.request ?? Request{
-                        headers: result.headers,
-                        method: result.method,
-                        body: result.body,
-                        path: result.path,
+                    let req = this.request ?? <{
+                        let req = Request{
+                            headers: result.headers,
+                            method: result.method,
+                            body: result.body,
+                            path: result.path,
+                        }
+                        this.request = req
+                        return req
                     }
-                    this.request = req
 
                     // Response
                     let resp = server.handler(req)
                     this.respond(resp)
+
+                    // Clear input
+                    req.reset()
+                    result.clear()
 
                     // Delete uploads
                     // TODO
