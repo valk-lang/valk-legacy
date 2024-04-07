@@ -62,7 +62,7 @@ class RequestParser {
         // Header
         if stage == 0 {
             let index = input.index_of_byte('\r', pos) ! {
-                if input.length - pos > 4096 {
+                if length - pos > 4096 {
                     throw http413
                 }
                 return

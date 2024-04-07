@@ -25,6 +25,7 @@ class Connection {
     // request: ?Request (null)
 
     fn full_reset() {
+        this.request.reset()
         this.parser.full_reset()
         this.reset_output()
     }
@@ -90,16 +91,6 @@ class Connection {
         let file = this.output_file
 
         while read {
-            // Flush output
-            if this.should_flush_output() {
-                this.send_response_bytes() err ! {
-                    if error_is(err, !again) : return
-                    this.close()
-                    return
-                }
-                this.reset_output()
-            }
-
             // Read bytes
             let bytes = this.netcon.recv(input) err ! {
                 if error_is(err, !again) : break
@@ -111,71 +102,86 @@ class Connection {
                 parser.full_reset()
                 break
             }
+        }
 
-            while true {
-
-                parser.parse(request) err ! {
-                    if error_is(err, !http413) {
-                        this.send_error(413)
-                    }
-                    this.close()
-                    return
+        // While has input
+        while parser.input_pos < parser.input.length {
+            parser.parse(request) err ! {
+                if error_is(err, !http413) {
+                    this.send_error(413)
                 }
-
-                // Check limits
-                if parser.parsed_headers {
-                    let len = parser.content_length
-                    if len > 0 {
-                        if len > max_bs {
-                            this.send_error(413)
-                            return
-                        }
-                        if server.active_body_size + len > max_sbs {
-                            this.send_error(413)
-                            return
-                        }
-                        if !this.added_active_body_size {
-                            this.added_active_body_size = true
-                            atomic(server.active_body_size + len)
-                        }
-                    }
-                }
-
-                if parser.parsed_body {
-                    if this.added_active_body_size {
-                        this.added_active_body_size = false
-                        atomic(server.active_body_size - parser.content_length)
-                    }
-
-                    if server.static_dirs.length > 0 {
-                        let path = request.path.trim("/")
-                        each server.static_dirs as dir {
-                            let fullpath = dir + path 
-                            if fs:is_file(fullpath) {
-                                let stream = fs:stream(fullpath, true, false) ! continue
-                                this.send_file(stream, null)
-                                return
-                            }
-                        }
-                    }
-
-                    // println(request.method)
-                    // println(request.path)
-
-                    // Response
-                    let resp = server.handler(request)
-                    this.respond(resp)
-
-                    // Clear input
-                    request.reset()
-                    parser.soft_reset()
-                    // Delete uploads
-                    // TODO
-
-                    continue
-                }
-                break
+                this.send_error(400)
+                return
             }
+
+            // Check limits
+            if parser.parsed_headers {
+                let len = parser.content_length
+                if len > 0 {
+                    if len > max_bs {
+                        this.send_error(413)
+                        return
+                    }
+                    if server.active_body_size + len > max_sbs {
+                        this.send_error(413)
+                        return
+                    }
+                    if !this.added_active_body_size {
+                        this.added_active_body_size = true
+                        atomic(server.active_body_size + len)
+                    }
+                }
+            }
+
+            if parser.parsed_body {
+                if this.added_active_body_size {
+                    this.added_active_body_size = false
+                    atomic(server.active_body_size - parser.content_length)
+                }
+
+                parser.soft_reset()
+
+                if server.static_dirs.length > 0 {
+                    let path = request.path.trim("/")
+                    each server.static_dirs as dir {
+                        let fullpath = dir + path 
+                        if fs:is_file(fullpath) {
+                            let stream = fs:stream(fullpath, true, false) ! continue
+                            this.send_file(stream, null)
+                            request.reset()
+                            break
+                        }
+                    }
+                }
+
+                //println(request.method)
+                //println(request.path)
+                if(request.method != "GET") {
+                    let x = input.to_string()
+                    println(x)
+                    exit(1)
+                }
+
+                // Response
+                let resp = server.handler(request)
+                this.respond(resp)
+
+                // Clear request
+                request.reset()
+                // TODO: Delete uploads
+
+                // Flush output
+                if this.should_flush_output() {
+                    this.send_response_bytes() err ! {
+                        if error_is(err, !again) : return
+                        this.close()
+                        return
+                    }
+                    this.reset_output()
+                }
+                continue
+            }
+            break
         }
 
         // Write output
