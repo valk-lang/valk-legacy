@@ -30,6 +30,16 @@ class Response {
     	return Response{ filepath: path, filename: filename }
     }
 
+    fn reset() {
+        this.status = 200
+        this.body = ""
+        this.filepath = null
+        this.filename = null
+        this.content_type = "text/plain"
+        let headers = this.headers
+        if isset(headers) : headers.clear()
+    }
+
     fn compile(buf: utils:ByteBuffer) void {
 
         let len = this.body.bytes;
