@@ -89,22 +89,9 @@ class Connection {
         let request = this.request
         let file = this.output_file
 
-        if this.should_flush_output() && !write {
-            this.close()
-            return
-        }
-
         while read {
-            // Dont read while outputting file
-            if isset(file) {
-                if !write {
-                    this.close()
-                    return
-                }
-                break
-            }
             // Flush output
-            if write && this.should_flush_output() {
+            if this.should_flush_output() {
                 this.send_response_bytes() err ! {
                     if error_is(err, !again) : return
                     this.close()
@@ -192,14 +179,12 @@ class Connection {
         }
 
         // Write output
-        if write {
-            this.send_response_bytes() err ! {
-                if error_is(err, !again) : return
-                this.close()
-                return
-            }
-            this.reset_output()
+        this.send_response_bytes() err ! {
+            if error_is(err, !again) : return
+            this.close()
+            return
         }
+        this.reset_output()
     }
 
     fn respond(resp: Response) void {

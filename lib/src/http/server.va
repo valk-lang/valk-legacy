@@ -159,42 +159,6 @@ class Server {
                 } else {
                     lsn.detect_write_request(false)
                 }
-
-                // if is_write {
-                //     http_con.send_response_bytes() err ! {
-                //         if error_is(err, !again) : continue
-                //         http_con.close()
-                //         continue
-                //     }
-
-                //     http_con.reset_out()
-                //     lsn.detect_write_request(false)
-                // }
-                // if lsn.has_read_request() {
-                //     http_con.recv_and_respond() err ! {
-                //         if this.show_info {
-                //             println("[+] Invalid request: " + fd)
-                //         }
-                //         if error_is(err, !request_size) {
-                //             http_con.respond(Response.error(413, map[String]{ "Connection" => "close" }))
-                //             http_con.send_response_bytes() _
-                //         } else {
-                //             http_con.respond(Response.error(500, map[String]{ "Connection" => "close" }))
-                //             http_con.send_response_bytes() _
-                //         }
-                //         http_con.close()
-                //         continue
-                //     }
-                //     if http_con.has_data_to_send() {
-                //         lsn.detect_write_request(true)
-                //     } else {
-                //         http_con.reset_out()
-                //     }
-                //     continue;
-                // }
-
-                // Neither read or write
-                // if !is_write : http_con.close()
             }
         }
     }
