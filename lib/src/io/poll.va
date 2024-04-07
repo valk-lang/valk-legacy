@@ -43,7 +43,6 @@ class Poll[T] {
         let ebuf = this.epoll_buffer
         let count_ = sys:epoll_wait(this.epoll_fd, ebuf, 30, timeout)
         if count_ <= 0 {
-            os:sleep_ms(1)
             return events
         }
         let count = count_ @as uint
