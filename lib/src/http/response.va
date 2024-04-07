@@ -33,9 +33,10 @@ class Response {
     fn compile(buf: utils:ByteBuffer) void {
 
         let len = this.body.bytes;
+        buf.clear()
 
         buf.append_str("HTTP/1.1 ");
-        buf.append_str(this.status);
+        buf.append_uint(this.status);
         buf.append_str(" OK\r\n");
 
         buf.append_str("Content-Type: ");
@@ -43,7 +44,7 @@ class Response {
         buf.append_str("\r\n");
 
         buf.append_str("Content-Length: ");
-        buf.append_str(this.body.bytes);
+        buf.append_uint(this.body.bytes);
         buf.append_str("\r\n");
 
         let headers = this.headers;

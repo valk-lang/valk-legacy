@@ -50,14 +50,22 @@ class ByteBuffer {
         if new_bytes > this.size {
             this.minimum_size(new_bytes)
         }
-        let to : ptr = this.data + bytes
-        // TODO: use @ptr_offset
-        @ptrv(to, u8, 0) = byte
+        @ptrv(this.data, u8, bytes) = byte
         this.length = new_bytes
     }
 
     fn append_str(str: String) {
         this.append_from_ptr(str.data, str.bytes);
+    }
+    fn append_uint(value: uint) {
+        this.minimum_free_space(64)
+        let len = value.to_base_to_ptr(10, this.data + this.length)
+        this.length += len
+    }
+    fn append_int(value: int) {
+        this.minimum_free_space(64)
+        let len = value.to_base_to_ptr(10, this.data + this.length)
+        this.length += len
     }
 
     // Compare
