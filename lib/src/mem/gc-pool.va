@@ -89,7 +89,6 @@ struct GcPool {
     }
 
     fn get(vtable: u32) ptr {
-        // io:print_fake("a")
         let size = this.size
         let block = this.current
         let index = this.index

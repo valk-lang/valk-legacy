@@ -159,7 +159,6 @@ class Server {
                     lsn.detect_write_request(false)
                 }
                 if lsn.has_read_request() {
-                            // io:print_fake("\n")
                     http_con.recv_and_respond() err ! {
                         if this.show_info {
                             println("[+] Invalid request: " + fd)

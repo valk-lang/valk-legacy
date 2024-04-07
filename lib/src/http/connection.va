@@ -130,6 +130,7 @@ class Connection {
                         let path = result.path.trim("/")
                         each server.static_dirs as dir {
                             let fullpath = dir + path 
+                        println(dir)
                             if fs:is_file(fullpath) {
                                 let stream = fs:stream(fullpath, true, false) ! continue
                                 this.send_file(stream, null)
@@ -141,14 +142,18 @@ class Connection {
                     // Request
                     let req = this.request ?? <{
                         let req = Request{
-                            headers: result.headers,
                             method: result.method,
-                            body: result.body,
                             path: result.path,
+                            headers: result.headers,
+                            body: result.body,
                         }
                         this.request = req
                         return req
                     }
+                    req.method = result.method
+                    req.path = result.path
+                    req.headers = result.headers
+                    req.body = result.body
 
                     // Response
                     let resp = server.handler(req)

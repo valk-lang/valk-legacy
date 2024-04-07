@@ -242,7 +242,6 @@ class String {
 
     // TODO: mark unsafe
     static fn make_empty(length: uint) String {
-                                    // io:print_fake("s")
         if length == 0 : return ""
         let d = mem:gc_bump_alloc(length + 1)
         @ptrv(d, u8, length) = 0 // trailing 0 byte

@@ -4,6 +4,7 @@ class Request {
     method: String
     path: String
     body: String
+    response: Response (Response.html("hello world"))
 
     fn reset() {
         this.headers.clear()
