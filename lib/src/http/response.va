@@ -43,7 +43,6 @@ class Response {
     fn compile(buf: utils:ByteBuffer) void {
 
         let len = this.body.bytes;
-        buf.clear()
 
         buf.append_str("HTTP/1.1 ");
         buf.append_uint(this.status);

@@ -36,7 +36,7 @@ class RequestParser {
     fn soft_reset() {
         let input = this.input
         let pos = this.input_pos
-        if pos == input.length {
+        if pos >= input.length {
             this.input_pos = 0
             input.clear()
         }
@@ -67,6 +67,7 @@ class RequestParser {
                 }
                 return
             }
+
             if index + 1 == length { return }
             if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
@@ -77,7 +78,7 @@ class RequestParser {
             if space2 > index { throw invalid }
 
             // Request "GET / HTTP/1.1"
-            let method = input.sub_str(pos, space1)
+            let method = input.sub_str(pos, space1 - pos)
             let path = input.sub_str(space1 + 1, space2 - space1 - 1)
             // let version = input.sub_str(space2 + 1, index - space2 - 1)
 

@@ -89,14 +89,12 @@ struct Connection {
         return bytes_sent;
     }
 
-    fn recv(buffer: utils:ByteBuffer) uint !connection !again {
+    fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection !again {
 
         if this.open == false { return 0 }
-
-        let buf_size : uint = 65535;
         // let ssl = this.ssl;
 
-        buffer.minimum_free_space(buf_size);
+        buffer.minimum_free_space(bytes);
         let count : uint = 0;
 
         // if isset(ssl) {
@@ -120,9 +118,9 @@ struct Connection {
 
         // } else {
             #if OS == win
-            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, buf_size @as i32, 0);
+            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, bytes @as i32, 0);
             #else
-            let rcvd = sys:recv(this.fd @as i32, buffer.data + buffer.length, buf_size, 0);
+            let rcvd = sys:recv(this.fd @as i32, buffer.data + buffer.length, bytes, 0);
             #end
             if (rcvd < 0) {
                 #if OS == win
