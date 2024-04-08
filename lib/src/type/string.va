@@ -235,7 +235,7 @@ class String {
     // TODO: mark unsafe
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
-        let d = mem:gc_bump_alloc(length + 1)
+        let d = mem:alloc(length + 1)
         @ptrv(d, u8, length) = 0 // trailing 0 byte
         let str = String {
             data: d
@@ -273,20 +273,7 @@ class String {
         return mem:equal(this.data, cmp.data, this.bytes)
     }
 
-    fn _gc_transfer() {
-        // Copy data from bump allocator to malloc
-        let data = this.data
-        let bytes = this.bytes + 1
-        let new = mem:alloc(bytes)
-        mem:copy(data, new, bytes)
-        this.data = new
-    }
-
     fn _gc_free() {
-        // Free data if data was transfered
-        let data = this.data
-        if @ptrv(this, u8, -8) > 2 {
-            mem:free(data)
-        }
+        mem:free(this.data)
     }
 }
