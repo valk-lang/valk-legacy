@@ -13,6 +13,9 @@ fn println(str: String) {
     write(1, str) _
     write(1, "\n") _
 }
+fn print_from_ptr(adr: ptr, len: uint) {
+    write_from_ptr(1, adr, len) ! return
+}
 fn print_fake(adr: ptr) {
     write_from_ptr(1, (adr @as String).data, (adr @as String).bytes) ! return
 }

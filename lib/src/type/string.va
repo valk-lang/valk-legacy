@@ -122,14 +122,6 @@ class String {
         }
         return new_str
     }
-    fn modify_to_lower() {
-        let len = this.bytes
-        let data = this.data
-        while len-- > 0 {
-            let ch = @ptrv(data, u8, len)
-            if ch > 64 && ch < 91 : @ptrv(data, u8, len) = ch + 32
-        }
-    }
 
     /////////////////////
     // Partials

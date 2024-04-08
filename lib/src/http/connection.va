@@ -106,6 +106,7 @@ class Connection {
             parser.parse(request) err ! {
                 if error_is(err, !http413) {
                     this.send_error(413)
+                    return
                 }
                 this.send_error(400)
                 return
@@ -138,18 +139,18 @@ class Connection {
 
                 parser.soft_reset()
 
-                // if server.static_dirs.length > 0 {
-                //     let path = request.path.trim("/")
-                //     each server.static_dirs as dir {
-                //         let fullpath = dir + path 
-                //         if fs:is_file(fullpath) {
-                //             let stream = fs:stream(fullpath, true, false) ! continue
-                //             this.send_file(stream, null)
-                //             request.reset()
-                //             break
-                //         }
-                //     }
-                // }
+                if server.static_dirs.length > 0 {
+                    let path = request.path.trim("/")
+                    each server.static_dirs as dir {
+                        let fullpath = dir + path 
+                        if fs:is_file(fullpath) {
+                            let stream = fs:stream(fullpath, true, false) ! continue
+                            this.send_file(stream, null)
+                            request.reset()
+                            break
+                        }
+                    }
+                }
 
                 // Response
                 let resp = server.handler(request)
@@ -229,6 +230,13 @@ class Connection {
     }
 
     fn send_error(code: uint) {
+        if this.output.length == 0 {
+            let resp = this.request.response
+            resp.reset()
+            resp.status = code @as u32
+            this.respond(resp)
+            this.send_response_bytes() _
+        }
         this.close()
     }
 

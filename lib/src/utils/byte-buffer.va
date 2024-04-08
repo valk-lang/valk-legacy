@@ -32,9 +32,7 @@ class ByteBuffer {
     }
 
     fn append_from_ptr(data: ptr, length: uint) {
-        if(length == 0) {
-            return
-        }
+        if length == 0 : return
         let bytes : uint = this.length;
         let new_bytes : uint = bytes + length;
         this.minimum_size(new_bytes);
