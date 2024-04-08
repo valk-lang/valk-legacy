@@ -53,6 +53,7 @@ struct Stack {
     transfer : ObjectChain
     shared : GcRing
     lock : GcLock
+    bump: GcBumper (GcBumper.new())
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
@@ -151,9 +152,7 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        if disable_gc {
-            return
-        }
+        if disable_gc : return
         this.lock.lock()
 
         disable_gc = true
@@ -168,13 +167,14 @@ struct Stack {
         this.mark_difference_down()
         this.handle_transfer_list()
         GcPool.free_unused_all()
+        this.bump.wipe()
 
         // Full clear
         if this.force_full {
             this.clear_unknown = true
             this.force_full = false
         }
-        if gc_transfer_size > (gc_mark_size >> 1) {
+        if gc_transfer_size > gc_mark_size {
             this.clear_unknown = true
         }
         if this.clear_unknown {

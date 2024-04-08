@@ -7,111 +7,264 @@ use utils
 use fs
 
 class Connection {
+    server: Server
     netcon: net:Connection
     fd: uint
+
     // uploads: ?Array[String] (null)
-    read_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
-    parse_result: ParseResult (ParseResult{})
-    parse_pos: uint (0)
+    request: Request (Request{})
+    parser: RequestParser (RequestParser{})
+    added_active_body_size: bool (false)
 
     // Response
-    out_file: ?fs:FileStream (null)
-    out_buf: utils:ByteBuffer (utils:ByteBuffer.new(500))
-    out_pos: uint (0)
+    output_file: ?fs:FileStream (null)
+    output: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+    output_pos: uint (0)
 
-    fn reset_parser() void {
+    // Cache
+    // request: ?Request (null)
 
-        // this.parse_result = ParseResult{}
-        this.parse_result.clear()
-
-        let read_buf = this.read_buf
-        if read_buf.read_index == read_buf.length {
-            read_buf.clear()
-        }
+    fn full_reset() {
+        this.request.reset()
+        this.parser.full_reset()
+        this.reset_output()
     }
 
-    fn reset_out() void {
-        this.out_buf.clear()
-        this.out_pos = 0
+    fn reset_output() void {
+        // Reset output
+        let file = this.output_file
+        if isset(file) {
+            file.close()
+            this.output_file = null
+        }
+        this.output.clear()
+        this.output_pos = 0
     }
 
     fn send_file(stream: fs:FileStream, filename: ?String) void {
 
-    	let out = this.out_buf
-    	let path = stream.path
-    	let fsize = fs:size(path)
-    	let ext = fs:ext(path)
-    	let mime = fs:mime(ext)
+        let out = this.output
+        let path = stream.path
+        let fsize = fs:size(path)
+        let ext = fs:ext(path)
+        let mime = fs:mime(ext)
 
-    	this.out_file = stream
+        this.output_file = stream
 
-    	out.append_str("HTTP/1.1 200 OK\r\nContent-Type: " + mime + "\r\nContent-Length: " + fsize + "\r\n")
+        out.append_str("HTTP/1.1 200 OK\r\nContent-Type: " + mime + "\r\nContent-Length: " + fsize + "\r\n")
 
-    	if isset(filename) {
-    		out.append_str("Content-Disposition: attachment filename=\"" + filename + "\"\r\n")
-    	}
-
-    	out.append_str("\r\n")
-    }
-
-    fn respond(resp: Response) void {
-        let filepath = resp.filepath
-        if isset(filepath) {
-        	let stream = fs:stream(filepath, true, false) ! {
-        		this.respond(Response.error(404))
-        		return
-            }
-            this.send_file(stream, resp.filename)
-        	return
+        if isset(filename) {
+            out.append_str("Content-Disposition: attachment filename=\"" + filename + "\"\r\n")
         }
 
-        resp.compile(this.out_buf)
-    }
-
-    fn can_clear_out() bool {
-        return this.out_pos >= this.out_buf.length
+        out.append_str("\r\n")
     }
 
     fn has_data_to_send() bool {
-        if this.out_pos < this.out_buf.length {
+        if this.output_pos < this.output.length {
             return true
         }
-        let file = this.out_file
+        let file = this.output_file
         if isset(file) {
             if file.reading : return true
         }
         return false
     }
+    fn count_bytes_to_send() uint {
+        return this.output.length - this.output_pos
+    }
 
-    // Returns 'true' if all bytes were sent
-    fn send_response_bytes() void {
+    fn should_flush_output() bool {
+        return this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
+    }
 
-        let out = this.out_buf
+    fn handle_event(read: bool, write: bool) {
+        // Settings
+        let server = this.server
+        let max_hs = server.max_request_header_size
+        let max_bs = server.max_request_body_size
+        let max_sbs = server.max_server_wide_body_size
 
-        // Check file stream
-        let file = this.out_file
-        if isset(file) {
-            if this.can_clear_out() {
-                if file.reading {
-                    let part = file.read(65535) ? ""
-                    out.append_str(part)
-                }
+        let parser = this.parser
+        let input = parser.input
+        let request = this.request
+        let file = this.output_file
+
+        // Write output
+        if write {
+            this.send_response_bytes() err ! {
+                if error_is(err, !again) : return
+                this.close()
+                return
+            }
+            this.reset_output()
+            if !read {
+                return
             }
         }
 
-        let pos = this.out_pos
-        let bytes = out.length - pos
-        if bytes > 0 {
-            #if OS == win
-            let wbytes = sys:send(this.fd, out.data + pos, bytes @as i32, 0)
-            if wbytes < 0 : wbytes = 0
-            this.out_pos += wbytes @as uint
-            #else
-            let wbytes = io:write_from_ptr(this.fd, out.data + pos, bytes) ? 0
-            this.out_pos += wbytes
-            #end
+        while read {
+            // Read bytes
+            let rbytes : uint = 65535
+            let bytes = this.netcon.recv(input, 65535) err ! {
+                if error_is(err, !again) : break
+                this.close()
+                return
+            }
+            if rbytes != bytes : break
+        }
+
+        // While has input
+        while parser.input_pos < parser.input.length {
+            parser.parse(request) err ! {
+                if error_is(err, !http413) {
+                    this.send_error(413)
+                    return
+                }
+                this.send_error(400)
+                return
+            }
+
+            // Check limits
+            if parser.parsed_headers {
+                let len = parser.content_length
+                if len > 0 {
+                    if len > max_bs {
+                        this.send_error(413)
+                        return
+                    }
+                    if server.active_body_size + len > max_sbs {
+                        this.send_error(413)
+                        return
+                    }
+                    if !this.added_active_body_size {
+                        this.added_active_body_size = true
+                        atomic(server.active_body_size + len)
+                    }
+                }
+            }
+
+            if parser.parsed_body {
+                if this.added_active_body_size {
+                    this.added_active_body_size = false
+                    atomic(server.active_body_size - parser.content_length)
+                }
+
+                parser.soft_reset()
+
+                if server.static_dirs.length > 0 {
+                    let path = request.path.trim("/")
+                    let found = false
+                    each server.static_dirs as dir {
+                        let fullpath = dir + path 
+                        if fs:is_file(fullpath) {
+                            let stream = fs:stream(fullpath, true, false) ! continue
+                            this.send_file(stream, null)
+                            request.reset()
+                            found = true
+                            break
+                        }
+                    }
+                    if found : break
+                }
+
+                // Response
+                let resp = server.handler(request)
+                this.respond(resp)
+
+                // Clear request
+                request.reset()
+                // TODO: Delete uploads
+
+                // Flush output
+                if this.should_flush_output() {
+                    this.send_response_bytes() err ! {
+                        if error_is(err, !again) : return
+                        this.close()
+                        return
+                    }
+                    this.reset_output()
+                }
+                continue
+            }
+            break
+        }
+
+        // Write output
+        this.send_response_bytes() err ! {
+            if error_is(err, !again) : return
+            this.close()
+            return
+        }
+        this.reset_output()
+    }
+
+    fn respond(resp: Response) void {
+        let filepath = resp.filepath
+        if isset(filepath) {
+            let stream = fs:stream(filepath, true, false) ! {
+                this.respond(Response.error(404))
+                return
+            }
+            this.send_file(stream, resp.filename)
+            return
+        }
+
+        resp.compile(this.output)
+    }
+
+    fn send_response_bytes() !write !again {
+
+        let out = this.output
+        let file = this.output_file
+
+        while true {
+            // Check file stream
+            if isset(file) {
+                if this.count_bytes_to_send() == 0 {
+                    if file.reading {
+                        let part = file.read(65535) ? ""
+                        out.append_str(part)
+                    }
+                    if !file.reading {
+                        this.output_file = null
+                    }
+                }
+            }
+
+            let pos = this.output_pos
+            let bytes = out.length - pos
+            if bytes == 0 : break
+
+            let wbytes = this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
+                if error_is(err, !again) : throw again
+                throw write
+            }
+            this.output_pos += wbytes
+            if wbytes < bytes : break
         }
     }
+
+    fn send_error(code: uint) {
+        if this.output.length == 0 {
+            let resp = this.request.response
+            resp.reset()
+            resp.status = code @as u32
+            this.respond(resp)
+            this.send_response_bytes() _
+        }
+        this.close()
+    }
+
+    fn close() {
+        if this.added_active_body_size {
+            atomic(this.server.active_body_size - this.parser.content_length)
+            this.added_active_body_size = false
+        }
+        this.full_reset()
+        net:Socket.close(this.fd)
+    }
+
 }
 
 

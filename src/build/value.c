@@ -34,9 +34,12 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             if (from->type == v_decl) {
                 Decl *decl = from->item;
-                if (!decl->is_mut) {
+                if (!decl->is_mut)
                     decl->is_mut = true;
-                }
+            } else if (from->type == v_decl_overwrite) {
+                DeclOverwrite *dov = from->item;
+                if (!dov->decl->is_mut)
+                    dov->decl->is_mut = true;
             }
             v = value_make(alc, v_ptr_of, from, type_gen_valk(alc, b, "ptr"));
 
@@ -179,7 +182,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         } else if (str_is(tkn, "isset")) {
             tok_expect(p, "(", false, false);
             Value* on = read_value(alc, p, true, 0);
-            if(on->type != v_decl) {
+            if(on->type != v_decl && on->type != v_decl_overwrite) {
                 parse_err(p, -1, "The 'isset' value must be a local variable");
             }
             if(!on->rett->nullable) {
@@ -188,7 +191,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             v = vgen_isset(alc, b, on);
 
-            if (on->type == v_decl) {
+            if (on->type == v_decl || on->type == v_decl_overwrite) {
                 Array *issets = array_make(alc, 4);
                 v->issets = issets;
                 array_push(issets, on);
@@ -597,7 +600,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_decl_overwrite) {
         DeclOverwrite* dov = idf->item;
-        return value_make(alc, v_decl, dov->decl, dov->type);
+        return value_make(alc, v_decl_overwrite, dov, dov->type);
     }
     if (type == idf_global) {
         Global* g = idf->item;
@@ -1183,7 +1186,7 @@ bool value_is_assignable(Value *v) {
         VIRCached* vc = v->item;
         return value_is_assignable(vc->value);
     }
-    return v->type == v_decl || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global; 
+    return v->type == v_decl || v->type == v_decl_overwrite || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global; 
 }
 
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
@@ -1210,6 +1213,10 @@ void value_is_mutable(Value* v) {
     if (v->type == v_decl) {
         Decl *decl = v->item;
         decl->is_mut = true;
+    }
+    if (v->type == v_decl_overwrite) {
+        DeclOverwrite* dov = v->item;
+        dov->decl->is_mut = true;
     }
 }
 
@@ -1312,7 +1319,7 @@ bool try_convert_number(Value* val, Type* to_type) {
 
 bool value_needs_gc_buffer(Value* val) {
     if(type_is_gc(val->rett)) {
-        if(val->type == v_decl || val->type == v_string || val->type == v_null) {
+        if(val->type == v_decl || val->type == v_decl_overwrite || val->type == v_string || val->type == v_null) {
             return false;
         }
         return true;

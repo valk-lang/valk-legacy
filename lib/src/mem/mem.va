@@ -66,3 +66,22 @@ fn equal(a: ptr, b: ptr, length: uint) bool {
     }
     return true
 }
+
+fn ascii_bytes_to_lower(adr: ptr, len: uint) {
+    while len-- > 0 {
+        let ch = @ptrv(adr, u8, len)
+        if ch > 64 && ch < 91 : @ptrv(adr, u8, len) = ch + 32
+    }
+}
+
+fn bytes_to_uint(adr: ptr, len: uint) uint !not_a_number {
+    let result : uint = 0;
+    let mult : uint = 1;
+    while len-- > 0 {
+        let ch = @ptrv(adr, u8, len)
+        if ch < 48 || ch > 57 : throw not_a_number;
+        result += ((ch @as uint) - 48) * mult;
+        mult *= 10;
+    }
+    return result;
+}

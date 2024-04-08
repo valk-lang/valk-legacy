@@ -492,6 +492,15 @@ void read_ast(Parser *p, bool single_line) {
             }
 
             right = try_convert(alc, p, p->scope, right, left->rett);
+            if(op == op_eq && left->type == v_decl_overwrite) {
+                char* reason;
+                if(!type_compat(left->rett, right->rett, &reason)) {
+                    // Remove overwrite
+                    DeclOverwrite* dov = left->item;
+                    scope_delete_idf_by_value(scope, dov, true);
+                    left = vgen_decl(alc, dov->decl);
+                }
+            }
             type_check(p, left->rett, right->rett);
 
             if(op == op_eq && left->type == v_global) {

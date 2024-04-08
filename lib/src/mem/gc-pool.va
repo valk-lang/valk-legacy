@@ -75,11 +75,11 @@ struct GcPool {
             @ptrv(current, ptr) = next
         }
 
-        let usage = this.items_used * 100 / this.items_total_last
+        let usage = this.items_used * 100 / (this.items_total_last + 100)
 
         if usage > pool_usage {
             pool_usage = usage
-            if usage > 80 {
+            if usage > 90 {
                 stack.run_gc = true
                 stack.bumper_overflow = true
             }

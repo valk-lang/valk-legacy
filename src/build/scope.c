@@ -85,6 +85,20 @@ void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
 
             Idf *idf = idf_make(alc, idf_decl_overwrite, dov);
             map_set(scope->identifiers, decl->name, idf);
+
+        } else if (on->type == v_decl_overwrite) {
+            DeclOverwrite *ddov = on->item;
+            Decl *decl = ddov->decl;
+
+            Type *type = type_clone(alc, decl->type);
+            type->nullable = false;
+
+            DeclOverwrite *dov = al(alc, sizeof(DeclOverwrite));
+            dov->decl = decl;
+            dov->type = type;
+
+            Idf *idf = idf_make(alc, idf_decl_overwrite, dov);
+            map_set(scope->identifiers, decl->name, idf);
         }
     }
 }

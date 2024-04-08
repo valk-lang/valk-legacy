@@ -114,15 +114,29 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
 Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
     while(scope) {
         Idf* idf = map_get(scope->identifiers, name);
-        if(!idf) {
-            if(!recursive)
-                break;
-            scope = scope->idf_parent;
-            continue;
-        }
-        return idf;
+        if(idf)
+            return idf;
+        if(!recursive)
+            break;
+        scope = scope->idf_parent;
     }
     return NULL;
+}
+bool scope_delete_idf_by_value(Scope* scope, void* item, bool recursive) {
+    while(scope) {
+        Array* idfs = scope->identifiers->values;
+        for(int i = 0; i < idfs->length; i++) {
+            Idf* idf = array_get_index(idfs, i);
+            if(idf->item == item) {
+                array_set_index(scope->identifiers->values, i, NULL);
+                return true;
+            }
+        }
+        if (!recursive)
+            break;
+        scope = scope->idf_parent;
+    }
+    return false;
 }
 
 

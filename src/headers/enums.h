@@ -125,6 +125,7 @@ enum CLASSTYPES {
 
 enum VALUES {
     v_decl,
+    v_decl_overwrite,
     v_class_pa,
     v_ptrv,
     v_ptr_offset,

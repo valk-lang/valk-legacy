@@ -19,15 +19,25 @@ class Response {
     	return Response{ body: body, status: code, content_type: content_type, headers: headers };
     }
     static fn redirect(location: String, code: u32 (301), headers: ?Map[String] (null)) Response {
-    	let h = headers ?? Map[String]{};
+    	let h = headers ?? map[String]{};
     	h.set("Location", location);
     	return Response{ status: code, headers: h };
     }
-    static fn error(code: u32) Response {
-    	return Response{ status: code };
+    static fn error(code: u32, headers: ?Map[String] (null)) Response {
+    	return Response{ status: code, headers: headers };
     }
     static fn file(path: String, filename: String (null)) Response {
     	return Response{ filepath: path, filename: filename }
+    }
+
+    fn reset() {
+        this.status = 200
+        this.body = ""
+        this.filepath = null
+        this.filename = null
+        this.content_type = "text/plain"
+        let headers = this.headers
+        if isset(headers) : headers.clear()
     }
 
     fn compile(buf: utils:ByteBuffer) void {
@@ -35,7 +45,7 @@ class Response {
         let len = this.body.bytes;
 
         buf.append_str("HTTP/1.1 ");
-        buf.append_str(this.status.to_str());
+        buf.append_uint(this.status);
         buf.append_str(" OK\r\n");
 
         buf.append_str("Content-Type: ");
@@ -43,7 +53,7 @@ class Response {
         buf.append_str("\r\n");
 
         buf.append_str("Content-Length: ");
-        buf.append_str(this.body.bytes.to_str());
+        buf.append_uint(this.body.bytes);
         buf.append_str("\r\n");
 
         let headers = this.headers;
