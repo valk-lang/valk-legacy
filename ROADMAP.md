@@ -13,7 +13,8 @@
 
 ```
 // Prio
-- http: max request size option, error handler option, parse post data, handle file uploads
+- coroutines
+- http: parse post data / file uploads
 // Other
 - error messages
 - doc generator
