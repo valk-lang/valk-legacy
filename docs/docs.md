@@ -1,20 +1,6 @@
 
 # Documentation
 
-## Install
-
-Currently you can only build from source. Prebuilt binaries will be coming soon.
-
-macOS: `brew install llvm@15 && brew link llvm@15`
-
-Ubuntu / Debian: `sudo apt-get install llvm-15 clang-15 lld libcurl4-openssl-dev`
-
-```
-git clone https://github.com/valk-lang/valk.git
-cd valk
-make
-```
-
 ## Table of contents
 
 <table>
@@ -58,6 +44,19 @@ make
 
 <br></td></tr>
 </table>
+
+## Getting started
+
+Install on linux, macos or WSL
+
+```sh
+curl -s https://valk-lang.dev/install.sh | bash -s latest
+# files stored in: /opt/valk
+# link created: /usr/local/bin/valk
+```
+
+Windows: see our [Download page](https://valk-lang.dev/download). Just unzip the files into a folder and use `valk.exe` in your terminal.
+
 
 ## Basic example
 

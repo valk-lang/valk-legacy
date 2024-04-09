@@ -53,6 +53,7 @@ struct Func {
     bool is_used;
     bool use_if_class_is_used;
     bool exits;
+    bool parsed;
 };
 struct FuncArg {
     Type* type;
@@ -60,13 +61,6 @@ struct FuncArg {
     Chunk* chunk;
     Chunk* chunk_value;
     Decl* decl;
-};
-struct FuncError {
-    ErrorCollection* collection;
-    int value;
-};
-struct ErrorCollection {
-    Map* errors;
 };
 
 #endif

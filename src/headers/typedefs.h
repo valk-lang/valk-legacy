@@ -36,12 +36,11 @@ typedef struct IRFuncIR IRFuncIR;
 // Parse
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;
-typedef struct FuncError FuncError;
-typedef struct ErrorCollection ErrorCollection;
 typedef struct Scope Scope;
 typedef struct Idf Idf;
 typedef struct Id Id;
 typedef struct Type Type;
+typedef struct TypeFuncInfo TypeFuncInfo;
 typedef struct Decl Decl;
 typedef struct DeclOverwrite DeclOverwrite;
 typedef struct Global Global;
@@ -50,6 +49,11 @@ typedef struct ClassProp ClassProp;
 typedef struct Trait Trait;
 typedef struct ValueAlias ValueAlias;
 typedef struct Alias Alias;
+typedef struct Macro Macro;
+typedef struct MacroPattern MacroPattern;
+typedef struct MacroPatternItem MacroPatternItem;
+typedef struct MacroRepeat MacroRepeat;
+typedef struct MacroItem MacroItem;
 typedef struct Test Test;
 // Tokens
 typedef struct Token Token;
@@ -77,6 +81,7 @@ typedef struct VPhiValue VPhiValue;
 typedef struct VScope VScope;
 typedef struct VVar VVar;
 typedef struct VThisOrThat VThisOrThat;
+typedef struct VError VError;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;

@@ -30,7 +30,6 @@ class FileStream {
 
         if(rcount < bytes) {
             this.close()
-            this.reading = false
         }
 
         return str
@@ -38,6 +37,7 @@ class FileStream {
 
     fn close() {
         if this.reading {
+            this.reading = false
             let check = io:close(this.fd)
         }
     }

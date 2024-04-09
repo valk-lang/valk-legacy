@@ -13,6 +13,8 @@ void stage_3_gen(Build* b) {
     stage_generate_main(b);
 
     b->time_parse += microtime() - start;
+
+    stage_add_item(b->stage_4_ast, b);
 }
 
 void stage_generate_main(Build *b) {

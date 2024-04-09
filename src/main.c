@@ -3,6 +3,9 @@
 
 void help();
 
+Array* watch_dirs;
+bool is_watching;
+
 int main(int argc, char *argv[]) {
     //
     if (argc < 2) {
@@ -11,6 +14,8 @@ int main(int argc, char *argv[]) {
 
     //
     // lsp_doc_content = NULL;
+    watch_dirs = NULL;
+    is_watching = false;
 
     //
     char *cmd = argv[1];

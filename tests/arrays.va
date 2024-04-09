@@ -1,9 +1,6 @@
 
 test "Array[String] tests" {
-    let arr = Array[String].new()
-    arr.push("1")
-    arr.push("2")
-    arr.push("3")
+    let arr = array[String]{ "1", "2", "3" }
     //
     assert(arr.contains("0") == false)
     assert(arr.contains("1"))
@@ -21,10 +18,7 @@ test "Array[String] tests" {
 }
 
 test "Array[int] tests" {
-    let arr = Array[int].new()
-    arr.push(1)
-    arr.push(2)
-    arr.push(3)
+    let arr = array[int]{ 1, 2, 3 }
     //
     each arr as k, v {
         assert(k + 1 == v @as uint)

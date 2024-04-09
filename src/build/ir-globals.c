@@ -11,26 +11,6 @@ void ir_gen_globals(IR* ir) {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = dso_local thread_local(initialexec) global i32 0, align 4\n");
         str_flat(code, "@valk_err_msg = dso_local thread_local(initialexec) global i8* null, align 8\n");
-
-        // Define vtable functions
-        Array* classes = b->classes;
-        for(int i = 0; i < classes->length; i++) {
-            Class* class = array_get_index(classes, i);
-            if(class->type != ct_class)
-                continue;
-
-            Func* transfer = map_get(class->funcs, "_v_transfer");
-            Func* mark = map_get(class->funcs, "_v_mark");
-            Func* mark_shared = map_get(class->funcs, "_v_mark_shared");
-            Func* share = map_get(class->funcs, "_v_share");
-            Func* gc_free = map_get(class->funcs, "_gc_free");
-
-            ir_define_ext_func(ir, transfer);
-            ir_define_ext_func(ir, mark);
-            ir_define_ext_func(ir, mark_shared);
-            ir_define_ext_func(ir, share);
-            ir_define_ext_func(ir, gc_free);
-        }
     } else {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = external thread_local(initialexec) global i32, align 4\n");

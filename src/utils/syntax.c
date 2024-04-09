@@ -76,6 +76,12 @@ bool is_hex_char(char c) {
     }
     return false;
 }
+bool is_octal_char(char c) {
+    if (c >= 48 && c <= 55) {
+        return true;
+    }
+    return false;
+}
 
 bool is_whitespace(char c) { return c <= 32; }
 bool is_newline(char c) { return c == 10; }
@@ -121,6 +127,21 @@ bool is_valid_hex_number(char *str) {
     while (i < len) {
         char ch = str[i];
         if (!is_hex_char(ch)) {
+            return false;
+        }
+        i++;
+    }
+    return true;
+}
+bool is_valid_octal_number(char *str) {
+    int len = strlen(str);
+    if (len == 0) {
+        return false;
+    }
+    int i = 0;
+    while (i < len) {
+        char ch = str[i];
+        if (!is_octal_char(ch)) {
             return false;
         }
         i++;
@@ -292,4 +313,35 @@ char* itos(v_i64 val, char* buf, const int base){
     while(i-- > 0)
         buf[i] = rev[up++];
     return buf;
+}
+
+v_i64 hex2int(char *hex) {
+    v_i64 val = 0;
+    while (*hex) {
+        // get current character then increment
+        uint8_t byte = *hex++;
+        // transform hex character to the 4bit equivalent number, using the ascii table indexes
+        if (byte >= '0' && byte <= '9')
+            byte = byte - '0';
+        else if (byte >= 'a' && byte <= 'f')
+            byte = byte - 'a' + 10;
+        else if (byte >= 'A' && byte <= 'F')
+            byte = byte - 'A' + 10;
+        // shift 4 to make space for new digit, and add the 4 bits of the new digit
+        val = (val << 4) | (byte & 0xF);
+    }
+    return val;
+}
+v_i64 oct2int(char *oct) {
+    v_i64 val = 0;
+    while (*oct) {
+        // get current character then increment
+        uint8_t byte = *oct++;
+        // transform octal character to the 3bit equivalent number, using the ascii table indexes
+        if (byte >= '0' && byte <= '7')
+            byte = byte - '0';
+        // shift 3 to make space for new digit, and add the 3 bits of the new digit
+        val = (val << 3) | (byte & 0x7);
+    }
+    return val;
 }

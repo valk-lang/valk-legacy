@@ -20,6 +20,7 @@ struct Unit {
     char *ir_start;
     char *ir_end;
     Array *func_irs;
+    IR* ir;
     //
     Parser *parser;
     //

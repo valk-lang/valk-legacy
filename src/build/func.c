@@ -1,6 +1,8 @@
 
 #include "../all.h"
 
+void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsigned int v);
+
 Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export_name) {
     Func* f = al(alc, sizeof(Func));
     f->name = name;
@@ -37,6 +39,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->is_used = false;
     f->use_if_class_is_used = false;
     f->exits = false;
+    f->parsed = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -94,21 +97,17 @@ void parse_handle_func_args(Parser* p, Func* func) {
         }
         // Get error value
         char* name = p->tkn;
-        FuncError* err = NULL;
+        unsigned int err = 0;
         if(func->in_header) {
             build_err(b, "TODO: header errors");
         } else {
-            err = map_get(b->errors->errors, name);
-            if(!err) {
-                err = al(b->alc, sizeof(FuncError));
-                err->value = ++b->error_count;
-                err->collection = b->errors;
-                map_set(b->errors->errors, name, err);
-            }
+            unsigned int v = ctxhash_u32(name);
+            if(v == 0)
+                v = 1;
+            func_check_error_dupe(p, func, errors, name, v);
+            err = v;
         }
-        Idf* idf = idf_make(b->alc, idf_error, err);
-        map_set(errors, name, err);
-        scope_set_idf(func->scope, name, idf, p);
+        map_set(errors, name, (void*)(uintptr_t)err);
 
         t = tok(p, true, true, false);
     }
@@ -136,8 +135,8 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
     char *load = ir_load(ir, type_i32, "@valk_err_code");
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
-    // Clear error
-    ir_store_old(ir, type_i32, "@valk_err_code", "0");
+    if (fcall->err_decl)
+        fcall->err_decl->ir_var = load;
 
     ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
 
@@ -145,6 +144,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
 
         Scope* err_scope = fcall->err_scope;
         ir->block = block_err;
+        ir_store_old(ir, type_i32, "@valk_err_code", "0");
         ir_write_ast(ir, err_scope);
         if(!err_scope->did_return) {
             ir_jump(ir, after);
@@ -159,6 +159,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         char* ltype = ir_type(ir, val->rett);
 
         ir->block = block_err;
+        ir_store_old(ir, type_i32, "@valk_err_code", "0");
         char* alt_val = ir_value(ir, scope, val);
         IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);
@@ -312,5 +313,19 @@ void func_validate_rett_void(Parser *p, Func *func) {
         char buf[512];
         type_to_str(func->rett, buf);
         parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
+    }
+}
+
+void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsigned int v) {
+    if(map_get(errors, str_v)) {
+        parse_err(p, -1, "Duplicate error name");
+    }
+    int len = errors->values->length;
+    for(int i = 0; i < len; i++) {
+        unsigned int ev = array_get_index_u32(errors->values, i);
+        if(ev == v) {
+            char* prev = array_get_index(errors->keys, i);
+            parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
+        }
     }
 }

@@ -1,26 +1,28 @@
 
 use mem
 
-struct GcRing[T] {
+struct GcRing {
     -- data: ptr
     -- size: uint
     ~ length: uint (0)
     -- index: uint (0)
+    -- lock: GcLock
 
     static fn new() CLASS {
         let size : uint = 4;
         return CLASS {
-            data: mem:alloc(size * sizeof(T))
+            data: mem:alloc(size * sizeof(ptr))
             size: size
+            lock: GcLock.new()
         }
     }
 
-    fn add(item: T) {
+    fn add(item: ptr) {
         let length = this.length
         let data = this.data
 
         let index = this.index
-        @ptrv(data, T, index) = @gc_link(this, item)
+        @ptrv(data, ptr, index) = item
         let new_len = length + 1
         this.length = new_len
 
@@ -45,7 +47,7 @@ struct GcRing[T] {
         }
         if last != index {
             let data = this.data
-            @ptrv(data, T, index) = @ptrv(data, T, last)
+            @ptrv(data, ptr, index) = @ptrv(data, ptr, last)
         }
         this.length = len - 1
     }
@@ -65,11 +67,17 @@ struct GcRing[T] {
         let size = this.size
         let new_size = size * 2
         let new_data : ptr = null @as ptr
-        new_data = mem:alloc(new_size * sizeof(T));
-        mem:copy(data, new_data, size * sizeof(T));
+        new_data = mem:alloc(new_size * sizeof(ptr));
+        mem:copy(data, new_data, size * sizeof(ptr));
         mem:free(data)
         this.data = new_data
         this.size = new_size
         return new_data
+    }
+
+    fn free() {
+        this.lock.free()
+        free(this.data)
+        free(this)
     }
 }

@@ -95,6 +95,9 @@ enum IDF {
     idf_cached_value,
     idf_error,
     idf_trait,
+    idf_macro,
+    idf_macro_items,
+    idf_macro_item,
 };
 
 enum TYPES {
@@ -108,6 +111,7 @@ enum TYPES {
     type_undefined,
     type_null,
     type_static_array,
+    type_error,
 };
 
 enum CLASSTYPES {
@@ -121,6 +125,7 @@ enum CLASSTYPES {
 
 enum VALUES {
     v_decl,
+    v_decl_overwrite,
     v_class_pa,
     v_ptrv,
     v_ptr_offset,

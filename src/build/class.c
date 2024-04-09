@@ -1,6 +1,11 @@
 
 #include "../all.h"
 
+void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func);
+void class_generate_mark(Parser* p, Build* b, Class* class, Func* func);
+void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func);
+void class_generate_share(Parser* p, Build* b, Class* class, Func* func);
+
 Class* class_make(Allocator* alc, Build* b, int type) {
     Class* c = al(alc, sizeof(Class));
     c->b = b;
@@ -115,6 +120,9 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
         class->pool_index = get_class_pool_index(class);
+        if (class->pool_index == -1) {
+            parse_err(p, -1, "Invalid class pool index: '%s' (compiler bug)\n", class->name);
+        }
 
         // VTABLE_INDEX
         if(b->verbose > 2)
@@ -199,8 +207,8 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 
         // AST
         class_generate_transfer(p, b, class, transfer);
-        class_generate_mark(p, b, class, mark, false);
-        class_generate_mark(p, b, class, mark_shared, true);
+        class_generate_mark(p, b, class, mark);
+        class_generate_mark_shared(p, b, class, mark_shared);
         class_generate_share(p, b, class, share);
     }
 }
@@ -208,9 +216,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
 
     Map* props = class->props;
-    if (class->pool_index == -1) {
-        parse_err(p, -1, "Invalid class pool index: '%s' (compiler bug)\n", class->name);
-    }
 
     Str* code = b->str_buf;
     str_clear(code);
@@ -219,13 +224,12 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
 
-    if (class->pool_index > -1) {
-        str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-        str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-        str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-        str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-        str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-    }
+    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
     // Props
@@ -267,7 +271,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     *p->chunk = *chunk;
     parse_handle_func_args(p, func);
 }
-void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool shared) {
+void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
 
     Map* props = class->props;
 
@@ -275,16 +279,11 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
     str_clear(code);
 
     str_flat(code, "(age: u8) void {\n");
-    if(shared) {
-        str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
-        str_flat(code, "  @ptrv(this, u8, -5) = age\n");
-    } else {
-        str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-        str_flat(code, "  if state > 8 { return }\n");
-        str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-        str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-        str_flat(code, "  GC_MARK_SIZE += SIZE\n");
-    }
+    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
+    str_flat(code, "  if state > 8 { return }\n");
+    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+    str_flat(code, "  GC_MARK_SIZE += SIZE\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -307,21 +306,60 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func, bool sha
             str_flat(code, ") : ");
         }
         str_add(code, var);
-        if (shared) {
-            str_flat(code, "._v_mark_shared(age)\n");
-        } else {
-            str_flat(code, "._v_mark(age)\n");
-        }
+        str_flat(code, "._v_mark(age)\n");
     }
 
-    if(shared) {
-        if (map_get(class->funcs, "_gc_mark_shared")) {
-            str_flat(code, "  this._gc_mark_shared()\n");
+    if (map_get(class->funcs, "_gc_mark")) {
+        str_flat(code, "  this._gc_mark()\n");
+    }
+
+    str_flat(code, "}\n");
+
+    char* content = str_to_chars(b->alc, code);
+    Chunk *chunk = chunk_make(b->alc, b, NULL);
+    chunk_set_content(b, chunk, content, code->length);
+
+    *p->chunk = *chunk;
+    parse_handle_func_args(p, func);
+}
+
+void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
+
+    Map* props = class->props;
+
+    Str* code = b->str_buf;
+    str_clear(code);
+
+    str_flat(code, "(age: u8) void {\n");
+    str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -5) = age\n");
+
+    // Props
+    for(int i = 0; i < props->values->length; i++) {
+        ClassProp* p = array_get_index(props->values, i);
+        char* pn = array_get_index(props->keys, i);
+        if(!type_is_gc(p->type))
+            continue;
+        char var[32];
+        strcpy(var, "prop_");
+        itos(i, var + 5, 10);
+
+        str_flat(code, "let ");
+        str_add(code, var);
+        str_flat(code, " = this.");
+        str_add(code, pn);
+        str_flat(code, "\n");
+        if(p->type->nullable) {
+            str_flat(code, "if isset(");
+            str_add(code, var);
+            str_flat(code, ") : ");
         }
-    } else {
-        if (map_get(class->funcs, "_gc_mark")) {
-            str_flat(code, "  this._gc_mark()\n");
-        }
+        str_add(code, var);
+        str_flat(code, "._v_mark_shared(age)\n");
+    }
+
+    if (map_get(class->funcs, "_gc_mark_shared")) {
+        str_flat(code, "  this._gc_mark_shared()\n");
     }
 
     str_flat(code, "}\n");
@@ -347,15 +385,14 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
-    if (class->pool_index > -1) {
-        str_flat(code, "  if state < 4 {\n");
-        str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-        str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-        str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-        str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-        str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-        str_flat(code, "  }\n");
-    }
+    str_flat(code, "  if state < 4 {\n");
+    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    str_flat(code, "  }\n");
+
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
     str_flat(code, "  STACK.add_shared(this)\n");
 
@@ -463,9 +500,11 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     gclass->name = name;
     gclass->ir_name = export_name;
 
-    array_push(b->classes, gclass);
-    if(gclass->type == ct_class) {
-        gclass->gc_vtable_index = ++b->gc_vtables;
+    if (b->building_ast) {
+        array_push(b->classes, gclass);
+        if (gclass->type == ct_class) {
+            gclass->gc_vtable_index = ++b->gc_vtables;
+        }
     }
 
     map_set(class->generics, h, gclass);
@@ -473,7 +512,8 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     // Set type identifiers
     for (int i = 0; i < generic_types->length; i++) {
         char* name = array_get_index(class->generic_names, i);
-        Type* type = array_get_index(generic_types, i);
+        Type* type_ = array_get_index(generic_types, i);
+        Type* type = type_clone(b->alc, type_);
         Idf* idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(gclass->scope, name, idf, p);
     }

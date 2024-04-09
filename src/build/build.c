@@ -5,6 +5,8 @@ void cmd_build_help();
 int default_arch();
 int default_os();
 
+void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, int argc, char** argv);
+
 int cmd_build(int argc, char *argv[]) {
 
     size_t mem_start = get_mem_usage();
@@ -52,7 +54,7 @@ int cmd_build(int argc, char *argv[]) {
         get_fullpath(arg, dir_buf);
         main_dir = dir_buf;
     }
-    if (!main_dir && vo_files->length == 0) {
+    if (vo_files->length == 0) {
         cmd_build_help();
         return 1;
     }
@@ -159,8 +161,6 @@ int cmd_build(int argc, char *argv[]) {
     b->units = array_make(alc, 40);
     b->classes = array_make(alc, 40);
     b->pool_str = array_make(alc, 20);
-    b->errors = al(alc, sizeof(ErrorCollection));
-    b->errors->errors = map_make(alc);
     b->strings = array_make(alc, 100);
     b->links = array_make(alc, 10);
     b->link_settings = map_make(alc);
@@ -178,13 +178,13 @@ int cmd_build(int argc, char *argv[]) {
     b->target_os = target_os;
 
     b->ptr_size = 8;
-    b->error_count = 0;
     b->export_count = 0;
     b->string_count = 0;
     b->gc_vtables = 0;
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
+    b->building_ast = true;
 
     b->is_test = is_test;
     b->is_clean = is_clean;
@@ -227,6 +227,12 @@ int cmd_build(int argc, char *argv[]) {
         b->path_out = path_out;
     }
 
+    // Watch files
+    if ((array_contains(args, "--watch", arr_find_str) || array_contains(args, "-w", arr_find_str)) && !is_watching) {
+        watch_files(alc, autorun, vo_files, b->path_out, argc, argv);
+        return 0;
+    }
+
     //
     build_set_stages(b);
 
@@ -262,7 +268,6 @@ int cmd_build(int argc, char *argv[]) {
     // Build stages
     b->parser_started = true;
     build_run_stages(b);
-    stage_4_ast_main(b->nsc_main->unit);
 
     // Object files + Linking
     alc_delete(b->alc_ast);
@@ -311,7 +316,7 @@ int cmd_build(int argc, char *argv[]) {
             break;
     }
 
-    if(autorun) {
+    if(autorun && !is_watching) {
 
         char cmd[VALK_PATH_MAX];
         strcpy(cmd, "\"");
@@ -421,21 +426,105 @@ int default_arch() {
     return arch_other;
 }
 
-void cmd_build_help() {
-    printf("\n# valk build {.va-file|config-dir} [{more .va-files}] -o {outpath}\n\n");
 
+void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, int argc, char** argv) {
+    is_watching = true;
+    bool first_run = true;
+    watch_dirs = array_make(alc, 20);
+    // Add directories from files args
+    for (int i = 0; i < vo_files->length; i++) {
+        char *file = array_get_index(vo_files, i);
+        char md[VALK_PATH_MAX];
+        get_dir_from_path(file, md);
+        char *dir = dups(alc, md);
+        array_push_unique_chars(watch_dirs, dir);
+    }
+
+    //
+    Map *mod_times = map_make(alc);
+    cmd_build(argc, argv);
+    Allocator *walc = alc_make();
+    int pid = -1;
+    bool run_after_build = true;
+    while (true) {
+        alc_wipe(walc);
+        bool build = false;
+        for (int i = 0; i < watch_dirs->length; i++) {
+            char *dir = array_get_index(watch_dirs, i);
+            Array *files = get_subfiles(walc, dir, false, true);
+            for (int o = 0; o < files->length; o++) {
+                char *file = array_get_index(files, o);
+                if (!ends_with(file, ".va")) {
+                    continue;
+                }
+                int mt = mod_time(file);
+                int pmt = map_get_i32(mod_times, file);
+                if (mt != pmt) {
+                    build = true;
+                    map_set_i32(mod_times, file, mt);
+                }
+            }
+        }
+
+        if (!build && !first_run) {
+            // Check autorun
+            if (autorun && run_after_build) {
+                run_after_build = false;
+                // TODO : run program in different thread/process
+                // Kill old process
+                if (pid != -1) {
+                }
+                // Start new process
+                char cmd[VALK_PATH_MAX];
+                strcpy(cmd, "\"");
+                strcat(cmd, path_out);
+                strcat(cmd, "\"");
+                int code = system(cmd);
+                code = code == 0 ? 0 : 1;
+            }
+            sleep_ms(200);
+            continue;
+        }
+
+        run_after_build = true;
+
+        time_t timer = time(NULL);
+        struct tm *tm_info = localtime(&timer);
+        char buffer[26];
+        strftime(buffer, 26, "%H:%M:%Ss", tm_info);
+
+        if (first_run) {
+            printf("[%s] Watching files\n", buffer);
+            first_run = false;
+            continue;
+        }
+
+        printf("[%s] Watcher: files changed -> build\n", buffer);
+        cmd_build(argc, argv);
+    }
+}
+
+
+void cmd_build_help() {
+    printf("\n# valk build {.va-file(s)} [{config-dir}] -o {outpath}\n");
+    printf("or\n");
+    printf("# valk build {.va-file(s)} [{config-dir}] -r|--run\n\n");
+
+    printf(" -o                  set outpath\n");
     printf(" --run -r            run program after compiling\n");
-    // printf(" --watch             watch files & rebuild when code changes\n");
+    printf(" --watch -w          watch files & rebuild when code changes\n");
     printf(" --test -t           build tests\n");
     printf(" --clean -c          ignore cache\n");
     // printf(" --debug -d          generate debug info\n");
-    printf(" --no-opt            build without optimizations\n");
+    // printf(" --no-opt            build without optimizations\n");
     printf("\n");
 
-    // printf(" --def               define compile condition variables\n");
-    // printf("                     format: VAR1=VAL,VAR2=VAL\n");
-    // printf(" --target            compile for a specific os/arch\n");
-    // printf("                     linux-x64, macos-x64, win-x64\n");
+    printf(" --def               define compile condition variables\n");
+    printf("                     format: VAR1=VAL,VAR2=VAL\n");
+    printf(" --target            compile for a specific os/arch\n");
+    printf("                     linux-x64, macos-x64, win-x64\n");
+
+    printf("\n");
     printf(" -v -vv -vvv         show compile info\n");
     printf(" --help -h           build command usage info\n");
     printf("\n");

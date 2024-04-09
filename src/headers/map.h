@@ -19,4 +19,7 @@ void map_set(Map *map, char *key, void *value);
 void map_set_force_new(Map *map, char *key, void *value);
 void map_print_keys(Map *map);
 
+int map_get_i32(Map* map, char* key);
+void map_set_i32(Map* map, char* key, int val);
+
 #endif

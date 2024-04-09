@@ -3,41 +3,63 @@
 
 void ir_gen_func(IR *ir, IRFunc *func);
 
-void ir_gen_functions(IR* ir) {
+void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
+
+    Build* b = ir->b;
+    Unit* u = ir->unit;
+
+    if (b->verbose > 2)
+        printf("Stage 4 | Generate function IR: %s\n", vfunc->export_name);
+
+    IRFunc *func = al(ir->alc, sizeof(IRFunc));
+    func->ir = ir;
+    func->func = vfunc;
     //
-    Array* funcs = ir->unit->funcs;
+    func->blocks = array_make(ir->alc, 20);
+    //
+    func->stack_save_vn = NULL;
+    func->di_scope = NULL;
+    func->gc_stack = NULL;
+    func->gc_stack_adr = NULL;
+    func->gc_stack_adr_val = NULL;
+    //
+    func->var_count = 0;
+    func->gc_count = 0;
+    func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
 
-    for (int i = 0; i < funcs->length; i++) {
-        Func* vfunc = array_get_index(funcs, i);
-        if(vfunc->in_header)
-            continue;
+    IRBlock *start = ir_block_make(ir, func, "start_");
+    IRBlock *code_block = ir_block_make(ir, func, "code_");
 
-        IRFunc* func = al(ir->alc, sizeof(IRFunc));
-        func->ir = ir;
-        func->func = vfunc;
-        //
-        func->blocks = array_make(ir->alc, 20);
-        //
-        func->stack_save_vn = NULL;
-        func->di_scope = NULL;
-        func->gc_stack = NULL;
-        func->gc_stack_adr = NULL;
-        func->gc_stack_adr_val = NULL;
-        //
-        func->var_count = 0;
-        func->gc_count = 0;
-        func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
+    func->block_start = start;
+    func->block_code = code_block;
 
-        IRBlock* start = ir_block_make(ir, func, "start_");
-        IRBlock* code = ir_block_make(ir, func, "code_");
+    array_push(ir->funcs, func);
 
-        func->block_start = start;
-        func->block_code = code;
+    // Generate IR
+    ir_gen_func(ir, func);
 
-        array_push(ir->funcs, func);
-
-        ir_gen_func(ir, func);
+    // Collect final IR
+    Str* code = b->str_buf;
+    str_clear(code);
+    ir_func_definition(code, ir, func->func, false, func->rett_refs);
+    // Blocks
+    if (func->block_code->code->length > 0) {
+        for (int o = 0; o < func->blocks->length; o++) {
+            str_preserve(code, 1000);
+            IRBlock *block = array_get_index(func->blocks, o);
+            str_preserve(code, block->code->length + 100);
+            str_add(code, block->name);
+            str_flat(code, ":\n");
+            str_append(code, block->code);
+        }
     }
+    //
+    str_flat(code, "}\n\n");
+
+    IRFuncIR *irf = al(b->alc, sizeof(IRFuncIR));
+    irf->func = func->func;
+    irf->ir = str_to_chars(b->alc, code);
+    array_push(u->func_irs, irf);
 }
 
 void ir_gen_func(IR *ir, IRFunc *func) {
@@ -75,9 +97,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
 
     ir->func = func;
     ir->block = func->block_code;
-
-    if(ir->b->verbose > 2)
-        printf("> Func IR: %s\n", vfunc->export_name);
 
     // Store arg values
     for (int i = 0; i < args->length; i++) {

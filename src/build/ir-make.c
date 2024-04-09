@@ -1,23 +1,21 @@
 
 #include "../all.h"
 
-IR* ir_make(Unit* u, Parser* p) {
+IR* ir_make(Unit* u) {
     //
     Build* b = u->b;
-    Allocator* alc = b->alc_ast;
+    Allocator* alc = b->alc;
 
     IR* ir = al(alc, sizeof(IR));
     ir->unit = u;
-    ir->parser = p;
     ir->b = b;
-    ir->alc = alc;
+    ir->alc = b->alc_ast;
     ir->char_buf = b->char_buf;
 
-    ir->code_final = str_make(alc, 50000);
-    ir->code_struct = str_make(alc, 10000);
-    ir->code_global = str_make(alc, 10000);
-    ir->code_extern = str_make(alc, 10000);
-    ir->code_attr = str_make(alc, 10000);
+    ir->code_struct = str_make(alc, 2000);
+    ir->code_global = str_make(alc, 4000);
+    ir->code_extern = str_make(alc, 4000);
+    ir->code_attr = str_make(alc, 4000);
 
     ir->func = NULL;
     ir->block = NULL;
@@ -42,11 +40,6 @@ IR* ir_make(Unit* u, Parser* p) {
     ir->attr_count = 0;
 
     ir->debug = false;
-
-    ir_gen_globals(ir);
-    ir_gen_functions(ir);
-
-    ir_gen_final(ir);
 
     return ir;
 }

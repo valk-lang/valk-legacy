@@ -29,7 +29,7 @@ Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
 Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
-Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
+// Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);
 Value* vgen_null(Allocator* alc, Build* b);
@@ -64,6 +64,7 @@ struct VFuncCall {
     Array *rett_refs;
     Scope *err_scope;
     Value *err_value;
+    Decl* err_decl;
     int line;
     int col;
 };
@@ -127,6 +128,12 @@ struct VThisOrThat {
     Value* cond;
     Value* v1;
     Value* v2;
+};
+struct VError {
+    Array* err_names;
+    Array* err_values;
+    Decl* decl;
+    bool has_unknown;
 };
 
 #endif

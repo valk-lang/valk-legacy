@@ -97,7 +97,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_throw) {
             TThrow* tt = t->item;
-            ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->err->value));
+            ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->value));
             char *msg = ir_string(ir, tt->msg);
             ir_store_old(ir, type_gen_valk(alc, ir->b, "ptr"), "@valk_err_msg", msg);
             ir_func_return_nothing(ir);
@@ -243,23 +243,13 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
 
     IRBlock *current = ir->block;
     IRBlock *block_if = ir_block_make(ir, ir->func, "if_link_");
-    IRBlock *block_link = ir_block_make(ir, ir->func, "link_");
     IRBlock *after = ir_block_make(ir, ir->func, "link_after_");
 
     // On state > transfer
     char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);
     ir_cond_jump(ir, comp_on, block_if, after);
 
-    // To state < solid
     ir->block = block_if;
-    char* to_state_var = ir_ptrv(ir, to, "i8", -8);
-    char* to_state = ir_load(ir, type_u8, to_state_var);
-
-    char *comp_to = ir_compare(ir, op_lt, to_state, "4", "i8", false, false);
-    ir_cond_jump(ir, comp_to, block_link, after);
-
-    // Link
-    ir->block = block_link;
     Func *func = get_valk_class_func(b, "mem", "Stack", "link");
     func_mark_used(ir->func->func, func);
 
@@ -278,6 +268,5 @@ char* ir_gc_link(IR* ir, char* on, char* to) {
     ir_jump(ir, after);
 
     ir->block = after;
-    char *result = ir_this_or_that_or_that(ir, to, current, to, block_if, link_rett, block_link, "ptr");
-    return result;
+    return to;
 }

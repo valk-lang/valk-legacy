@@ -13,12 +13,11 @@
 
 ```
 // Prio
-- split error identifiers & scope identifiers
-- octal integers
-- use number hash to determine value for errors: unsigned int err_value = num_hash("!x")
-- macros (e.g. array, map)
-- watch files --watch
+- coroutines
+- http: parse post data / file uploads
 // Other
+- error messages
+- doc generator
 - more string functions
 - format string
 - borrow & gc_check stack if thread paused for too long in order to free shared memory 
@@ -35,6 +34,7 @@
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
 - declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
+- success handling: myfunc() -> res { ... code ... }
 ```
 
 ## Maybe
@@ -42,7 +42,5 @@
 ```
 - defer token
 - interfaces
-- multi-threaded compiling
-- success chain: let str = ->r : a()->b(100, r)->c(r) ? "fail"
--- each '->' passes the return value (r) to the next function, if any fails, go to the error handler at the end
+- multi-threaded parsing
 ```

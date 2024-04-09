@@ -1,4 +1,5 @@
 
+value INFINITE (4294967295)
 value EAGAIN (536870918)
 value SOCK_STREAM (1)
 
