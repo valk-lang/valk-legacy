@@ -39,6 +39,7 @@ struct Func {
     Map* errors;
     Array* used_functions;
     Array* used_classes;
+    Type* reference_type;
     //
     int act;
     //
@@ -54,6 +55,7 @@ struct Func {
     bool use_if_class_is_used;
     bool exits;
     bool parsed;
+    bool is_async;
 };
 struct FuncArg {
     Type* type;

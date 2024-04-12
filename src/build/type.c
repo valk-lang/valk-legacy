@@ -220,13 +220,16 @@ Type* type_gen_class(Allocator* alc, Class* class) {
     return t;
 }
 Type* type_gen_func(Allocator* alc, Func* func) {
-    Type* t = type_make(alc, type_func);
-    t->size = func->b->ptr_size;
-    t->is_pointer = true;
-    t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
-    t->func_info->can_error = func->errors ? true : false;
-    t->func_info->will_exit = func->exits;
-    return t;
+    if (!func->reference_type) {
+        Type *t = type_make(alc, type_func);
+        t->size = func->b->ptr_size;
+        t->is_pointer = true;
+        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
+        t->func_info->can_error = func->errors ? true : false;
+        t->func_info->will_exit = func->exits;
+        func->reference_type = t;
+    }
+    return func->reference_type;
 }
 
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {

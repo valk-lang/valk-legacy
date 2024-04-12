@@ -151,6 +151,8 @@ void stage_types_func(Parser* p, Func* func) {
     } else {
         func->rett = type_gen_void(b->alc);
     }
+
+    type_gen_func(alc, func);
 }
 
 void stage_types_class(Parser* p, Class* class) {
