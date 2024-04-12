@@ -1,57 +1,64 @@
 
 use mem
 
-// class Promise {
-//     stack: ptr
-//     gc_stack: ptr
-//     gc_item_count: uint
-//     handler: fn(CLASS)()
-//     resume_index: u32 (0)
-//     done: bool (false)
+global coroutines : ?Array[Coro] (null)
+global run_coroutine : ?Coro (null)
+global new_coroutine : ?Coro (null)
 
-//     static fn new(local_var_count: uint, gc_item_count: uint, handler: fn(CLASS)()) CLASS {
-//         let prom = CLASS {
-//             stack: local_var_count > 0 ? mem:alloc(local_var_count * sizeof(ptr)) : null @as ptr
-//             gc_stack: gc_item_count > 0 ? mem:calloc(gc_item_count * sizeof(ptr)) : null @as ptr
-//             gc_item_count: gc_item_count
-//             handler: handler
-//         }
-//         return prom
-//     }
+class Coro {
+    stack: ptr
+    gc_stack: ptr
+    gc_item_count: uint
+    stack_size: uint
+    handler: fn()()
+    resume_index: u32 (0)
+    done: bool (false)
 
-//     fn resume() {
-//         if this.done : return
-//         this.handler(this)
-//     }
+    static fn new(stack_size: uint, gc_item_count: uint, handler: ptr) CLASS {
+        let prom = CLASS {
+            stack: stack_size > 0 ? mem:alloc(stack_size) : null @as ptr
+            stack_size: stack_size
+            gc_stack: gc_item_count > 0 ? mem:calloc(gc_item_count * sizeof(ptr)) : null @as ptr
+            gc_item_count: gc_item_count
+            handler: handler @as fn()()
+        }
+        return prom
+    }
 
-//     ///////////////////
-//     // GC
-//     ///////////////////
-//     fn _gc_transfer() {
-//         let x = this.gc_item_count
-//         let data = this.gc_stack
-//         while x-- > 0 {
-//             mem:gc_transfer_item(@ptrv(data, ptr, x))
-//         }
-//     }
-//     fn _gc_mark() {
-//         let data = this.gc_stack
-//         let x = this.gc_item_count
-//         while x-- > 0 {
-//             mem:gc_mark_item(@ptrv(data, ptr, x))
-//         }
-//     }
-//     fn _gc_mark_shared() {
-//         let data = this.gc_stack
-//         let x = this.gc_item_count
-//         while x-- > 0 {
-//             mem:gc_mark_shared_item(@ptrv(data, ptr, x))
-//         }
-//     }
-//     fn _gc_free() {
-//         let s1 = this.stack
-//         let s2 = this.gc_stack
-//         if s1 : mem:free(s1)
-//         if s2 : mem:free(s2)
-//     }
-// }
+    fn resume() {
+        if this.done : return
+        run_coroutine = this
+        this.handler()
+    }
+
+    ///////////////////
+    // GC
+    ///////////////////
+    fn _gc_transfer() {
+        let x = this.gc_item_count
+        let data = this.gc_stack
+        while x-- > 0 {
+            mem:gc_transfer_item(@ptrv(data, ptr, x))
+        }
+    }
+    fn _gc_mark() {
+        let data = this.gc_stack
+        let x = this.gc_item_count
+        while x-- > 0 {
+            mem:gc_mark_item(@ptrv(data, ptr, x))
+        }
+    }
+    fn _gc_mark_shared() {
+        let data = this.gc_stack
+        let x = this.gc_item_count
+        while x-- > 0 {
+            mem:gc_mark_shared_item(@ptrv(data, ptr, x))
+        }
+    }
+    fn _gc_free() {
+        let s1 = this.stack
+        let s2 = this.gc_stack
+        if s1 != null : mem:free(s1)
+        if s2 != null : mem:free(s2)
+    }
+}

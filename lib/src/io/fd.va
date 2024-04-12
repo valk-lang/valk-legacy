@@ -1,5 +1,6 @@
 
 header "sys" as sys;
+header "libuv" as uv;
 
 alias FD as uint;
 

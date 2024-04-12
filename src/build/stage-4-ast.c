@@ -95,9 +95,6 @@ void stage_ast_func(Func *func) {
     for (int i = 0; i < used->length; i++) {
         Func* f = array_get_index(used, i);
         stage_ast_func(f);
-        if(f->is_async) {
-            func->is_async = true;
-        }
     }
     Array *classes = func->used_classes;
     for(int i = 0; i < classes->length; i++) {

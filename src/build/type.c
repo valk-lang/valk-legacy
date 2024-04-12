@@ -60,7 +60,10 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
         if (str_is(tkn, "void")) {
             return type_make(alc, type_void);
         }
-        if (str_is(tkn, "fn")) {
+        if (str_is(tkn, "fn") || str_is(tkn, "async")) {
+            if (str_is(tkn, "async")) {
+                tok_expect(p, "fn", true, false);
+            }
             tok_expect(p, "(", false, false);
             // Args
             Array* args = array_make(alc, 4);

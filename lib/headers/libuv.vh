@@ -1,0 +1,2 @@
+
+link_static "uv"

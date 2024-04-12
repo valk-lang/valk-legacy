@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void stage_parse(Parser* p, Unit* u, Fc* fc);
-void stage_1_func(Parser* p, Unit* u, int act, Fc* fc, bool exits);
+void stage_1_func(Parser* p, Unit* u, int act, Fc* fc, bool exits, bool async);
 void stage_1_header(Parser* p, Unit* u, Fc* fc);
 void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc);
 void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc);
@@ -70,11 +70,15 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {
-                stage_1_func(p, u, act, fc, false);
+                stage_1_func(p, u, act, fc, false, false);
+                continue;
+            }
+            if (str_is(tkn, "async")) {
+                stage_1_func(p, u, act, fc, false, true);
                 continue;
             }
             if (str_is(tkn, "exit_fn")) {
-                stage_1_func(p, u, act, fc, true);
+                stage_1_func(p, u, act, fc, true, false);
                 continue;
             }
             if (str_is(tkn, "struct")) {
@@ -150,6 +154,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_link(p, u, link_dynamic);
                 continue;
             }
+            if (str_is(tkn, "link_static")) {
+                stage_1_link(p, u, link_static);
+                continue;
+            }
         }
         if (t == tok_at_word) {
             if (str_is(tkn, "@ignore_access_types")) {
@@ -162,8 +170,12 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
     }
 }
 
-void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits) {
+void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits, bool async) {
     Build* b = p->b;
+
+    if(async) {
+        tok_expect(p, "fn", true, false);
+    }
 
     char t = tok(p, true, false, true);
     char* name = p->tkn;
@@ -176,6 +188,7 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits) {
     func->fc = fc;
     func->in_header = p->in_header;
     func->exits = exits;
+    func->is_async = async;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);
