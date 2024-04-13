@@ -24,6 +24,7 @@ struct Decl {
     char *name;
     char *ir_var;
     char *ir_store_var;
+    int offset;
     bool is_mut;
     bool is_gc;
     bool is_arg;

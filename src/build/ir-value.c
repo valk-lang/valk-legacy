@@ -343,6 +343,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir->block = block_after;
         return ir_phi(ir, values, ir_type(ir, v->rett));
     }
+    if (vt == v_await) {
+        VAwait* aw = v->item;
+        return ir_await(ir, scope, aw);
+    }
 
     printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
     exit(1);

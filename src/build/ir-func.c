@@ -2,6 +2,8 @@
 #include "../all.h"
 
 void ir_gen_func(IR *ir, IRFunc *func);
+void ir_gen_await_blocks(IR* ir, IRFunc* func);
+char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
 
 void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
 
@@ -26,6 +28,11 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     func->var_count = 0;
     func->gc_count = 0;
     func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
+    // Coro
+    func->is_async = vfunc->is_async;
+    func->var_coro = NULL;
+    func->var_stack = NULL;
+    func->var_gc_stack = NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -34,6 +41,9 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     func->block_code = code_block;
 
     array_push(ir->funcs, func);
+
+    // Create await blocks
+    ir_gen_await_blocks(ir, func);
 
     // Generate IR
     ir_gen_func(ir, func);
@@ -67,6 +77,29 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     Build* b = ir->b;
     Func* vfunc = func->func;
 
+    ir->func = func;
+    ir->block = func->block_code;
+
+    if(vfunc == b->func_main_gen) {
+        // Init GcMan & Stack
+        Func* f1 = get_valk_class_func(b, "mem", "GcManager", "init");
+        Func* f2 = get_valk_class_func(b, "mem", "Stack", "init");
+        ir_value(ir, vfunc->scope, vgen_func_call(alc, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1)));
+        ir_value(ir, vfunc->scope, vgen_func_call(alc, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
+    }
+
+    // Load stack refs
+    if(vfunc->is_async) {
+    } else {
+        Global* g = get_valk_global(ir->b, "mem", "stack");
+        char* g_stack_ref = ir_global(ir, g);
+        char* g_stack = ir_load(ir, g->type, g_stack_ref);
+        if(func->func->alloca_size > 0)
+            func->var_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
+        if(func->func->gc_decl_count > 0)
+            func->var_gc_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr")));
+    }
+
     // Arg vars
     Array *args = vfunc->args->values;
     for (int i = 0; i < args->length; i++) {
@@ -75,9 +108,11 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         char* var = ir_var(func);
         decl->ir_var = var;
         if(decl->is_mut) {
-            decl->ir_store_var = ir_alloca(ir, func, decl->type);
+            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+            ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
         }
     }
+
     // Return value references
     Array *retts = vfunc->rett_types;
     for (int i = 1; i < retts->length; i++) {
@@ -90,23 +125,20 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     Array* decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
-        if(decl->is_mut && !decl->is_gc) {
-            decl->ir_store_var = ir_alloca(ir, func, decl->type);
+        if(decl->is_mut || decl->is_gc) {
+            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
         }
     }
 
-    ir->func = func;
-    ir->block = func->block_code;
-
-    // Store arg values
-    for (int i = 0; i < args->length; i++) {
-        FuncArg *arg = array_get_index(args, i);
-        Decl* decl = arg->decl;
-        if(decl->is_mut) {
-            // Store passed argument in storage var
-            ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
-        }
-    }
+    // // Store arg values
+    // for (int i = 0; i < args->length; i++) {
+    //     FuncArg *arg = array_get_index(args, i);
+    //     Decl* decl = arg->decl;
+    //     if(decl->is_mut) {
+    //         // Store passed argument in storage var
+    //         ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
+    //     }
+    // }
 
     // AST
     ir_write_ast(ir, vfunc->scope);
@@ -262,4 +294,25 @@ void ir_func_return(IR* ir, char* type, char* value) {
     }
     str_add(code, value);
     str_flat(code, "\n");
+}
+
+
+void ir_gen_await_blocks(IR* ir, IRFunc* func) {
+    Func* vfunc = func->func;
+    Array* awas = vfunc->awaits;
+    if(!awas)
+        return;
+    for(int i = 0; i < awas->length; i++) {
+        VAwait* aw = array_get_index(awas, i);
+        aw->block = ir_block_make(ir, func, "resume_");
+    }
+}
+
+char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
+    if(decl->is_gc) {
+        char* stack = func->var_gc_stack;
+        return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i32", ir->b->ptr_size);
+    }
+    char* stack = func->var_stack;
+    return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
 }

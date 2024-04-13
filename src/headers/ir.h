@@ -63,6 +63,8 @@ char* ir_this_or_that_or_that(IR* ir, char* this, IRBlock* this_block, char* tha
 char* ir_phi(IR* ir, Array* values, char* type);
 char *ir_notnull_i1(IR *ir, char *val);
 char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right, char* right, IRBlock* block_last, int op);
+// Coro
+char* ir_await(IR* ir, Scope* scope, VAwait* aw);
 
 // Structs
 struct IR {
@@ -121,8 +123,14 @@ struct IRFunc {
     char* gc_stack_adr;
     char* gc_stack_adr_val;
     //
+    char* var_coro;
+    char* var_stack;
+    char* var_gc_stack;
+    //
     int var_count;
     int gc_count;
+    //
+    bool is_async;
 };
 struct IRBlock {
     char* name;

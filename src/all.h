@@ -92,5 +92,6 @@ extern bool is_watching;
 #include "headers/test.h"
 #include "headers/thread.h"
 #include "headers/macro.h"
+#include "headers/coro.h"
 
 #endif

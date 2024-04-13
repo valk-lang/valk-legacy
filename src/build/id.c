@@ -17,6 +17,7 @@ Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
     d->is_mut = false;
     d->is_gc = is_gc;
     d->is_arg = is_arg;
+    d->offset = -1;
     return d;
 }
 

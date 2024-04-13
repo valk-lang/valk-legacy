@@ -14,6 +14,7 @@ void func_validate_rett_count(Parser* p, Func* func, bool is_static, int rett_co
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types);
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types);
 void func_validate_rett_void(Parser *p, Func *func);
+void func_set_decl_offset(Func* func, Decl* decl);
 
 struct Func {
     char* name;
@@ -40,8 +41,13 @@ struct Func {
     Array* used_functions;
     Array* used_classes;
     Type* reference_type;
+    Array* awaits;
     //
     int act;
+    int suspend_index;
+    int alloca_size;
+    int alloca_size_last_item;
+    int gc_decl_count;
     //
     bool is_static;
     bool is_inline;

@@ -12,6 +12,7 @@ Type* type_gen_null(Allocator* alc, Build* b);
 Type* type_gen_class(Allocator* alc, Class* class);
 Type* type_gen_func(Allocator* alc, Func* func);
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values);
+Type* type_gen_promise(Allocator* alc, TypeFuncInfo* fi);
 Type* type_gen_valk(Allocator* alc, Build* b, char* name);
 char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed);
 Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed);
@@ -28,6 +29,8 @@ int type_get_size(Build* b, Type* type);
 Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable);
 Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2);
 Type* vscope_get_result_type(Array* values);
+// Type cache
+Type* type_cache_ptr(Build* b);
 
 struct Type {
     Class* class;
@@ -51,6 +54,7 @@ struct TypeFuncInfo {
     bool has_unknown_errors;
     bool can_error;
     bool will_exit;
+    bool is_async;
 };
 
 #endif

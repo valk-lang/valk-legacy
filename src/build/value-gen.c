@@ -29,7 +29,13 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
     item->err_scope = NULL;
     item->err_value = NULL;
     item->err_decl = NULL;
-    return value_make(alc, v_func_call, item, on->rett->func_info->rett);
+
+    Type* rett = on->rett->func_info->rett;
+    if(on->rett->func_info->is_async) {
+        rett = type_gen_promise(alc, on->rett->func_info);
+    }
+
+    return value_make(alc, v_func_call, item, rett);
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {

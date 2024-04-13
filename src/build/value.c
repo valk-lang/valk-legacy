@@ -228,6 +228,36 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             tok_expect(p, ")", true, true);
 
+        } else if (str_is(tkn, "await")) {
+
+            Value* on = read_value(alc, p, true, 1);
+            if(on->rett->type != type_promise) {
+                parse_err(p, -1, "Using 'await' on a non-promise value");
+            }
+
+            bool on_decl = on->type == v_decl;
+
+            VAwait* aw = al(alc, sizeof(VAwait));
+            aw->decl = on_decl ? on->item : decl_make(alc, NULL, type_gen_valk(alc, b, "ptr"), false);
+            aw->on = on;
+            aw->suspend_index = ++p->func->suspend_index;
+            aw->on_decl = on_decl;
+            aw->block = NULL;
+            aw->rett = on->rett->func_info->rett;
+
+            if(!on_decl) {
+                scope_add_decl(alc, p->scope, aw->decl);
+            }
+
+            Array* awas = p->func->awaits;
+            if(!awas) {
+                awas = array_make(b->alc, 2);
+                p->func->awaits = awas;
+            }
+            array_push(awas, aw);
+
+            v = value_make(alc, v_await, aw, aw->rett);
+
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
             tok_expect(p, "(", false, false);

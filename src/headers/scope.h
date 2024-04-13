@@ -18,8 +18,8 @@ struct Scope {
     Array* ast;
     Type* rett;
     Array* decls;
+    Func* func;
     int type;
-    int gc_decl_count;
     bool must_return;
     bool did_return;
     bool gc_check;

@@ -25,6 +25,7 @@ TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_va
     t->has_unknown_errors = false;
     t->can_error = false;
     t->will_exit = false;
+    t->is_async = false;
     return t;
 }
 
@@ -230,6 +231,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
         t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
         t->func_info->can_error = func->errors ? true : false;
         t->func_info->will_exit = func->exits;
+        t->func_info->is_async = func->is_async;
         func->reference_type = t;
     }
     return func->reference_type;
@@ -238,6 +240,14 @@ Type* type_gen_func(Allocator* alc, Func* func) {
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
     t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL, NULL);
+    return t;
+}
+
+Type* type_gen_promise(Allocator* alc, TypeFuncInfo* fi) {
+    Type* t = type_make(alc, type_promise);
+    t->func_info = fi;
+    t->is_pointer = true;
+    // t->class = type_gen_class(alc, get_valk_class(, "core", "Coro"));
     return t;
 }
 
@@ -402,6 +412,17 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
             type_to_str_append(sub, res, use_export_name);
         }
         strcat(res, use_export_name ? "_" : ")");
+    } else if (t->type == type_promise) {
+        strcat(res, use_export_name ? "PROMISE_" : "promise(");
+        Array* types = t->func_info->rett_types;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, use_export_name ? "_" : ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, use_export_name ? "_" : ")");
     } else if (t->class) {
         Class *class = t->class;
         strcat(res, use_export_name ? class->ir_name : class->name);
@@ -475,4 +496,11 @@ Type* vscope_get_result_type(Array* values) {
     if (type->is_pointer)
         type->nullable = contains_nullable;
     return type;
+}
+
+Type* tcache_ptr;
+Type* type_cache_ptr(Build* b) {
+    if(!tcache_ptr)
+        tcache_ptr = type_gen_valk(b->alc, b, "ptr");
+    return tcache_ptr;
 }

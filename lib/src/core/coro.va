@@ -3,32 +3,43 @@ use mem
 
 global coroutines : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
-global new_coroutine : ?Coro (null)
+
+// coro alloc data: {result-bytes} {stack-size} {gc-stack}
 
 class Coro {
     stack: ptr
     gc_stack: ptr
     gc_item_count: uint
-    stack_size: uint
+    result: ptr
     handler: fn()()
     resume_index: u32 (0)
     done: bool (false)
+    error: u32 (0)
 
-    static fn new(stack_size: uint, gc_item_count: uint, handler: ptr) CLASS {
-        let prom = CLASS {
-            stack: stack_size > 0 ? mem:alloc(stack_size) : null @as ptr
-            stack_size: stack_size
-            gc_stack: gc_item_count > 0 ? mem:calloc(gc_item_count * sizeof(ptr)) : null @as ptr
-            gc_item_count: gc_item_count
+    static fn new(stack_size: uint, gc_item_count: uint, result_size: uint, result_is_gc: bool, handler: ptr) CLASS {
+        let gc_size = gc_item_count * sizeof(ptr)
+        let size = stack_size + gc_size + result_size
+        let data = mem:calloc(size)
+        let coro = CLASS {
+            stack: data
+            gc_stack: data + stack_size
+            gc_item_count: gc_item_count + (result_is_gc ? 1 @as uint : 0 @as uint)
+            result: data + stack_size + gc_size
             handler: handler @as fn()()
         }
-        return prom
+        let list = coroutines
+        if list == null : list = array[Coro]{}
+        if isset(list) : list.push(coro)
+        return coro
     }
 
     fn resume() {
         if this.done : return
         run_coroutine = this
         this.handler()
+    }
+    fn get_result_ptr() ptr {
+        return this.result
     }
 
     ///////////////////

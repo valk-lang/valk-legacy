@@ -12,6 +12,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->act = act_public;
     f->fc = NULL;
     f->scope = scope_make(alc, sc_func, parent);
+    f->scope->func = f;
     f->scope_stack_reduce = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
@@ -27,6 +28,12 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
+
+    f->awaits = NULL;
+    f->suspend_index = 0;
+    f->alloca_size = 0;
+    f->alloca_size_last_item = 0;
+    f->gc_decl_count = 0;
 
     f->is_inline = false;
     f->is_static = false;
@@ -327,6 +334,26 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
         if(ev == v) {
             char* prev = array_get_index(errors->keys, i);
             parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
+        }
+    }
+}
+
+
+void func_set_decl_offset(Func* func, Decl* decl) {
+    if (func->is_async)
+        decl->is_mut = true;
+
+    if (decl->is_gc) {
+        decl->offset = func->gc_decl_count++;
+    } else {
+        if (decl->is_mut) {
+            Type *type = decl->type;
+            int size = type->size;
+            int offset = func->alloca_size;
+            int skip = (size - (offset % size)) % size;
+            offset += skip;
+            decl->offset = offset;
+            func->alloca_size = offset + size;
         }
     }
 }
