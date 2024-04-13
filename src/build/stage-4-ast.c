@@ -21,6 +21,7 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
+    // TODO: only include Coro.new if an async function was used
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
 
     b->building_ast = false;

@@ -19,7 +19,6 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     ir->block = resume;
 
     Class* coro_class = get_valk_class(ir->b, "core", "Coro");
-    printf("'%p'\n", aw->decl->ir_store_var);
     char* coro = ir_load(ir, type_gen_valk(ir->alc, ir->b, "ptr"), aw->decl->ir_store_var);
     // Check if coro is done
     char *is_done = ir_load(ir, type_gen_valk(ir->alc, ir->b, "bool"), ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "done")));

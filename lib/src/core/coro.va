@@ -4,7 +4,7 @@ use mem
 global coroutines : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
 
-// Stack layout: {gc-stack-items} {other-bytes}
+// Stack layout: {alloca-items} {gc-stack-items}
 
 class Coro {
     stack: ptr
@@ -36,8 +36,13 @@ class Coro {
             handler: handler @as fn()()
         }
         let list = coroutines
-        if list == null : list = array[Coro]{}
-        if isset(list) : list.push(coro)
+        if list == null {
+            list = array[Coro]{}
+            coroutines = list
+        }
+        if isset(list) {
+            list.push(coro)
+        }
         return coro
     }
 
@@ -72,9 +77,7 @@ class Coro {
         }
     }
     fn _gc_free() {
-        let s1 = this.stack
-        let s2 = this.gc_stack
-        if s1 != null : mem:free(s1)
-        if s2 != null : mem:free(s2)
+        let s = this.stack
+        if s != null : mem:free(s)
     }
 }
