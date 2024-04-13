@@ -41,12 +41,13 @@ struct Func {
     Array* used_functions;
     Array* used_classes;
     Type* reference_type;
+    // Coro
     Array* awaits;
+    Decl* result_decl;
     //
     int act;
     int suspend_index;
     int alloca_size;
-    int alloca_size_last_item;
     int gc_decl_count;
     //
     bool is_static;

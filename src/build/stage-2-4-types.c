@@ -152,6 +152,11 @@ void stage_types_func(Parser* p, Func* func) {
         func->rett = type_gen_void(b->alc);
     }
 
+    if(func->is_async && !type_is_void(func->rett)) {
+        func->result_decl = decl_make(alc, NULL, func->rett, false);
+        scope_add_decl(alc, func->scope, func->result_decl);
+    }
+
     type_gen_func(alc, func);
 }
 

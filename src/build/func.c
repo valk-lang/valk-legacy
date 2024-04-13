@@ -28,11 +28,11 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
-
+    // Coro
     f->awaits = NULL;
+    f->result_decl = NULL;
     f->suspend_index = 0;
     f->alloca_size = 0;
-    f->alloca_size_last_item = 0;
     f->gc_decl_count = 0;
 
     f->is_inline = false;

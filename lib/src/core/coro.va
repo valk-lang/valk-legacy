@@ -4,7 +4,7 @@ use mem
 global coroutines : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
 
-// coro alloc data: {result-bytes} {stack-size} {gc-stack}
+// Stack layout: {gc-stack-items} {other-bytes}
 
 class Coro {
     stack: ptr
@@ -16,15 +16,23 @@ class Coro {
     done: bool (false)
     error: u32 (0)
 
-    static fn new(stack_size: uint, gc_item_count: uint, result_size: uint, result_is_gc: bool, handler: ptr) CLASS {
+    static fn new(stack_size: uint, gc_item_count: uint, result_offset: uint, result_is_gc: bool, handler: ptr) CLASS {
         let gc_size = gc_item_count * sizeof(ptr)
-        let size = stack_size + gc_size + result_size
+        let size = stack_size + gc_size
         let data = mem:calloc(size)
+        let gc_stack = data + stack_size
+        let result = <{
+            if result_is_gc {
+                return gc_stack + (result_offset * sizeof(ptr))
+            }
+            return data + result_offset
+        }
+
         let coro = CLASS {
             stack: data
-            gc_stack: data + stack_size
-            gc_item_count: gc_item_count + (result_is_gc ? 1 @as uint : 0 @as uint)
-            result: data + stack_size + gc_size
+            gc_stack: gc_stack
+            gc_item_count: gc_item_count
+            result: result
             handler: handler @as fn()()
         }
         let list = coroutines
@@ -37,9 +45,6 @@ class Coro {
         if this.done : return
         run_coroutine = this
         this.handler()
-    }
-    fn get_result_ptr() ptr {
-        return this.result
     }
 
     ///////////////////

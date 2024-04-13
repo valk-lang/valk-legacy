@@ -2,6 +2,7 @@
 #include "../all.h"
 
 char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
+    Func* vfunc = ir->func->func;
     // Add suspend point
     // x = coro.done
     // if x == false -> jump suspend block

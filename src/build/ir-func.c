@@ -4,6 +4,7 @@
 void ir_gen_func(IR *ir, IRFunc *func);
 void ir_gen_await_blocks(IR* ir, IRFunc* func);
 char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
+void ir_write_async_func_start(IR *ir, IRFunc *func);
 
 void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
 
@@ -84,13 +85,17 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         // Init GcMan & Stack
         Func* f1 = get_valk_class_func(b, "mem", "GcManager", "init");
         Func* f2 = get_valk_class_func(b, "mem", "Stack", "init");
-        ir_value(ir, vfunc->scope, vgen_func_call(alc, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1)));
-        ir_value(ir, vfunc->scope, vgen_func_call(alc, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
+        ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1)));
+        ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
     }
 
     // Load stack refs
     if(vfunc->is_async) {
+        // Async function
+        ir_write_async_func_start(ir, func);
+
     } else {
+        // Synchronous function
         Global* g = get_valk_global(ir->b, "mem", "stack");
         char* g_stack_ref = ir_global(ir, g);
         char* g_stack = ir_load(ir, g->type, g_stack_ref);
@@ -315,4 +320,73 @@ char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
     }
     char* stack = func->var_stack;
     return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
+}
+
+void ir_write_async_func_start(IR *ir, IRFunc *func) {
+    //
+    Build* b = ir->b;
+    Allocator* alc = ir->alc;
+    Func* vfunc = func->func;
+
+    IRBlock* current = ir->block;
+    Global* g = get_valk_global(ir->b, "core", "run_coroutine");
+    char* coro = ir_load(ir, g->type, ir_global(ir, g));
+    IRBlock* create_coro = ir_block_make(ir, func, "create_coro_");
+    IRBlock* jump_block = ir_block_make(ir, func, "coro_jumper_");
+    char *is_null = ir_compare(ir, op_eq, coro, "null", "ptr", false, false);
+    ir_cond_jump(ir, is_null, create_coro, jump_block);
+
+    // Create new coro
+    ir->block = create_coro;
+    Array* args = array_make(alc, 4);
+    array_push(args, vgen_int(alc, vfunc->alloca_size, type_cache_uint(b)));
+    array_push(args, vgen_int(alc, vfunc->gc_decl_count, type_cache_uint(b)));
+    array_push(args, vgen_int(alc, vfunc->result_decl ? vfunc->result_decl->offset : 0, type_cache_uint(b)));
+    array_push(args, vgen_bool(alc, b, vfunc->result_decl ? vfunc->result_decl->is_gc : false));
+    array_push(args, vgen_func_ptr(alc, vfunc, NULL));
+
+    Class* cc = get_valk_class(b, "core", "Coro");
+    Func* coro_init = get_valk_class_func(b, "core", "Coro", "new");
+    char* new_coro = ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, coro_init, NULL), args));
+
+    ir_jump(ir, jump_block);
+
+    // Load stack refs
+    // Jump to first block or resume block
+    ir->block = jump_block;
+    coro = ir_this_or_that(ir, coro, current, new_coro, create_coro, "ptr");
+    IRBlock* entry = ir_block_make(ir, func, "coro_entry_");
+
+    if (func->func->alloca_size > 0)
+        func->var_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "stack")));
+    if (func->func->gc_decl_count > 0)
+        func->var_gc_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "gc_stack")));
+
+    // Get resume index + jump
+    char *resume_index = ir_load(ir, type_cache_u32(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "resume_index")));
+    Str* code = ir->block->code;
+    str_flat(code, "  switch i32 ");
+    str_add(code, resume_index);
+    str_flat(code, ", label %");
+    str_add(code, entry->name);
+    str_flat(code, " [ i32 0, label %");
+    str_add(code, entry->name);
+    Array* awas = vfunc->awaits;
+    if (awas) {
+        for (int i = 0; i < awas->length; i++) {
+            VAwait *aw = array_get_index(awas, i);
+            IRBlock *block = aw->block;
+            char index[16];
+            itos(aw->suspend_index, index, 10);
+            str_flat(code, "\n    i32 ");
+            str_add(code, index);
+            str_flat(code, ", label %");
+            str_add(code, entry->name);
+        }
+    }
+    str_flat(code, " ]\n");
+    // switch i8 %0, label %suspend [i8 0, label %loop
+    //                             i8 1, label %cleanup]
+
+    ir->block = entry;
 }

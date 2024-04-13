@@ -243,10 +243,11 @@ Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     return t;
 }
 
-Type* type_gen_promise(Allocator* alc, TypeFuncInfo* fi) {
+Type* type_gen_promise(Allocator* alc, Build* b, TypeFuncInfo* fi) {
     Type* t = type_make(alc, type_promise);
     t->func_info = fi;
     t->is_pointer = true;
+    t->size = b->ptr_size;
     // t->class = type_gen_class(alc, get_valk_class(, "core", "Coro"));
     return t;
 }
@@ -503,4 +504,18 @@ Type* type_cache_ptr(Build* b) {
     if(!tcache_ptr)
         tcache_ptr = type_gen_valk(b->alc, b, "ptr");
     return tcache_ptr;
+}
+
+Type* tcache_uint;
+Type* type_cache_uint(Build* b) {
+    if(!tcache_uint)
+        tcache_uint = type_gen_valk(b->alc, b, "uint");
+    return tcache_uint;
+}
+
+Type* tcache_u32;
+Type* type_cache_u32(Build* b) {
+    if(!tcache_u32)
+        tcache_u32 = type_gen_valk(b->alc, b, "u32");
+    return tcache_u32;
 }

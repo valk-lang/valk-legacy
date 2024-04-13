@@ -21,7 +21,7 @@ Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
     return value_make(alc, v_func_ptr, item, type_gen_func(alc, func));
 }
 
-Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
+Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args) {
     VFuncCall *item = al(alc, sizeof(VFuncCall));
     item->on = on;
     item->args = args;
@@ -32,7 +32,7 @@ Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
 
     Type* rett = on->rett->func_info->rett;
     if(on->rett->func_info->is_async) {
-        rett = type_gen_promise(alc, on->rett->func_info);
+        rett = type_gen_promise(alc, b, on->rett->func_info);
     }
 
     return value_make(alc, v_func_call, item, rett);
@@ -100,7 +100,7 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
     Array *alloc_values = array_make(alc, func->args->values->length);
     Value *vint = vgen_int(alc, size, type_gen_valk(alc, b, "uint"));
     array_push(alloc_values, vint);
-    Value *res = vgen_func_call(alc, fptr, alloc_values);
+    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
     if(cast_as)
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
@@ -125,7 +125,7 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
     array_push(alloc_values, pool);
     Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_valk(alc, b, "u32"));
     array_push(alloc_values, v_index);
-    Value *res = vgen_func_call(alc, fptr, alloc_values);
+    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
     if(class)
         res->rett = type_gen_class(alc, class);
     return res;
@@ -136,7 +136,7 @@ Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
 //     Array *alloc_values = array_make(alc, func->args->values->length);
 //     array_push(alloc_values, left);
 //     array_push(alloc_values, right);
-//     Value *res = vgen_func_call(alc, fptr, alloc_values);
+//     Value *res = vgen_func_call(alc, b, fptr, alloc_values);
 //     res = vgen_cast(alc, res, left->rett);
 //     return res;
 // }

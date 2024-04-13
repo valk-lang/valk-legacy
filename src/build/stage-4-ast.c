@@ -21,6 +21,7 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
 
     b->building_ast = false;
 
@@ -445,7 +446,7 @@ void read_ast(Parser *p, bool single_line) {
                 Array* args = array_make(alc, 2);
                 array_push(args, v);
                 Value *on = vgen_func_ptr(alc, share, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
+                Value *fcall = vgen_func_call(alc, b, on, args);
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
@@ -516,7 +517,7 @@ void read_ast(Parser *p, bool single_line) {
                     Array *args = array_make(alc, 2);
                     array_push(args, right);
                     Value *on = vgen_func_ptr(alc, share, NULL);
-                    Value *fcall = vgen_func_call(alc, on, args);
+                    Value *fcall = vgen_func_call(alc, b, on, args);
                     array_push(scope->ast, token_make(alc, t_statement, fcall));
                 }
             }
@@ -707,7 +708,6 @@ void read_ast(Parser *p, bool single_line) {
             Decl* decl = array_get_index(decls, i);
             func_set_decl_offset(func, decl);
         }
-        // TODO result offset for async function
     }
 }
 

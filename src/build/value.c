@@ -230,6 +230,10 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
         } else if (str_is(tkn, "await")) {
 
+            if(!p->func->is_async) {
+                parse_err(p, -1, "When you use 'await', the current function you are in must also be 'async'");
+            }
+
             Value* on = read_value(alc, p, true, 1);
             if(on->rett->type != type_promise) {
                 parse_err(p, -1, "Using 'await' on a non-promise value");
@@ -281,7 +285,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
             array_push(args, vgen_int(alc, p->line, type_gen_valk(alc, b, "uint")));
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
-            v = vgen_func_call(alc, fptr, args);
+            v = vgen_func_call(alc, b, fptr, args);
 
         } else {
             // Identifiers
@@ -796,7 +800,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
-    Value* fcall = vgen_func_call(alc, on, args);
+    Value* fcall = vgen_func_call(alc, b, on, args);
     if(on->rett->func_info->will_exit) {
         p->scope->did_return = true;
     }
@@ -1051,7 +1055,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
             array_push(args, right);
             type_check(p, arg_type, right->rett);
             Value *on = vgen_func_ptr(alc, add, NULL);
-            Value *fcall = vgen_func_call(alc, on, args);
+            Value *fcall = vgen_func_call(alc, b, on, args);
             return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
         }
     }
@@ -1167,7 +1171,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
                 array_push(args, right);
                 type_check(p, arg_type, right->rett);
                 Value *on = vgen_func_ptr(alc, eq, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
+                Value *fcall = vgen_func_call(alc, b, on, args);
                 Value* result = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
                 if(op == op_ne) {
                     result = value_make(alc, v_not, result, result->rett);
@@ -1263,7 +1267,7 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
             Array *args = array_make(alc, 2);
             array_push(args, val);
             Value *on = vgen_func_ptr(alc, to_str, NULL);
-            Value *fcall = vgen_func_call(alc, on, args);
+            Value *fcall = vgen_func_call(alc, b, on, args);
             return vgen_gc_buffer(alc, b, scope, fcall, args, true);
         }
     }
