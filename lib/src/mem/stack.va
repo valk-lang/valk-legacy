@@ -4,6 +4,7 @@
 use valk:mem
 use valk:os
 use valk:io
+use valk:core
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
@@ -154,6 +155,7 @@ struct Stack {
     fn gc() {
         if disable_gc : return
         this.lock.lock()
+        // print("GC.")
 
         disable_gc = true
         this.run_gc = false
@@ -258,6 +260,11 @@ struct Stack {
                     @ptrv(item, u8, -8) = state_transfer @as u8
                 } 
             }
+        }
+
+        // Coroutines
+        each core:coroutines as coro {
+            coro._gc_transfer()
         }
     }
 
