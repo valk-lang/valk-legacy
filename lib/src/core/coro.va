@@ -17,10 +17,11 @@ class Coro {
     error: u32 (0)
 
     static fn new(stack_size: uint, gc_item_count: uint, result_offset: uint, result_is_gc: bool, handler: ptr) CLASS {
+        let align = (sizeof(ptr) - (stack_size % sizeof(ptr))) % sizeof(ptr)
         let gc_size = gc_item_count * sizeof(ptr)
-        let size = stack_size + gc_size
+        let size = stack_size + align + gc_size
         let data = mem:calloc(size)
-        let gc_stack = data + stack_size
+        let gc_stack = data + stack_size + align
         let result = <{
             if result_is_gc {
                 return gc_stack + (result_offset * sizeof(ptr))

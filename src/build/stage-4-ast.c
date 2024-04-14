@@ -602,6 +602,7 @@ void read_ast(Parser *p, bool single_line) {
         parse_err(p, -1, "Missing return statement");
     }
 
+    VNumber *raise_stack_amount = NULL;
     Scope *start;
     Scope *end;
     bool is_async = p->func->is_async && scope->type == sc_func;
@@ -650,9 +651,10 @@ void read_ast(Parser *p, bool single_line) {
 
             if (scope->type == sc_func) {
                 // Stack reserve
-                Value *amount = vgen_int(alc, p->func->gc_decl_count, type_gen_number(alc, b, b->ptr_size, false, false));
+                Value *amount = vgen_int(alc, 0, type_gen_number(alc, b, b->ptr_size, false, false));
                 idf = idf_make(alc, idf_value, amount);
                 map_set(idfs, "amount", idf);
+                raise_stack_amount = amount->item;
 
                 Scope *reserve = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reserve"), idfs, start);
                 array_push(start->ast, token_make(alc, t_ast_scope, reserve));
@@ -709,6 +711,9 @@ void read_ast(Parser *p, bool single_line) {
             Decl* decl = array_get_index(decls, i);
             func_set_decl_offset(func, decl);
         }
+
+        if (raise_stack_amount)
+            raise_stack_amount->value_int = func->gc_decl_count;
     }
 }
 

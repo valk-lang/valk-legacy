@@ -97,11 +97,10 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     } else {
         // Synchronous function
         Global* g = get_valk_global(ir->b, "mem", "stack");
-        char* g_stack_ref = ir_global(ir, g);
-        char* g_stack = ir_load(ir, g->type, g_stack_ref);
-        if(func->func->alloca_size > 0)
+        char* g_stack = ir_load(ir, g->type, ir_global(ir, g));
+        if(vfunc->alloca_size > 0)
             func->var_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
-        if(func->func->gc_decl_count > 0)
+        if(vfunc->gc_decl_count > 0)
             func->var_gc_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr")));
     }
 
