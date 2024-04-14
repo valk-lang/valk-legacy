@@ -1,7 +1,8 @@
 
 use mem
+use os
 
-global coroutines : ?Array[Coro] (null)
+// global coroutines_ : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
 
 // Stack layout: {alloca-items} {gc-stack-items}
@@ -36,14 +37,8 @@ class Coro {
             result: result
             handler: handler @as fn()()
         }
-        let list = coroutines
-        if list == null {
-            list = array[Coro]{}
-            coroutines = list
-        }
-        if isset(list) {
-            list.push(coro)
-        }
+        let list = mem:coros
+        list.add(coro)
         return coro
     }
 
@@ -51,6 +46,88 @@ class Coro {
         if this.done : return
         run_coroutine = this
         this.handler()
+    }
+
+    static fn loop() {
+        let ring = mem:coros
+        while ring.length > 0 {
+            let tail = ring.last_index()
+            let head = ring.index
+            let size = ring.size
+            let data = ring.data
+            while tail != head {
+                let coro = @ptrv(data, Coro, tail)
+                if coro.done {
+                    ring.remove(tail)
+                    break
+                }
+                coro.resume()
+
+                // Next
+                tail++
+                if tail == size {
+                    tail = 0
+                }
+            }
+        }
+    }
+
+    ///////////////////
+    // GC list
+    ///////////////////
+    --- static fn transfer_check() {
+        let ring = mem:coros
+        let tail = ring.last_index()
+        let head = ring.index
+        let size = ring.size
+        let data = ring.data
+        while tail != head {
+            let coro = @ptrv(data, Coro, tail)
+            mem:gc_transfer_item(coro)
+            coro._gc_transfer()
+
+            // Next
+            tail++
+            if tail == size {
+                tail = 0
+            }
+        }
+    }
+
+    --- static fn mark_all() {
+        let ring = mem:coros
+        let tail = ring.last_index()
+        let head = ring.index
+        let size = ring.size
+        let data = ring.data
+        while tail != head {
+            let coro = @ptrv(data, Coro, tail)
+            mem:gc_mark_item(coro)
+
+            // Next
+            tail++
+            if tail == size {
+                tail = 0
+            }
+        }
+    }
+
+    --- static fn mark_shared_all() {
+        let ring = mem:coros
+        let tail = ring.last_index()
+        let head = ring.index
+        let size = ring.size
+        let data = ring.data
+        while tail != head {
+            let coro = @ptrv(data, Coro, tail)
+            mem:gc_mark_shared_item(coro)
+
+            // Next
+            tail++
+            if tail == size {
+                tail = 0
+            }
+        }
     }
 
     ///////////////////

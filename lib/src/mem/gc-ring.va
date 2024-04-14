@@ -2,11 +2,11 @@
 use mem
 
 struct GcRing {
-    -- data: ptr
-    -- size: uint
+    --- data: ptr
+    --- size: uint
     ~ length: uint (0)
-    -- index: uint (0)
-    -- lock: GcLock
+    --- index: uint (0)
+    --- lock: GcLock
 
     static fn new() CLASS {
         let size : uint = 4;

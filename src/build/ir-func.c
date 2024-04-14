@@ -158,7 +158,11 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir_write_ast(ir, vfunc->scope);
     //
     if (!vfunc->scope->did_return) {
-        ir_func_return(ir, NULL, "void");
+        if(vfunc->is_async) {
+            ir_coro_return(ir, NULL);
+        } else {
+            ir_func_return(ir, NULL, "void");
+        }
     }
 
     // Jump from start to code block
@@ -181,7 +185,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     } else {
         str_flat(code, "define dso_local ");
     }
-    str_add(code, ir_type(ir, vfunc->rett));
+    str_add(code, vfunc->is_async ? "ptr" : ir_type(ir, vfunc->rett));
     str_flat(code, " @");
     str_add(code, vfunc->export_name);
     str_flat(code, "(");
@@ -364,6 +368,7 @@ void ir_write_async_func_start(IR *ir, IRFunc *func) {
     // Jump to first block or resume block
     ir->block = jump_block;
     coro = ir_this_or_that(ir, coro, current, new_coro, create_coro, "ptr");
+    func->var_coro = coro;
     IRBlock* entry = ir_block_make(ir, func, "coro_entry_");
 
     if (func->func->alloca_size > 0)

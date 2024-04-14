@@ -65,6 +65,7 @@ char *ir_notnull_i1(IR *ir, char *val);
 char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right, char* right, IRBlock* block_last, int op);
 // Coro
 char* ir_await(IR* ir, Scope* scope, VAwait* aw);
+void ir_coro_return(IR* ir, Value* value);
 
 // Structs
 struct IR {

@@ -28,7 +28,8 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
 
     // If suspend
     ir->block = suspend;
-    ir_func_return_nothing(ir);
+    ir_store(ir, ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
+    ir_func_return(ir, "ptr", ir->func->var_coro);
 
     // If done
     // Load result
@@ -36,4 +37,24 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     char* result_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "result"));
     char* result = ir_load(ir, aw->rett, result_ref);
     return result;
+}
+
+void ir_coro_return(IR* ir, Value* value) {
+    IRFunc* func = ir->func;
+    Class* coro_class = get_valk_class(ir->b, "core", "Coro");
+
+    char *coro = func->var_coro;
+
+    // Set return value if any
+    if(value) {
+        char *result_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "result"));
+        char* result = ir_value(ir, func->func->scope, value);
+        Type *rett = func->func->rett;
+        ir_store(ir, result_ref, result, ir_type(ir, rett), rett->size);
+    }
+
+    char *done_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "done"));
+    ir_store(ir, done_ref, "true", "i1", 1);
+
+    ir_func_return(ir, "ptr", coro);
 }

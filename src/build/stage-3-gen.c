@@ -33,6 +33,9 @@ void stage_generate_main(Build *b) {
     Func* func = func_make(b->alc, u, scope, "main", "main");
     b->func_main_gen = func;
 
+    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
+    scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
+
     // Generate main AST
     Str* code = b->str_buf;
     str_clear(code);
@@ -101,16 +104,21 @@ void stage_generate_main(Build *b) {
         str_flat(code, "return 0;\n");
     } else {
         if (b->func_main) {
-            if (main_has_return)
-                str_flat(code, "return ");
+            if (main_has_return || b->func_main->is_async)
+                str_flat(code, "let main_res = ");
             str_flat(code, "main(");
             if (main_has_arg) {
                 str_flat(code, "arr");
             }
             str_flat(code, ");\n");
         }
-        if (!main_has_return)
-            str_flat(code, "return 0;\n");
+
+        str_flat(code, "CORO_CLASS.loop()\n");
+
+        if (main_has_return)
+            str_flat(code, "return main_res\n");
+        else
+            str_flat(code, "return 0\n");
     }
 
     str_flat(code, "}\n");

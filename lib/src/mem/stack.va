@@ -7,6 +7,7 @@ use valk:io
 use valk:core
 
 global stack : @ignu(Stack);
+global coros : @ignu(GcRing);
 global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
@@ -102,6 +103,7 @@ struct Stack {
         disable_gc = false
 
         GcPool.init()
+        coros = GcRing.new()
 
         s.scan_globals()
 
@@ -263,9 +265,7 @@ struct Stack {
         }
 
         // Coroutines
-        each core:coroutines as coro {
-            coro._gc_transfer()
-        }
+        core:Coro.transfer_check()
     }
 
     fn handle_transfer_list() {
@@ -319,6 +319,9 @@ struct Stack {
 
     fn mark_stack_age() {
         let age = this.age
+        // Coroutines
+        core:Coro.mark_all()
+
         // Globals
         #loop_globals as G, T
         #if @type_is_gc(T) && !@global_is_shared(G)
@@ -356,6 +359,9 @@ struct Stack {
         }
     }
     fn mark_stack_gc_age(age: u8) {
+        // Coroutines
+        core:Coro.mark_shared_all()
+
         // Globals
         let globals = this.globals
         let globalc = this.globalc
