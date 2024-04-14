@@ -190,10 +190,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return val;
     }
     if (vt == v_cached_stack_adr) {
-        return ir->func->var_stack_adr;
+        return ir->func->var_g_stack_adr;
     }
     if (vt == v_cached_stack_instance) {
-        return ir->func->var_stack;
+        return ir->func->var_g_stack;
     }
     if (vt == v_ir_value) {
         return v->item;
@@ -415,7 +415,7 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
         return var;
     }
     if (vt == v_cached_stack_adr) {
-        return ir->func->var_stack_adr_ref;
+        return ir->func->var_g_stack_adr_ref;
     }
     return "?-?";
 }

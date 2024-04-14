@@ -631,6 +631,7 @@ void read_ast(Parser *p, bool single_line) {
         if (scope->has_gc_decls && scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)) {
             Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
             array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
+            p->func->calls_gc_check = true;
         }
 
         if (scope->has_gc_decls) {

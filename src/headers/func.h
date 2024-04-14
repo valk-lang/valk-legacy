@@ -63,6 +63,7 @@ struct Func {
     bool exits;
     bool parsed;
     bool is_async;
+    bool calls_gc_check;
 };
 struct FuncArg {
     Type* type;

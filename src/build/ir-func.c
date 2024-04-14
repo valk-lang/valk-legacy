@@ -34,8 +34,9 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     func->var_coro = NULL;
     func->var_alloca_stack = NULL;
     func->var_stack_adr = NULL;
-    func->var_stack_adr_ref = NULL;
-    func->var_stack = NULL;
+    func->var_g_stack = NULL;
+    func->var_g_stack_adr = NULL;
+    func->var_g_stack_adr_ref = NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -91,6 +92,14 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
     }
 
+    if(vfunc->calls_gc_check || vfunc->gc_decl_count > 0) {
+        Global* g = get_valk_global(ir->b, "mem", "stack");
+        char* g_stack = ir_load(ir, g->type, ir_global(ir, g));
+        func->var_g_stack = g_stack;
+        func->var_g_stack_adr_ref = ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr"));
+        func->var_g_stack_adr = ir_load(ir, type_cache_ptr(b), func->var_g_stack_adr_ref);
+    }
+
     // Load stack refs
     if(vfunc->is_async) {
         // Async function
@@ -98,14 +107,10 @@ void ir_gen_func(IR *ir, IRFunc *func) {
 
     } else {
         // Synchronous function
-        Global* g = get_valk_global(ir->b, "mem", "stack");
-        char* g_stack = ir_load(ir, g->type, ir_global(ir, g));
-        func->var_stack = g_stack;
         if(vfunc->alloca_size > 0)
             func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
         if(vfunc->gc_decl_count > 0) {
-            func->var_stack_adr_ref = ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr"));
-            func->var_stack_adr = ir_load(ir, type_cache_ptr(b), func->var_stack_adr_ref);
+            func->var_stack_adr = func->var_g_stack_adr;
         }
     }
 

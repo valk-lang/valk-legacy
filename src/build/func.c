@@ -48,6 +48,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->exits = false;
     f->parsed = false;
     f->is_async = false;
+    f->calls_gc_check = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
