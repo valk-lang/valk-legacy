@@ -87,6 +87,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             v = value_make(alc, v_stack, val, type_gen_valk(alc, b, "ptr"));
 
+        } else if (str_is(tkn, "@cached_stack_address")) {
+            v = value_make(alc, v_cached_stack_adr, NULL, type_cache_ptr(b));
+        } else if (str_is(tkn, "@cached_stack_instance")) {
+            v = value_make(alc, v_cached_stack_instance, NULL, type_gen_valk_class(alc, b, "mem", "Stack", false));
+
         } else if (str_is(tkn, "@gc_link")){
             tok_expect(p, "(", false, false);
             Value* on = read_value(alc, p, true, 0);
@@ -1216,11 +1221,12 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
 }
 
 bool value_is_assignable(Value *v) {
-    if(v->type == v_ir_cached) {
+    int vt = v->type;
+    if(vt == v_ir_cached) {
         VIRCached* vc = v->item;
         return value_is_assignable(vc->value);
     }
-    return v->type == v_decl || v->type == v_decl_overwrite || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global; 
+    return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global || vt == v_cached_stack_adr; 
 }
 
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {

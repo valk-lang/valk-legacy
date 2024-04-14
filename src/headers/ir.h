@@ -124,8 +124,10 @@ struct IRFunc {
     char* gc_stack_adr_val;
     //
     char* var_coro;
+    char* var_alloca_stack;
     char* var_stack;
-    char* var_gc_stack;
+    char* var_stack_adr;
+    char* var_stack_adr_ref;
     //
     int var_count;
     int gc_count;

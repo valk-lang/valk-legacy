@@ -628,12 +628,7 @@ void read_ast(Parser *p, bool single_line) {
             }
         }
 
-        // if (is_main_func_scope) {
-        //     Scope *boot = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "boot"), map_make(alc), scope);
-        //     array_push(start->ast, token_make(alc, t_ast_scope, boot));
-        // }
-
-        if (scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)) {
+        if (scope->has_gc_decls && scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)) {
             Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
             array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
         }
@@ -642,17 +637,10 @@ void read_ast(Parser *p, bool single_line) {
             // Stack
             Map *idfs = map_make(alc);
 
-            // Cache stack & stack_adr variable
-            Scope *cache = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_cache"), idfs, start);
-            array_push(start->ast, token_make(alc, t_ast_scope, cache));
-
-            Idf *idf = map_get(cache->identifiers, "STACK_ADR");
-            Value *stack_adr = idf->item;
-
             if (scope->type == sc_func) {
                 // Stack reserve
                 Value *amount = vgen_int(alc, 0, type_gen_number(alc, b, b->ptr_size, false, false));
-                idf = idf_make(alc, idf_value, amount);
+                Idf* idf = idf_make(alc, idf_value, amount);
                 map_set(idfs, "amount", idf);
                 raise_stack_amount = amount->item;
 
@@ -666,11 +654,6 @@ void read_ast(Parser *p, bool single_line) {
                     Decl *decl = array_get_index(decls, i);
                     if (!decl->is_gc)
                         continue;
-                    // Value *offset = vgen_ptrv(alc, b, stack_adr, type_gen_valk(alc, b, "ptr"), vgen_int(alc, x++, type_gen_valk(alc, b, "i32")));
-                    // TDeclare *item = al(alc, sizeof(TDeclare));
-                    // item->decl = decl;
-                    // item->value = offset;
-                    // array_push(start->ast, token_make(alc, t_set_decl_store_var, item));
                     array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
                 }
 
@@ -691,11 +674,6 @@ void read_ast(Parser *p, bool single_line) {
                 }
             }
         }
-        //
-        // if (is_main_func_scope) {
-        //     Scope *shutdown = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "shutdown"), map_make(alc), scope);
-        //     array_push(end->ast, token_make(alc, t_ast_scope, shutdown));
-        // }
     }
 
     // Calculate decl offsets

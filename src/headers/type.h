@@ -14,6 +14,7 @@ Type* type_gen_func(Allocator* alc, Func* func);
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values);
 Type* type_gen_promise(Allocator* alc, Build* b, TypeFuncInfo* fi);
 Type* type_gen_valk(Allocator* alc, Build* b, char* name);
+Type *type_gen_valk_class(Allocator *alc, Build *b, char *ns, char *name, bool nullable);
 char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed);
 Type* type_gen_number(Allocator* alc, Build* b, int size, bool is_float, bool is_signed);
 Type* type_merge(Allocator* alc, Type* t1, Type* t2);

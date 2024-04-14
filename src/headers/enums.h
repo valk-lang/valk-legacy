@@ -158,6 +158,8 @@ enum VALUES {
     v_vscope, // 30
     v_null_alt_value,
     v_await,
+    v_cached_stack_adr,
+    v_cached_stack_instance,
 };
 
 enum TOKENS {

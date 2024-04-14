@@ -270,6 +270,13 @@ Type* type_gen_valk(Allocator* alc, Build* b, char* name) {
     exit(1);
 }
 
+Type *type_gen_valk_class(Allocator *alc, Build *b, char *ns, char *name, bool nullable) {
+    Class* class = get_valk_class(b, ns, name);
+    Type* t = type_gen_class(alc, class);
+    t->nullable = nullable;
+    return t;
+}
+
 char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed) {
     if(is_float) {
         if(size == 4)

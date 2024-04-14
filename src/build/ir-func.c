@@ -32,8 +32,10 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     // Coro
     func->is_async = vfunc->is_async;
     func->var_coro = NULL;
+    func->var_alloca_stack = NULL;
+    func->var_stack_adr = NULL;
+    func->var_stack_adr_ref = NULL;
     func->var_stack = NULL;
-    func->var_gc_stack = NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -98,10 +100,13 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         // Synchronous function
         Global* g = get_valk_global(ir->b, "mem", "stack");
         char* g_stack = ir_load(ir, g->type, ir_global(ir, g));
+        func->var_stack = g_stack;
         if(vfunc->alloca_size > 0)
-            func->var_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
-        if(vfunc->gc_decl_count > 0)
-            func->var_gc_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr")));
+            func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
+        if(vfunc->gc_decl_count > 0) {
+            func->var_stack_adr_ref = ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr"));
+            func->var_stack_adr = ir_load(ir, type_cache_ptr(b), func->var_stack_adr_ref);
+        }
     }
 
     // Arg vars
@@ -314,10 +319,10 @@ void ir_gen_await_blocks(IR* ir, IRFunc* func) {
 
 char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
     if(decl->is_gc) {
-        char* stack = func->var_gc_stack;
+        char* stack = func->var_stack_adr;
         return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i32", ir->b->ptr_size);
     }
-    char* stack = func->var_stack;
+    char* stack = func->var_alloca_stack;
     return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
 }
 
@@ -357,9 +362,9 @@ void ir_write_async_func_start(IR *ir, IRFunc *func) {
     IRBlock* entry = ir_block_make(ir, func, "coro_entry_");
 
     if (func->func->alloca_size > 0)
-        func->var_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "stack")));
+        func->var_alloca_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "stack")));
     if (func->func->gc_decl_count > 0)
-        func->var_gc_stack = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "gc_stack")));
+        func->var_stack_adr = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "gc_stack")));
 
     // Get resume index + jump
     char *resume_index = ir_load(ir, type_cache_u32(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "resume_index")));
