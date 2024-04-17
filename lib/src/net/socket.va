@@ -8,7 +8,7 @@ class Socket {
         return SocketTCP.new(host, port, blocking) ! { throw init_error }
     }
 
-    static fn close(fd: uint) void {
+    static fn close(fd: FD) void {
         #if OS == win
         sys:closesocket(fd);
         #else

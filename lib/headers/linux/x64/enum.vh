@@ -1,5 +1,7 @@
 
 value EAGAIN (11)
+value EWOULDBLOCK (11)
+
 value SOCK_STREAM (1)
 value SOCK_NONBLOCK (2048)
 

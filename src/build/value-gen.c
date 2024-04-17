@@ -26,9 +26,6 @@ Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args) {
     item->on = on;
     item->args = args;
     item->rett_refs = NULL;
-    item->err_scope = NULL;
-    item->err_value = NULL;
-    item->err_decl = NULL;
 
     Type* rett = on->rett->func_info->rett;
     if(on->rett->func_info->is_async) {

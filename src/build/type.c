@@ -254,14 +254,17 @@ Type* type_gen_promise(Allocator* alc, Build* b, TypeFuncInfo* fi) {
 
 
 Type* type_gen_valk(Allocator* alc, Build* b, char* name) {
+    char *ns = "type";
     if (name[0] == 'u' && str_is(name, "uint")) {
         name = get_number_type_name(b, b->ptr_size, false, false);
     } else if (name[0] == 'i' && str_is(name, "int")) {
         name = get_number_type_name(b, b->ptr_size, false, true);
     } else if (name[0] == 'f' && str_is(name, "float")) {
         name = get_number_type_name(b, b->ptr_size, true, false);
+    } else if (name[0] == 'F' && str_is(name, "FD")) {
+        ns = "io";
     }
-    Nsc* nsc = get_valk_nsc(b, "type");
+    Nsc* nsc = get_valk_nsc(b, ns);
     Idf* idf = scope_find_idf(nsc->scope, name, false);
     if(idf && idf->type == idf_class) {
         return type_gen_class(alc, idf->item);

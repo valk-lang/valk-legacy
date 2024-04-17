@@ -61,6 +61,7 @@ class Server {
 
         worker_count--
         while worker_count > 0 {
+            // break
             let thread = os:Thread.start_with_data(Server.worker, this)
             worker_count--
         }
@@ -69,7 +70,7 @@ class Server {
         os:sleep_ms(200)
     }
 
-    - fn worker() {
+    - async fn worker() {
 
         let max_connections = this.max_connections
         let handler = this.handler
@@ -96,7 +97,7 @@ class Server {
 
                 if fd == sock_fd {
                     // New connection
-                    let netcon = sock.accept() ! {
+                    let netcon = await sock.accept() ! {
                         // print("failed to accept\n")
                         continue
                     }

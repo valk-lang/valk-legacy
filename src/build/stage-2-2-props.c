@@ -140,9 +140,15 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
 
         bool is_static = false;
         bool is_inline = false;
+        bool is_async = false;
         char* tkn = name;
         if(str_is(tkn, "static")) {
             is_static = true;
+            tkn = p->tkn;
+            next = tok(p, true, false, true);
+        }
+        if(str_is(tkn, "async")) {
+            is_async = true;
             tkn = p->tkn;
             next = tok(p, true, false, true);
         }
@@ -171,6 +177,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->is_static = is_static;
         func->is_inline = is_inline;
         func->in_header = class->in_header;
+        func->is_async = is_async;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

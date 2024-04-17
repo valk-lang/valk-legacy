@@ -131,44 +131,62 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
-    if(!fcall->err_scope && !fcall->err_value) {
-        return res;
-    }
+char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on){
+    bool on_await = errh->on->type == v_await;
 
     IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
-    IRBlock *block_else = fcall->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
+    IRBlock *block_else = errh->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
     IRBlock *after = ir_block_make(ir, ir->func, "if_err_after_");
 
-    Type* type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
-    char *load = ir_load(ir, type_i32, "@valk_err_code");
+    Type *type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
+
+    char *coro_err_prop = NULL;
+    char *load = NULL;
+    if (on_await) {
+        Class *coro_class = get_valk_class(ir->b, "core", "Coro");
+        coro_err_prop = ir_class_pa(ir, coro_class, on, map_get(coro_class->props, "error"));
+        load = ir_load(ir, type_i32, coro_err_prop);
+    } else {
+        load = ir_load(ir, type_i32, "@valk_err_code");
+    }
+
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
-    if (fcall->err_decl)
-        fcall->err_decl->ir_var = load;
+    if (errh->err_decl)
+        errh->err_decl->ir_var = load;
 
-    ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
+    ir_cond_jump(ir, lcond, block_err, errh->err_value ? block_else : after);
 
-    if(fcall->err_scope) {
+    if(errh->err_scope) {
 
-        Scope* err_scope = fcall->err_scope;
+        Scope* err_scope = errh->err_scope;
         ir->block = block_err;
-        ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
         ir_write_ast(ir, err_scope);
         if(!err_scope->did_return) {
             ir_jump(ir, after);
         }
         ir->block = after;
 
-        return res;
+        return on;
 
-    } else if(fcall->err_value) {
+    } else if(errh->err_value) {
 
-        Value* val = fcall->err_value;
+        Value* val = errh->err_value;
         char* ltype = ir_type(ir, val->rett);
 
         ir->block = block_err;
-        ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
         char* alt_val = ir_value(ir, scope, val);
         IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);
@@ -184,7 +202,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
         str_flat(code, " = phi ");
         str_add(code, ltype);
         str_flat(code, " [ ");
-        str_add(code, res);
+        str_add(code, on);
         str_flat(code, ", %");
         str_add(code, block_else->name);
         str_flat(code, " ], [ ");
@@ -198,7 +216,6 @@ char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
 
     return NULL;
 }
-
 
 void func_generate_args(Allocator* alc, Func* func, Map* args) {
     int count = args->values->length;

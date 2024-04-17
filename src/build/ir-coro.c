@@ -39,6 +39,15 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     return result;
 }
 
+void ir_yield(IR* ir, Scope* scope, VAwait* aw) {
+
+    ir_func_return(ir, "ptr", ir->func->var_coro);
+
+    IRBlock* resume = aw->block;
+    ir_jump(ir, resume);
+    ir->block = resume;
+}
+
 void ir_coro_return(IR* ir, Value* value) {
     IRFunc* func = ir->func;
     Class* coro_class = get_valk_class(ir->b, "core", "Coro");

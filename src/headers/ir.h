@@ -22,7 +22,7 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size);
 void ir_func_return_nothing(IR* ir);
 void ir_func_return(IR* ir, char* type, char* value);
-char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall);
+char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
@@ -65,6 +65,7 @@ char *ir_notnull_i1(IR *ir, char *val);
 char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right, char* right, IRBlock* block_last, int op);
 // Coro
 char* ir_await(IR* ir, Scope* scope, VAwait* aw);
+void ir_yield(IR* ir, Scope* scope, VAwait* aw);
 void ir_coro_return(IR* ir, Value* value);
 
 // Structs

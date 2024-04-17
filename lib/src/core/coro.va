@@ -48,7 +48,14 @@ class Coro {
         this.handler()
     }
 
+    fn await_coro(coro: Coro) {
+    }
+    fn await_fd(fd: FD, read: bool, write: bool) {
+        println("awa fd")
+    }
+
     static fn loop() {
+                    print("loop")
         let ring = mem:coros
         while ring.length > 0 {
             let tail = ring.last_index()
@@ -58,9 +65,11 @@ class Coro {
             while tail != head {
                 let coro = @ptrv(data, Coro, tail)
                 if coro.done {
+                    print("Rem")
                     ring.remove(tail)
                     break
                 }
+                    print("Res")
                 coro.resume()
 
                 // Next
@@ -70,6 +79,7 @@ class Coro {
                 }
             }
         }
+                    print("stop-loop")
     }
 
     ///////////////////

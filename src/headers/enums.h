@@ -160,6 +160,8 @@ enum VALUES {
     v_await,
     v_cached_stack_adr,
     v_cached_stack_instance,
+    v_this_coro,
+    v_err_handler,
 };
 
 enum TOKENS {
@@ -178,6 +180,7 @@ enum TOKENS {
     t_set_return_value,
     t_each,
     t_return_vscope,
+    t_yield,
 };
 
 enum OPERATORS {

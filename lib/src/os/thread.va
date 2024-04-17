@@ -2,6 +2,7 @@
 header "sys" as sys;
 
 use valk:mem;
+use valk:core;
 
 struct ThreadEntry {
     func: ptr
@@ -20,6 +21,7 @@ struct Thread {
             let func = e.func @as fn()(void);
             func();
         }
+        core:Coro.loop()
         mem:stack.shutdown()
     }
 

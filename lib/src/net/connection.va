@@ -6,7 +6,7 @@ use io;
 use utils;
 
 struct Connection {
-    ~ fd: uint
+    ~ fd: FD
     ~ open: bool (true)
     // ~ ssl_enabled: bool = false;
     // - ssl: ?SSL = null;

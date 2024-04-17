@@ -101,7 +101,7 @@ class Poll[T] {
         return events
     }
 
-    fn create_listener(fd: uint, data: T) Listener[T] {
+    fn create_listener(fd: FD, data: T) Listener[T] {
         let lsn = Listener[T] {
             epoll_fd: this.epoll_fd
             fd: fd

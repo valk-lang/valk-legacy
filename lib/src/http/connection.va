@@ -9,7 +9,7 @@ use fs
 class Connection {
     server: Server
     netcon: net:Connection
-    fd: uint
+    fd: FD
 
     // uploads: ?Array[String] (null)
     request: Request (Request{})

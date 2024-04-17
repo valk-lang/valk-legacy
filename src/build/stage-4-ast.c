@@ -23,6 +23,7 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
     // TODO: only include Coro.new if an async function was used
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
 
     b->building_ast = false;
 
@@ -408,6 +409,54 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(scope->ast, tgen_each(alc, on, func, kd, vd, scope_each, index, vindex));
                 continue;
             }
+            if (str_is(tkn, "await_fd")){
+
+                if(!p->func->is_async) {
+                    parse_err(p, -1, "Using 'await_fd' in a non-async function");
+                }
+
+                tok_expect(p, "(", false, false);
+                Value* fd = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "FD"), fd->rett);
+                tok_expect(p, ",", true, true);
+                Value* read = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "bool"), read->rett);
+                tok_expect(p, ",", true, true);
+                Value* write = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "bool"), write->rett);
+                tok_expect(p, ")", true, true);
+
+                // Call Coro.await_fd
+                Class *coro_class = get_valk_class(b, "core", "Coro");
+                Value *coro = value_make(alc, v_this_coro, NULL, type_gen_class(alc, coro_class));
+                Func* f = map_get(coro_class->funcs, "await_fd");
+                Value* fptr = vgen_func_ptr(alc, f, NULL);
+                Array* args = array_make(alc, 4);
+                array_push(args, coro);
+                array_push(args, fd);
+                array_push(args, read);
+                array_push(args, write);
+                Value* fcall = vgen_func_call(alc, b, fptr, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
+
+                VAwait* aw = al(alc, sizeof(VAwait));
+                aw->decl = NULL;
+                aw->on = NULL;
+                aw->suspend_index = ++p->func->suspend_index;
+                aw->on_decl = NULL;
+                aw->block = NULL;
+                aw->rett = NULL;
+
+                Array* awas = p->func->awaits;
+                if(!awas) {
+                    awas = array_make(b->alc, 2);
+                    p->func->awaits = awas;
+                }
+                array_push(awas, aw);
+
+                array_push(scope->ast, token_make(alc, t_yield, aw));
+                continue;
+            }
             // Check if macro
             Idf* idf = scope_find_idf(scope, tkn, true);
             if(idf && idf->type == idf_macro) {
@@ -666,6 +715,8 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *scope_end = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reduce"), idfs, scope);
                 array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
 
+            } else if (scope->type == sc_vscope) {
+                // Dont set local vars to null in value scope because it will return one of those variables
             } else {
                 // if / while : At end of scope, set local variables to null
                 Array *decls = scope->decls;

@@ -2,7 +2,13 @@
 header "sys" as sys;
 header "libuv" as uv;
 
-alias FD as uint;
+alias FD as int;
+
+#if OS == win
+fn valk_fd(fd: uint) FD {
+    return (fd == (0^-1) @as uint) ? -1 : fd @as int
+}
+#end
 
 fn write(fd: FD, str: String) !failed !again {
     #if OS == win

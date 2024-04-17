@@ -12,7 +12,7 @@ class Request {
     path: String ("/")
     body: String ("")
     response: Response (Response.text(""))
-    uploads: Map[String] (map[String]{})
+    uploads: Map[String] (Map[String]{})
     - headers_parsed: bool (false)
 
     fn reset() {

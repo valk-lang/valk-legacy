@@ -231,6 +231,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
             //
             continue;
         }
+        if (tt == t_yield) {
+            VAwait* awa = t->item;
+            ir_yield(ir, scope, awa);
+            continue;
+        }
 
         die("Unhandled IR token (compiler bug)");
     }

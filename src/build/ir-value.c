@@ -23,8 +23,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);
         Array *values = ir_fcall_args(ir, scope, fcall->args, fcall->rett_refs);
-        char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
-        return ir_func_err_handler(ir, scope, res, fcall);
+        return ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
     }
     if (vt == v_gc_buffer) {
         VGcBuffer* buf = v->item;
@@ -38,6 +37,11 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (vt == v_func_ptr) {
         VFuncPtr *fptr = v->item;
         return ir_func_ptr(ir, fptr->func);
+    }
+    if (vt == v_err_handler) {
+        ErrorHandler* errh = v->item;
+        char* on = ir_value(ir, scope, errh->on);
+        return ir_func_err_handler(ir, scope, errh, on);
     }
     if (vt == v_ptrv) {
         char *val = ir_assign_value(ir, scope, v);
@@ -352,6 +356,9 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (vt == v_await) {
         VAwait* aw = v->item;
         return ir_await(ir, scope, aw);
+    }
+    if (vt == v_this_coro) {
+        return ir->func->var_coro;
     }
 
     printf("unhandled ir-value: '%d' (compiler bug)\n", vt);

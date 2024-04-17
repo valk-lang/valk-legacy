@@ -3,6 +3,7 @@ header "sys" as sys
 
 use mem
 use os
+use io
 
 class SocketTCP {
     ~ host: String
@@ -19,10 +20,7 @@ class SocketTCP {
         #end
 
         #if OS == linux
-        let flags : i32 = sys:SOCK_STREAM
-        if blocking == false {
-            flags = flags | sys:SOCK_NONBLOCK
-        }
+        let flags : i32 = sys:SOCK_STREAM @as i32 | sys:SOCK_NONBLOCK
         let ufd = sys:socket(sys:AF_INET, flags, 0)
         let fd = ufd @as FD
         #else
@@ -32,14 +30,13 @@ class SocketTCP {
         let ufd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
         let fd = ufd @as FD
         let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
-        if flags >= 0 && !blocking : sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+        sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
 
         #elif OS == win
         let sock_fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
-        let ufd = os:WSA_unix_fd(sock_fd)
-        let fd = sock_fd @as FD
-        let nonblock_v = 1 // 1 = non-blocking, 0 = blocking
-        if !blocking : sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock_v))
+        let fd = io:valk_fd(sock_fd)
+        let nonblock = 1
+        sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock))
         #end
 
         #end
@@ -143,35 +140,55 @@ class SocketTCP {
         return addrinfo @as sys:libc_addrinfo
     }
 
-    fn accept() Connection !error {
-        let flags : i32 = 0
-        #if OS == linux
-        if this.blocking == false { flags = flags | sys:SOCK_NONBLOCK }
-        let ufd = sys:accept4(this.fd @autocast, null, null, flags)
-        let fd = ufd @as FD
-        #else
-        let os_fd = sys:accept(this.fd @autocast, null, null)
-        #if OS == macos
-        let ufd = os_fd
-        let fd = os_fd @as FD
-        if !this.blocking {
-        	let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
-        	if flags >= 0 : sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+    async fn accept() Connection !error {
+
+        while true {
+            #if OS == linux
+            let fd = sys:accept4(this.fd @autocast, null, null, sys:SOCK_NONBLOCK)
+            #else
+            let fd_ = sys:accept(this.fd @autocast, null, null)
+            #if OS == win
+            let fd = io:valk_fd(fd_)
+            #else
+            let fd = fd_
+            #end
+            #end
+
+            // Error
+            if fd == -1 {
+                #if OS == win
+                // Windows error
+                let err = os:WSA_error()
+                if err == sys:WSAEWOULDBLOCK {
+                    await_fd(this.fd, true, false)
+                    continue;
+                }
+                #else
+                // Linux / macos error
+                let err = os:libc_errno()
+                if err == sys:EAGAIN {
+                    await_fd(this.fd, true, false)
+                    continue;
+                }
+                #end
+                // On error
+                throw error
+            }
+
+            #if OS == macos
+            let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
+            sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+            #end
+            #if OS == win
+            let nonblock = 1
+            sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock))
+            #end
+
+            return Connection {
+                fd: fd,
+            }
         }
-        #end
-        #if OS == win
-        let ufd = os:WSA_unix_fd(os_fd)
-        let fd = os_fd
-        let nonblock_v = 1 // 1 = non-blocking, 0 = blocking
-        if !this.blocking : sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock_v))
-        #end
-        #end
-        if ufd == -1 {
-            throw error
-        }
-        return Connection {
-            fd: fd,
-        }
+        throw error
     }
 
     fn clone() CLASS {

@@ -236,7 +236,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         } else if (str_is(tkn, "await")) {
 
             if(!p->func->is_async) {
-                parse_err(p, -1, "When you use 'await', the current function you are in must also be 'async'");
+                parse_err(p, -1, "Using 'await' in a non-async function");
             }
 
             Value* on = read_value(alc, p, true, 1);
@@ -266,6 +266,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             array_push(awas, aw);
 
             v = value_make(alc, v_await, aw, aw->rett);
+
+            TypeFuncInfo *fi = on->rett->func_info;
+            if (fi->err_names && fi->err_names->length > 0) {
+                v = read_err_handler(alc, p, v, fi);
+            }
 
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
@@ -810,99 +815,16 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         p->scope->did_return = true;
     }
 
-    if(ont->func_info->err_names && ont->func_info->err_names->length > 0) {
-        VFuncCall* f = fcall->item;
-        bool void_rett = type_is_void(fcall->rett);
-        bool ignore = false;
-        char t = tok(p, true, false, true);
-        char* name = NULL;
-        if(t == tok_id && !str_is(p->tkn, "_")) {
-            name = p->tkn;
-            t = tok(p, true, false, true);
-        }
-        if(void_rett) {
-            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?") && !str_is(p->tkn, "_")){
-                parse_err(p, -1, "Expected one the following error handler tokens: ! ? _ (Found: '%s')", p->tkn);
-            }
-        } else {
-            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?")){
-                parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
-            }
-        }
-
-        if(t == tok_not) {
-
-            t = tok(p, true, true, false);
-
-            Chunk* chunk_end = NULL;
-            int scope_end_i = -1;
-            if (t == tok_curly_open) {
-                tok(p, true, true, true);
-                scope_end_i = p->scope_end_i;
-            }
-            bool single = scope_end_i == -1;
-
-            Scope *scope = p->scope;
-            Scope* err_scope = scope_sub_make(alc, sc_default, scope);
-            f->err_scope = err_scope;
-
-            if(name) {
-                // Error identifier
-                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
-                Idf* idf = idf_make(alc, idf_error, decl);
-                scope_set_idf(err_scope, name, idf, p);
-                scope_add_decl(alc, err_scope, decl);
-                f->err_decl = decl;
-            }
-
-            p->scope = err_scope;
-            read_ast(p, single);
-            p->scope = scope;
-            if(!single)
-                p->chunk->i = scope_end_i;
-
-            if(!void_rett && !err_scope->did_return) {
-                parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
-            }
-
-        } else if(t == tok_qmark) {
-            if (void_rett) {
-                parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
-            }
-            Scope* scope = p->scope;
-            Scope* sub_scope = scope_sub_make(alc, sc_default, p->scope);
-            p->scope = sub_scope;
-
-            if(name) {
-                // Error identifier
-                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
-                Idf* idf = idf_make(alc, idf_error, decl);
-                scope_set_idf(sub_scope, name, idf, p);
-                scope_add_decl(alc, sub_scope, decl);
-                f->err_decl = decl;
-            }
-
-            Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, p, sub_scope, errv, fcall->rett);
-
-            p->scope = scope;
-
-            // Mix nullable
-            if(fcall->rett->is_pointer && errv->rett->nullable) {
-                Type* t = type_clone(alc, fcall->rett);
-                t->nullable = true;
-                fcall->rett = t;
-            }
-            //
-            type_check(p, fcall->rett, errv->rett);
-            f->err_value = errv;
-        }
-    }
-
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
     if(buffer->type == v_gc_buffer && p->scope->ast) {
         p->scope->gc_check = true;
     }
+
+    TypeFuncInfo* fi = ont->func_info;
+    if(!fi->is_async && fi->err_names && fi->err_names->length > 0) {
+        buffer = read_err_handler(alc, p, buffer, fi);
+    }
+
     return buffer;
 }
 
@@ -1431,4 +1353,101 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
     }
     unsigned int errv = array_get_index_u32(err_values, index);
     return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
+}
+
+Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
+
+    Type* frett = fi->rett;
+    bool void_rett = type_is_void(frett);
+    bool ignore = false;
+    char t = tok(p, true, false, true);
+    char *name = NULL;
+
+    if(type_is_void(frett) && str_is(p->tkn, "_")) {
+        return on;
+    }
+
+    ErrorHandler* errh = al(alc, sizeof(ErrorHandler));
+    errh->err_scope = NULL;
+    errh->err_value = NULL;
+    errh->err_decl = NULL;
+    errh->on = on;
+
+    if (t == tok_id) {
+        name = p->tkn;
+        t = tok(p, true, false, true);
+    }
+    if (!str_is(p->tkn, "!") && !str_is(p->tkn, "?")) {
+        parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
+    }
+
+    if (t == tok_not) {
+
+        t = tok(p, true, true, false);
+
+        Chunk *chunk_end = NULL;
+        int scope_end_i = -1;
+        if (t == tok_curly_open) {
+            tok(p, true, true, true);
+            scope_end_i = p->scope_end_i;
+        }
+        bool single = scope_end_i == -1;
+
+        Scope *scope = p->scope;
+        Scope *err_scope = scope_sub_make(alc, sc_default, scope);
+        errh->err_scope = err_scope;
+
+        if (name) {
+            // Error identifier
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), true);
+            Idf *idf = idf_make(alc, idf_error, decl);
+            scope_set_idf(err_scope, name, idf, p);
+            scope_add_decl(alc, err_scope, decl);
+            errh->err_decl = decl;
+        }
+
+        p->scope = err_scope;
+        read_ast(p, single);
+        p->scope = scope;
+        if (!single)
+            p->chunk->i = scope_end_i;
+
+        if (!void_rett && !err_scope->did_return) {
+            parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
+        }
+
+    } else if (t == tok_qmark) {
+        if (void_rett) {
+            parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
+        }
+        Scope *scope = p->scope;
+        Scope *sub_scope = scope_sub_make(alc, sc_default, p->scope);
+        p->scope = sub_scope;
+
+        if (name) {
+            // Error identifier
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), true);
+            Idf *idf = idf_make(alc, idf_error, decl);
+            scope_set_idf(sub_scope, name, idf, p);
+            scope_add_decl(alc, sub_scope, decl);
+            errh->err_decl = decl;
+        }
+
+        Value *errv = read_value(alc, p, false, 0);
+        errv = try_convert(alc, p, sub_scope, errv, frett);
+
+        p->scope = scope;
+
+        // Mix nullable
+        if (frett->is_pointer && errv->rett->nullable) {
+            Type *t = type_clone(alc, frett);
+            t->nullable = true;
+            frett = t;
+        }
+        //
+        type_check(p, frett, errv->rett);
+        errh->err_value = errv;
+    }
+
+    return value_make(alc, v_err_handler, errh, frett);
 }
