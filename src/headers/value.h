@@ -13,7 +13,7 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
 bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 VFuncCall* value_extract_func_call(Value* from);
-Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
+ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
 
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
@@ -63,6 +63,7 @@ struct VFuncCall {
     Value *on;
     Array *args;
     Array *rett_refs;
+    ErrorHandler* errh;
     int line;
     int col;
 };
@@ -70,7 +71,6 @@ struct ErrorHandler {
     Scope *err_scope;
     Value *err_value;
     Decl* err_decl;
-    Value* on;
 };
 struct VNumber {
     v_i64 value_int;

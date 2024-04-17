@@ -101,9 +101,17 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_throw) {
             TThrow* tt = t->item;
-            ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->value));
-            char *msg = ir_string(ir, tt->msg);
-            ir_store_old(ir, type_gen_valk(alc, ir->b, "ptr"), "@valk_err_msg", msg);
+            if(ir->func->is_async) {
+                Class* coro_class = get_valk_class(ir->b, "core", "Coro");
+                char *done_ref = ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "done"));
+                ir_store(ir, done_ref, "true", "i1", 1);
+                char* error_ref = ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "error"));
+                ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), error_ref, ir_int(ir, tt->value));
+            } else {
+                ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->value));
+                char *msg = ir_string(ir, tt->msg);
+                ir_store_old(ir, type_gen_valk(alc, ir->b, "ptr"), "@valk_err_msg", msg);
+            }
             ir_func_return_nothing(ir);
             continue;
         }

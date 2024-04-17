@@ -161,7 +161,6 @@ enum VALUES {
     v_cached_stack_adr,
     v_cached_stack_instance,
     v_this_coro,
-    v_err_handler,
 };
 
 enum TOKENS {

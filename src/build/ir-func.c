@@ -5,6 +5,7 @@ void ir_gen_func(IR *ir, IRFunc *func);
 void ir_gen_await_blocks(IR* ir, IRFunc* func);
 char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
 void ir_write_async_func_start(IR *ir, IRFunc *func);
+void ir_init_decls(IR *ir, IRFunc *func);
 
 void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
 
@@ -112,47 +113,21 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         if(vfunc->gc_decl_count > 0) {
             func->var_stack_adr = func->var_g_stack_adr;
         }
+
+        ir_init_decls(ir, func);
     }
 
-    // Arg vars
+
+    // // Store arg values
     Array *args = vfunc->args->values;
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);
         Decl* decl = arg->decl;
-        char* var = ir_var(func);
-        decl->ir_var = var;
         if(decl->is_mut) {
-            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+            // Store passed argument in storage var
             ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
         }
     }
-
-    // Return value references
-    Array *retts = vfunc->rett_types;
-    for (int i = 1; i < retts->length; i++) {
-        char *var = ir_var(func);
-        array_push(func->rett_refs, var);
-    }
-
-    // Decls
-    Scope* scope = vfunc->scope;
-    Array* decls = scope->decls;
-    for (int i = 0; i < decls->length; i++) {
-        Decl* decl = array_get_index(decls, i);
-        if(decl->is_mut || decl->is_gc) {
-            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
-        }
-    }
-
-    // // Store arg values
-    // for (int i = 0; i < args->length; i++) {
-    //     FuncArg *arg = array_get_index(args, i);
-    //     Decl* decl = arg->decl;
-    //     if(decl->is_mut) {
-    //         // Store passed argument in storage var
-    //         ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
-    //     }
-    // }
 
     // AST
     ir_write_ast(ir, vfunc->scope);
@@ -283,6 +258,10 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size) {
 
 void ir_func_return_nothing(IR* ir) {
     Func* func = ir->func->func;
+    if(ir->func->is_async) {
+        ir_func_return(ir, "ptr", ir->func->var_coro);
+        return;
+    }
     if(!func->rett || type_is_void(func->rett)) {
         ir_func_return(ir, NULL, "void");
     } else {
@@ -335,6 +314,39 @@ char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
     return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
 }
 
+void ir_init_decls(IR *ir, IRFunc *func) {
+    Func* vfunc = func->func;
+
+    // Arg vars
+    Array *args = vfunc->args->values;
+    for (int i = 0; i < args->length; i++) {
+        FuncArg *arg = array_get_index(args, i);
+        Decl* decl = arg->decl;
+        char* var = ir_var(func);
+        decl->ir_var = var;
+        if(decl->is_mut) {
+            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+        }
+    }
+
+    // Return value references
+    Array *retts = vfunc->rett_types;
+    for (int i = 1; i < retts->length; i++) {
+        char *var = ir_var(func);
+        array_push(func->rett_refs, var);
+    }
+
+    // Decls
+    Scope* scope = vfunc->scope;
+    Array* decls = scope->decls;
+    for (int i = 0; i < decls->length; i++) {
+        Decl* decl = array_get_index(decls, i);
+        if(decl->is_mut || decl->is_gc) {
+            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+        }
+    }
+}
+
 void ir_write_async_func_start(IR *ir, IRFunc *func) {
     //
     Build* b = ir->b;
@@ -376,6 +388,8 @@ void ir_write_async_func_start(IR *ir, IRFunc *func) {
     if (func->func->gc_decl_count > 0)
         func->var_stack_adr = ir_load(ir, type_cache_ptr(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "gc_stack")));
 
+    ir_init_decls(ir, func);
+
     // Get resume index + jump
     char *resume_index = ir_load(ir, type_cache_u32(b), ir_class_pa(ir, cc, coro, map_get(cc->props, "resume_index")));
     Str* code = ir->block->code;
@@ -395,7 +409,7 @@ void ir_write_async_func_start(IR *ir, IRFunc *func) {
             str_flat(code, "\n    i32 ");
             str_add(code, index);
             str_flat(code, ", label %");
-            str_add(code, entry->name);
+            str_add(code, block->name);
         }
     }
     str_flat(code, " ]\n");

@@ -45,13 +45,14 @@ class Coro {
     fn resume() {
         if this.done : return
         run_coroutine = this
+            // print("R.")
         this.handler()
     }
 
     fn await_coro(coro: Coro) {
     }
     fn await_fd(fd: FD, read: bool, write: bool) {
-        println("awa fd")
+        // println("awa fd")
     }
 
     static fn loop() {
@@ -65,11 +66,10 @@ class Coro {
             while tail != head {
                 let coro = @ptrv(data, Coro, tail)
                 if coro.done {
-                    print("Rem")
+                    // print("Rem")
                     ring.remove(tail)
                     break
                 }
-                    print("Res")
                 coro.resume()
 
                 // Next
@@ -78,8 +78,9 @@ class Coro {
                     tail = 0
                 }
             }
+            // os:sleep_ms(1000)
         }
-                    print("stop-loop")
+        print("stop-loop")
     }
 
     ///////////////////

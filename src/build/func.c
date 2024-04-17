@@ -131,8 +131,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on){
-    bool on_await = errh->on->type == v_await;
+char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bool on_await){
 
     IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
     IRBlock *block_else = errh->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;

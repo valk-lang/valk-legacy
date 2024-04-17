@@ -28,12 +28,18 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
 
     // If suspend
     ir->block = suspend;
-    ir_store(ir, ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
-    ir_func_return(ir, "ptr", ir->func->var_coro);
+    ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
+    ir_func_return_nothing(ir);
 
     // If done
     // Load result
     ir->block = done;
+
+    ErrorHandler *errh = aw->errh;
+    if (errh) {
+        coro = ir_func_err_handler(ir, scope, errh, coro, true);
+    }
+
     char* result_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "result"));
     char* result = ir_load(ir, aw->rett, result_ref);
     return result;
@@ -41,10 +47,11 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
 
 void ir_yield(IR* ir, Scope* scope, VAwait* aw) {
 
+    Class* coro_class = get_valk_class(ir->b, "core", "Coro");
+    ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
     ir_func_return(ir, "ptr", ir->func->var_coro);
 
     IRBlock* resume = aw->block;
-    ir_jump(ir, resume);
     ir->block = resume;
 }
 
@@ -65,5 +72,5 @@ void ir_coro_return(IR* ir, Value* value) {
     char *done_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "done"));
     ir_store(ir, done_ref, "true", "i1", 1);
 
-    ir_func_return(ir, "ptr", coro);
+    ir_func_return_nothing(ir);
 }

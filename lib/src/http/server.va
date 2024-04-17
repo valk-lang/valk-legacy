@@ -61,9 +61,9 @@ class Server {
 
         worker_count--
         while worker_count > 0 {
-            // break
             let thread = os:Thread.start_with_data(Server.worker, this)
             worker_count--
+            // break
         }
 
         this.worker()

@@ -253,6 +253,12 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             aw->on_decl = on_decl;
             aw->block = NULL;
             aw->rett = on->rett->func_info->rett;
+            aw->errh = NULL;
+
+            TypeFuncInfo *fi = on->rett->func_info;
+            if (fi->err_names && fi->err_names->length > 0) {
+                aw->errh = read_err_handler(alc, p, v, fi);
+            }
 
             if(!on_decl) {
                 scope_add_decl(alc, p->scope, aw->decl);
@@ -267,10 +273,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             v = value_make(alc, v_await, aw, aw->rett);
 
-            TypeFuncInfo *fi = on->rett->func_info;
-            if (fi->err_names && fi->err_names->length > 0) {
-                v = read_err_handler(alc, p, v, fi);
-            }
 
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
@@ -822,7 +824,8 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
 
     TypeFuncInfo* fi = ont->func_info;
     if(!fi->is_async && fi->err_names && fi->err_names->length > 0) {
-        buffer = read_err_handler(alc, p, buffer, fi);
+        VFuncCall* c = fcall->item;
+        c->errh = read_err_handler(alc, p, buffer, fi);
     }
 
     return buffer;
@@ -1355,7 +1358,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
     return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
 }
 
-Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
+ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
 
     Type* frett = fi->rett;
     bool void_rett = type_is_void(frett);
@@ -1364,14 +1367,13 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
     char *name = NULL;
 
     if(type_is_void(frett) && str_is(p->tkn, "_")) {
-        return on;
+        return NULL;
     }
 
     ErrorHandler* errh = al(alc, sizeof(ErrorHandler));
     errh->err_scope = NULL;
     errh->err_value = NULL;
     errh->err_decl = NULL;
-    errh->on = on;
 
     if (t == tok_id) {
         name = p->tkn;
@@ -1449,5 +1451,5 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
         errh->err_value = errv;
     }
 
-    return value_make(alc, v_err_handler, errh, frett);
+    return errh;
 }
