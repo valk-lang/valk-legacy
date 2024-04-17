@@ -826,6 +826,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     if(!fi->is_async && fi->err_names && fi->err_names->length > 0) {
         VFuncCall* c = fcall->item;
         c->errh = read_err_handler(alc, p, buffer, fi);
+        if(c->errh && c->errh->err_value) {
+            buffer->rett = c->errh->err_value->rett;
+        }
     }
 
     return buffer;
