@@ -76,91 +76,26 @@ class Server {
         let handler = this.handler
 
         let sock = this.socket
-        let sock_fd = sock.fd
-
-        let poll = io:Poll[?Connection].new() ! {
-            println("[x] Failed to create poll instance")
-            return
-        }
-        let sock_lsn = poll.create_listener(sock_fd, null)
-        sock_lsn.detect_read_request(true)
 
         while true {
-            let events = poll.wait(-1)
-            let event_count = events.length
-            let i : uint = 0
-
-            while i < event_count {
-                let lsn = events.get(i) ! { break }
-                let fd = lsn.fd
-                i++
-
-                if fd == sock_fd {
-                    // New connection
-                    let netcon = await sock.accept() ! {
-                        // print("failed to accept\n")
-                        continue
-                    }
-
-                    let fd = netcon.fd
-                    if this.show_info {
-                        println("[+] New connection: " + fd)
-                    }
-
-                    let http_con = Connection {
-                        server: this,
-                        netcon: netcon,
-                        fd: fd,
-                    }
-
-                    let lsn = poll.create_listener(fd, http_con)
-                    lsn.detect_read_request(true)
-                    lsn.detect_write_request(false)
-                    continue
-                }
-
-                if lsn.data == null {
-                    if this.show_info {
-                        println("[x] Missing http connection for fd: " + lsn.fd)
-                    }
-                    net:Socket.close(lsn.fd)
-                    continue
-                }
-
-                let http_con = lsn.data @as Connection
-                if http_con.fd != fd {
-                    if this.show_info {
-                        print("[x] fd mismatch\n")
-                    }
-                    http_con.close()
-                    net:Socket.close(fd)
-                    continue
-                }
-
-                // Existing connection
-                if lsn.has_stopped_the_connection() {
-                    if this.show_info {
-                        println("[+] Close connection: " + fd)
-                    }
-                    http_con.close()
-                    continue
-                }
-
-                let read = lsn.has_read_request()
-                let write = lsn.has_write_request()
-
-                if !read && !write {
-                    http_con.close()
-                    continue
-                }
-
-                http_con.handle_event(read, write)
-                if http_con.has_data_to_send() {
-                    lsn.detect_write_request(true)
-                } else {
-                    lsn.detect_write_request(false)
-                }
+            print("Accepting...\n")
+            let netcon = await sock.accept() ! {
+                println("[x] Failed to accept")
+                continue
             }
+
+            let fd = netcon.fd
+            if this.show_info {
+                println("[+] New connection: " + fd)
+            }
+
+            let http_con = Connection {
+                server: this,
+                netcon: netcon,
+                fd: fd,
+            }
+
+            http_con.handle()
         }
     }
 

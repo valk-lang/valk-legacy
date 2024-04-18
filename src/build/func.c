@@ -367,7 +367,7 @@ void func_set_decl_offset(Func* func, Decl* decl) {
             Type *type = decl->type;
             int size = type->size;
             int offset = func->alloca_size;
-            int skip = (size - (offset % size)) % size;
+            int skip = size > 0 ? (size - (offset % size)) % size : 0;
             offset += skip;
             decl->offset = offset;
             func->alloca_size = offset + size;

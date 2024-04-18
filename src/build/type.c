@@ -240,6 +240,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
     t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL, NULL);
+    t->size = sizeof(int);
     return t;
 }
 

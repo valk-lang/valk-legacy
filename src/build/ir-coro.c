@@ -41,6 +41,9 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
         coro = ir_func_err_handler(ir, scope, errh, coro, true);
     }
 
+    if (type_is_void(aw->rett)) {
+        return "void";
+    }
     char* result_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "result"));
     char* result = ir_load(ir, aw->rett, result_ref);
     return result;

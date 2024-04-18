@@ -89,9 +89,14 @@ class Array[T] {
             }
             this.increase_size(new_size)
         }
+        let len = this.length
+        if index >= len {
+            this.length = index + 1
+        }
+
         let data = this.data;
         // fill
-        let i = this.length
+        let i = len
         while i < index {
             @ptrv(data, T, i++) = @gc_link(this, filler_value)
         }

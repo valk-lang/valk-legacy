@@ -16,7 +16,7 @@ class Coro {
     result: ptr
     handler: fn()()
     await_coro: ?Coro (null)
-    await_coros: ?Array[Coro] (null)
+    // waiting_on_me: ?Array[Coro] (null)
     resume_index: u32 (0)
     error: u32 (0)
     done: bool (false)
@@ -76,32 +76,38 @@ class Coro {
         let poll = Coro.get_poll()
         let ring = mem:coros
         while ring.length > 0 {
-            let tail = ring.last_index()
-            let head = ring.index
-            let size = ring.size
-            let data = ring.data
-            while tail != head {
-                let coro = @ptrv(data, Coro, tail)
-                if coro.done {
-                    ring.remove(tail)
-                } else {
-                    let wait_on = coro.await_coro
-                    if(isset(wait_on)) {
-                        if(wait_on.done) {
-                            coro.await_coro = null
-                            coro.resume()
+            let resumec = 0
+            // while ring.length > 0 {
+                let tail = ring.last_index()
+                let head = ring.index
+                let size = ring.size
+                let data = ring.data
+                while tail != head {
+                    let coro = @ptrv(data, Coro, tail)
+                    if coro.done {
+                        ring.remove(tail)
+                    } else {
+                        let wait_on = coro.await_coro
+                        if(isset(wait_on)) {
+                            if(wait_on.done) {
+                                coro.await_coro = null
+                                coro.resume()
+                                resumec++
+                            }
                         }
                     }
-                }
 
-                // Next
-                tail++
-                if tail == size {
-                    tail = 0
+                    // Next
+                    tail++
+                    if tail == size {
+                        tail = 0
+                    }
                 }
-            }
-            // os:sleep_ms(1000)
-            let coros = poll.wait(100)
+            // }
+            // if resumec > 0 : continue
+            // os:sleep_ms(100)
+            // print("x")
+            let coros = poll.wait(1000)
             each coros as coro {
                 coro.resume()
             }

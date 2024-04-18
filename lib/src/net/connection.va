@@ -2,6 +2,7 @@
 header "sys" as sys;
 // header "openssl" as ossl;
 
+use os;
 use io;
 use utils;
 
@@ -29,7 +30,7 @@ struct Connection {
         this.open = false;
     }
 
-    fn send_from_ptr(data: ptr, bytes_to_send: uint) uint !connection !again {
+    async fn send_from_ptr(data: ptr, bytes_to_send: uint) uint !connection {
 
         if this.open == false { throw connection }
 
@@ -54,6 +55,7 @@ struct Connection {
 
         // } else {
             // No SSL
+        while true {
             #if OS == win
             let wbytes = sys:send(this.fd, data, bytes_to_send @as i32, 0);
             #else
@@ -62,20 +64,18 @@ struct Connection {
 
             if wbytes < 0 {
                 #if OS == win
-                let err = sys:WSAGetLastError();
-                if err == sys:WSAENOBUFS {
+                let err = os:WSA_error()
+                if err == sys:WSAEWOULDBLOCK {
                     // EAGAIN
-                    throw again;
+                    await_fd(this.fd, false, true)
+                    continue;
                 }
                 #else
-                #if OS == macos
-                let err = @ptrv(sys:__error(), i32, 0);
-                #else
-                let err = @ptrv(sys:__errno_location(), i32, 0);
-                #end
+                let err = os:libc_errno()
                 if err == sys:EAGAIN {
                     // EAGAIN
-                    throw again;
+                    await_fd(this.fd, false, true)
+                    continue;
                 }
                 #end
                 throw connection;
@@ -84,12 +84,13 @@ struct Connection {
                 return 0;
             }
             bytes_sent = wbytes @as uint;
-        // }
+            break
+        }
 
         return bytes_sent;
     }
 
-    fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection !again {
+    async fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection {
 
         if this.open == false { return 0 }
         // let ssl = this.ssl;
@@ -117,6 +118,7 @@ struct Connection {
         //     count = rcvd @as uint;
 
         // } else {
+        while true {
             #if OS == win
             let rcvd = sys:recv(this.fd, buffer.data + buffer.length, bytes @as i32, 0);
             #else
@@ -124,20 +126,18 @@ struct Connection {
             #end
             if (rcvd < 0) {
                 #if OS == win
-                let err = sys:WSAGetLastError();
-                if err == sys:WSAENOBUFS {
+                let err = os:WSA_error()
+                if err == sys:WSAEWOULDBLOCK {
                     // EAGAIN
-                    throw again;
+                    await_fd(this.fd, true, false)
+                    continue;
                 }
                 #else
-                #if OS == macos
-                let err = @ptrv(sys:__error(), i32, 0);
-                #else
-                let err = @ptrv(sys:__errno_location(), i32, 0);
-                #end
+                let err = os:libc_errno()
                 if err == sys:EAGAIN {
                     // EAGAIN
-                    throw again;
+                    await_fd(this.fd, true, false)
+                    continue;
                 }
                 #end
                 throw connection;
@@ -146,7 +146,8 @@ struct Connection {
                 return 0;
             }
             count = rcvd @as uint;
-        // }
+            break
+        }
             
         buffer.length += count;
         return count;

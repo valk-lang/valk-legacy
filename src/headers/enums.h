@@ -111,7 +111,7 @@ enum TYPES {
     type_undefined,
     type_null,
     type_static_array,
-    type_error,
+    type_error, // 10
     type_promise,
 };
 

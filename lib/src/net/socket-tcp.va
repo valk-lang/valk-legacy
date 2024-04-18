@@ -140,7 +140,7 @@ class SocketTCP {
         return addrinfo @as sys:libc_addrinfo
     }
 
-    async fn accept() Connection !error !again {
+    async fn accept() Connection !error {
 
         while true {
             #if OS == linux
@@ -153,6 +153,7 @@ class SocketTCP {
             let fd = fd_
             #end
             #end
+            print("a")
 
             // Error
             if fd == -1 {
@@ -160,7 +161,7 @@ class SocketTCP {
                 // Windows error
                 let err = os:WSA_error()
                 if err == sys:WSAEWOULDBLOCK {
-                    if !this.blocking : throw again
+                    // if !this.blocking : throw again
                     await_fd(this.fd, true, false)
                     continue;
                 }
@@ -168,7 +169,7 @@ class SocketTCP {
                 // Linux / macos error
                 let err = os:libc_errno()
                 if err == sys:EAGAIN {
-                    if !this.blocking : throw again
+                    // if !this.blocking : throw again
                     await_fd(this.fd, true, false)
                     continue;
                 }

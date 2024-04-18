@@ -34,12 +34,18 @@ class StructArray[T] {
         let new_data = mem:alloc(new_size * sizeof(inline T));
         let copy_size = size * sizeof(inline T)
         mem:copy(data, new_data, copy_size)
-        mem:clear(@ptr_offset(data, copy_size), new_size - copy_size)
+        mem:clear(@ptr_offset(new_data, copy_size), new_size - copy_size)
         mem:free(data)
 
         this.data = new_data
         this.size = new_size
         return new_data
+    }
+
+    fn _each(index: uint) (T, uint) !end {
+        if index >= this.size : throw end
+        let v = this.get(index)
+        return v, index
     }
 
     fn _gc_free() {

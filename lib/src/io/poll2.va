@@ -13,9 +13,12 @@ class SimplePoll[T] {
 
     static fn new() CLASS {
         let poll = CLASS {
-            poll_items: type:StructArray[sys:libc_poll_item].new(20),
-            items: Array[?T].new(20),
+            poll_items: type:StructArray[sys:libc_poll_item].new(4),
+            items: Array[?T].new(4),
             result: Array[T].new(4)
+        }
+        each poll.poll_items as pi {
+            pi.fd = -1
         }
         return poll
     }
@@ -23,7 +26,15 @@ class SimplePoll[T] {
     fn set(fd: FD, data: T, read: bool, write: bool) {
         if fd < 0 : return
         let pis = this.poll_items
+        let s1 = pis.size
         let pi = pis.get(fd @as uint)
+        let s2 = pis.size
+        if s1 != s2 {
+            each pis as i, pi {
+                if i < s1 : continue
+                pi.fd = -1
+            }
+        }
 
         #if OS == win
         pi.fd = fd
@@ -44,15 +55,18 @@ class SimplePoll[T] {
         let pis = this.poll_items
         let items = this.items
         let len = pis.size
-        let count = sys:poll(pis, len @as u32, timeout)
+        let count = sys:poll(pis.data, len @as u32, timeout)
         let i = 0 @as uint
         let result = this.result
         result.clear()
-        while i < len {
-            let pi = pis.get(i++)
-            if pi.revents == 0 : continue
-            let item = items.get(i) ! continue
-            if isset(item) : result.push(item)
+        if count > 0 {
+            while i < len {
+                let pi = pis.get(i++)
+                pi.fd = -1
+                if pi.revents == 0 : continue
+                let item = items.get(i - 1) ! continue
+                if isset(item) : result.push(item)
+            }
         }
         return result
     }
