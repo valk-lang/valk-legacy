@@ -29,6 +29,7 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     // If suspend
     ir->block = suspend;
     ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
+    ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "await_coro")), coro, "ptr", ir->b->ptr_size);
     ir_func_return_nothing(ir);
 
     // If done

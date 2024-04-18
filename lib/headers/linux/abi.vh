@@ -37,6 +37,8 @@ fn setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i
 fn getaddrinfo(host: ptr, port: ptr, hints: libc_addrinfo, res: ptr) i32;
 fn freeaddrinfo(info: libc_addrinfo) i32;
 
+fn poll(fds: ptr, nfds: u32, timeout: i32) i32;
+
 fn epoll_create(size: i32) i32;
 fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
 fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: libc_epoll_event) i32;

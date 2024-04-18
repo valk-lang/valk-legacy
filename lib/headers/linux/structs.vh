@@ -40,7 +40,7 @@ struct libc_timeval {
 	tv_usec: int // microseconds
 }
 
-struct libc_pollfd {
+struct libc_poll_item {
 	fd: i32
 	events: i16  // detect events
 	revents: i16 // detected events

@@ -1,11 +1,13 @@
 
 use mem
 use os
+use io
 
 // global coroutines_ : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
 
 // Stack layout: {alloca-items} {gc-stack-items}
+global coro_poll : ?io:SimplePoll[Coro] (null)
 
 class Coro {
     stack: ptr
@@ -13,9 +15,11 @@ class Coro {
     gc_item_count: uint
     result: ptr
     handler: fn()()
+    await_coro: ?Coro (null)
+    await_coros: ?Array[Coro] (null)
     resume_index: u32 (0)
-    done: bool (false)
     error: u32 (0)
+    done: bool (false)
 
     static fn new(stack_size: uint, gc_item_count: uint, result_offset: uint, result_is_gc: bool, handler: ptr) CLASS {
         let align = (sizeof(ptr) - (stack_size % sizeof(ptr))) % sizeof(ptr)
@@ -42,21 +46,34 @@ class Coro {
         return coro
     }
 
+    static fn get_poll() io:SimplePoll[Coro] {
+        let poll = coro_poll
+        if poll == null {
+            let p = io:SimplePoll[Coro].new()
+            coro_poll = p
+            return p
+        }
+        return poll @as io:SimplePoll[Coro]
+    }
+
     fn resume() {
         if this.done : return
         run_coroutine = this
-            // print("R.")
         this.handler()
+
+        if this.done {
+            // Run sub coros
+        }
     }
 
-    fn await_coro(coro: Coro) {
-    }
     fn await_fd(fd: FD, read: bool, write: bool) {
-        // println("awa fd")
+        let poll = Coro.get_poll()
+        poll.set(fd, this, read, write)
     }
 
     static fn loop() {
-                    print("loop")
+        print("loop")
+        let poll = Coro.get_poll()
         let ring = mem:coros
         while ring.length > 0 {
             let tail = ring.last_index()
@@ -66,11 +83,16 @@ class Coro {
             while tail != head {
                 let coro = @ptrv(data, Coro, tail)
                 if coro.done {
-                    // print("Rem")
                     ring.remove(tail)
-                    break
+                } else {
+                    let wait_on = coro.await_coro
+                    if(isset(wait_on)) {
+                        if(wait_on.done) {
+                            coro.await_coro = null
+                            coro.resume()
+                        }
+                    }
                 }
-                coro.resume()
 
                 // Next
                 tail++
@@ -79,6 +101,10 @@ class Coro {
                 }
             }
             // os:sleep_ms(1000)
+            let coros = poll.wait(100)
+            each coros as coro {
+                coro.resume()
+            }
         }
         print("stop-loop")
     }

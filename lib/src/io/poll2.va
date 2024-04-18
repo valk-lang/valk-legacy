@@ -1,0 +1,59 @@
+
+header "sys" as sys
+
+use mem
+use io
+use os
+use type
+
+class SimplePoll[T] {
+    poll_items: type:StructArray[sys:libc_poll_item]
+    items: Array[?T]
+    result: Array[T]
+
+    static fn new() CLASS {
+        let poll = CLASS {
+            poll_items: type:StructArray[sys:libc_poll_item].new(20),
+            items: Array[?T].new(20),
+            result: Array[T].new(4)
+        }
+        return poll
+    }
+
+    fn set(fd: FD, data: T, read: bool, write: bool) {
+        if fd < 0 : return
+        let pis = this.poll_items
+        let pi = pis.get(fd @as uint)
+
+        #if OS == win
+        pi.fd = fd
+        #else
+        pi.fd = fd @as i32
+        #end
+
+        let events = sys:POLLRDHUP @as i16
+        if read : events = events | sys:POLLIN
+        if write : events = events | sys:POLLOUT
+        pi.events = events
+
+        let items = this.items
+        items.set_expand(fd @as uint, data, null)
+    }
+
+    fn wait(timeout: i32 (-1)) Array[T] {
+        let pis = this.poll_items
+        let items = this.items
+        let len = pis.size
+        let count = sys:poll(pis, len @as u32, timeout)
+        let i = 0 @as uint
+        let result = this.result
+        result.clear()
+        while i < len {
+            let pi = pis.get(i++)
+            if pi.revents == 0 : continue
+            let item = items.get(i) ! continue
+            if isset(item) : result.push(item)
+        }
+        return result
+    }
+}

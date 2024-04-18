@@ -17,6 +17,12 @@ value AI_PASSIVE (1)
 value AI_CANONNAME (2)
 value AI_NUMERICHOST (4)
 
+value POLLIN (1)
+value POLLOUT (4)
+value POLLERR (8)
+value POLLHUP (16)
+value POLLRDHUP (8192)
+
 value EPOLLERR (8)
 value EPOLLET (-2147483648)
 value EPOLLHUP (16)
