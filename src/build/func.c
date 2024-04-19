@@ -151,8 +151,13 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
 
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
-    if (errh->err_decl)
-        errh->err_decl->ir_var = load;
+    if (errh->err_decl) {
+        if(errh->err_decl->is_mut) {
+            ir_store(ir, errh->err_decl->ir_store_var, load, "i32", type_i32->size);
+        } else {
+            errh->err_decl->ir_var = load;
+        }
+    }
 
     ir_cond_jump(ir, lcond, block_err, errh->err_value ? block_else : after);
 

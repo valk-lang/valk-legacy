@@ -233,6 +233,20 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             tok_expect(p, ")", true, true);
 
+        } else if (str_is(tkn, "error_value")) {
+
+            tok_expect(p, "(", false, false);
+            Id id;
+            read_id(p, NULL, &id);
+            Idf *idf = idf_by_id(p, p->scope, &id, true);
+            if(idf->type != idf_error) {
+                parse_err(p, -1, "Expected an error identifier here");
+            }
+            tok_expect(p, ")", true, true);
+
+            Decl* edecl = idf->item;
+            v = value_make(alc, v_decl, edecl, type_gen_number(alc, b, 4, false, false));
+
         } else if (str_is(tkn, "await")) {
 
             if(!p->func->is_async) {

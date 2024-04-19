@@ -111,7 +111,7 @@ class Coro {
                     }
                 }
             // }
-            // if resumec > 0 : continue
+            if resumec > 0 : continue
             // os:sleep_ms(100)
                     // print("9")
             let coros = poll.wait(1000)
