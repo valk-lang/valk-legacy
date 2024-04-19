@@ -262,6 +262,9 @@ class Connection {
         this.netcon.close()
     }
 
+    fn _gc_free() {
+        println("FREE CON")
+    }
 }
 
 

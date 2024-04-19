@@ -7,8 +7,8 @@ Idf* idf_make(Allocator* alc, int type, void* item) {
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
-    bool is_gc = !is_arg && type_is_gc(type);
+Decl* decl_make(Allocator* alc, char* name, Type* type, bool never_gc) {
+    bool is_gc = !never_gc && type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->name = name;
     d->type = type;
@@ -16,7 +16,6 @@ Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
     d->ir_store_var = NULL;
     d->is_mut = false;
     d->is_gc = is_gc;
-    d->is_arg = is_arg;
     d->offset = -1;
     return d;
 }

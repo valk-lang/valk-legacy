@@ -25,12 +25,10 @@ class Coro {
         let align = (sizeof(ptr) - (stack_size % sizeof(ptr))) % sizeof(ptr)
         let gc_size = gc_item_count * sizeof(ptr)
         let size = stack_size + align + gc_size
-        let data = mem:calloc(size)
+        let data = size == 0 ? (null @as ptr) : mem:calloc(size)
         let gc_stack = data + stack_size + align
         let result = <{
-            if result_is_gc {
-                return gc_stack + (result_offset * sizeof(ptr))
-            }
+            if result_is_gc : return gc_stack + (result_offset * sizeof(ptr))
             return data + result_offset
         }
 

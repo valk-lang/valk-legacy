@@ -27,7 +27,6 @@ struct Decl {
     int offset;
     bool is_mut;
     bool is_gc;
-    bool is_arg;
 };
 struct DeclOverwrite {
     Decl* decl;

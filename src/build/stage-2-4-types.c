@@ -50,7 +50,7 @@ void stage_types_func(Parser* p, Func* func) {
         map_set_force_new(func->args, "VALK_TEST_RESULT", arg);
         array_push(func->arg_types, type);
 
-        Decl* decl = decl_make(alc, "VALK_TEST_RESULT", type, true);
+        Decl* decl = decl_make(alc, "VALK_TEST_RESULT", type, !func->is_async);
         Idf* idf = idf_make(alc, idf_decl, decl);
         scope_set_idf(func->scope, "VALK_TEST_RESULT", idf, p);
         arg->decl = decl;
@@ -65,7 +65,7 @@ void stage_types_func(Parser* p, Func* func) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
         map_set_force_new(func->args, "this", arg);
         array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(b->alc, "this", arg->type, true);
+        Decl *decl = decl_make(b->alc, "this", arg->type, !func->is_async);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, p);
         arg->decl = decl;
@@ -98,7 +98,7 @@ void stage_types_func(Parser* p, Func* func) {
             map_set_force_new(func->args, name, arg);
             array_push(func->arg_types, type);
 
-            Decl* decl = decl_make(b->alc, name, type, true);
+            Decl* decl = decl_make(b->alc, name, type, !func->is_async);
             Idf* idf = idf_make(b->alc, idf_decl, decl);
             scope_set_idf(func->scope, name, idf, p);
             arg->decl = decl;

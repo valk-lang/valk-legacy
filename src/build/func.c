@@ -225,7 +225,7 @@ void func_generate_args(Allocator* alc, Func* func, Map* args) {
         FuncArg *arg = func_arg_make(alc, type);
         map_set_force_new(func->args, name, arg);
         array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(alc, name, arg->type, true);
+        Decl *decl = decl_make(alc, name, arg->type, !func->is_async);
         Idf *idf = idf_make(alc, idf_decl, decl);
         scope_set_idf(func->scope, name, idf, NULL);
         arg->decl = decl;

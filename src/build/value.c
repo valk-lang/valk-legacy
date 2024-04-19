@@ -1404,7 +1404,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
 
         if (name) {
             // Error identifier
-            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), true);
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
             Idf *idf = idf_make(alc, idf_error, decl);
             scope_set_idf(err_scope, name, idf, p);
             scope_add_decl(alc, err_scope, decl);
@@ -1431,7 +1431,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
 
         if (name) {
             // Error identifier
-            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), true);
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
             Idf *idf = idf_make(alc, idf_error, decl);
             scope_set_idf(sub_scope, name, idf, p);
             scope_add_decl(alc, sub_scope, decl);

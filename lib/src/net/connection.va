@@ -6,6 +6,7 @@ use os;
 use io;
 use utils;
 
+// TODO: use class instead of struct
 struct Connection {
     ~ fd: FD
     ~ open: bool (true)
