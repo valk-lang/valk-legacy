@@ -79,8 +79,18 @@ class Coro {
                 let tail = ring.tail
                 while tail != ring.head {
                     let data = ring.data
-                    let size = ring.size
                     let coro = @ptrv(data, Coro, tail)
+                    if (coro @as uint) < 10000 {
+                        println("INVALID CORO: ")
+                        (coro @as ptr).print()
+                        print("\n")
+                        println(tail)
+                        println(ring.size)
+                        println(ring.head)
+                        println(ring.tail)
+                        println(ring.length)
+                        os:exit(1)
+                    }
                     if coro.done {
                         ring.remove(tail)
                     } else {
@@ -96,16 +106,19 @@ class Coro {
 
                     // Next
                     tail++
-                    if tail == size {
+                    if tail == ring.size {
                         tail = 0
                     }
                 }
             // }
             // if resumec > 0 : continue
             // os:sleep_ms(100)
+                    // print("9")
             let coros = poll.wait(1000)
             each coros as coro {
+                    // print("a")
                 coro.resume()
+                    // print("b")
             }
         }
         print("stop-loop")

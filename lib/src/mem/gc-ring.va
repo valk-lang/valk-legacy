@@ -28,14 +28,14 @@ struct GcRing {
         let new_len = length + 1
         this.length = new_len
 
-        let new_head = head + 1
-        if new_head == this.size {
-            new_head = 0
-        } 
-        this.head = new_head
-
         if new_len == this.size {
             data = this.increase_size()
+        } else {
+            let new_head = head + 1
+            if new_head == this.size {
+                new_head = 0
+            } 
+            this.head = new_head
         }
     }
 
@@ -60,16 +60,15 @@ struct GcRing {
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data : ptr = null @as ptr
-        new_data = mem:alloc(new_size * sizeof(ptr));
+        let new_data = mem:alloc(new_size * sizeof(ptr));
 
         // Copy data
         // Before tail
         let before_len = tail
-        mem:copy(data, @ptr_offset(new_data, size, sizeof(ptr)), before_len * sizeof(ptr));
+        if before_len > 0 : mem:copy(data, @ptr_offset(new_data, size, sizeof(ptr)), before_len * sizeof(ptr));
         // After tail
         let after_len = size - tail
-        mem:copy(@ptr_offset(data, tail, sizeof(ptr)), @ptr_offset(new_data, tail, sizeof(ptr)), after_len * sizeof(ptr));
+        if after_len > 0 : mem:copy(@ptr_offset(data, tail, sizeof(ptr)), @ptr_offset(new_data, tail, sizeof(ptr)), after_len * sizeof(ptr));
         // Set new head
         this.head = size + before_len
 
