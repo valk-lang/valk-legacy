@@ -79,7 +79,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         Type *on_type = on->rett;
         char *ir_on = ir_value(ir, scope, on);
         char *ir_to = ir_value(ir, scope, to);
-        char *res = ir_gc_link(ir, ir_on, ir_to);
+        char *res = ir_gc_link(ir, ir_on, ir_to, to->rett->nullable);
         return res;
     }
     if (vt == v_decl) {

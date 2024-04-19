@@ -27,7 +27,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
-char* ir_gc_link(IR* ir, char* on, char* to);
+char* ir_gc_link(IR* ir, char* on, char* to, bool nullable);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
