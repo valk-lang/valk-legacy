@@ -78,11 +78,10 @@ class Coro {
         while ring.length > 0 {
             let resumec = 0
             // while ring.length > 0 {
-                let tail = ring.last_index()
-                let head = ring.index
-                let size = ring.size
-                let data = ring.data
-                while tail != head {
+                let tail = ring.tail
+                while tail != ring.head {
+                    let data = ring.data
+                    let size = ring.size
                     let coro = @ptrv(data, Coro, tail)
                     if coro.done {
                         ring.remove(tail)
@@ -106,7 +105,6 @@ class Coro {
             // }
             // if resumec > 0 : continue
             // os:sleep_ms(100)
-            // print("x")
             let coros = poll.wait(1000)
             each coros as coro {
                 coro.resume()
@@ -120,8 +118,8 @@ class Coro {
     ///////////////////
     --- static fn transfer_check() {
         let ring = mem:coros
-        let tail = ring.last_index()
-        let head = ring.index
+        let tail = ring.tail
+        let head = ring.head
         let size = ring.size
         let data = ring.data
         while tail != head {
@@ -139,8 +137,8 @@ class Coro {
 
     --- static fn mark_all() {
         let ring = mem:coros
-        let tail = ring.last_index()
-        let head = ring.index
+        let tail = ring.tail
+        let head = ring.head
         let size = ring.size
         let data = ring.data
         while tail != head {
@@ -157,8 +155,8 @@ class Coro {
 
     --- static fn mark_shared_all() {
         let ring = mem:coros
-        let tail = ring.last_index()
-        let head = ring.index
+        let tail = ring.tail
+        let head = ring.head
         let size = ring.size
         let data = ring.data
         while tail != head {

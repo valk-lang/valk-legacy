@@ -403,8 +403,8 @@ struct Stack {
     fn clean_shared() {
         let ring = this.shared
         ring.lock.lock()
-        let tail = ring.last_index()
-        let head = ring.index
+        let tail = ring.tail
+        let head = ring.head
         let size = ring.size
         let data = ring.data
         let age = gc_age

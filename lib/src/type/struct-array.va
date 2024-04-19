@@ -31,10 +31,11 @@ class StructArray[T] {
         let size = this.size
         if size >= new_size : return data
 
-        let new_data = mem:alloc(new_size * sizeof(inline T));
+        let new_total = new_size * sizeof(inline T)
+        let new_data = mem:alloc(new_total);
         let copy_size = size * sizeof(inline T)
         mem:copy(data, new_data, copy_size)
-        mem:clear(@ptr_offset(new_data, copy_size), new_size - copy_size)
+        mem:clear(@ptr_offset(new_data, copy_size), new_total - copy_size)
         mem:free(data)
 
         this.data = new_data

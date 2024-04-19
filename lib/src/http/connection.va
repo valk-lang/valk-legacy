@@ -92,10 +92,14 @@ class Connection {
         let file = this.output_file
 
         // Read headers
+        while true {
         while !parser.parsed_headers {
             let rbytes : uint = 65535
             let bytes = await this.netcon.recv(input, rbytes) err ! {
                 this.close()
+                return
+            }
+            if bytes == 0 {
                 return
             }
 
@@ -108,7 +112,6 @@ class Connection {
                 return
             }
         }
-
 
         // Body
         while !parser.parsed_body {
@@ -190,6 +193,7 @@ class Connection {
             return
         }
         this.reset_output()
+        }
     }
 
     fn respond(resp: Response) void {
@@ -221,6 +225,7 @@ class Connection {
                     }
                     if !file.reading {
                         this.output_file = null
+                        file = null
                     }
                 }
             }
@@ -229,11 +234,10 @@ class Connection {
             let bytes = out.length - pos
             if bytes == 0 : break
 
-            let wbytes = await this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
+            await this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
                 throw write
             }
-            this.output_pos += wbytes
-            if wbytes < bytes : break
+            this.output_pos += bytes
         }
     }
 
@@ -249,12 +253,13 @@ class Connection {
     }
 
     fn close() {
-        if this.added_active_body_size {
-            atomic(this.server.active_body_size - this.parser.content_length)
-            this.added_active_body_size = false
-        }
+        println("[+] Close connection: " + this.fd)
+        // if this.added_active_body_size {
+        //     atomic(this.server.active_body_size - this.parser.content_length)
+        //     this.added_active_body_size = false
+        // }
         this.full_reset()
-        net:Socket.close(this.fd)
+        this.netcon.close()
     }
 
 }

@@ -356,6 +356,7 @@ void ir_write_async_func_start(IR *ir, IRFunc *func) {
     IRBlock* current = ir->block;
     Global* g = get_valk_global(ir->b, "core", "run_coroutine");
     char* coro = ir_load(ir, g->type, ir_global(ir, g));
+    ir_store(ir, ir_global(ir, g), "null", "ptr", b->ptr_size);
     IRBlock* create_coro = ir_block_make(ir, func, "create_coro_");
     IRBlock* jump_block = ir_block_make(ir, func, "coro_jumper_");
     char *is_null = ir_compare(ir, op_eq, coro, "null", "ptr", false, false);

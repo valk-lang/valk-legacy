@@ -30,31 +30,10 @@ struct Connection {
         this.open = false;
     }
 
-    async fn send_from_ptr(data: ptr, bytes_to_send: uint) uint !connection {
+    async fn send_from_ptr(data: ptr, bytes_to_send: uint) !connection {
 
         if this.open == false { throw connection }
 
-        // let ssl = this.ssl;
-        let bytes_sent : uint = 0;
-
-        // if isset(ssl) {
-        //     // SSL
-        //     let wbytes = ossl.SSL_write(ssl.ssl, buffer.data + buffer.read_index, bytes_to_send @as i32);
-        //     if wbytes <= 0 {
-        //         // SSL_ERROR_WANT_WRITE: 3
-        //         let err = ossl.SSL_get_error(ssl.ssl, wbytes);
-        //         if err != 0 {
-        //             if err == 3 {
-        //                 throw e_again;
-        //             }
-        //             throw connection;
-        //         }
-        //         return 0;
-        //     }
-        //     bytes_sent = wbytes @as uint;
-
-        // } else {
-            // No SSL
         while true {
             #if OS == win
             let wbytes = sys:send(this.fd, data, bytes_to_send @as i32, 0);
@@ -81,43 +60,29 @@ struct Connection {
                 throw connection;
             }
             if wbytes == 0 {
-                return 0;
+                throw connection;
             }
-            bytes_sent = wbytes @as uint;
-            break
-        }
 
-        return bytes_sent;
+            let bytes_sent = wbytes @as uint
+            if bytes_sent < bytes_to_send {
+                data += bytes_sent
+                bytes_to_send -= bytes_sent
+                await_fd(this.fd, false, true)
+                continue
+            }
+
+            if bytes_sent == bytes_to_send : return
+            throw connection
+        }
     }
 
     async fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection {
 
         if this.open == false { return 0 }
-        // let ssl = this.ssl;
 
         buffer.minimum_free_space(bytes);
         let count : uint = 0;
 
-        // if isset(ssl) {
-        //     let rcvd = ossl.SSL_read(ssl.ssl, buffer.data + buffer.length, buf_size);
-        //     if rcvd <= 0 {
-        //         // SSL_ERROR_NONE: 0
-        //         // SSL_ERROR_WANT_READ: 2
-        //         // SSL_ERROR_ZERO_RETURN: 6
-        //         let err = ossl.SSL_get_error(ssl.ssl, rcvd);
-        //         if err != 0 {
-        //             if err != 6 {
-        //                 if err == 2 {
-        //                     throw e_again;
-        //                 }
-        //                 throw connection;
-        //             }
-        //         }
-        //         return 0;
-        //     }
-        //     count = rcvd @as uint;
-
-        // } else {
         while true {
             #if OS == win
             let rcvd = sys:recv(this.fd, buffer.data + buffer.length, bytes @as i32, 0);
@@ -142,9 +107,7 @@ struct Connection {
                 #end
                 throw connection;
             }
-            if (rcvd == 0) {
-                return 0;
-            }
+            if rcvd == 0 : throw connection;
             count = rcvd @as uint;
             break
         }
