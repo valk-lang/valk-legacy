@@ -7,7 +7,7 @@ use io;
 use utils;
 
 // TODO: use class instead of struct
-struct Connection {
+class Connection {
     ~ fd: FD
     ~ open: bool (true)
     // ~ ssl_enabled: bool = false;
