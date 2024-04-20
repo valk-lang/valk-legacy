@@ -52,13 +52,13 @@ class SimplePoll[T] {
     }
 
     fn wait(timeout: i32 (-1)) Array[T] {
+        let result = this.result
+        result.clear()
         let pis = this.poll_items
         let items = this.items
         let len = pis.size
         let count = sys:poll(pis.data, len @as u32, timeout)
         let i = 0 @as uint
-        let result = this.result
-        result.clear()
         if count > 0 {
             while i < len {
                 let pi = pis.get(i++)

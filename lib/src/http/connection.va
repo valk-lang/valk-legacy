@@ -75,7 +75,7 @@ class Connection {
     }
 
     fn should_flush_output() bool {
-        return this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
+        return this.parser.input_pos == 0 || this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
     }
 
     async fn read_more() uint !err {
@@ -108,9 +108,7 @@ class Connection {
                         this.close()
                         return
                     }
-                    if bytes == 0 {
-                        return
-                    }
+                    if bytes == 0 : return
                     continue
                 }
                 if error_is(err, !http413) {
@@ -131,11 +129,14 @@ class Connection {
             request.reset()
             // TODO: Delete uploads
 
-            await this.send_response_bytes() err ! {
-                this.close()
-                return
+            // Flush output
+            if this.should_flush_output() {
+                await this.send_response_bytes() err ! {
+                    this.close()
+                    return
+                }
+                this.reset_output()
             }
-            this.reset_output()
         }
 
         // // Read headers
