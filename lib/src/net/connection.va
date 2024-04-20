@@ -1,29 +1,13 @@
 
 header "sys" as sys;
-// header "openssl" as ossl;
 
 use os;
 use io;
 use utils;
 
-// TODO: use class instead of struct
 class Connection {
     ~ fd: FD
     ~ open: bool (true)
-    // ~ ssl_enabled: bool = false;
-    // - ssl: ?SSL = null;
-
-
-    // fn ssl_connect() !ssl_error {
-    //     if this.ssl_enabled : return;
-    //     let ssl = SSL.new(this.fd);
-    //     let err = ossl.SSL_connect(ssl.ssl);
-    //     if err != 1 {
-    //         throw ssl_error;
-    //     }
-    //     this.ssl = ssl;
-    //     this.ssl_enabled = true;
-    // }
 
     fn close() {
         if this.open == false { return }
