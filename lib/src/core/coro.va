@@ -5,6 +5,8 @@ use io
 
 global run_coroutine : ?Coro (null)
 global coro_poll : ?io:SimplePoll[Coro] (null)
+global g_coros : @ignu(Array[?Coro])
+global g_coro_indexes : @ignu(Pool[uint])
 
 class Coro {
     stack: ptr
@@ -13,6 +15,7 @@ class Coro {
     result: ptr
     handler: fn()()
     follow_up: ?Coro (null)
+    g_list_index: uint (0)
     resume_index: u32 (0)
     error: u32 (0)
     done: bool (false)
@@ -35,8 +38,19 @@ class Coro {
             result: result
             handler: handler @as fn()()
         }
-        let list = mem:coros
-        list.add(coro)
+
+        let indexes = g_coro_indexes
+        if indexes.count == 0 {
+            let index = g_coros.push(coro)
+            coro.g_list_index = index
+        } else {
+            let index = indexes.get() ? 0
+            g_coros.set(index, coro) _
+            coro.g_list_index = index
+        }
+
+        // let list = mem:coros
+        // list.add(coro)
         return coro
     }
 
@@ -49,6 +63,29 @@ class Coro {
         }
         return poll @as io:SimplePoll[Coro]
     }
+
+    //////////////
+    // AWAIT
+    //////////////
+
+    fn await_coro(coro: Coro) {
+        let ob = coro
+        let ref = ob.follow_up
+        while isset(ref) {
+            ob = ref
+            ref = ref.follow_up
+        }
+        ob.follow_up = this
+    }
+
+    fn await_fd(fd: FD, read: bool, write: bool) {
+        let poll = Coro.get_poll()
+        poll.set(fd, this, read, write)
+    }
+
+    //////////////
+    // FLOW
+    //////////////
 
     fn resume() {
         if this.done : return
@@ -63,103 +100,38 @@ class Coro {
         }
     }
 
-    fn await_coro(coro: Coro) {
-        let ob = coro
-        let ref = ob.follow_up
-        while isset(ref) {
-            ob = ref
-            ref = ref.follow_up
-        }
-        ob.follow_up = this
+    fn complete() {
+        this.done = true
+        g_coros.set(this.g_list_index, null) _
+        g_coro_indexes.add(this.g_list_index)
     }
-    fn await_fd(fd: FD, read: bool, write: bool) {
-        let poll = Coro.get_poll()
-        poll.set(fd, this, read, write)
-    }
+
+    //////////////
+    // LOOP
+    //////////////
 
     static fn loop() {
-        print("loop")
         let poll = Coro.get_poll()
-        let ring = mem:coros
-        let to_run = array[Coro]{}
-        while ring.length > 0 {
-            let tail = ring.tail
-            while tail != ring.head {
-                let data = ring.data
-                let coro = @ptrv(data, Coro, tail)
-                if coro.done {
-                    ring.remove(tail)
-                }
-
-                // Next
-                tail++
-                if tail == ring.size {
-                    tail = 0
-                }
-            }
-
+        let coros = g_coros
+        while true {
             let coros = poll.wait(-1)
+            if coros.length == 0 : break
             each coros as coro {
                 coro.resume()
             }
         }
-        print("stop-loop")
     }
 
     ///////////////////
     // GC list
     ///////////////////
     --- static fn transfer_check() {
-        let ring = mem:coros
-        let tail = ring.tail
-        let head = ring.head
-        let size = ring.size
-        let data = ring.data
-        while tail != head {
-            let coro = @ptrv(data, Coro, tail)
-            mem:gc_transfer_item(coro)
-            coro._gc_transfer()
+        let coros = g_coros
 
-            // Next
-            tail++
-            if tail == size {
-                tail = 0
-            }
-        }
-    }
-
-    --- static fn mark_all() {
-        let ring = mem:coros
-        let tail = ring.tail
-        let head = ring.head
-        let size = ring.size
-        let data = ring.data
-        while tail != head {
-            let coro = @ptrv(data, Coro, tail)
-            mem:gc_mark_item(coro)
-
-            // Next
-            tail++
-            if tail == size {
-                tail = 0
-            }
-        }
-    }
-
-    --- static fn mark_shared_all() {
-        let ring = mem:coros
-        let tail = ring.tail
-        let head = ring.head
-        let size = ring.size
-        let data = ring.data
-        while tail != head {
-            let coro = @ptrv(data, Coro, tail)
-            mem:gc_mark_shared_item(coro)
-
-            // Next
-            tail++
-            if tail == size {
-                tail = 0
+        each coros as coro {
+            if isset(coro) {
+                mem:gc_transfer_item(coro)
+                coro._gc_transfer()
             }
         }
     }

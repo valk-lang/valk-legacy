@@ -1,13 +1,12 @@
 
 @ignore_access_types
 
-use valk:mem
-use valk:os
-use valk:io
-use valk:core
+use mem
+use os
+use io
+use core
 
 global stack : @ignu(Stack);
-global coros : @ignu(GcRing);
 global disable_gc : bool;
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
@@ -103,12 +102,14 @@ struct Stack {
         disable_gc = false
 
         GcPool.init()
-        coros = GcRing.new()
 
         s.scan_globals()
 
         let gcm = gc_manager()
         gcm.add_stack(s);
+
+        core:g_coros = Array[?core:Coro].new()
+        core:g_coro_indexes = Pool[uint].new()
     }
 
     fn scan_globals() {
@@ -319,9 +320,6 @@ struct Stack {
 
     fn mark_stack_age() {
         let age = this.age
-        // Coroutines
-        core:Coro.mark_all()
-
         // Globals
         #loop_globals as G, T
         #if @type_is_gc(T) && !@global_is_shared(G)
@@ -359,9 +357,6 @@ struct Stack {
         }
     }
     fn mark_stack_gc_age(age: u8) {
-        // Coroutines
-        core:Coro.mark_shared_all()
-
         // Globals
         let globals = this.globals
         let globalc = this.globalc

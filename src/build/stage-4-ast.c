@@ -25,6 +25,7 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro", "complete"));
 
     b->building_ast = false;
 

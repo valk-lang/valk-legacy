@@ -37,9 +37,9 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     Array* args_v = array_make(ir->alc, 2);
     Array* args_t = array_make(ir->alc, 2);
     array_push(args_v, ir->func->var_coro);
-    array_push(args_t, coro_class);
+    array_push(args_t, coro_type);
     array_push(args_v, coro);
-    array_push(args_t, coro_class);
+    array_push(args_t, coro_type);
     Array *values = ir_fcall_ir_args(ir, args_v, args_t);
     char *call = ir_func_call(ir, fptr, values, "void", 0, 0);
 
@@ -86,8 +86,21 @@ void ir_coro_return(IR* ir, Value* value) {
         ir_store(ir, result_ref, result, ir_type(ir, rett), rett->size);
     }
 
-    char *done_ref = ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "done"));
-    ir_store(ir, done_ref, "true", "i1", 1);
+    ir_coro_complete(ir, coro);
 
     ir_func_return_nothing(ir);
+}
+
+void ir_coro_complete(IR* ir, char* coro) {
+    Class* coro_class = get_valk_class(ir->b, "core", "Coro");
+    Type* coro_type = type_gen_class(ir->alc, coro_class);
+
+    Func* ac = get_valk_class_func(ir->b, "core", "Coro", "complete");
+    char* fptr = ir_value(ir, ac->scope, vgen_func_ptr(ir->alc, ac, NULL));
+    Array* args_v = array_make(ir->alc, 2);
+    Array* args_t = array_make(ir->alc, 2);
+    array_push(args_v, ir->func->var_coro);
+    array_push(args_t, coro_type);
+    Array *values = ir_fcall_ir_args(ir, args_v, args_t);
+    char *call = ir_func_call(ir, fptr, values, "void", 0, 0);
 }

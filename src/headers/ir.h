@@ -67,6 +67,7 @@ char *ir_and_or(IR *ir, IRBlock* block_current, char *left, IRBlock* block_right
 char* ir_await(IR* ir, Scope* scope, VAwait* aw);
 void ir_yield(IR* ir, Scope* scope, VAwait* aw);
 void ir_coro_return(IR* ir, Value* value);
+void ir_coro_complete(IR* ir, char* coro);
 
 // Structs
 struct IR {
