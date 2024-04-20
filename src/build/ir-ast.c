@@ -165,12 +165,13 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_each) {
             TEach* item = t->item;
-            char* on = ir_value(ir, scope, item->on);
             IRBlock *block_cond = ir_block_make(ir, ir->func, "each_cond_");
             IRBlock *block_code = ir_block_make(ir, ir->func, "each_code_");
             IRBlock *block_after = ir_block_make(ir, ir->func, "each_after_");
             ir_jump(ir, block_cond);
             ir->block = block_cond;
+
+            char* on = ir_value(ir, scope, item->on);
 
             Decl* kd = item->kd;
             Decl* kd_buf = item->kd_buf;

@@ -64,11 +64,7 @@ class SimplePoll[T] {
                 let pi = pis.get(i++)
                 if pi.revents == 0 : continue
 
-                if (pi.revents & sys:POLLRDHUP) > 0 {
-                    pi.fd = -1
-                } else {
-                    pi.events = sys:POLLRDHUP
-                }
+                pi.fd = -1
 
                 let item = items.get(i - 1) ! continue
                 if isset(item) : result.push(item)

@@ -381,14 +381,21 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *ls = p->loop_scope;
                 Scope *scope_each = scope_sub_make(alc, sc_loop, scope);
 
+                Decl *on_decl = decl_make(alc, NULL, on->rett, false);
+                on_decl->is_mut = p->func->is_async ? true : on_decl->is_mut;
+                array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
+                on = vgen_decl(alc, on_decl);
+
                 Decl *kd = NULL;
                 if (kname) {
                     kd = decl_make(alc, kname, array_get_index(func->rett_types, 1), false);
+                    kd->is_mut = p->func->is_async ? true : kd->is_mut;
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
                 Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 0), false);
+                vd->is_mut = p->func->is_async ? true : vd->is_mut;
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
