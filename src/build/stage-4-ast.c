@@ -24,6 +24,7 @@ void stage_4_ast(Build *b) {
     // TODO: only include Coro.new if an async function was used
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
 
     b->building_ast = false;
 

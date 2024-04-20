@@ -19,6 +19,8 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     ir->block = resume;
 
     Class* coro_class = get_valk_class(ir->b, "core", "Coro");
+    Type* coro_type = type_gen_class(ir->alc, coro_class);
+
     char* coro = ir_load(ir, type_gen_valk(ir->alc, ir->b, "ptr"), aw->decl->ir_store_var);
     // Check if coro is done
     char *is_done = ir_load(ir, type_gen_valk(ir->alc, ir->b, "bool"), ir_class_pa(ir, coro_class, coro, map_get(coro_class->props, "done")));
@@ -29,7 +31,18 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw) {
     // If suspend
     ir->block = suspend;
     ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "resume_index")), ir_int(ir, aw->suspend_index), "i32", 4);
-    ir_store(ir, ir_class_pa(ir, coro_class, ir->func->var_coro, map_get(coro_class->props, "await_coro")), coro, "ptr", ir->b->ptr_size);
+
+    Func* ac = get_valk_class_func(ir->b, "core", "Coro", "await_coro");
+    char* fptr = ir_value(ir, scope, vgen_func_ptr(ir->alc, ac, NULL));
+    Array* args_v = array_make(ir->alc, 2);
+    Array* args_t = array_make(ir->alc, 2);
+    array_push(args_v, ir->func->var_coro);
+    array_push(args_t, coro_class);
+    array_push(args_v, coro);
+    array_push(args_t, coro_class);
+    Array *values = ir_fcall_ir_args(ir, args_v, args_t);
+    char *call = ir_func_call(ir, fptr, values, "void", 0, 0);
+
     ir_func_return_nothing(ir);
 
     // If done

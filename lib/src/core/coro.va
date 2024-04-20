@@ -3,10 +3,7 @@ use mem
 use os
 use io
 
-// global coroutines_ : ?Array[Coro] (null)
 global run_coroutine : ?Coro (null)
-
-// Stack layout: {alloca-items} {gc-stack-items}
 global coro_poll : ?io:SimplePoll[Coro] (null)
 
 class Coro {
@@ -15,7 +12,7 @@ class Coro {
     gc_item_count: uint
     result: ptr
     handler: fn()()
-    await_coro: ?Coro (null)
+    resume_coro: ?Coro (null)
     // waiting_on_me: ?Array[Coro] (null)
     resume_index: u32 (0)
     error: u32 (0)
@@ -60,10 +57,22 @@ class Coro {
         this.handler()
 
         if this.done {
-            // Run sub coros
+            let next = this.resume_coro
+            if isset(next) {
+                next.resume()
+            }
         }
     }
 
+    fn await_coro(coro: Coro) {
+        let ob = coro
+        let ref = ob.resume_coro
+        while isset(ref) {
+            ob = ref
+            ref = ref.resume_coro
+        }
+        ob.resume_coro = this
+    }
     fn await_fd(fd: FD, read: bool, write: bool) {
         let poll = Coro.get_poll()
         poll.set(fd, this, read, write)
@@ -73,52 +82,50 @@ class Coro {
         print("loop")
         let poll = Coro.get_poll()
         let ring = mem:coros
+        let to_run = array[Coro]{}
         while ring.length > 0 {
-            let resumec = 0
-            // while ring.length > 0 {
-                let tail = ring.tail
-                while tail != ring.head {
-                    let data = ring.data
-                    let coro = @ptrv(data, Coro, tail)
-                    if (coro @as uint) < 10000 {
-                        println("INVALID CORO: ")
-                        (coro @as ptr).print()
-                        print("\n")
-                        println(tail)
-                        println(ring.size)
-                        println(ring.head)
-                        println(ring.tail)
-                        println(ring.length)
-                        os:exit(1)
-                    }
-                    if coro.done {
-                        ring.remove(tail)
-                    } else {
-                        let wait_on = coro.await_coro
-                        if(isset(wait_on)) {
-                            if(wait_on.done) {
-                                coro.await_coro = null
-                                coro.resume()
-                                resumec++
-                            }
-                        }
-                    }
-
-                    // Next
-                    tail++
-                    if tail == ring.size {
-                        tail = 0
-                    }
+            let tail = ring.tail
+            while tail != ring.head {
+                let data = ring.data
+                let coro = @ptrv(data, Coro, tail)
+                // if (coro @as uint) < 10000 {
+                //     println("INVALID CORO: ")
+                //     (coro @as ptr).print()
+                //     print("\n")
+                //     println(tail)
+                //     println(ring.size)
+                //     println(ring.head)
+                //     println(ring.tail)
+                //     println(ring.length)
+                //     os:exit(1)
+                // }
+                if coro.done {
+                    ring.remove(tail)
                 }
+
+                // print((ring @as ptr).to_hex() + ": " + tail + "(" + ring.tail + "/" + ring.head + ", " + ring.size + ")\n")
+
+                // Next
+                tail++
+                if tail == ring.size {
+                    tail = 0
+                }
+            }
+
+            // if to_run.length > 0 {
+            //     each to_run as coro {
+            //         coro.resume()
+            //     }
+            //     to_run.clear()
+            //     continue;
             // }
-            if resumec > 0 : continue
-            // os:sleep_ms(100)
-                    // print("9")
-            let coros = poll.wait(1000)
+
+            let coros = poll.wait(-1)
+            if coros.length == 0 {
+                os:sleep_ms(4000)
+            }
             each coros as coro {
-                    // print("a")
                 coro.resume()
-                    // print("b")
             }
         }
         print("stop-loop")
