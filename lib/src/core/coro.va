@@ -7,6 +7,7 @@ global run_coroutine : ?Coro (null)
 global coro_poll : ?io:SimplePoll[Coro] (null)
 global g_coros : @ignu(Array[?Coro])
 global g_coro_indexes : @ignu(Pool[uint])
+global g_coro_poll_count : uint
 
 class Coro {
     stack: ptr
@@ -81,6 +82,7 @@ class Coro {
     fn await_fd(fd: FD, read: bool, write: bool) {
         let poll = Coro.get_poll()
         poll.set(fd, this, read, write)
+        g_coro_poll_count++
     }
 
     //////////////
@@ -113,14 +115,14 @@ class Coro {
     static fn loop() {
         let poll = Coro.get_poll()
         let coros = g_coros
-        while true {
+        while g_coro_poll_count > 0 {
             let coros = poll.wait(-1)
             if coros.length == 0 : break
+            g_coro_poll_count = 0
             each coros as coro {
                 coro.resume()
             }
         }
-        println("DONE")
     }
 
     ///////////////////
