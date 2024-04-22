@@ -1,6 +1,5 @@
 
 header "sys" as sys;
-header "libuv" as uv;
 
 use os
 
