@@ -8,6 +8,8 @@ use core
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
+global reached_lowest : bool;
+
 global gc_transfer_size : uint;
 global gc_mark_size : uint;
 global gctick : uint
@@ -184,7 +186,7 @@ struct Stack {
         }
         if this.clear_unknown {
             //
-            // io:print_fake("f")
+            // io:print_fake("FFF")
             gc_mark_size = 0
             gc_transfer_size = 0
             // Mark
@@ -199,6 +201,8 @@ struct Stack {
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
             }
+        // } else {
+            // io:print_fake("<<<")
         }
         GcPool.reset_all()
 
@@ -436,7 +440,7 @@ struct Stack {
     }
 
 
-    fn print_stack() {
+    fn print() {
         print("---------\n")
         let item_adr = this.stack_base
         let stack_adr = this.stack_adr

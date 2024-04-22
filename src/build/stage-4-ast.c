@@ -664,75 +664,72 @@ void read_ast(Parser *p, bool single_line) {
     Scope *start;
     Scope *end;
     bool is_async = p->func->is_async && scope->type == sc_func;
-    if (!is_async) {
-        bool is_main_func_scope = p->func == b->func_main_gen && scope->type == sc_func;
-        if (scope->has_gc_decls || scope->gc_check || is_main_func_scope) {
-            // Start scope
-            start = scope_sub_make(alc, sc_default, scope);
-            start->ast = array_make(alc, 10);
-            array_shift(scope->ast, token_make(alc, t_ast_scope, start));
-            // End scope
-            int last_token_index = scope->ast->length - 1;
-            end = scope_sub_make(alc, sc_default, scope);
-            end->ast = array_make(alc, 10);
-            array_push(scope->ast, token_make(alc, t_ast_scope, end));
-            // Swap return/continue/break token & end-scope
-            if (scope->did_return) {
-                int last_index = scope->ast->length - 1;
-                void *a = array_get_index(scope->ast, last_token_index);
-                void *b = array_get_index(scope->ast, last_index);
-                array_set_index(scope->ast, last_token_index, b);
-                array_set_index(scope->ast, last_index, a);
-            }
+    if (!is_async && scope->has_gc_decls) {
+        // Start scope
+        start = scope_sub_make(alc, sc_default, scope);
+        start->ast = array_make(alc, 10);
+        array_shift(scope->ast, token_make(alc, t_ast_scope, start));
+        // End scope
+        int last_token_index = scope->ast->length - 1;
+        end = scope_sub_make(alc, sc_default, scope);
+        end->ast = array_make(alc, 10);
+        array_push(scope->ast, token_make(alc, t_ast_scope, end));
+        // Swap return/continue/break token & end-scope
+        if (scope->did_return) {
+            int last_index = scope->ast->length - 1;
+            void *a = array_get_index(scope->ast, last_token_index);
+            void *b = array_get_index(scope->ast, last_index);
+            array_set_index(scope->ast, last_token_index, b);
+            array_set_index(scope->ast, last_index, a);
         }
 
-        if (scope->has_gc_decls && scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)) {
+        if (scope->type == sc_loop || scope->type == sc_func) {
+            if(scope->gc_check) {
             Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
             array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
             p->func->calls_gc_check = true;
+            }
         }
 
-        if (scope->has_gc_decls) {
-            // Stack
-            Map *idfs = map_make(alc);
+        // Stack
+        Map *idfs = map_make(alc);
 
-            if (scope->type == sc_func) {
-                // Stack reserve
-                Value *amount = vgen_int(alc, 0, type_gen_number(alc, b, b->ptr_size, false, false));
-                Idf* idf = idf_make(alc, idf_value, amount);
-                map_set(idfs, "amount", idf);
-                raise_stack_amount = amount->item;
+        if (scope->type == sc_func) {
+            // Stack reserve
+            Value *amount = vgen_int(alc, 0, type_gen_number(alc, b, b->ptr_size, false, false));
+            Idf *idf = idf_make(alc, idf_value, amount);
+            map_set(idfs, "amount", idf);
+            raise_stack_amount = amount->item;
 
-                Scope *reserve = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reserve"), idfs, start);
-                array_push(start->ast, token_make(alc, t_ast_scope, reserve));
+            Scope *reserve = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reserve"), idfs, start);
+            array_push(start->ast, token_make(alc, t_ast_scope, reserve));
 
-                // Set stack offset for varables
-                Array *decls = scope->decls;
-                int x = 0;
-                for (int i = 0; i < decls->length; i++) {
-                    Decl *decl = array_get_index(decls, i);
-                    if (!decl->is_gc)
-                        continue;
-                    array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
-                }
+            // Set stack offset for varables
+            Array *decls = scope->decls;
+            int x = 0;
+            for (int i = 0; i < decls->length; i++) {
+                Decl *decl = array_get_index(decls, i);
+                if (!decl->is_gc)
+                    continue;
+                array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
+            }
 
-                // Stack reduce
-                Func *func = p->func;
-                Scope *reduce_scope = scope_sub_make(alc, sc_default, scope);
-                reduce_scope->ast = array_make(alc, 10);
-                func->scope_stack_reduce = reduce_scope;
-                Scope *scope_end = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reduce"), idfs, scope);
-                array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
+            // Stack reduce
+            Func *func = p->func;
+            Scope *reduce_scope = scope_sub_make(alc, sc_default, scope);
+            reduce_scope->ast = array_make(alc, 10);
+            func->scope_stack_reduce = reduce_scope;
+            Scope *scope_end = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reduce"), idfs, scope);
+            array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
 
-            } else if (scope->type == sc_vscope) {
-                // Dont set local vars to null in value scope because it will return one of those variables
-            } else {
-                // if / while : At end of scope, set local variables to null
-                Array *decls = scope->decls;
-                for (int i = 0; i < decls->length; i++) {
-                    Decl *decl = array_get_index(decls, i);
-                    array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
-                }
+        } else if (scope->type == sc_vscope) {
+            // Dont set local vars to null in value scope because it will return one of those variables
+        } else {
+            // if / while : At end of scope, set local variables to null
+            Array *decls = scope->decls;
+            for (int i = 0; i < decls->length; i++) {
+                Decl *decl = array_get_index(decls, i);
+                array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
             }
         }
     }

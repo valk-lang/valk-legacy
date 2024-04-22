@@ -262,14 +262,13 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     IRBlock *after = ir_block_make(ir, ir->func, "link_after_");
 
     // Not null
-    if(nullable) {
+    if(block_not_null) {
         char *comp = ir_compare(ir, op_ne, to, "null", "ptr", false, false);
         ir_cond_jump(ir, comp, block_not_null, after);
+        ir->block = block_not_null;
     }
 
     // On state > transfer
-    if(block_not_null)
-        ir->block = block_not_null;
     char* on_state_var = ir_ptrv(ir, on, "i8", -8);
     char* on_state = ir_load(ir, type_u8, on_state_var);
     char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);

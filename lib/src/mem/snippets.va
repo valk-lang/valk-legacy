@@ -10,6 +10,7 @@ snippet run_gc_check() {
     if disable_gc == false {
         let s = @cached_stack_instance
         let sa = @cached_stack_address
+        // let sa = @cached_stack_instance.stack_adr
         if sa < s.lowest_next {
             s.lowest_next = sa
         }
@@ -25,5 +26,6 @@ snippet run_gc_check() {
 }
 
 snippet stack_reduce() {
-    @cached_stack_address = @cached_stack_address
+    // @cached_stack_address = @cached_stack_address
+    @cached_stack_instance.stack_adr = @cached_stack_address
 }
