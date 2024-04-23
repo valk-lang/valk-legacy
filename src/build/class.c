@@ -146,9 +146,9 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_transfer_size"));
+        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));
         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_mark_size"));
+        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_marked"));
         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_age"));
         scope_set_idf(class->scope, "GC_AGE", idf, p);

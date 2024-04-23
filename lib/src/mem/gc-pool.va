@@ -1,7 +1,7 @@
 
 global pools : ptr (null)
 global pool_count : uint
-global pool_usage : uint
+// global pool_usage : uint
 
 use io
 use os
@@ -11,9 +11,7 @@ struct GcPool {
     first : ptr
     current : ptr
     index : uint (0)
-    items_used: uint (0)
-    items_total: uint
-    items_total_last: uint
+    block_count : uint (1)
     state_used: u8 (0)
     items_use_gc_free: bool
 
@@ -42,8 +40,6 @@ struct GcPool {
             size: size
             first: block
             current: block
-            items_total: @ptrv(block, uint, 1)
-            items_total_last: @ptrv(block, uint, 1)
             items_use_gc_free: items_use_gc_free
         }
         if items_use_gc_free {
@@ -70,19 +66,15 @@ struct GcPool {
 
         let next = @ptrv(current, ptr)
         if next == null {
-            next = GcPool.create_block(this.size, this.items_total * 2)
-            this.items_total += @ptrv(next, uint, 1)
+            let bc = this.block_count + 1
+            next = GcPool.create_block(this.size, bc * bc)
+            this.block_count = bc
             @ptrv(current, ptr) = next
         }
 
-        let usage = this.items_used * 100 / (this.items_total_last + 100)
-
-        if usage > pool_usage {
-            pool_usage = usage
-            if usage > 90 {
-                stack.run_gc = true
-                stack.bumper_overflow = true
-            }
+        mem_usage = mem_new * 100 / mem_marked
+        if mem_usage > 30 {
+            stack.run_gc = true
         }
 
         return next
@@ -139,7 +131,8 @@ struct GcPool {
         @ptrv(res, u16, 1) = 0
         @ptrv(res, u32, 1) = vtable
 
-        this.items_used++
+        // Update mem usage
+        mem_new = mem_new + size
 
         return res + 8
     }
@@ -203,7 +196,7 @@ struct GcPool {
             next = @ptrv(block, ptr)
             if @ptrv(block, uint, 2) == 0 {
                 // Delete block
-                this.items_total -= @ptrv(block, uint, 1)
+                this.block_count--
                 free(block)
                 @ptrv(prev, ptr) = next
             } else {
@@ -215,9 +208,6 @@ struct GcPool {
         // Set current to first
         this.current = this.first
         this.index = 0
-        this.items_used = 0
-        this.items_total_last = this.items_total
-        pool_usage = 0
     }
 
     static fn clean_old_all(age: u8) {
