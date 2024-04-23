@@ -63,7 +63,6 @@ struct Stack {
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
-    disable_gc_ref: ptr
 
     age: u8 (33)
     gc_age: u8 (0)
@@ -98,8 +97,6 @@ struct Stack {
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
-
-            disable_gc_ref: @ptr_of(disable_gc)
         }
 
         stack = s;

@@ -14,7 +14,7 @@ snippet run_gc_check() {
     //         @cached_stack_instance.run_gc = true
     //     }
     // }
-    if @cached_stack_instance.run_gc {
+    if !disable_gc && @cached_stack_instance.run_gc {
         @cached_stack_instance.gc()
     }
     // }
