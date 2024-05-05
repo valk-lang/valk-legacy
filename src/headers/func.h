@@ -64,6 +64,7 @@ struct Func {
     bool parsed;
     bool is_async;
     bool calls_gc_check;
+    bool parse_last;
 };
 struct FuncArg {
     Type* type;

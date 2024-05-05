@@ -36,11 +36,18 @@ void stage_generate_main(Build *b) {
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
+    idf = idf_make(b->alc, idf_scope, get_valk_nsc(b, "mem")->scope);
+    scope_set_idf(func->scope, "mem", idf, NULL);
+
     // Generate main AST
     Str* code = b->str_buf;
     str_clear(code);
 
     str_flat(code, "(argc: i32, argv: ptr) i32 {\n");
+    // Init pools
+    str_flat(code, "mem:pools_init();\n");
+    // TODO: set default values for globals
+
     // CLI args
     str_flat(code, "let arr = Array[String].new(10);\n");
     str_flat(code, "let i = 0\n");

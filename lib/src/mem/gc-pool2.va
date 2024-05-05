@@ -1,0 +1,106 @@
+
+
+class GcPool2[T] {
+    data: ptr
+    size: uint
+    itemc: uint (0)
+    new_index: uint (0)
+    sol_index: uint (0)
+
+    static fn init() CLASS {
+        let size = 1
+        return CLASS{
+            data: alloc(size * sizeof(ptr))
+            size: size
+        }
+    }
+
+    fn get() T {
+        let item = this.get_item()
+        return (item + 8) @as T
+    }
+
+    fn get_item() ptr {
+        // Increase list size if needed
+        let itemc = this.itemc
+        if itemc == this.size : this.increase_size()
+        // Pop existing object
+        let data = this.data
+        let index = this.new_index
+        if index > 0 {
+            let i = index - 1
+            let item = @ptrv(data, T, i)
+            this.new_index = i
+            return item
+        }
+        // Create new object
+        let item = alloc(sizeof(inline T) + 8)
+        let sol_index = this.sol_index
+        @ptrv(data, ptr, itemc) = @ptrv(data, ptr, sol_index)
+        @ptrv(data, ptr, sol_index) = item
+        this.sol_index = sol_index + 1
+        this.itemc = itemc + 1
+        // Set default state
+        @ptrv(res, u8, 0) = 0
+        @ptrv(res, u16, 1) = 0
+        @ptrv(res, u32, 1) = @vtable_index(T)
+        //
+        return item
+    }
+
+    fn increase_size() {
+        let size = this.size
+        let data = this.data
+        let new_size = size * 2
+        let new_data = alloc(new_size * sizeof(ptr))
+        copy(data, new_data, size * sizeof(ptr))
+        this.data = new_data
+        this.size = new_size
+    }
+
+    fn swap_transfers() {
+        let data = this.data
+        let index = this.new_index
+        let delete_count = index
+        let until = this.sol_index
+        while index < until {
+            let item = @ptrv(data, ptr, index)
+            let state = @ptrv(item, u8, byte_state)
+            if state == state_transfer {
+                until--
+                @ptrv(data, ptr, index) = @ptrv(data, ptr, until)
+                @ptrv(data, ptr, until) = item 
+                @ptrv(item, u8, byte_state) = state_solid
+                this.sol_index = until
+                continue
+            }
+            index++
+        }
+        this.new_index = index
+        // TODO: delete new-items (delete_count)
+    }
+
+    fn clean_unmarked(age: u8) {
+        let data = this.data
+        let index = this.sol_index
+        let swap = index
+        let until = this.itemc
+        while index < until {
+            let item = @ptrv(data, ptr, index)
+            let iage = @ptrv(item, u8, byte_age)
+            if iage != age {
+                #if @type_has_method(T, _gc_free)
+                let ob = (item + 8) @as T
+                ob._gc_free()
+                #end
+                if swap != index {
+                    @ptrv(data, ptr, index) = @ptrv(data, ptr, swap)
+                    @ptrv(data, ptr, swap) = item
+                }
+                swap++
+            }
+            index++
+        }
+        this.new_index = swap
+    }
+}

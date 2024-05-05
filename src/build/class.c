@@ -30,6 +30,7 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->generics = NULL;
     c->generic_names = NULL;
     c->generic_types = NULL;
+    c->generic_of = NULL;
     c->is_generic_base = false;
     c->in_header = false;
     //
@@ -221,16 +222,8 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(to_state: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
-
-    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-
-    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) > 0 { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -8) = 2\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {

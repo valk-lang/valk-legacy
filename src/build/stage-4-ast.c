@@ -27,6 +27,15 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "complete"));
 
+    b->parse_last = true;
+
+    Array* funcs = b->parse_later;
+    for(int i = 0; i < funcs->length; i++) {
+        Func* func = array_get_index(funcs, i);
+        stage_ast_func(func);
+        func->parsed = false;
+    }
+
     b->building_ast = false;
 
     Unit* um = b->nsc_main->unit;
@@ -63,6 +72,11 @@ void stage_ast_func(Func *func) {
     Unit* u = func->unit;
     Build* b = u->b;
     Parser* p = u->parser;
+
+    if(func->parse_last && !b->parse_last) {
+        array_push(b->parse_later, func);
+        return;
+    }
 
     if (u->b->verbose > 2)
         printf("Stage 4 | Parse AST: %s\n", func->export_name);

@@ -88,6 +88,7 @@ struct Build {
     Array *strings;
     Array *links;
     Map *link_settings;
+    Array *parse_later;
     //
     Map* cc_defs;
     //
@@ -111,6 +112,7 @@ struct Build {
     bool is_clean;
     bool optimize;
     bool building_ast;
+    bool parse_last;
 };
 struct Fc {
     Build *b;

@@ -164,6 +164,7 @@ int cmd_build(int argc, char *argv[]) {
     b->strings = array_make(alc, 100);
     b->links = array_make(alc, 10);
     b->link_settings = map_make(alc);
+    b->parse_later = array_make(alc, 10);
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
@@ -185,6 +186,7 @@ int cmd_build(int argc, char *argv[]) {
     b->LOC = 0;
     b->parser_started = false;
     b->building_ast = true;
+    b->parse_last = false;
 
     b->is_test = is_test;
     b->is_clean = is_clean;

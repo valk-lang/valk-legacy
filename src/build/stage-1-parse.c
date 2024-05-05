@@ -45,9 +45,17 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
         if (t == tok_semi) {
             continue;
         }
+
+        p->parse_last = false;
         if (t == tok_hashtag && p->on_newline) {
-            cc_parse(p);
-            continue;
+            if(str_is(p->tkn, "parse_last")) {
+                p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else {
+                cc_parse(p);
+                continue;
+            }
         }
 
         int act = act_public;
@@ -189,6 +197,7 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits, bool async) {
     func->in_header = p->in_header;
     func->exits = exits;
     func->is_async = async;
+    func->parse_last = p->parse_last;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);

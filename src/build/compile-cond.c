@@ -199,6 +199,19 @@ char cc_parse_cond(Parser* p, int prio) {
             Type* type = read_type(p, p->b->alc, false);
             tok_expect(p, ")", true, false);
             result = type_is_void(type) ? 1 : 0;
+        } else if (str_is(p->tkn, "@type_is_generic_of")) {
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, p->b->alc, false);
+            tok_expect(p, ",", true, false);
+            Id id;
+            read_id(p, NULL, &id);
+            Idf *idf = idf_by_id(p, p->scope, &id, true);
+            if(idf->type != idf_global) {
+                parse_err(p, -1, "This identifier does not represent a class");
+            }
+            Class* class = idf->item;
+            tok_expect(p, ")", true, false);
+            result = type->class && type->class->generic_of == class ? 1 : 0;
         } else if (str_is(p->tkn, "@global_is_shared")) {
             tok_expect(p, "(", false, false);
             Id id;

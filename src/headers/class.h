@@ -25,6 +25,7 @@ struct Class {
     Array* generic_names;
     Map* generic_types;
     Map* generics;
+    Class* generic_of;
     int act;
     int type;
     int size;

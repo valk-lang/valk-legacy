@@ -39,3 +39,31 @@ fn gc_share(item: ptr) {
     func(item);
     // disable_gc = dis;
 }
+
+#parse_last
+fn pools_init() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G = @class_of(T).init()
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_swap_transfers() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.swap_transfers()
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_clean_unmarked(age: u8) {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.clean_unmarked(age)
+    #end
+    #endloop
+}
+
