@@ -218,6 +218,7 @@ struct Stack {
         this.lock.unlock()
     }
 
+    #parse_last
     fn mark_difference_down() {
         //
         let transfer = this.transfer

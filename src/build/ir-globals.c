@@ -20,7 +20,7 @@ void ir_gen_globals(IR* ir) {
 
     for (int i = 0; i < u->globals->length; i++) {
         Global *g = array_get_index(u->globals, i);
-        if (g->fc->is_header)
+        if (g->fc && g->fc->is_header)
             continue;
 
         char *name = g->export_name;

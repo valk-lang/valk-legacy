@@ -187,6 +187,7 @@ int cmd_build(int argc, char *argv[]) {
     b->parser_started = false;
     b->building_ast = true;
     b->parse_last = false;
+    b->stage_1_done = false;
 
     b->is_test = is_test;
     b->is_clean = is_clean;

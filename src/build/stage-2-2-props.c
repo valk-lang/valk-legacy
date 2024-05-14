@@ -49,9 +49,18 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         if(t == tok_curly_close)
             break;
 
+        p->parse_last = false;
         if (t == tok_hashtag && p->on_newline) {
-            cc_parse(p);
-            continue;
+            t = tok(p, false, false, false);
+            if(str_is(p->tkn, "parse_last")) {
+                t = tok(p, false, false, true);
+                p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else {
+                cc_parse(p);
+                continue;
+            }
         }
 
         int act = act_public;

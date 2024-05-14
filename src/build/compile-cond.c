@@ -206,12 +206,20 @@ char cc_parse_cond(Parser* p, int prio) {
             Id id;
             read_id(p, NULL, &id);
             Idf *idf = idf_by_id(p, p->scope, &id, true);
-            if(idf->type != idf_global) {
+            if(idf->type != idf_class) {
                 parse_err(p, -1, "This identifier does not represent a class");
             }
             Class* class = idf->item;
             tok_expect(p, ")", true, false);
             result = type->class && type->class->generic_of == class ? 1 : 0;
+        } else if (str_is(p->tkn, "@type_has_method")) {
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, p->b->alc, false);
+            tok_expect(p, ",", true, false);
+            t = tok(p, true, true, true);
+            char* method = p->tkn;
+            tok_expect(p, ")", true, false);
+            result = (type->class && map_get(type->class->funcs, method)) ? 1 : 0;
         } else if (str_is(p->tkn, "@global_is_shared")) {
             tok_expect(p, "(", false, false);
             Id id;
@@ -252,6 +260,8 @@ char cc_parse_cond(Parser* p, int prio) {
     } else if(t == tok_not) {
         result = cc_parse_cond(p, 1);
         result = result == 1 ? 0 : 1;
+    } else {
+        parse_err(p, -1, "Invalid compile condition token '#%s'", p->tkn);
     }
 
     if(result == -1) {

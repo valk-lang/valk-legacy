@@ -48,7 +48,9 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
 
         p->parse_last = false;
         if (t == tok_hashtag && p->on_newline) {
+            t = tok(p, false, false, false);
             if(str_is(p->tkn, "parse_last")) {
+                t = tok(p, false, false, true);
                 p->parse_last = true;
                 tok_expect_newline(p);
                 t = tok(p, true, true, true);
@@ -255,14 +257,15 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
         parse_err(p, -1, "Invalid type name: '%s'", name);
     }
 
-    Class* class = class_make(b->alc, b, type);
+    Class* class = class_make(b->alc, b, u, type);
     class->act = act;
     class->fc = fc;
-    class->unit = u;
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
     class->scope = scope_sub_make(b->alc, sc_default, p->scope);
     class->in_header = p->in_header;
+
+    generate_class_pool(p, class);
 
     t = tok(p, false, false, false);
     if(t == tok_sq_bracket_open) {

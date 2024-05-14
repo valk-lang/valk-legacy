@@ -32,11 +32,12 @@ void stage_4_ast(Build *b) {
     Array* funcs = b->parse_later;
     for(int i = 0; i < funcs->length; i++) {
         Func* func = array_get_index(funcs, i);
-        stage_ast_func(func);
         func->parsed = false;
+        stage_ast_func(func);
     }
 
     b->building_ast = false;
+    b->parse_last = false;
 
     Unit* um = b->nsc_main->unit;
     ir_vtable_define_extern(um);

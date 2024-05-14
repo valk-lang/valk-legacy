@@ -1,6 +1,6 @@
 
 
-class GcPool2[T] {
+struct GcPool2[T] {
     data: ptr
     size: uint
     itemc: uint (0)
@@ -8,7 +8,7 @@ class GcPool2[T] {
     sol_index: uint (0)
 
     static fn init() CLASS {
-        let size = 1
+        let size : uint = 1
         return CLASS{
             data: alloc(size * sizeof(ptr))
             size: size
@@ -41,9 +41,9 @@ class GcPool2[T] {
         this.sol_index = sol_index + 1
         this.itemc = itemc + 1
         // Set default state
-        @ptrv(res, u8, 0) = 0
-        @ptrv(res, u16, 1) = 0
-        @ptrv(res, u32, 1) = @vtable_index(T)
+        @ptrv(item, u8, 0) = 0
+        @ptrv(item, u16, 1) = 0
+        @ptrv(item, u32, 1) = @type_vtable_index(T)
         //
         return item
     }

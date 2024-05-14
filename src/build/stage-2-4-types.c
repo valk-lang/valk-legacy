@@ -25,7 +25,8 @@ void stage_2_types(Unit* u) {
     Array* globals = u->globals;
     for(int i = 0; i < globals->length; i++) {
         Global* g = array_get_index(globals, i);
-        stage_types_global(p, g);
+        if(g->chunk_type)
+            stage_types_global(p, g);
     }
 
     unit_validate(u, p);

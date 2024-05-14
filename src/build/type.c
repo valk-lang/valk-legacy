@@ -530,3 +530,16 @@ Type* type_cache_u32(Build* b) {
         tcache_u32 = type_gen_valk(b->alc, b, "u32");
     return tcache_u32;
 }
+
+Type* class_pool_type(Parser* p, Class* class) {
+    Build* b = p->b;
+    Allocator* alc = b->alc;
+    Type* gt = type_gen_class(alc, class);
+    Array* gtypes = array_make(alc, 2);
+    array_push(gtypes, gt);
+    Class* base = get_valk_class(b, "mem", "GcPool2");
+    Class* gen = get_generic_class(p, base, gtypes);
+    Type* type = type_gen_class(alc, gen);
+    type->ignore_null = true;
+    return type;
+}

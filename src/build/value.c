@@ -108,6 +108,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Value* index = read_value(alc, p, true, 0);
             tok_expect(p, ")", true, true);
             v = value_make(alc, v_gc_get_table, index, type_gen_valk(alc, b, "ptr"));
+        } else if (str_is(tkn, "@type_vtable_index")) {
+            tok_expect(p, "(", false, false);
+            Type *type = read_type(p, alc, true);
+            tok_expect(p, ")", true, true);
+            v = vgen_int(alc, type->class->gc_vtable_index, type_gen_valk(alc, b, "int"));
         }
     } else if (t == tok_string) {
         char *body = tkn;

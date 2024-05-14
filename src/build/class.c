@@ -6,12 +6,13 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func);
 void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func);
 void class_generate_share(Parser* p, Build* b, Class* class, Func* func);
 
-Class* class_make(Allocator* alc, Build* b, int type) {
+Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     Class* c = al(alc, sizeof(Class));
     c->b = b;
     c->type = type;
     c->act = act_public;
     c->fc = NULL;
+    c->unit = u;
     c->name = NULL;
     c->ir_name = NULL;
     c->body = NULL;
@@ -33,6 +34,8 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->generic_of = NULL;
     c->is_generic_base = false;
     c->in_header = false;
+
+    c->pool = NULL;
     //
     return c;
 }
@@ -53,6 +56,37 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name) {
         build_err(b, b->char_buf);
     }
     return prop;
+}
+
+void generate_class_pool(Parser* p, Class* class) {
+    Build* b = p->b;
+    if (b->stage_1_done && class->type == ct_class && !class->is_generic_base) {
+        // Generate pool global
+        Allocator* alc = b->alc;
+        Unit* u = class->unit;
+
+        char buf[512];
+        strcpy(buf, "CLASS_POOL_");
+        strcat(buf, class->ir_name);
+
+        Global *g = al(alc, sizeof(Global));
+        g->act = act_public;
+        g->fc = NULL;
+        g->name = NULL;
+        g->export_name = gen_export_name(class->unit->nsc, buf);
+        g->type = class_pool_type(p, class);
+        g->value = NULL;
+        g->chunk_type = NULL;
+        g->chunk_value = NULL;
+        g->declared_scope = NULL;
+        g->is_shared = false;
+        g->is_mut = true;
+
+        array_push(u->globals, g);
+        array_push(b->globals, g);
+
+        class->pool = g;
+    }
 }
 
 int class_determine_size(Build* b, Class* class) {
@@ -431,6 +465,9 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
 
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Build* b = p->b;
+    if(b->parse_last) {
+        parse_err(p, -1, "You cannot generate a new generic class inside a #parse_last function");
+    }
     //
     Str* hash = build_get_str_buf(b);
     for (int i = 0; i < generic_types->length; i++) {
@@ -480,18 +517,19 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gclass = class_make(b->alc, b, class->type);
+    gclass = class_make(b->alc, b, p->unit, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
     gclass->scope = scope_sub_make(b->alc, sc_default, class->scope->parent);
     gclass->type = class->type;
     gclass->b = class->b;
-    gclass->unit = p->unit;
     gclass->act = class->act;
     gclass->fc = class->fc;
     gclass->packed = class->packed;
 
     gclass->name = name;
     gclass->ir_name = export_name;
+
+    generate_class_pool(p, gclass);
 
     if (b->building_ast) {
         array_push(b->classes, gclass);
@@ -525,7 +563,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     // Class size
     int size = class_determine_size(b, gclass);
     if(size == -1) {
-        parse_err(p, -1, "Cannot determine size of class: '%s'\n", gclass->name);
+        parse_err(p, -1, "Cannot determine size of class: '%s'", gclass->name);
     }
     // Internals
     class_generate_internals(p, b, gclass);

@@ -26,6 +26,7 @@ void stage_add_item(Stage *stage, void *item);
 void build_run_stages(Build *b);
 // Stages
 void stage_1_parse(Fc *fc);
+void stage_2_pools(Build* b);
 void stage_2_alias(Unit *u);
 void stage_2_props(Unit *u);
 void stage_2_update_classes(Build* b);
@@ -59,6 +60,7 @@ struct Build {
     usize time_llvm;
     usize time_link;
     Stage *stage_1_parse;
+    Stage *stage_2_pools;
     Stage *stage_2_alias;
     Stage *stage_2_props;
     Stage *stage_2_class_sizes;
@@ -113,6 +115,7 @@ struct Build {
     bool optimize;
     bool building_ast;
     bool parse_last;
+    bool stage_1_done;
 };
 struct Fc {
     Build *b;
