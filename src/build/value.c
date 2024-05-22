@@ -113,6 +113,15 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
             v = vgen_int(alc, type->class->gc_vtable_index, type_gen_valk(alc, b, "int"));
+        } else if (str_is(tkn, "@class_of")) {
+            tok_expect(p, "(", false, false);
+            Type *type = read_type(p, alc, true);
+            tok_expect(p, ")", true, true);
+            Class* class = type->class;
+            if(!class) {
+                parse_err(p, -1, "Type has no class");
+            }
+            v = value_handle_class(alc, p, class);
         }
     } else if (t == tok_string) {
         char *body = tkn;
@@ -936,7 +945,16 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
     }
 
-    Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
+    VClassInit* ci = al(alc, sizeof(VClassInit));
+    ci->prop_values = values;
+
+    if (class->type == ct_class) {
+        ci->item = vgen_call_pool_alloc(alc, p, b, class);
+    } else {
+        ci->item = vgen_call_alloc(alc, b, class->size, class);
+    }
+
+    Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;

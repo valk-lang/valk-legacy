@@ -8,6 +8,7 @@ struct GcPool2[T] {
     sol_index: uint (0)
 
     static fn init() CLASS {
+        print("I")
         let size : uint = 1
         return CLASS{
             data: alloc(size * sizeof(ptr))

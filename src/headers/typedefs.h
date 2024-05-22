@@ -71,6 +71,7 @@ typedef struct VFuncCall VFuncCall;
 typedef struct ErrorHandler ErrorHandler;
 typedef struct VNumber VNumber;
 typedef struct VGcBuffer VGcBuffer;
+typedef struct VClassInit VClassInit;
 typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
 typedef struct VPtrOffset VPtrOffset;

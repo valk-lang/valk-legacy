@@ -525,6 +525,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     gclass->act = class->act;
     gclass->fc = class->fc;
     gclass->packed = class->packed;
+    gclass->generic_of = class;
 
     gclass->name = name;
     gclass->ir_name = export_name;

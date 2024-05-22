@@ -103,9 +103,10 @@ struct Stack {
         disable_gc = false
         mem_marked = mem_marked_default
 
-        GcPool.init()
+        pools_init()
+        //GcPool.init()
 
-        s.scan_globals()
+        //s.scan_globals()
 
         let gcm = gc_manager()
         gcm.add_stack(s);
@@ -166,8 +167,9 @@ struct Stack {
         this.run_gc = false
 
         this.mark_difference_down()
+        pools_swap_transfers()
         this.handle_transfer_list()
-        GcPool.free_unused_all()
+        //GcPool.free_unused_all()
         this.bump.wipe()
 
         let transfer_percent = mem_transfered * 100 / mem_marked
@@ -184,7 +186,8 @@ struct Stack {
             this.update_age()
             this.mark_stack_age()
             // Clean
-            GcPool.clean_old_all(this.age)
+            pools_clean_unmarked(this.age)
+            //GcPool.clean_old_all(this.age)
             // Mark shared
             if gc_age != this.gc_age {
                 let age = gc_age
@@ -194,7 +197,7 @@ struct Stack {
         } else {
             io:print_fake("l")
         }
-        GcPool.reset_all()
+        //GcPool.reset_all()
 
         // Adjust lowest stack point
         // if this.lowest_next < this.lowest {
@@ -426,7 +429,7 @@ struct Stack {
         disable_gc = true
         this.transfer.delete()
 
-        GcPool.delete_all()
+        //GcPool.delete_all()
 
         // Stack is deleted by the Gc
         this.stopped = true

@@ -45,7 +45,7 @@ void stage_generate_main(Build *b) {
 
     str_flat(code, "(argc: i32, argv: ptr) i32 {\n");
     // Init pools
-    str_flat(code, "mem:pools_init();\n");
+    // str_flat(code, "mem:pools_init();\n");
     // TODO: set default values for globals
 
     // CLI args

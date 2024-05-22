@@ -227,9 +227,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return ir_cast(ir, lval, from_type, to_type);
     }
     if (vt == v_class_init) {
-        Map* values = v->item;
+        VClassInit* ci = v->item;
+        Value* ob = ci->item;
+        Map* values = ci->prop_values;
         Class* class = v->rett->class;
-        Value* ob = NULL;
 
         // Write prop values
         Array* ir_props = array_make(ir->alc, values->keys->length);
@@ -239,12 +240,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
             array_push(ir_props, lval);
         }
 
-        // Alloc memory
-        if(class->type == ct_class) {
-            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class);
-        } else {
-            ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
-        }
+        // Init object
         char* obj = ir_value(ir, scope, ob);
 
         // Set props

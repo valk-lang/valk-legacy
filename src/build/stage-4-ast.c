@@ -29,6 +29,8 @@ void stage_4_ast(Build *b) {
 
     b->parse_last = true;
 
+    stage_ast_func(get_valk_func(b, "mem", "pools_init"));
+
     Array* funcs = b->parse_later;
     for(int i = 0; i < funcs->length; i++) {
         Func* func = array_get_index(funcs, i);
