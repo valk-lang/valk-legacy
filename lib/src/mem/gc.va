@@ -8,6 +8,10 @@ fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
+fn force_gc() {
+    stack.force_full = true
+    stack.gc();
+}
 
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
@@ -42,7 +46,6 @@ fn gc_share(item: ptr) {
 
 #parse_last
 fn pools_init() {
-    print("POOLS\n")
     #loop_globals as G, T 
     #if @type_is_generic_of(T, GcPool2)
     G = @class_of(T).init()
@@ -61,10 +64,18 @@ fn pools_swap_transfers() {
 
 #parse_last
 fn pools_clean_unmarked(age: u8) {
-    print("C.")
     #loop_globals as G, T 
     #if @type_is_generic_of(T, GcPool2)
     G.clean_unmarked(age)
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_wipe() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.wipe()
     #end
     #endloop
 }

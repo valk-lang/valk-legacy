@@ -1,4 +1,5 @@
 
+use io
 
 struct GcPool2[T] {
     data: ptr
@@ -8,8 +9,7 @@ struct GcPool2[T] {
     sol_index: uint (0)
 
     static fn init() CLASS {
-        print("I")
-        let size : uint = 1
+        let size : uint = 4
         return CLASS{
             data: alloc(size * sizeof(ptr))
             size: size
@@ -18,6 +18,7 @@ struct GcPool2[T] {
 
     fn get() T {
         let item = this.get_item()
+        @ptrv(item, u32, 0) = 0
         return (item + 8) @as T
     }
 
@@ -25,6 +26,14 @@ struct GcPool2[T] {
         // Increase list size if needed
         let itemc = this.itemc
         if itemc == this.size : this.increase_size()
+
+        // Increment usage
+        mem_new = mem_new + sizeof(inline T)
+        mem_usage = mem_new * 100 / mem_marked
+        if mem_usage > 50 {
+            stack.run_gc = true
+        }
+
         // Pop existing object
         let data = this.data
         let index = this.new_index
@@ -42,10 +51,9 @@ struct GcPool2[T] {
         this.sol_index = sol_index + 1
         this.itemc = itemc + 1
         // Set default state
-        @ptrv(item, u8, 0) = 0
-        @ptrv(item, u16, 1) = 0
         @ptrv(item, u32, 1) = @type_vtable_index(T)
-        //
+        // io:print_fake(".")
+
         return item
     }
 
@@ -60,6 +68,7 @@ struct GcPool2[T] {
     }
 
     fn swap_transfers() {
+        // io:print_fake("s")
         let data = this.data
         let index = this.new_index
         let delete_count = index
@@ -72,12 +81,14 @@ struct GcPool2[T] {
                 @ptrv(data, ptr, index) = @ptrv(data, ptr, until)
                 @ptrv(data, ptr, until) = item 
                 @ptrv(item, u8, byte_state) = state_solid
-                this.sol_index = until
+                mem_transfered += sizeof(inline T)
                 continue
             }
             index++
         }
-        this.new_index = index
+        let i = until
+        this.sol_index = i
+        this.new_index = i
         // TODO: delete new-items (delete_count)
     }
 
@@ -102,6 +113,21 @@ struct GcPool2[T] {
             }
             index++
         }
-        this.new_index = swap
+        let i = swap
+        this.new_index = i
+        this.sol_index = i
+    }
+
+    fn wipe() {
+        return
+        io:print_fake("W")
+        let i = this.new_index
+        i.print(10)
+        io:print_fake("|")
+        this.new_index = this.itemc
+        this.sol_index = this.itemc
+        i = this.new_index
+        i.print(10)
+        io:print_fake(".")
     }
 }

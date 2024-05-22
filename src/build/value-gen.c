@@ -134,14 +134,14 @@ Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
     Class* pc = pool->type->class;
     Value* pv = value_make(alc, v_global, pool, pool->type);
 
-    Func *func = map_get(pc->funcs, "get_item");
+    Func *func = map_get(pc->funcs, "get");
     func_mark_used(p->func, func);
 
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
     array_push(alloc_values, pv);
     Value *res = vgen_func_call(alc, b, fptr, alloc_values);
-    res->rett = type_gen_class(alc, class);
+    // res->rett = type_gen_class(alc, class);
     return res;
 }
 

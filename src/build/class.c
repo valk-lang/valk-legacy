@@ -256,8 +256,8 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(to_state: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 0 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 2\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -8) = 3\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
