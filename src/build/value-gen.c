@@ -103,31 +103,6 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
-    //
-    Value* pool = NULL;
-    int index = class->pool_index;
-    if(index > -1) {
-        Global *g_pools = get_valk_global(b, "mem", "pools");
-        Value *pools = value_make(alc, v_global, g_pools, g_pools->type);
-        pool = vgen_ptrv(alc, b, pools, type_gen_class(alc, get_valk_class(b, "mem", "GcPool")), vgen_int(alc, index, type_gen_valk(alc, b, "i32")));
-    }
-    if(!pool){
-        build_err(b, "Cannot find correct pool to allocate class");
-    }
-
-    Func *func = get_valk_func(b, "mem", "gc_alloc_class");
-
-    Value *fptr = vgen_func_ptr(alc, func, NULL);
-    Array *alloc_values = array_make(alc, func->args->values->length);
-    array_push(alloc_values, pool);
-    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_valk(alc, b, "u32"));
-    array_push(alloc_values, v_index);
-    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
-    if(class)
-        res->rett = type_gen_class(alc, class);
-    return res;
-}
 
 Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
     Global* pool = class->pool;

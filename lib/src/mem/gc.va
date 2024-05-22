@@ -2,9 +2,9 @@
 use io
 use os
 
-fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
-    return pool.get(vtable)
-}
+// fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
+//     return pool.get(vtable)
+// }
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
@@ -72,11 +72,10 @@ fn pools_clean_unmarked(age: u8) {
 }
 
 #parse_last
-fn pools_wipe() {
+fn pools_reset() {
     #loop_globals as G, T 
     #if @type_is_generic_of(T, GcPool2)
-    G.wipe()
+    G.reset()
     #end
     #endloop
 }
-

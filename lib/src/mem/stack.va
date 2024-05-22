@@ -17,10 +17,9 @@ global mem_usage : uint;
 
 value mem_marked_default (1024)
 
-value state_unused (0)
-value state_used (1)
-value state_transfer_list (2)
-value state_transfer (3)
+value state_new (0)
+value state_transfer_list (1)
+value state_transfer (2)
 value state_solid (4)
 value state_const (8)
 value state_shared (10)
@@ -149,7 +148,7 @@ struct Stack {
             }
             return
         }
-        if to_state < state_transfer_list {
+        if to_state == state_new {
             // Transfer
             stack.transfer.add_item(to)
             @ptrv(to, u8, -8) = state_transfer_list
@@ -167,6 +166,11 @@ struct Stack {
         disable_gc = true
         this.run_gc = false
 
+        // mem_new.print(10)
+        // io:print_fake("/")
+        // mem_marked.print(10)
+        // io:print_fake("\n")
+
         this.mark_difference_down()
         this.handle_transfer_list()
         pools_swap_transfers()
@@ -174,6 +178,9 @@ struct Stack {
         this.bump.wipe()
 
         let transfer_percent = mem_transfered * 100 / mem_marked
+
+        // transfer_percent.print(10)
+        // io:print_fake("\n")
 
         // Full clear
         if transfer_percent > 50 || this.force_full {
@@ -198,6 +205,7 @@ struct Stack {
         } else {
             io:print_fake("l")
         }
+        pools_reset()
         //GcPool.reset_all()
 
         // Adjust lowest stack point
@@ -235,10 +243,10 @@ struct Stack {
             let g = G @as ptr
             if g != null {
                 let state = @ptrv(g, u8, -8)
-                if state < state_transfer_list {
+                if state == state_new {
                     // Transfer new items
                     transfer.add_item(g)
-                    @ptrv(g, u8, -8) = state_transfer_list @as u8
+                    @ptrv(g, u8, -8) = state_transfer_list
                 } 
             }
         }
@@ -259,10 +267,10 @@ struct Stack {
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state < state_transfer_list {
+                if state == state_new {
                     // Transfer new items
                     transfer.add_item(item)
-                    @ptrv(item, u8, -8) = state_transfer_list @as u8
+                    @ptrv(item, u8, -8) = state_transfer_list
                 } 
             }
         }

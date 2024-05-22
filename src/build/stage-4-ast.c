@@ -17,7 +17,6 @@ void stage_4_ast(Build *b) {
     b->building_ast = true;
 
     stage_ast_func(b->func_main_gen);
-    stage_ast_func(get_valk_func(b, "mem", "gc_alloc_class"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));

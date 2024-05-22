@@ -175,8 +175,8 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "POOL_INDEX", idf, p);
         //
-        idf = idf_make(b->alc, idf_class, get_valk_class(b, "mem", "GcPool"));
-        scope_set_idf(class->scope, "POOL_CLASS", idf, p);
+        // idf = idf_make(b->alc, idf_class, get_valk_class(b, "mem", "GcPool"));
+        // scope_set_idf(class->scope, "POOL_CLASS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, p);
@@ -256,8 +256,13 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(to_state: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 3\n");
+    str_flat(code, "  if @ptrv(this, u8, -8) > 1 { return }\n");
+    str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
+    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
+    //
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let adr = (this @as ptr) - (index * (SIZE + 8)) - sizeof(uint) - 8\n");
+    str_flat(code, "  @ptrv(adr, uint, 0)++\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -412,13 +417,13 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
-    str_flat(code, "  if state < 4 {\n");
-    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-    str_flat(code, "  }\n");
+    // str_flat(code, "  if state < 4 {\n");
+    // str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
+    // str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    // str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
+    // str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
+    // str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    // str_flat(code, "  }\n");
 
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
     str_flat(code, "  STACK.add_shared(this)\n");
