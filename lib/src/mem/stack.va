@@ -183,7 +183,7 @@ struct Stack {
         // io:print_fake("\n")
 
         // Full clear
-        if transfer_percent > 50 || this.force_full {
+        if transfer_percent > 30 || this.force_full {
 
             io:print_fake("!")
             if this.force_full : this.force_full = false

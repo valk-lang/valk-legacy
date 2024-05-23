@@ -27,7 +27,7 @@ struct GcPool2[T] {
         if size > 248 : size = 248
         let bytes1 : uint = (GCP_BLOCK_SETTINGS_SIZE + size).round_up(sizeof(ptr))
         let bytes2 : uint = size * isize
-        let b = calloc(bytes1 + bytes2)
+        let b = alloc(bytes1 + bytes2)
         // Ptr settings
         let data = b + bytes1
         @ptrv(b, ?ptr, 0) = null // next block
@@ -45,7 +45,6 @@ struct GcPool2[T] {
             @ptrv(indexes, u8, i) = i
             i++
         }
-        // exit(1)
         return b
     }
 
@@ -57,45 +56,44 @@ struct GcPool2[T] {
     fn get_item() ptr {
         // Increase list size if needed
         let block = this.block
+        let isize = this.isize
         while true {
-            let bset = block + GCP_BLOCK_PTR_SETTINGS
+            let b = block
+            let bset = b + GCP_BLOCK_PTR_SETTINGS
             let count = @ptrv(bset, u8, 0)
-            let new_index = @ptrv(bset, u8, 1)
+            let new_index = @ptrv(bset, u8, 1)++
             if new_index == count {
+                // Undo index increment
+                @ptrv(bset, u8, 1)--
                 // Next block
-                let next = @ptrv(block, ?ptr, 0)
+                let next = @ptrv(b, ?ptr, 0)
                 if isset(next) : block = next
                 else {
                     // Create new block
-                    let blockc = this.blockc + 1
-                    let new = CLASS.create_block(blockc * 2, this.isize)
-                    this.blockc = blockc
+                    let blockc = ++this.blockc
+                    let new = CLASS.create_block(blockc * 2, isize)
                     // Set next
-                    @ptrv(block, ptr, 0) = new
+                    @ptrv(b, ptr, 0) = new
                     block = new
                 }
+
                 this.block = block
                 continue
             }
             // New item
-            let data = @ptrv(block, ptr, 1)
-            let index = @ptrv(bset + GCP_BLOCK_BYTE_SETTINGS, u8, new_index)
-            let item = data + index * this.isize
-
-            // Update index
-            @ptrv(bset, u8, 1) = new_index + 1
+            let data = @ptrv(b, ptr, 1)
+            let index = @ptrv(bset, u8, new_index + GCP_BLOCK_BYTE_SETTINGS)
+            let item = data + index * isize
 
             // Defaults
             @ptrv(item, u32, 0) = 0
-            @ptrv(item, u8, 1) = index @as u8
+            // @ptrv(item, u8, 1) = index @as u8
             @ptrv(item, u32, 1) = @type_vtable_index(T)
 
             // Increment usage
             mem_new = mem_new + sizeof(inline T)
             mem_usage = mem_new * 100 / mem_marked
-            if mem_usage > 50 {
-                stack.run_gc = true
-            }
+            if mem_usage > 30 : stack.run_gc = true
 
             return item
         }
