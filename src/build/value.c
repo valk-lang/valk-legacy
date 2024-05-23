@@ -985,6 +985,11 @@ Value* value_handle_ptrv(Allocator *alc, Parser* p) {
         if (index->rett->type != type_int) {
             parse_err(p, -1, "@ptrv index must be of type integer");
         }
+        Build* b = p->b;
+        if (index->rett->size < b->ptr_size) {
+            // Increase index type size
+            index = vgen_cast(alc, index, type_gen_number(alc, b, b->ptr_size, false, true));
+        }
     }
     tok_expect(p, ")", true, true);
 

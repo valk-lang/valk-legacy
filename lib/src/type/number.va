@@ -19,6 +19,13 @@ trait Number {
         return this.to_base(16)
     }
 
+    fn round_up(modulo: CLASS) CLASS {
+        return this + ((modulo - (this % modulo)) % modulo)
+    }
+    fn round_down(modulo: CLASS) CLASS {
+        return this - (this % modulo)
+    }
+
     fn to_base(base: CLASS) String {
 
         if this == 0 || base == 0 {
