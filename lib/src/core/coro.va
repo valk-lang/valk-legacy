@@ -117,8 +117,10 @@ class Coro {
         let coros = g_coros
         while g_coro_poll_count > 0 {
             let coros = poll.wait(-1)
-            if coros.length == 0 : break
-            g_coro_poll_count = 0
+            if coros.length == 0 {
+                break
+            }
+            g_coro_poll_count -= coros.length
             each coros as coro {
                 coro.resume()
             }
