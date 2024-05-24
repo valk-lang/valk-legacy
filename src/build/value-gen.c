@@ -180,6 +180,9 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
             break;
         }
     }
+    if(!contains_gc_values) {
+        return val;
+    }
 
     Scope *sub = scope_sub_make(alc, sc_default, scope);
     sub->ast = array_make(alc, 10);
