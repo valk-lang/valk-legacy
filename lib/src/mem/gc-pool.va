@@ -47,10 +47,10 @@ struct GcPool2[T] {
         let isize = this.isize
         while true {
             let block = this.block
-            if @ptrv(block, uint, 3) > 75 {
-                this.set_next_block(block)
-                continue
-            }
+            // if @ptrv(block, uint, 3) > 75 {
+            //     this.set_next_block(block)
+            //     continue
+            // }
             let index = this.index
             if index == @ptrv(block, uint, 1) {
                 this.set_next_block(block)
@@ -100,6 +100,7 @@ struct GcPool2[T] {
         #if @type_has_method(T, _gc_free)
         let current = this.block
         let block = this.first
+        let isize = this.isize
 
         while block != current {
             let b = block
@@ -108,7 +109,7 @@ struct GcPool2[T] {
             let i : uint = 0
             let data = b + GP_DATA_OFFSET
             while i < count {
-                let item = data + i * this.isize
+                let item = data + i * isize
                 if @ptrv(item, u8, byte_state) == state_new {
                     ((item + 8) @as T)._gc_free()
                 }
@@ -123,6 +124,7 @@ struct GcPool2[T] {
     fn clean_unmarked(age: u8) {
         let current = this.block
         let block = this.first
+        let isize = this.isize
 
         while block != current {
             let b = block
@@ -132,7 +134,7 @@ struct GcPool2[T] {
             let i : uint = 0
             let data = b + GP_DATA_OFFSET
             while i < count {
-                let item = data + i * this.isize
+                let item = data + i * isize
                 let iage = @ptrv(item, u8, byte_age)
                 if iage != age && @ptrv(item, u8, byte_state) == state_solid {
                     #if @type_has_method(T, _gc_free)
