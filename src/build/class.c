@@ -260,6 +260,10 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+    str_flat(code, "  @ptrv(data, uint, -2)++\n");
+
     // Props
     for(int i = 0; i < props->values->length; i++) {
         ClassProp* p = array_get_index(props->values, i);

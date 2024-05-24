@@ -1,9 +1,7 @@
 
 use io
 
-value GCP_BLOCK_BYTE_SETTINGS (3)
-value GCP_BLOCK_PTR_SETTINGS (sizeof(ptr) * 2)
-value GCP_BLOCK_SETTINGS_SIZE (GCP_BLOCK_PTR_SETTINGS + GCP_BLOCK_BYTE_SETTINGS)
+value GP_DATA_OFFSET (sizeof(ptr) * 4)
 
 struct GcPool2[T] {
     blockc: uint
@@ -13,7 +11,7 @@ struct GcPool2[T] {
     isize: uint (0)
 
     static fn init() CLASS {
-        let isize : uint = ((sizeof(inline T) + 8) @as uint).round_up(sizeof(ptr))
+        let isize : uint = (sizeof(inline T) + 8) @as uint
         let blockc : uint = 1
         let block = CLASS.create_block(blockc * 2, isize)
         return CLASS{
@@ -25,166 +23,121 @@ struct GcPool2[T] {
     }
     static fn create_block(size: uint, isize: uint) ptr {
         if size > 248 : size = 248
-        let bytes1 : uint = (GCP_BLOCK_SETTINGS_SIZE + size).round_up(sizeof(ptr))
-        let bytes2 : uint = size * isize
-        let b = alloc(bytes1 + bytes2)
-        // Ptr settings
-        let data = b + bytes1
+        let b = alloc(size * isize + GP_DATA_OFFSET)
+        // Settings
         @ptrv(b, ?ptr, 0) = null // next block
-        @ptrv(b, ptr, 1) = data // data section
-        // Byte settings
-        let byte_settings = b + GCP_BLOCK_PTR_SETTINGS
-        @ptrv(byte_settings, u8, 0) = size @as u8 // item count
-        @ptrv(byte_settings, u8, 1) = 0 // new index
-        @ptrv(byte_settings, u8, 2) = 0 // solid index
+        @ptrv(b, uint, 1) = size // count
+        @ptrv(b, uint, 2) = 0 // used
+        @ptrv(b, uint, 3) = 0 // skip
         // Set indexes
-        let indexes = b + GCP_BLOCK_SETTINGS_SIZE
-        let end = size @as u8
-        let i : u8 = 0
-        while i < end {
-            @ptrv(indexes, u8, i) = i
+        let data = b + GP_DATA_OFFSET
+        let i : uint = 0
+        while i < size {
+            let item : ptr = data + i * isize
+            @ptrv(item, u8, 0) = state_new
+            @ptrv(item, u8, 1) = i @as u8
+            @ptrv(item, u16, 1) = 0
+            @ptrv(item, u32, 1) = @type_vtable_index(T)
             i++
         }
         return b
     }
 
     fn get() T {
-        let item = this.get_item()
-        return (item + 8) @as T
-    }
-
-    fn get_item() ptr {
-        // Increase list size if needed
-        let block = this.block
         let isize = this.isize
         while true {
-            let b = block
-            let bset = b + GCP_BLOCK_PTR_SETTINGS
-            let count = @ptrv(bset, u8, 0)
-            let new_index = @ptrv(bset, u8, 1)++
-            if new_index == count {
-                // Undo index increment
-                @ptrv(bset, u8, 1)--
-                // Next block
-                let next = @ptrv(b, ?ptr, 0)
-                if isset(next) : block = next
-                else {
-                    // Create new block
-                    let blockc = ++this.blockc
-                    let new = CLASS.create_block(blockc * 2, isize)
-                    // Set next
-                    @ptrv(b, ptr, 0) = new
-                    block = new
-                }
-
-                this.block = block
+            let block = this.block
+            if @ptrv(block, uint, 3) == 1 {
+                this.set_next_block(block)
                 continue
             }
-            // New item
-            let data = @ptrv(b, ptr, 1)
-            let index = @ptrv(bset, u8, new_index + GCP_BLOCK_BYTE_SETTINGS)
+            let index = this.index
+            if index == @ptrv(block, uint, 1) {
+                this.set_next_block(block)
+                continue
+            }
+            this.index++
+            let data = block + GP_DATA_OFFSET
             let item = data + index * isize
-
-            // Defaults
-            @ptrv(item, u32, 0) = 0
-            // @ptrv(item, u8, 1) = index @as u8
-            @ptrv(item, u32, 1) = @type_vtable_index(T)
+            if @ptrv(item, u8, byte_state) != state_new {
+                continue
+            }
 
             // Increment usage
             mem_new = mem_new + sizeof(inline T)
             mem_usage = mem_new * 100 / mem_marked
-            if mem_usage > 30 : stack.run_gc = true
+            if mem_usage > 50 {
+                stack.run_gc = true
+            }
 
-            return item
+            return (item + 8) @as T
         }
         exit(1)
     }
 
-    fn swap_transfers() {
-        let current = this.block
-        let block = this.first
-
-        while true {
-            let b = block
-            let data = @ptrv(b, ptr, 1)
-            let bset = b + GCP_BLOCK_PTR_SETTINGS
-            let count = @ptrv(bset, u8, 0)
-            let new_index = @ptrv(bset, u8, 1)
-            let sol_index = @ptrv(bset, u8, 2)
-            let swap = sol_index
-            let indexes = b + GCP_BLOCK_SETTINGS_SIZE
-            while sol_index < new_index {
-                let index = @ptrv(indexes, u8, sol_index)
-                let item = data + index * this.isize
-                let state = @ptrv(item, u8, byte_state)
-                if state == state_solid {
-                    if sol_index != swap {
-                        @ptrv(indexes, u8, sol_index) = @ptrv(indexes, u8, swap)
-                        @ptrv(indexes, u8, swap) = index
-                    }
-                    swap++
-                }
-                // if state == state_new {
-                // TODO call _gc_free
-                // }
-                sol_index++
-            }
-            @ptrv(bset, u8, 1) = swap // new_index
-            @ptrv(bset, u8, 2) = swap // sol_index
-            // Stop after current
-            if block == current : break
-            // Check next
-            let next = @ptrv(b, ?ptr, 0)
-            if isset(next) {
-                block = next
-                continue
-            }
-            break
+    fn set_next_block(block: ptr) {
+        let next = @ptrv(block, ?ptr, 0)
+        if isset(next) {
+            this.set_block(next)
+        } else {
+            // Create new block
+            let blockc = ++this.blockc
+            let new = CLASS.create_block(blockc * 2, this.isize)
+            // Set next
+            @ptrv(block, ptr, 0) = new
+            this.set_block(new)
         }
+    }
+
+    fn set_block(block: ptr) {
+        this.block = block
+        this.index = 0
+    }
+
+    fn swap_transfers() {
     }
 
     fn clean_unmarked(age: u8) {
         let current = this.block
         let block = this.first
 
-        while true {
+        while block != current {
             let b = block
-            let data = @ptrv(b, ptr, 1)
-            let bset = b + GCP_BLOCK_PTR_SETTINGS
-            let count = @ptrv(bset, u8, 0)
-            let i : u8 = 0
-            let sol_index = @ptrv(bset, u8, 2)
-            let swap = sol_index
-            let indexes = b + GCP_BLOCK_SETTINGS_SIZE
-            while i < sol_index {
-                let index = @ptrv(indexes, u8, i)
-                let item = data + index * this.isize
-                let state = @ptrv(item, u8, byte_state)
+            let count = @ptrv(b, uint, 1)
+            let used = @ptrv(b, uint, 2)
+            // Loop items
+            let i : uint = 0
+            let data = b + GP_DATA_OFFSET
+            while i < count {
+                let item = data + i * this.isize
                 let iage = @ptrv(item, u8, byte_age)
-                if iage != age && state == state_solid {
-                    sol_index--
-                    @ptrv(indexes, u8, i) = @ptrv(indexes, u8, sol_index)
-                    @ptrv(indexes, u8, sol_index) = index
-                    // TODO call _gc_free
-                } else {
-                    i++
+                if iage != age && @ptrv(item, u8, byte_state) == state_solid {
+                    @ptrv(item, u8, byte_state) = state_new
+                    @ptrv(item, u16, 1) = 0
+                    used--
                 }
+                i++
             }
-            @ptrv(bset, u8, 1) = sol_index // new_index
-            @ptrv(bset, u8, 2) = sol_index // sol_index
-            // Stop after current
-            if block == current : break
-            // Check next
-            let next = @ptrv(b, ?ptr, 0)
-            if isset(next) {
-                block = next
-                continue
-            }
-            break
+
+            @ptrv(b, uint, 2) = used
+
+            block = @ptrv(block, ptr, 0)
         }
     }
 
     fn reset() {
-        this.block = this.first
+        //
+        let current = this.block
+        let block = this.first
+        while block != current {
+            let b = block
+            let count = @ptrv(b, uint, 1)
+            let used = @ptrv(b, uint, 2)
+            @ptrv(b, int, 3) = (used * 100 / count > 70) ? 1 : 0
+
+            block = @ptrv(block, ptr, 0)
+        }
+        //
+        this.set_block(this.first)
     }
 }
