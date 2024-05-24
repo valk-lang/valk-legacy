@@ -11,7 +11,6 @@ void generate_class_pool(Parser* p, Class* class);
 int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
-int get_class_pool_index(Class* class);
 
 struct Class {
     char* name;
@@ -33,7 +32,6 @@ struct Class {
     int size;
     int gc_fields;
     int gc_vtable_index;
-    int pool_index;
     bool packed;
     bool is_signed;
     bool allow_math;

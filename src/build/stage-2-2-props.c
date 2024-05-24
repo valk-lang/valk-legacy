@@ -104,6 +104,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             prop->chunk_type = chunk_clone(b->alc, p->chunk);
             prop->chunk_value = NULL;
             prop->index = class->props->values->length;
+            prop->skip_default_value = false;
             map_set_force_new(class->props, name, prop);
 
             prop->type = read_type(p, b->alc, false);

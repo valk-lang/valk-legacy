@@ -17,6 +17,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
+    f->reference_type = NULL;
 
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);

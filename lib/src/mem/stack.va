@@ -106,7 +106,7 @@ struct Stack {
         pools_init()
         //GcPool.init()
 
-        //s.scan_globals()
+        s.scan_globals()
 
         let gcm = gc_manager()
         gcm.add_stack(s);
@@ -115,6 +115,7 @@ struct Stack {
         core:g_coro_indexes = Pool[uint].new()
     }
 
+    #parse_last
     fn scan_globals() {
         let count : uint = 0
         #loop_globals as G, T
@@ -185,7 +186,7 @@ struct Stack {
         // Full clear
         if transfer_percent > 30 || this.force_full {
 
-            io:print_fake("!")
+            // io:print_fake("!")
             if this.force_full : this.force_full = false
 
             mem_marked = mem_marked_default
@@ -203,7 +204,7 @@ struct Stack {
                 this.gc_age = age
             }
         } else {
-            io:print_fake("l")
+            // io:print_fake("l")
         }
         pools_reset()
         //GcPool.reset_all()
@@ -328,6 +329,7 @@ struct Stack {
         this.age = age
     }
 
+    #parse_last
     fn mark_stack_age() {
         let age = this.age
         // Globals

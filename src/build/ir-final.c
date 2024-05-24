@@ -10,24 +10,24 @@ void ir_gen_final(IR* ir) {
 
     // Structs & Globals
     str_append(code, ir->code_struct);
-    str_flat(code, "\n");
+    str_append_chars(code, "\n");
     str_append(code, ir->code_global);
-    str_flat(code, "\n\n");
+    str_append_chars(code, "\n\n");
 
     u->ir_start = str_to_chars(b->alc, code);
     str_clear(code);
 
     // Extern
     str_append(code, ir->code_extern);
-    str_flat(code, "\n");
+    str_append_chars(code, "\n");
 
     // Attrs
     for (int i = 0; i < ir->attrs->length; i++) {
-        str_add(code, array_get_index(ir->attrs, i));
-        str_flat(code, "\n");
+        str_append_chars(code, array_get_index(ir->attrs, i));
+        str_append_chars(code, "\n");
     }
     str_append(code, ir->code_attr);
-    str_flat(code, "\n");
+    str_append_chars(code, "\n");
 
     u->ir_end = str_to_chars(u->b->alc, code);
 }

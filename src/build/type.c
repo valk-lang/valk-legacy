@@ -12,6 +12,7 @@ Type* type_make(Allocator* alc, int type) {
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
+    t->ignore_null = false;
     return t;
 }
 TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett) {

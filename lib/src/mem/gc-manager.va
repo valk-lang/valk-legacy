@@ -56,7 +56,6 @@ struct GcManager {
 
     static fn loop() {
 
-        return
         Stack.init()
         let gcm_stack = stack
 

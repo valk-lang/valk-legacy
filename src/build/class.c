@@ -23,7 +23,6 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     c->size = -1;
     c->gc_fields = 0;
     c->gc_vtable_index = 0;
-    c->pool_index = -1;
     //
     c->packed = false;
     c->is_signed = true;
@@ -34,6 +33,7 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     c->generic_of = NULL;
     c->is_generic_base = false;
     c->in_header = false;
+    c->is_used = false;
 
     c->pool = NULL;
     //
@@ -154,10 +154,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
-        class->pool_index = get_class_pool_index(class);
-        if (class->pool_index == -1) {
-            parse_err(p, -1, "Invalid class pool index: '%s' (compiler bug)\n", class->name);
-        }
 
         // VTABLE_INDEX
         if(b->verbose > 2)
@@ -168,15 +164,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
         scope_set_idf(class->scope, "STACK", idf, p);
-        //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "pools"));
-        scope_set_idf(class->scope, "POOLS", idf, p);
-        //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
-        scope_set_idf(class->scope, "POOL_INDEX", idf, p);
-        //
-        // idf = idf_make(b->alc, idf_class, get_valk_class(b, "mem", "GcPool"));
-        // scope_set_idf(class->scope, "POOL_CLASS", idf, p);
         //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, p);
@@ -417,13 +404,11 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
-    // str_flat(code, "  if state < 4 {\n");
-    // str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-    // str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    // str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-    // str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    // str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-    // str_flat(code, "  }\n");
+    str_flat(code, "  if state < 4 {\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+    str_flat(code, "  @ptrv(data, uint, -2)++\n");
+    str_flat(code, "  }\n");
 
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
     str_flat(code, "  STACK.add_shared(this)\n");
@@ -591,24 +576,3 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     return gclass;
 }
 
-
-int get_class_pool_index(Class* class) {
-    int size = class->size;
-    int index = -1;
-    if(size <= 64) {
-        int psize = size + (size % 8);
-        index = ((psize / 8) - 1) * 2;
-    } else if(size <= 128) {
-        index = (64 / 8) * 2;
-    } else if(size <= 256) {
-        index = (64 / 8 + 1) * 2;
-    } else if(size <= 512) {
-        index = (64 / 8 + 2) * 2;
-    }
-    if(index > -1) {
-        if(map_get(class->funcs, "_gc_free")) {
-            index++;
-        }
-    }
-    return index;
-}
