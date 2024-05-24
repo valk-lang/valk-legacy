@@ -175,7 +175,7 @@ struct Stack {
         // Full clear
         if transfer_percent > 30 || this.force_full {
 
-            io:print_fake(".")
+            // io:print_fake(".")
             if this.force_full : this.force_full = false
 
             mem_marked = mem_marked_default
@@ -192,7 +192,7 @@ struct Stack {
                 this.gc_age = age
             }
         } else {
-            io:print_fake("l")
+            // io:print_fake("l")
         }
         GcPool.reset_all()
 
