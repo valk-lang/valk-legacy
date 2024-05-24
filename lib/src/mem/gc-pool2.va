@@ -28,7 +28,7 @@ struct GcPool2[T] {
         @ptrv(b, ?ptr, 0) = null // next block
         @ptrv(b, uint, 1) = size // count
         @ptrv(b, uint, 2) = 0 // used
-        @ptrv(b, uint, 3) = 0 // skip
+        @ptrv(b, uint, 3) = 0 // usage percent
         // Set indexes
         let data = b + GP_DATA_OFFSET
         let i : uint = 0
@@ -47,7 +47,7 @@ struct GcPool2[T] {
         let isize = this.isize
         while true {
             let block = this.block
-            if @ptrv(block, uint, 3) == 1 {
+            if @ptrv(block, uint, 3) > 75 {
                 this.set_next_block(block)
                 continue
             }
@@ -63,12 +63,8 @@ struct GcPool2[T] {
                 continue
             }
 
-            // Increment usage
-            mem_new = mem_new + sizeof(inline T)
-            mem_usage = mem_new * 100 / mem_marked
-            if mem_usage > 50 {
-                stack.run_gc = true
-            }
+            // Increase mem usage
+            mem_new += sizeof(inline T)
 
             return (item + 8) @as T
         }
@@ -82,10 +78,16 @@ struct GcPool2[T] {
         } else {
             // Create new block
             let blockc = ++this.blockc
-            let new = CLASS.create_block(blockc * 2, this.isize)
+            let new = CLASS.create_block(blockc * blockc, this.isize)
             // Set next
             @ptrv(block, ptr, 0) = new
             this.set_block(new)
+        }
+
+        // Check mem usage
+        mem_usage = mem_new * 100 / mem_marked
+        if mem_usage > 30 {
+            stack.run_gc = true
         }
     }
 
@@ -133,7 +135,7 @@ struct GcPool2[T] {
             let b = block
             let count = @ptrv(b, uint, 1)
             let used = @ptrv(b, uint, 2)
-            @ptrv(b, int, 3) = (used * 100 / count > 70) ? 1 : 0
+            @ptrv(b, uint, 3) = used * 100 / count
 
             block = @ptrv(block, ptr, 0)
         }
