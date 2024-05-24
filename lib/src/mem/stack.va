@@ -18,7 +18,7 @@ global mem_usage : uint;
 value mem_marked_default (1024)
 
 value state_new (0)
-value state_transfer_list (1)
+value state_used (1)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
@@ -149,10 +149,10 @@ struct Stack {
             }
             return
         }
-        if to_state == state_new {
+        if to_state < state_transfer {
             // Transfer
             stack.transfer.add_item(to)
-            @ptrv(to, u8, -8) = state_transfer_list
+            @ptrv(to, u8, -8) = state_transfer
         }
     }
 
@@ -244,10 +244,10 @@ struct Stack {
             let g = G @as ptr
             if g != null {
                 let state = @ptrv(g, u8, -8)
-                if state == state_new {
+                if state < state_transfer {
                     // Transfer new items
                     transfer.add_item(g)
-                    @ptrv(g, u8, -8) = state_transfer_list
+                    @ptrv(g, u8, -8) = state_transfer
                 } 
             }
         }
@@ -268,10 +268,10 @@ struct Stack {
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state == state_new {
+                if state < state_transfer {
                     // Transfer new items
                     transfer.add_item(item)
-                    @ptrv(item, u8, -8) = state_transfer_list
+                    @ptrv(item, u8, -8) = state_transfer
                 } 
             }
         }
@@ -301,7 +301,7 @@ struct Stack {
                 let item = @ptrv(list, ptr, index)
                 index++
                 // Item logic
-                if @ptrv(item, u8, -8) != state_transfer_list {
+                if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
                 let vtable = @ptrv(item, u32, -1)
