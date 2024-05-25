@@ -135,8 +135,11 @@ class Coro {
 
         each coros as coro {
             if isset(coro) {
-                mem:gc_transfer_item(coro)
-                coro._gc_transfer()
+                let x = coro.gc_item_count
+                let data = coro.gc_stack
+                while x-- > 0 {
+                    mem:gc_transfer_item(@ptrv(data, ptr, x))
+                }
             }
         }
     }
@@ -144,13 +147,6 @@ class Coro {
     ///////////////////
     // GC
     ///////////////////
-    fn _gc_transfer() {
-        let x = this.gc_item_count
-        let data = this.gc_stack
-        while x-- > 0 {
-            mem:gc_transfer_item(@ptrv(data, ptr, x))
-        }
-    }
     fn _gc_mark() {
         let data = this.gc_stack
         let x = this.gc_item_count
