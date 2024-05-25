@@ -1,0 +1,12 @@
+
+class Coro2 {
+    stack: ptr
+    stack_adr: ptr
+    gc_stack: ptr
+    gc_stack_adr: ptr
+    result: ptr
+    handler: fn()()
+    error: u32 (0)
+    done: bool (false)
+    jmp_buf: inline [u8, 256]
+}

@@ -7,33 +7,9 @@ snippet stack_reserve(amount: V) {
 }
 
 snippet run_gc_check() {
-    // if disable_gc == false {
-    // if @cached_stack_address < @cached_stack_instance.lowest {
-    //     @cached_stack_instance.lowest = @cached_stack_address
-    //     if mem_usage > 50 {
-    //         @cached_stack_instance.run_gc = true
-    //     }
-    // }
     if !disable_gc && @cached_stack_instance.run_gc {
         @cached_stack_instance.gc()
     }
-    // }
-
-    // if disable_gc == false {
-    //     let s = @cached_stack_instance
-    //     let sa = @cached_stack_address
-    //     if sa < s.lowest_next {
-    //         s.lowest_next = sa
-    //     }
-    //     if sa < s.lowest {
-    //         if mem_usage > 50 {
-    //             s.run_gc = true
-    //         }
-    //     }
-    //     if s.run_gc {
-    //         s.gc()
-    //     }
-    // }
 }
 
 snippet stack_reduce() {

@@ -261,6 +261,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Decl* edecl = idf->item;
             v = value_make(alc, v_decl, edecl, type_gen_number(alc, b, 4, false, false));
 
+        } else if (str_is(tkn, "co")) {
+
+            Value* on = read_value(alc, p, true, 1);
+            if(on->rett->type != type_promise) {
+                parse_err(p, -1, "Using 'await' on a non-promise value");
+            }
+
         } else if (str_is(tkn, "await")) {
 
             if(!p->func->is_async) {

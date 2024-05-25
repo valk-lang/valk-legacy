@@ -113,7 +113,7 @@ void stage_generate_main(Build *b) {
         if (b->func_main) {
             if (main_has_return || b->func_main->is_async)
                 str_flat(code, "let main_res = ");
-            str_flat(code, "main(");
+            str_flat(code, "co main(");
             if (main_has_arg) {
                 str_flat(code, "arr");
             }

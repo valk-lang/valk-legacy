@@ -2,9 +2,6 @@
 use io
 use os
 
-// fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
-//     return pool.get(vtable)
-// }
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
