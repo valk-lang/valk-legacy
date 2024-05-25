@@ -82,7 +82,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     if(has_rett) {
         str_flat(code, "@ptrv(coro.result, T, 0) = res\n");
     }
-    str_flat(code, "coro.done = true\n");
+    str_flat(code, "coro.complete()\n");
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
@@ -167,6 +167,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     if(has_gc_arg) {
         str_flat(code, "coro.gc_stack_adr = gc_args\n");
     }
+    str_flat(code, "coro.resume()\n"); // Start coroutine
     str_flat(code, "return coro\n");
     str_flat(code, "}\n");
 

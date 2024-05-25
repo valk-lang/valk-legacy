@@ -22,6 +22,7 @@ class Coro2 {
     g_list_index: uint (0)
     jmp_buf: inline [u8, 256]
     error: u32 (0)
+    started: bool (false)
     done: bool (false)
 
     static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
@@ -63,6 +64,64 @@ class Coro2 {
         return poll @as io:SimplePoll[Coro2]
     }
 
+    //////////////
+    // AWAIT
+    //////////////
+
+    fn await_coro(coro: Coro2) {
+        let ob = coro
+        let ref = ob.follow_up
+        while isset(ref) {
+            ob = ref
+            ref = ref.follow_up
+        }
+        ob.follow_up = this
+    }
+
+    fn await_fd(fd: FD, read: bool, write: bool) {
+        let poll = Coro2.get_poll()
+        poll.set(fd, this, read, write)
+        g_coro_poll_count++
+    }
+
+    //////////////
+    // FLOW
+    //////////////
+
+    fn resume() {
+        if this.done : return
+        run_coroutine = this
+
+        if @setjmp(main_jmp_buf) == 0 {
+
+            if !this.started {
+                let start = this.start_func
+                start(this)
+            } else {
+                @longjmp(this.jmp_buf)
+            }
+            return
+        }
+
+        if this.done {
+            let next = this.follow_up
+            if isset(next) {
+                next.resume()
+            }
+        }
+    }
+
+    fn complete() {
+        this.done = true
+        g_coros.set(this.g_list_index, null) _
+        g_coro_indexes.add(this.g_list_index)
+        @longjmp(main_jmp_buf)
+    }
+
+    //////////////
+    // LOOP
+    //////////////
+
     static fn loop() {
         let poll = Coro2.get_poll()
         let coros = g_coros
@@ -79,8 +138,9 @@ class Coro2 {
     }
 
     ///////////////////
-    // GC list
+    // GC
     ///////////////////
+
     --- static fn transfer_check() {
         let coros = g_coros
 
@@ -94,5 +154,27 @@ class Coro2 {
                 }
             }
         }
+    }
+
+    fn _gc_mark() {
+        let base = coro.gc_stack
+        let adr = coro.gc_stack_adr
+        while adr > base {
+            adr -= sizeof(ptr)
+            mem:gc_mark_item(@ptrv(adr, ptr, 0))
+        }
+    }
+    fn _gc_mark_shared() {
+        let base = coro.gc_stack
+        let adr = coro.gc_stack_adr
+        while adr > base {
+            adr -= sizeof(ptr)
+            mem:gc_mark_shared_item(@ptrv(adr, ptr, 0))
+        }
+    }
+
+    fn _gc_free() {
+        mem:free(this.stack)
+        mem:free(this.gc_stack)
     }
 }
