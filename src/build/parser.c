@@ -24,6 +24,8 @@ Parser* parser_make(Allocator* alc, Unit* u) {
 
     p->in_header = false;
     p->on_newline = false;
+    p->parse_last = false;
+    p->reading_coro_fcall = false;
 
     return p;
 }

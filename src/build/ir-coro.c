@@ -104,3 +104,30 @@ void ir_coro_complete(IR* ir, char* coro) {
     Array *values = ir_fcall_ir_args(ir, args_v, args_t);
     char *call = ir_func_call(ir, fptr, values, "void", 0, 0);
 }
+
+/////////////////
+// NEW
+/////////////////
+
+// char* ir_coro_init(IR* ir, Scope* scope, VCoro* vc) {
+//     Allocator *alc = ir->alc;
+//     Build* b = ir->b;
+//     VFuncCall* fcall = vc->fcall;
+//     //
+//     char* handler = ir_value(ir, scope, fcall->on);
+//     char* start = ir_value(ir, scope, vgen_func_ptr(alc, vc->start_func, NULL));
+//     Type* ptr_type = type_cache_ptr(b);
+//     //
+//     Class* coro_class = get_valk_class(ir->b, "core", "Coro2");
+//     // Coro new
+//     Func* ac = get_valk_class_func(ir->b, "core", "Coro2", "new");
+//     char* fptr = ir_value(ir, ac->scope, vgen_func_ptr(ir->alc, ac, NULL));
+//     Array* args_v = array_make(ir->alc, 2);
+//     Array* args_t = array_make(ir->alc, 2);
+//     array_push(args_v, handler);
+//     array_push(args_t, ptr_type);
+//     array_push(args_v, start);
+//     array_push(args_t, ptr_type);
+//     Array *values = ir_fcall_ir_args(ir, args_v, args_t);
+//     char *call = ir_func_call(ir, fptr, values, "ptr", 0, 0);
+// }

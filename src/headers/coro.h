@@ -4,6 +4,13 @@
 
 #include "typedefs.h"
 
+Value* coro_generate(Allocator* alc, Parser* p, Value* on);
+
+struct VCoro {
+    Func* start_func;
+    VFuncCall* fcall;
+};
+
 struct VAwait {
     Decl* decl;
     Value* on;

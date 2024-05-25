@@ -348,6 +348,9 @@ void ir_init_decls(IR *ir, IRFunc *func) {
 }
 
 void ir_write_async_func_start(IR *ir, IRFunc *func) {
+
+    die("ASYNC functions not allowed");
+
     //
     Build* b = ir->b;
     Allocator* alc = ir->alc;

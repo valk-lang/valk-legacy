@@ -1,12 +1,98 @@
 
+use mem
+use io
+
+global run_coroutine : ?Coro2 (null)
+global coro_poll : ?io:SimplePoll[Coro2] (null)
+global g_coros : @ignu(Array[?Coro2])
+global g_coro_indexes : @ignu(Pool[uint])
+global g_coro_poll_count : uint
+
+global main_jmp_buf : @ignu(ptr)
+
 class Coro2 {
     stack: ptr
     stack_adr: ptr
     gc_stack: ptr
     gc_stack_adr: ptr
     result: ptr
+    start_func: fn(Coro2)()
     handler: fn()()
+    follow_up: ?Coro2 (null)
+    g_list_index: uint (0)
+    jmp_buf: inline [u8, 256]
     error: u32 (0)
     done: bool (false)
-    jmp_buf: inline [u8, 256]
+
+    static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
+
+        let stack_adr = mem:create_stack()
+        let gc_stack_adr = mem:create_stack()
+
+        let coro = Coro2 {
+            stack: stack_adr
+            stack_adr: stack_adr
+            gc_stack: gc_stack_adr
+            gc_stack_adr: gc_stack_adr
+            result: result_is_gc ? gc_stack_adr : stack_adr
+            //
+            start_func: start_func @as fn(Coro2)()
+            handler: handler @as fn()()
+        }
+
+        let indexes = g_coro_indexes
+        if indexes.count == 0 {
+            let index = g_coros.push(coro)
+            coro.g_list_index = index
+        } else {
+            let index = indexes.get() ? 0
+            g_coros.set(index, coro) _
+            coro.g_list_index = index
+        }
+
+        return coro
+    }
+
+    static fn get_poll() io:SimplePoll[Coro2] {
+        let poll = coro_poll
+        if poll == null {
+            let p = io:SimplePoll[Coro2].new()
+            coro_poll = p
+            return p
+        }
+        return poll @as io:SimplePoll[Coro2]
+    }
+
+    static fn loop() {
+        let poll = Coro2.get_poll()
+        let coros = g_coros
+        while g_coro_poll_count > 0 {
+            let coros = poll.wait(-1)
+            if coros.length == 0 {
+                break
+            }
+            g_coro_poll_count -= coros.length
+            each coros as coro {
+                // coro.resume()
+            }
+        }
+    }
+
+    ///////////////////
+    // GC list
+    ///////////////////
+    --- static fn transfer_check() {
+        let coros = g_coros
+
+        each coros as coro {
+            if isset(coro) {
+                let base = coro.gc_stack
+                let adr = coro.gc_stack_adr
+                while adr > base {
+                    adr -= sizeof(ptr)
+                    mem:gc_transfer_item(@ptrv(adr, ptr, 0))
+                }
+            }
+        }
+    }
 }

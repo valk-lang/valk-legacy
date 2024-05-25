@@ -68,6 +68,8 @@ char* ir_await(IR* ir, Scope* scope, VAwait* aw);
 void ir_yield(IR* ir, Scope* scope, VAwait* aw);
 void ir_coro_return(IR* ir, Value* value);
 void ir_coro_complete(IR* ir, char* coro);
+// Coro new
+char* ir_coro_init(IR* ir, Scope* scope, VCoro* vc);
 
 // Structs
 struct IR {

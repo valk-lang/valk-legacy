@@ -3,166 +3,166 @@ use mem
 use os
 use io
 
-global run_coroutine : ?Coro (null)
-global coro_poll : ?io:SimplePoll[Coro] (null)
-global g_coros : @ignu(Array[?Coro])
-global g_coro_indexes : @ignu(Pool[uint])
-global g_coro_poll_count : uint
+// global run_coroutine : ?Coro (null)
+// global coro_poll : ?io:SimplePoll[Coro] (null)
+// global g_coros : @ignu(Array[?Coro])
+// global g_coro_indexes : @ignu(Pool[uint])
+// global g_coro_poll_count : uint
 
-class Coro {
-    stack: ptr
-    gc_stack: ptr
-    gc_item_count: uint
-    result: ptr
-    handler: fn()()
-    follow_up: ?Coro (null)
-    g_list_index: uint (0)
-    resume_index: u32 (0)
-    error: u32 (0)
-    done: bool (false)
+// class Coro {
+//     stack: ptr
+//     gc_stack: ptr
+//     gc_item_count: uint
+//     result: ptr
+//     handler: fn()()
+//     follow_up: ?Coro (null)
+//     g_list_index: uint (0)
+//     resume_index: u32 (0)
+//     error: u32 (0)
+//     done: bool (false)
 
-    static fn new(stack_size: uint, gc_item_count: uint, result_offset: uint, result_is_gc: bool, handler: ptr) CLASS {
-        let align = (sizeof(ptr) - (stack_size % sizeof(ptr))) % sizeof(ptr)
-        let gc_size = gc_item_count * sizeof(ptr)
-        let size = stack_size + align + gc_size
-        let data = size == 0 ? (null @as ptr) : mem:calloc(size)
-        let gc_stack = data + stack_size + align
-        let result = <{
-            if result_is_gc : return gc_stack + (result_offset * sizeof(ptr))
-            return data + result_offset
-        }
+//     static fn new(stack_size: uint, gc_item_count: uint, result_offset: uint, result_is_gc: bool, handler: ptr) CLASS {
+//         let align = (sizeof(ptr) - (stack_size % sizeof(ptr))) % sizeof(ptr)
+//         let gc_size = gc_item_count * sizeof(ptr)
+//         let size = stack_size + align + gc_size
+//         let data = size == 0 ? (null @as ptr) : mem:calloc(size)
+//         let gc_stack = data + stack_size + align
+//         let result = <{
+//             if result_is_gc : return gc_stack + (result_offset * sizeof(ptr))
+//             return data + result_offset
+//         }
 
-        let coro = CLASS {
-            stack: data
-            gc_stack: gc_stack
-            gc_item_count: gc_item_count
-            result: result
-            handler: handler @as fn()()
-        }
+//         let coro = CLASS {
+//             stack: data
+//             gc_stack: gc_stack
+//             gc_item_count: gc_item_count
+//             result: result
+//             handler: handler @as fn()()
+//         }
 
-        let indexes = g_coro_indexes
-        if indexes.count == 0 {
-            let index = g_coros.push(coro)
-            coro.g_list_index = index
-        } else {
-            let index = indexes.get() ? 0
-            g_coros.set(index, coro) _
-            coro.g_list_index = index
-        }
+//         let indexes = g_coro_indexes
+//         if indexes.count == 0 {
+//             let index = g_coros.push(coro)
+//             coro.g_list_index = index
+//         } else {
+//             let index = indexes.get() ? 0
+//             g_coros.set(index, coro) _
+//             coro.g_list_index = index
+//         }
 
-        // let list = mem:coros
-        // list.add(coro)
-        return coro
-    }
+//         // let list = mem:coros
+//         // list.add(coro)
+//         return coro
+//     }
 
-    static fn get_poll() io:SimplePoll[Coro] {
-        let poll = coro_poll
-        if poll == null {
-            let p = io:SimplePoll[Coro].new()
-            coro_poll = p
-            return p
-        }
-        return poll @as io:SimplePoll[Coro]
-    }
+//     static fn get_poll() io:SimplePoll[Coro] {
+//         let poll = coro_poll
+//         if poll == null {
+//             let p = io:SimplePoll[Coro].new()
+//             coro_poll = p
+//             return p
+//         }
+//         return poll @as io:SimplePoll[Coro]
+//     }
 
-    //////////////
-    // AWAIT
-    //////////////
+//     //////////////
+//     // AWAIT
+//     //////////////
 
-    fn await_coro(coro: Coro) {
-        let ob = coro
-        let ref = ob.follow_up
-        while isset(ref) {
-            ob = ref
-            ref = ref.follow_up
-        }
-        ob.follow_up = this
-    }
+//     fn await_coro(coro: Coro) {
+//         let ob = coro
+//         let ref = ob.follow_up
+//         while isset(ref) {
+//             ob = ref
+//             ref = ref.follow_up
+//         }
+//         ob.follow_up = this
+//     }
 
-    fn await_fd(fd: FD, read: bool, write: bool) {
-        let poll = Coro.get_poll()
-        poll.set(fd, this, read, write)
-        g_coro_poll_count++
-    }
+//     fn await_fd(fd: FD, read: bool, write: bool) {
+//         let poll = Coro.get_poll()
+//         poll.set(fd, this, read, write)
+//         g_coro_poll_count++
+//     }
 
-    //////////////
-    // FLOW
-    //////////////
+//     //////////////
+//     // FLOW
+//     //////////////
 
-    fn resume() {
-        if this.done : return
-        run_coroutine = this
-        this.handler()
+//     fn resume() {
+//         if this.done : return
+//         run_coroutine = this
+//         this.handler()
 
-        if this.done {
-            let next = this.follow_up
-            if isset(next) {
-                next.resume()
-            }
-        }
-    }
+//         if this.done {
+//             let next = this.follow_up
+//             if isset(next) {
+//                 next.resume()
+//             }
+//         }
+//     }
 
-    fn complete() {
-        this.done = true
-        g_coros.set(this.g_list_index, null) _
-        g_coro_indexes.add(this.g_list_index)
-    }
+//     fn complete() {
+//         this.done = true
+//         g_coros.set(this.g_list_index, null) _
+//         g_coro_indexes.add(this.g_list_index)
+//     }
 
-    //////////////
-    // LOOP
-    //////////////
+//     //////////////
+//     // LOOP
+//     //////////////
 
-    static fn loop() {
-        let poll = Coro.get_poll()
-        let coros = g_coros
-        while g_coro_poll_count > 0 {
-            let coros = poll.wait(-1)
-            if coros.length == 0 {
-                break
-            }
-            g_coro_poll_count -= coros.length
-            each coros as coro {
-                coro.resume()
-            }
-        }
-    }
+//     static fn loop() {
+//         let poll = Coro.get_poll()
+//         let coros = g_coros
+//         while g_coro_poll_count > 0 {
+//             let coros = poll.wait(-1)
+//             if coros.length == 0 {
+//                 break
+//             }
+//             g_coro_poll_count -= coros.length
+//             each coros as coro {
+//                 coro.resume()
+//             }
+//         }
+//     }
 
-    ///////////////////
-    // GC list
-    ///////////////////
-    --- static fn transfer_check() {
-        let coros = g_coros
+//     ///////////////////
+//     // GC list
+//     ///////////////////
+//     --- static fn transfer_check() {
+//         let coros = g_coros
 
-        each coros as coro {
-            if isset(coro) {
-                let x = coro.gc_item_count
-                let data = coro.gc_stack
-                while x-- > 0 {
-                    mem:gc_transfer_item(@ptrv(data, ptr, x))
-                }
-            }
-        }
-    }
+//         each coros as coro {
+//             if isset(coro) {
+//                 let x = coro.gc_item_count
+//                 let data = coro.gc_stack
+//                 while x-- > 0 {
+//                     mem:gc_transfer_item(@ptrv(data, ptr, x))
+//                 }
+//             }
+//         }
+//     }
 
-    ///////////////////
-    // GC
-    ///////////////////
-    fn _gc_mark() {
-        let data = this.gc_stack
-        let x = this.gc_item_count
-        while x-- > 0 {
-            mem:gc_mark_item(@ptrv(data, ptr, x))
-        }
-    }
-    fn _gc_mark_shared() {
-        let data = this.gc_stack
-        let x = this.gc_item_count
-        while x-- > 0 {
-            mem:gc_mark_shared_item(@ptrv(data, ptr, x))
-        }
-    }
-    fn _gc_free() {
-        let s = this.stack
-        if s != null : mem:free(s)
-    }
-}
+//     ///////////////////
+//     // GC
+//     ///////////////////
+//     fn _gc_mark() {
+//         let data = this.gc_stack
+//         let x = this.gc_item_count
+//         while x-- > 0 {
+//             mem:gc_mark_item(@ptrv(data, ptr, x))
+//         }
+//     }
+//     fn _gc_mark_shared() {
+//         let data = this.gc_stack
+//         let x = this.gc_item_count
+//         while x-- > 0 {
+//             mem:gc_mark_shared_item(@ptrv(data, ptr, x))
+//         }
+//     }
+//     fn _gc_free() {
+//         let s = this.stack
+//         if s != null : mem:free(s)
+//     }
+// }

@@ -85,6 +85,7 @@ typedef struct VVar VVar;
 typedef struct VThisOrThat VThisOrThat;
 typedef struct VError VError;
 typedef struct VAwait VAwait;
+typedef struct VCoro VCoro;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;

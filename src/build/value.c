@@ -263,10 +263,15 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
         } else if (str_is(tkn, "co")) {
 
+            bool before = p->reading_coro_fcall;
+            p->reading_coro_fcall = true;
             Value* on = read_value(alc, p, true, 1);
-            if(on->rett->type != type_promise) {
-                parse_err(p, -1, "Using 'await' on a non-promise value");
+            p->reading_coro_fcall = before;
+
+            if(on->type != v_func_call) {
+                parse_err(p, -1, "Missing function call statement after 'co' token");
             }
+            v = coro_generate(alc, p, on);
 
         } else if (str_is(tkn, "await")) {
 
@@ -852,17 +857,20 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         p->scope->did_return = true;
     }
 
-    Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
-    if(buffer->type == v_gc_buffer && p->scope->ast) {
-        p->scope->gc_check = true;
-    }
+    Value *buffer = fcall;
+    // Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+    // if(buffer->type == v_gc_buffer && p->scope->ast) {
+    //     p->scope->gc_check = true;
+    // }
 
-    TypeFuncInfo* fi = ont->func_info;
-    if(!fi->is_async && fi->err_names && fi->err_names->length > 0) {
-        VFuncCall* c = fcall->item;
-        c->errh = read_err_handler(alc, p, buffer, fi);
-        if(c->errh && c->errh->err_value) {
-            buffer->rett = c->errh->err_value->rett;
+    if (!p->reading_coro_fcall) {
+        TypeFuncInfo *fi = ont->func_info;
+        if (fi->err_names && fi->err_names->length > 0) {
+            VFuncCall *c = fcall->item;
+            c->errh = read_err_handler(alc, p, buffer, fi);
+            if (c->errh && c->errh->err_value) {
+                buffer->rett = c->errh->err_value->rett;
+            }
         }
     }
 
@@ -941,6 +949,8 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         char* name = array_get_index(class->props->keys, i);
         if(!map_contains(values, name)) {
             if(prop->skip_default_value)
+                continue;
+            if(prop->type->type == type_static_array)
                 continue;
             if(!prop->chunk_value) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);

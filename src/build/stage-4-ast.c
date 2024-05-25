@@ -21,10 +21,10 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
     // TODO: only include Coro.new if an async function was used
-    stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
-    stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
-    stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
-    stage_ast_func(get_valk_class_func(b, "core", "Coro", "complete"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro2", "new"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_fd"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_coro"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "complete"));
 
     b->parse_last = true;
 
@@ -435,6 +435,8 @@ void read_ast(Parser *p, bool single_line) {
                 continue;
             }
             if (str_is(tkn, "await_fd")){
+
+                die("old await_fd not allowed");
 
                 if(!p->func->is_async) {
                     parse_err(p, -1, "Using 'await_fd' in a non-async function");

@@ -33,7 +33,7 @@ void stage_generate_main(Build *b) {
     Func* func = func_make(b->alc, u, scope, "main", "main");
     b->func_main_gen = func;
 
-    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
+    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
     idf = idf_make(b->alc, idf_scope, get_valk_nsc(b, "mem")->scope);
