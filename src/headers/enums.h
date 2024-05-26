@@ -163,6 +163,7 @@ enum VALUES {
     v_this_coro,
     v_setjmp,
     v_longjmp,
+    v_frameptr,
 };
 
 enum TOKENS {

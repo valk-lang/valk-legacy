@@ -357,6 +357,14 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (vt == v_this_coro) {
         return ir->func->var_coro;
     }
+    if (vt == v_frameptr) {
+        Str *code = ir->block->code;
+        char* framep = ir_var(ir->func);
+        str_flat(code, "  ");
+        str_add(code, framep);
+        str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+        return framep;
+    }
     if (vt == v_setjmp) {
         Value* val = v->item;
         char* buf = ir_value(ir, scope, val);
@@ -371,7 +379,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char* s1 = ir_ptrv(ir, buf, "ptr", 0);
         ir_store(ir, s1, framep, "ptr", ir->b->ptr_size);
 
-        // Stack pointer
+        // // Stack pointer
         // str_flat(code, "  ");
         // str_add(code, stackp);
         // str_flat(code, " = tail call ptr @llvm.stacksave()\n");

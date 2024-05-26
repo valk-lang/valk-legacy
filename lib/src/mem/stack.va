@@ -85,7 +85,8 @@ struct Stack {
         gc_stack_adr = gc_stack_adr
         main_stack_adr = stack_adr
         main_gc_stack_adr = gc_stack_adr
-        core:main_jmp_buf = calloc(256)
+        core:main_jmp_buf = calloc(80)
+        core:tmp_jmp_buf = calloc(80)
 
         let s = Stack {
             id: id

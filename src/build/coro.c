@@ -38,6 +38,11 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Coro start function code
     str_flat(code, "(coro: CORO_CLASS) {\n");
+    str_flat(code, "if @setjmp(@ptr_of(coro.jmp_buf)) == 0 {\n");
+    str_flat(code, "  print(\"x\")\n");
+    str_flat(code, "  return\n");
+    str_flat(code, "}\n");
+    str_flat(code, "  print(\"z\")\n");
     if(has_arg) {
         str_flat(code, "let args = coro.stack\n");
     }
@@ -82,7 +87,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     str_flat(code, ")\n");
     // Finish
     if(has_rett) {
-        str_flat(code, "@ptrv(coro.result, T, 0) = res\n");
+        str_flat(code, "@ptrv(coro.result, RETT, 0) = res\n");
     }
     str_flat(code, "coro.complete()\n");
     str_flat(code, "}\n");
@@ -164,7 +169,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     if(has_gc_arg) {
         str_flat(code, "coro.gc_stack_adr = gc_args\n");
     }
-    str_flat(code, "coro.resume()\n"); // Start coroutine
+    str_flat(code, "coro.start()\n"); // Start coroutine
     str_flat(code, "return coro\n");
     str_flat(code, "}\n");
 

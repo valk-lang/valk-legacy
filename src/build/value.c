@@ -103,6 +103,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             } else {
                 v = to;
             }
+        } else if (str_is(tkn, "@frameptr")) {
+            v = value_make(alc, v_frameptr, NULL, type_cache_ptr(b));
         } else if (str_is(tkn, "@setjmp")) {
             tok_expect(p, "(", false, false);
             Value* buf = read_value(alc, p, true, 0);
