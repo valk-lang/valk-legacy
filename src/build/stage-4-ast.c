@@ -436,12 +436,6 @@ void read_ast(Parser *p, bool single_line) {
             }
             if (str_is(tkn, "await_fd")){
 
-                die("old await_fd not allowed");
-
-                if(!p->func->is_async) {
-                    parse_err(p, -1, "Using 'await_fd' in a non-async function");
-                }
-
                 tok_expect(p, "(", false, false);
                 Value* fd = read_value(alc, p, true, 0);
                 type_check(p, type_gen_valk(alc, b, "FD"), fd->rett);
@@ -454,7 +448,7 @@ void read_ast(Parser *p, bool single_line) {
                 tok_expect(p, ")", true, true);
 
                 // Call Coro.await_fd
-                Class *coro_class = get_valk_class(b, "core", "Coro");
+                Class *coro_class = get_valk_class(b, "core", "Coro2");
                 Value *coro = value_make(alc, v_this_coro, NULL, type_gen_class(alc, coro_class));
                 Func* f = map_get(coro_class->funcs, "await_fd");
                 Value* fptr = vgen_func_ptr(alc, f, NULL);
@@ -465,23 +459,6 @@ void read_ast(Parser *p, bool single_line) {
                 array_push(args, write);
                 Value* fcall = vgen_func_call(alc, b, fptr, args);
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
-
-                VAwait* aw = al(alc, sizeof(VAwait));
-                aw->decl = NULL;
-                aw->on = NULL;
-                aw->suspend_index = ++p->func->suspend_index;
-                aw->on_decl = NULL;
-                aw->block = NULL;
-                aw->rett = NULL;
-
-                Array* awas = p->func->awaits;
-                if(!awas) {
-                    awas = array_make(b->alc, 2);
-                    p->func->awaits = awas;
-                }
-                array_push(awas, aw);
-
-                array_push(scope->ast, token_make(alc, t_yield, aw));
                 continue;
             }
             // Check if macro

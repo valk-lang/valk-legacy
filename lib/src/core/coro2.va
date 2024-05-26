@@ -76,12 +76,18 @@ class Coro2 {
             ref = ref.follow_up
         }
         ob.follow_up = this
+        if @setjmp(@ptr_of(this.jmp_buf)) == 0 {
+            @longjmp(main_jmp_buf)
+        }
     }
 
     fn await_fd(fd: FD, read: bool, write: bool) {
         let poll = Coro2.get_poll()
         poll.set(fd, this, read, write)
         g_coro_poll_count++
+        if @setjmp(@ptr_of(this.jmp_buf)) == 0 {
+            @longjmp(main_jmp_buf)
+        }
     }
 
     //////////////
@@ -98,7 +104,7 @@ class Coro2 {
                 let start = this.start_func
                 start(this)
             } else {
-                @longjmp(this.jmp_buf)
+                @longjmp(@ptr_of(this.jmp_buf))
             }
             return
         }
@@ -157,16 +163,16 @@ class Coro2 {
     }
 
     fn _gc_mark() {
-        let base = coro.gc_stack
-        let adr = coro.gc_stack_adr
+        let base = this.gc_stack
+        let adr = this.gc_stack_adr
         while adr > base {
             adr -= sizeof(ptr)
             mem:gc_mark_item(@ptrv(adr, ptr, 0))
         }
     }
     fn _gc_mark_shared() {
-        let base = coro.gc_stack
-        let adr = coro.gc_stack_adr
+        let base = this.gc_stack
+        let adr = this.gc_stack_adr
         while adr > base {
             adr -= sizeof(ptr)
             mem:gc_mark_shared_item(@ptrv(adr, ptr, 0))

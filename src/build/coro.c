@@ -26,7 +26,9 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Generate handler function
     Scope* parent = p->func->scope->parent;
-    Func *func = func_make(b->alc, u, parent, "main", "main");
+    char name[256];
+    sprintf(name, "VALK_CORO_%d", b->coro_count++);
+    Func *func = func_make(b->alc, u, parent, dups(b->alc, name), NULL);
 
     Str* code = b->str_buf;
     str_clear(code);
@@ -103,13 +105,8 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     array_push(p->func->used_functions, func);
 
     ///////////////////////
-    // Generate VCoroInit
+    // Generate init coro
     ///////////////////////
-
-    // VCoro* vc = al(alc, sizeof(VCoro));
-    // vc->start_func = func;
-    // vc->fcall = fcall;
-    // Value *v = value_make(alc, v_coro_init, vc, type_gen_promise(alc, b, fi));
 
     str_clear(code);
 

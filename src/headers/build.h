@@ -105,6 +105,7 @@ struct Build {
     int ptr_size;
     int export_count;
     int string_count;
+    int coro_count;
     int gc_vtables;
     int verbose;
     int LOC;

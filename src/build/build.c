@@ -181,6 +181,7 @@ int cmd_build(int argc, char *argv[]) {
     b->ptr_size = 8;
     b->export_count = 0;
     b->string_count = 0;
+    b->coro_count = 0;
     b->gc_vtables = 0;
     b->verbose = verbose;
     b->LOC = 0;

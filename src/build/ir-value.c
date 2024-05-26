@@ -357,6 +357,44 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     if (vt == v_this_coro) {
         return ir->func->var_coro;
     }
+    if (vt == v_setjmp) {
+        Value* val = v->item;
+        char* buf = ir_value(ir, scope, val);
+        char* framep = ir_var(ir->func);
+        char* stackp = ir_var(ir->func);
+        char* result = ir_var(ir->func);
+        Str *code = ir->block->code;
+        // Frame pointer
+        str_flat(code, "  ");
+        str_add(code, framep);
+        str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+        char* s1 = ir_ptrv(ir, buf, "ptr", 0);
+        ir_store(ir, s1, framep, "ptr", ir->b->ptr_size);
+
+        // Stack pointer
+        // str_flat(code, "  ");
+        // str_add(code, stackp);
+        // str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+        // char* s2 = ir_ptrv(ir, buf, "ptr", 2);
+        // ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size);
+
+        // Call setjmp
+        str_flat(code, "  ");
+        str_add(code, result);
+        str_flat(code, " = tail call i32 @llvm.eh.sjlj.setjmp(ptr ");
+        str_add(code, buf);
+        str_flat(code, ")\n");
+        return result;
+    }
+    if (vt == v_longjmp) {
+        Value* val = v->item;
+        char* buf = ir_value(ir, scope, val);
+        Str *code = ir->block->code;
+        str_flat(code, "  call void @llvm.eh.sjlj.longjmp(ptr ");
+        str_add(code, buf);
+        str_flat(code, ")\n");
+        return "";
+    }
 
     printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
     exit(1);

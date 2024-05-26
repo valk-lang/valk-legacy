@@ -103,6 +103,22 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             } else {
                 v = to;
             }
+        } else if (str_is(tkn, "@setjmp")) {
+            tok_expect(p, "(", false, false);
+            Value* buf = read_value(alc, p, true, 0);
+            tok_expect(p, ")", true, true);
+            if(!buf->rett->is_pointer) {
+                parse_err(p, -1, "Expected a value that return a pointer type");
+            }
+            v = value_make(alc, v_setjmp, buf, type_cache_u32(b));
+        } else if (str_is(tkn, "@longjmp")) {
+            tok_expect(p, "(", false, false);
+            Value* buf = read_value(alc, p, true, 0);
+            tok_expect(p, ")", true, true);
+            if(!buf->rett->is_pointer) {
+                parse_err(p, -1, "Expected a value that return a pointer type");
+            }
+            v = value_make(alc, v_longjmp, buf, type_gen_void(alc));
         } else if (str_is(tkn, "@gc_get_vtable")) {
             tok_expect(p, "(", false, false);
             Value* index = read_value(alc, p, true, 0);

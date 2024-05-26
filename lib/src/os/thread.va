@@ -21,7 +21,7 @@ struct Thread {
             let func = e.func @as fn()(void);
             func();
         }
-        core:Coro.loop()
+        core:Coro2.loop()
         mem:stack.shutdown()
     }
 

@@ -21,6 +21,12 @@ void ir_gen_final(IR* ir) {
     str_append(code, ir->code_extern);
     str_append_chars(code, "\n");
 
+    str_append_chars(code, "declare ptr @llvm.frameaddress(i32) nounwind readnone\n");
+    str_append_chars(code, "declare ptr @llvm.stacksave() nounwind\n");
+    str_append_chars(code, "declare i32 @llvm.eh.sjlj.setjmp(ptr) nounwind\n");
+    str_append_chars(code, "declare void @llvm.eh.sjlj.longjmp(ptr) nounwind\n");
+    str_append_chars(code, "\n");
+
     // Attrs
     for (int i = 0; i < ir->attrs->length; i++) {
         str_append_chars(code, array_get_index(ir->attrs, i));
