@@ -342,7 +342,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             v = value_make(alc, v_await, aw, aw->rett);
 
-
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
             tok_expect(p, "(", false, false);

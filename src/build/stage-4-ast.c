@@ -460,6 +460,21 @@ void read_ast(Parser *p, bool single_line) {
                 Value* fcall = vgen_func_call(alc, b, fptr, args);
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
+
+            } else if (str_is(tkn, "await_last_coro")) {
+                //
+                Global *g_coro = get_valk_global(b, "core", "current_coro");
+                Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
+                // Call Coro.await_last_coro
+                Class *coro_class = get_valk_class(b, "core", "Coro2");
+                Func* f = map_get(coro_class->funcs, "await_last_coro");
+                func_mark_used(p->func, f);
+                Value* fptr = vgen_func_ptr(alc, f, NULL);
+                Array* args = array_make(alc, 4);
+                array_push(args, coro);
+                Value* fcall = vgen_func_call(alc, b, fptr, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
+                continue;
             }
             // Check if macro
             Idf* idf = scope_find_idf(scope, tkn, true);

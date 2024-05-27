@@ -381,18 +381,18 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char* result = ir_var(ir->func);
         Str *code = ir->block->code;
         // Frame pointer
-        // str_flat(code, "  ");
-        // str_add(code, framep);
-        // str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
-        // char* s1 = ir_ptrv(ir, buf, "ptr", 0);
-        // ir_store(ir, s1, framep, "ptr", ir->b->ptr_size);
+        str_flat(code, "  ");
+        str_add(code, framep);
+        str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+        char* s1 = ir_ptrv(ir, buf, "ptr", 0);
+        ir_store(ir, s1, framep, "ptr", ir->b->ptr_size * 2);
 
         // // Stack pointer
-        // str_flat(code, "  ");
-        // str_add(code, stackp);
-        // str_flat(code, " = tail call ptr @llvm.stacksave()\n");
-        // char* s2 = ir_ptrv(ir, buf, "ptr", 2);
-        // ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size);
+        str_flat(code, "  ");
+        str_add(code, stackp);
+        str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+        char* s2 = ir_ptrv(ir, buf, "ptr", 2);
+        ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size * 2);
 
         // Call setjmp
         str_flat(code, "  ");

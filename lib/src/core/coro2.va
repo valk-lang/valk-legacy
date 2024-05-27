@@ -4,7 +4,7 @@ use io
 
 global coro_run_first : ?Coro2 (null)
 global coro_run_last : ?Coro2 (null)
-global current_coro : ?Coro2 (null)
+global current_coro : @ignu(Coro2)
 
 global coro_poll : ?io:SimplePoll[Coro2] (null)
 global g_coros : @ignu(Array[?Coro2])
@@ -104,6 +104,18 @@ class Coro2 {
         this.block()
     }
 
+    fn await_last_coro() {
+        let last = coro_run_last
+        if isset(last) {
+            last.next_resume = this
+            coro_run_last = this
+        } else {
+            coro_run_first = this
+            coro_run_last = this
+        }
+        this.block()
+    }
+
     //////////////
     // FLOW
     //////////////
@@ -128,13 +140,14 @@ class Coro2 {
 
     fn start() {
         let pad = @stack(inline [u8, 300])
+        this.started = true
         this.s_bottom = pad
         let start = this.start_func
         start(this)
     }
     fn continue() {
         mem:copy(this.s_stack @as ptr, this.s_top, (this.s_bottom - this.s_top) @as uint);
-        longjmp(@ptr_of(this.jmp_buf))
+        @longjmp(this.s_cont)
     }
 
     fn resume() {
@@ -179,7 +192,9 @@ class Coro2 {
             let coro = coro_run_first
             while isset(coro) {
                 coro.resume()
-                coro = coro.next_resume
+                let next = coro.next_resume
+                coro.next_resume = null
+                coro = next
             }
             coro_run_first = null
             coro_run_last = null
