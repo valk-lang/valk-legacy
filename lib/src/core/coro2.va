@@ -2,7 +2,10 @@
 use mem
 use io
 
-global run_coroutine : ?Coro2 (null)
+global coro_run_first : ?Coro2 (null)
+global coro_run_last : ?Coro2 (null)
+global current_coro : ?Coro2 (null)
+
 global coro_poll : ?io:SimplePoll[Coro2] (null)
 global g_coros : @ignu(Array[?Coro2])
 global g_coro_indexes : @ignu(Pool[uint])
@@ -14,27 +17,32 @@ global tmp_jmp_buf : @ignu(ptr)
 global frame_ptr : @ignu(ptr)
 
 class Coro2 {
-    stack: mem:StackPos
     gc_stack: mem:StackPos
     result: ptr
     start_func: fn(Coro2)()
     handler: fn()()
     follow_up: ?Coro2 (null)
+    next_resume: ?Coro2 (null)
     g_list_index: uint (0)
     jmp_buf: inline [u8, 256]
+
+    s_stack: ?ptr (null)
+    s_top: ptr (0 @as ptr)
+    s_bottom: ptr (0 @as ptr)
+    s_cont: ptr (0 @as ptr)
+    s_size: uint (0)
+
     error: u32 (0)
     started: bool (false)
     done: bool (false)
 
     static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
 
-        let stack = mem:create_stack()
         let gc_stack = mem:create_stack()
 
         let coro = Coro2 {
-            stack: stack
             gc_stack: gc_stack
-            result: result_is_gc ? gc_stack.adr : stack.adr
+            result: result_is_gc ? gc_stack.adr : mem:alloc(16) // TODO Fix
             //
             start_func: start_func @as fn(Coro2)()
             handler: handler @as fn()()
@@ -49,6 +57,16 @@ class Coro2 {
             g_coros.set(index, coro) _
             coro.g_list_index = index
         }
+
+        let last = coro_run_last
+        if isset(last) {
+            last.next_resume = coro
+        } else {
+            coro_run_first = coro
+            coro_run_last = coro
+        }
+
+        g_coro_count++
 
         return coro
     }
@@ -75,68 +93,97 @@ class Coro2 {
             ref = ref.follow_up
         }
         ob.follow_up = this
-        if setjmp(@ptr_of(this.jmp_buf)) == 0 {
-            longjmp(main_jmp_buf)
-        }
+        this.block()
     }
 
     fn await_fd(fd: FD, read: bool, write: bool) {
         let poll = Coro2.get_poll()
         poll.set(fd, this, read, write)
         g_coro_poll_count++
-        if setjmp(@ptr_of(this.jmp_buf)) == 0 {
-            longjmp(main_jmp_buf)
-        }
+        this.block()
     }
 
     //////////////
     // FLOW
     //////////////
 
-    fn test() {
-        let x = 1
-        setjmp(tmp_jmp_buf)
-        println(x++)
+    // fn test() {
+    //     let x = 1
+    //     setjmp(tmp_jmp_buf)
+    //     println(x++)
+    // }
+
+    // fn start() {
+    //     // this.test()
+    //     // longjmp(tmp_jmp_buf)
+    //     //
+
+    //     let fp_start = @stackptr
+    //     let start = this.start_func
+
+    //     let current_stack = mem:stack_pos
+    //     mem:stack_pos = this.gc_stack
+    //     start(this)
+    //     mem:stack_pos = current_stack
+
+    //     let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 2)
+    //     let fp_size = (fp_start - fp_end) @as uint
+    //     //
+    //     // println(fp_start)
+    //     // println(fp_end)
+    //     // println(fp_size)
+    //     let stack = this.stack
+    //     let entry = stack.adr + stack.size - fp_size
+    //     mem:copy(fp_end, entry, fp_size)
+
+    //     // @ptrv(@ptr_of(this.jmp_buf), ptr, 2) = entry
+    // }
+    fn block() {
+        let here = @stack(inline [ptr, 5])
+        if @setjmp(here) == 0 {
+            this.s_cont = here @as ptr
+            this.s_top = this.s_cont - 32
+
+            // Copy stack
+            let size = (this.s_bottom - this.s_top) @as uint
+            let stack = mem:alloc(size)
+            mem:copy(this.s_top, stack, size)
+            this.s_size = size
+            this.s_stack = stack
+
+            // Jump out
+            @longjmp(main_jmp_buf)
+        }
     }
 
     fn start() {
-        // this.test()
-        // longjmp(tmp_jmp_buf)
-        //
-        g_coro_count++
-
-        let fp_start = @stackptr
+        let pad = @stack(inline [u8, 300])
+        this.s_bottom = pad
         let start = this.start_func
-
-        mem:stack_pos = this.gc_stack
         start(this)
-        mem:stack_pos = mem:main_stack_pos
-
-        let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 2)
-        let fp_size = (fp_start - fp_end) @as uint
-        //
-        // println(fp_start)
-        // println(fp_end)
-        // println(fp_size)
-        let stack = this.stack
-        let entry = stack.adr + stack.size - fp_size
-        mem:copy(fp_end, entry, fp_size)
-
-        // @ptrv(@ptr_of(this.jmp_buf), ptr, 2) = entry
+    }
+    fn continue() {
+        mem:copy(this.s_stack @as ptr, this.s_top, (this.s_bottom - this.s_top) @as uint);
+        longjmp(@ptr_of(this.jmp_buf))
     }
 
     fn resume() {
         if this.done : return
-        run_coroutine = this
+        current_coro = this
 
-        if setjmp(main_jmp_buf) == 0 {
+        // let buf = @stack(inline [ptr, 5])
+        let current_stack = mem:stack_pos
+        if @setjmp(main_jmp_buf) == 0 {
             print("1.")
             mem:stack_pos = this.gc_stack
-            longjmp(@ptr_of(this.jmp_buf))
+            if this.started == false {
+                this.start()
+            } else {
+                this.continue()
+            }
             print("2.")
-            return
         }
-        mem:stack_pos = mem:main_stack_pos
+        mem:stack_pos = current_stack
         print("3.")
 
         if this.done {
@@ -152,7 +199,6 @@ class Coro2 {
         g_coro_count--
         g_coros.set(this.g_list_index, null) _
         g_coro_indexes.add(this.g_list_index)
-        longjmp(main_jmp_buf)
     }
 
     //////////////
@@ -161,18 +207,16 @@ class Coro2 {
 
     static fn loop() {
         let poll = Coro2.get_poll()
-        let all = g_coros
         while g_coro_count > 0 {
-            each all as coro {
-                if isset(coro) {
-                    if coro.started == false {
-                print("R.")
-                        coro.started = true
-                        coro.resume()
-                print("D.")
-                    }
-                }
+            // Run coro chain
+            let coro = coro_run_first
+            while isset(coro) {
+                coro.resume()
+                coro = coro.next_resume
             }
+            coro_run_first = null
+            coro_run_last = null
+            // Wait for poll coros
             if g_coro_poll_count > 0 {
                 let coros = poll.wait(-1)
                 if coros.length == 0 {
@@ -223,7 +267,6 @@ class Coro2 {
     }
 
     fn _gc_free() {
-        mem:free(this.stack)
-        mem:free(this.gc_stack)
+        // mem:free(this.gc_stack)
     }
 }

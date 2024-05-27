@@ -76,7 +76,16 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Type* type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
             int size = (type->class ? type->class->size : type->size);
-            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), type);
+            Type* rett = type;
+            if(!type->is_pointer) {
+                if(type->type == type_static_array) {
+                    rett = type_clone(alc, type);
+                    rett->is_pointer = true;
+                } else {
+                    rett = type_cache_ptr(b);
+                }
+            }
+            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), rett);
 
         } else if (str_is(tkn, "@stack_bytes")) {
             tok_expect(p, "(", false, false);
