@@ -771,7 +771,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
 
-    parse_err(p, -1, "Identifier cannot be used as a value", idf->type);
+    parse_err(p, -1, "Identifier cannot be used as a value: %d", idf->type);
     return NULL;
 }
 

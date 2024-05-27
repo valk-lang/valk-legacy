@@ -74,8 +74,8 @@ class Coro2 {
             ref = ref.follow_up
         }
         ob.follow_up = this
-        if @setjmp(@ptr_of(this.jmp_buf)) == 0 {
-            @longjmp(main_jmp_buf)
+        if setjmp(@ptr_of(this.jmp_buf)) == 0 {
+            longjmp(main_jmp_buf)
         }
     }
 
@@ -83,8 +83,8 @@ class Coro2 {
         let poll = Coro2.get_poll()
         poll.set(fd, this, read, write)
         g_coro_poll_count++
-        if @setjmp(@ptr_of(this.jmp_buf)) == 0 {
-            @longjmp(main_jmp_buf)
+        if setjmp(@ptr_of(this.jmp_buf)) == 0 {
+            longjmp(main_jmp_buf)
         }
     }
 
@@ -94,13 +94,13 @@ class Coro2 {
 
     fn test() {
         let x = 1
-        @setjmp(tmp_jmp_buf)
+        setjmp(tmp_jmp_buf)
         println(x++)
     }
 
     fn start() {
         // this.test()
-        // @longjmp(tmp_jmp_buf)
+        // longjmp(tmp_jmp_buf)
         //
         g_coro_count++
 
@@ -128,10 +128,10 @@ class Coro2 {
         if this.done : return
         run_coroutine = this
 
-        if @setjmp(main_jmp_buf) == 0 {
+        if setjmp(main_jmp_buf) == 0 {
             print("1.")
             mem:stack_pos = this.gc_stack
-            @longjmp(@ptr_of(this.jmp_buf))
+            longjmp(@ptr_of(this.jmp_buf))
             print("2.")
             return
         }
@@ -151,7 +151,7 @@ class Coro2 {
         g_coro_count--
         g_coros.set(this.g_list_index, null) _
         g_coro_indexes.add(this.g_list_index)
-        @longjmp(main_jmp_buf)
+        longjmp(main_jmp_buf)
     }
 
     //////////////

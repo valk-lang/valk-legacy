@@ -106,7 +106,6 @@ struct Stack {
         mem_marked = mem_marked_default
 
         pools_init()
-        //GcPool.init()
 
         s.scan_globals()
 

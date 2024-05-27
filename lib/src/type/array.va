@@ -11,10 +11,12 @@ class Array[T] {
         if start_size < 2 {
             start_size = 2
         }
-        return CLASS {
+        io:print_fake("g\n")
+        let x = CLASS {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
         };
+        return x
     }
 
     fn push(item: T) uint {

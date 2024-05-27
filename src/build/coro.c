@@ -33,12 +33,14 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     Str* code = b->str_buf;
     str_clear(code);
 
-    Idf *idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
+    idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "setjmp"));
+    scope_set_idf(func->scope, "SETJMP", idf, NULL);
 
     // Coro start function code
     str_flat(code, "(coro: CORO_CLASS) {\n");
-    str_flat(code, "if @setjmp(@ptr_of(coro.jmp_buf)) == 0 {\n");
+    str_flat(code, "if SETJMP(@ptr_of(coro.jmp_buf)) == 0 {\n");
     str_flat(code, "  print(\"x\")\n");
     str_flat(code, "  return\n");
     str_flat(code, "}\n");
