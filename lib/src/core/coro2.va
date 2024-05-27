@@ -61,6 +61,7 @@ class Coro2 {
         let last = coro_run_last
         if isset(last) {
             last.next_resume = coro
+            coro_run_last = coro
         } else {
             coro_run_first = coro
             coro_run_last = coro
@@ -107,37 +108,6 @@ class Coro2 {
     // FLOW
     //////////////
 
-    // fn test() {
-    //     let x = 1
-    //     setjmp(tmp_jmp_buf)
-    //     println(x++)
-    // }
-
-    // fn start() {
-    //     // this.test()
-    //     // longjmp(tmp_jmp_buf)
-    //     //
-
-    //     let fp_start = @stackptr
-    //     let start = this.start_func
-
-    //     let current_stack = mem:stack_pos
-    //     mem:stack_pos = this.gc_stack
-    //     start(this)
-    //     mem:stack_pos = current_stack
-
-    //     let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 2)
-    //     let fp_size = (fp_start - fp_end) @as uint
-    //     //
-    //     // println(fp_start)
-    //     // println(fp_end)
-    //     // println(fp_size)
-    //     let stack = this.stack
-    //     let entry = stack.adr + stack.size - fp_size
-    //     mem:copy(fp_end, entry, fp_size)
-
-    //     // @ptrv(@ptr_of(this.jmp_buf), ptr, 2) = entry
-    // }
     fn block() {
         let here = @stack(inline [ptr, 5])
         if @setjmp(here) == 0 {
@@ -174,17 +144,14 @@ class Coro2 {
         // let buf = @stack(inline [ptr, 5])
         let current_stack = mem:stack_pos
         if @setjmp(main_jmp_buf) == 0 {
-            print("1.")
             mem:stack_pos = this.gc_stack
             if this.started == false {
                 this.start()
             } else {
                 this.continue()
             }
-            print("2.")
         }
         mem:stack_pos = current_stack
-        print("3.")
 
         if this.done {
             let next = this.follow_up

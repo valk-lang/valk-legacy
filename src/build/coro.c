@@ -40,7 +40,6 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Coro start function code
     str_flat(code, "(coro: CORO_CLASS) {\n");
-    str_flat(code, "  print(\"z\")\n");
     if(has_arg) {
         str_flat(code, "let args = coro.stack\n");
     }
