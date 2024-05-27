@@ -12,10 +12,6 @@ global g_coro_indexes : @ignu(Pool[uint])
 global g_coro_poll_count : uint
 global g_coro_count : uint
 
-global main_jmp_buf : @ignu(ptr)
-global tmp_jmp_buf : @ignu(ptr)
-global frame_ptr : @ignu(ptr)
-
 class Coro2 {
     gc_stack: mem:StackPos
     result: ptr
@@ -24,13 +20,13 @@ class Coro2 {
     follow_up: ?Coro2 (null)
     next_resume: ?Coro2 (null)
     g_list_index: uint (0)
-    jmp_buf: inline [u8, 256]
 
     s_stack: ?ptr (null)
     s_top: ptr (0 @as ptr)
     s_bottom: ptr (0 @as ptr)
     s_cont: ptr (0 @as ptr)
     s_size: uint (0)
+    s_back_buf: ptr (0 @as ptr)
 
     error: u32 (0)
     started: bool (false)
@@ -134,7 +130,7 @@ class Coro2 {
             this.s_stack = stack
 
             // Jump out
-            @longjmp(main_jmp_buf)
+            @longjmp(this.s_back_buf)
         }
     }
 
@@ -154,9 +150,10 @@ class Coro2 {
         if this.done : return
         current_coro = this
 
-        // let buf = @stack(inline [ptr, 5])
+        let jmpbuf = @stack(inline [ptr, 5])
         let current_stack = mem:stack_pos
-        if @setjmp(main_jmp_buf) == 0 {
+        if @setjmp(jmpbuf) == 0 {
+            this.s_back_buf = jmpbuf
             mem:stack_pos = this.gc_stack
             if this.started == false {
                 this.start()

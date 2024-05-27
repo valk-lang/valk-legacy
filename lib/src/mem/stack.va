@@ -91,9 +91,6 @@ struct Stack {
         stack_pos = pos
         main_stack_pos = pos
 
-        core:main_jmp_buf = calloc(256)
-        core:tmp_jmp_buf = calloc(256)
-
         let s = Stack {
             id: id
             transfer: ObjectChain.new()
