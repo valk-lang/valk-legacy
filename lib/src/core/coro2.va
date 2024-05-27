@@ -11,6 +11,7 @@ global g_coro_count : uint
 
 global main_jmp_buf : @ignu(ptr)
 global tmp_jmp_buf : @ignu(ptr)
+global frame_ptr : @ignu(ptr)
 
 class Coro2 {
     stack: mem:StackPos
@@ -104,24 +105,24 @@ class Coro2 {
         //
         g_coro_count++
 
-        let fp_start = @frameptr
+        let fp_start = @stackptr
         let start = this.start_func
 
         mem:stack_pos = this.gc_stack
         start(this)
         mem:stack_pos = mem:main_stack_pos
 
-        let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 0)
+        let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 2)
         let fp_size = (fp_start - fp_end) @as uint
         //
-        println(fp_start)
-        println(fp_end)
-        println(fp_size)
+        // println(fp_start)
+        // println(fp_end)
+        // println(fp_size)
         let stack = this.stack
         let entry = stack.adr + stack.size - fp_size
         mem:copy(fp_end, entry, fp_size)
 
-        @ptrv(@ptr_of(this.jmp_buf), ptr, 0) = entry
+        // @ptrv(@ptr_of(this.jmp_buf), ptr, 2) = entry
     }
 
     fn resume() {

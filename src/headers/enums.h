@@ -164,6 +164,7 @@ enum VALUES {
     v_setjmp,
     v_longjmp,
     v_frameptr,
+    v_stackptr,
 };
 
 enum TOKENS {

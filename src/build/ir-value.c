@@ -365,6 +365,14 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
         return framep;
     }
+    if (vt == v_stackptr) {
+        Str *code = ir->block->code;
+        char* ptr = ir_var(ir->func);
+        str_flat(code, "  ");
+        str_add(code, ptr);
+        str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+        return ptr;
+    }
     if (vt == v_setjmp) {
         Value* val = v->item;
         char* buf = ir_value(ir, scope, val);

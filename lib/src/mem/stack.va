@@ -88,8 +88,8 @@ struct Stack {
         let id = atomic(stack_count + 1)
 
         let pos = create_stack()
-        stack_pos = stack_pos
-        main_stack_pos = stack_pos
+        stack_pos = pos
+        main_stack_pos = pos
 
         core:main_jmp_buf = calloc(256)
         core:tmp_jmp_buf = calloc(256)
