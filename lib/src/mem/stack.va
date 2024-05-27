@@ -42,20 +42,29 @@ value byte_gc_age_rel (-5)
 
 shared stack_count: uint
 
-global stack_adr: @ignu(ptr)
-global gc_stack_adr: @ignu(ptr)
-global main_stack_adr: @ignu(ptr)
-global main_gc_stack_adr: @ignu(ptr)
+global stack_pos: @ignu(StackPos)
+global main_stack_pos: @ignu(StackPos)
 
-fn create_stack() ptr {
-    return alloc(stack_size)
+struct StackPos {
+    base: ptr
+    adr: ptr
+    size: uint
+    static fn free(pos: StackPos) {
+        free(pos.base)
+        free(pos)
+    }
+}
+fn create_stack() StackPos {
+    let base = alloc(stack_size)
+    return StackPos { 
+        base: base
+        adr: base
+        size: stack_size
+    }
 }
 
 struct Stack {
     id: uint
-    stack_base : ptr
-    stack_adr : ptr
-    stack_adr_last : ptr
 
     transfer : ObjectChain
     shared : GcRing
@@ -78,22 +87,15 @@ struct Stack {
 
         let id = atomic(stack_count + 1)
 
-        let stack_adr = create_stack()
-        let gc_stack_adr = create_stack()
+        let pos = create_stack()
+        stack_pos = stack_pos
+        main_stack_pos = stack_pos
 
-        stack_adr = stack_adr
-        gc_stack_adr = gc_stack_adr
-        main_stack_adr = stack_adr
-        main_gc_stack_adr = gc_stack_adr
-        core:main_jmp_buf = calloc(80)
-        core:tmp_jmp_buf = calloc(80)
+        core:main_jmp_buf = calloc(256)
+        core:tmp_jmp_buf = calloc(256)
 
         let s = Stack {
             id: id
-            stack_base: gc_stack_adr
-            stack_adr: gc_stack_adr
-            stack_adr_last: gc_stack_adr
-
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
@@ -206,7 +208,6 @@ struct Stack {
         }
         pools_reset()
 
-        this.stack_adr_last = this.stack_adr
         disable_gc = false
         mem_new = 0
         this.lock.unlock()
@@ -236,9 +237,9 @@ struct Stack {
         #endloop
 
         // Stack
-        let stack_base = this.stack_base
-        let stack_adr = this.stack_adr
-        let adr_last = this.stack_adr_last
+        let pos = main_stack_pos
+        let stack_base = pos.base
+        let stack_adr = pos.adr
 
         // Mark new items as transfer
         let adr = stack_adr;
@@ -332,8 +333,9 @@ struct Stack {
         #end
         #endloop
         // Stack
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
@@ -366,8 +368,9 @@ struct Stack {
             }
         }
         // Stack
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
@@ -416,7 +419,8 @@ struct Stack {
     fn shutdown() {
         //
         this.force_full = true
-        this.stack_adr = this.stack_base
+        let pos = main_stack_pos
+        pos.adr = pos.base
         this.gc()
         //
         disable_gc = true
@@ -432,8 +436,9 @@ struct Stack {
 
     fn print() {
         print("---------\n")
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             item.print()

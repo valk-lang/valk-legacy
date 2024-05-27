@@ -94,10 +94,10 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     }
 
     if(vfunc->calls_gc_check || vfunc->gc_decl_count > 0) {
-        Global* g = get_valk_global(ir->b, "mem", "stack");
+        Global* g = get_valk_global(ir->b, "mem", "stack_pos");
         char* g_stack = ir_load(ir, g->type, ir_global(ir, g));
         func->var_g_stack = g_stack;
-        func->var_g_stack_adr_ref = ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "stack_adr"));
+        func->var_g_stack_adr_ref = ir_class_pa(ir, g->type->class, g_stack, map_get(g->type->class->props, "adr"));
         func->var_g_stack_adr = ir_load(ir, type_cache_ptr(b), func->var_g_stack_adr_ref);
     }
 

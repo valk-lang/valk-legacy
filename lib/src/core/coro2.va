@@ -13,11 +13,8 @@ global main_jmp_buf : @ignu(ptr)
 global tmp_jmp_buf : @ignu(ptr)
 
 class Coro2 {
-    stack: ptr
-    stack_adr: ptr
-    stack_size: uint
-    gc_stack: ptr
-    gc_stack_adr: ptr
+    stack: mem:StackPos
+    gc_stack: mem:StackPos
     result: ptr
     start_func: fn(Coro2)()
     handler: fn()()
@@ -30,16 +27,13 @@ class Coro2 {
 
     static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
 
-        let stack_adr = mem:create_stack()
-        let gc_stack_adr = mem:create_stack()
+        let stack = mem:create_stack()
+        let gc_stack = mem:create_stack()
 
         let coro = Coro2 {
-            stack: stack_adr
-            stack_adr: stack_adr
-            stack_size: mem:stack_size
-            gc_stack: gc_stack_adr
-            gc_stack_adr: gc_stack_adr
-            result: result_is_gc ? gc_stack_adr : stack_adr
+            stack: stack
+            gc_stack: gc_stack
+            result: result_is_gc ? gc_stack.adr : stack.adr
             //
             start_func: start_func @as fn(Coro2)()
             handler: handler @as fn()()
@@ -98,13 +92,25 @@ class Coro2 {
     // FLOW
     //////////////
 
+    fn test() {
+        let x = 1
+        @setjmp(tmp_jmp_buf)
+        println(x++)
+    }
+
     fn start() {
+        // this.test()
+        // @longjmp(tmp_jmp_buf)
         //
         g_coro_count++
 
         let fp_start = @frameptr
         let start = this.start_func
+
+        mem:stack_pos = this.gc_stack
         start(this)
+        mem:stack_pos = mem:main_stack_pos
+
         let fp_end = @ptrv(@ptr_of(this.jmp_buf), ptr, 0)
         let fp_size = (fp_start - fp_end) @as uint
         //
@@ -112,11 +118,10 @@ class Coro2 {
         println(fp_end)
         println(fp_size)
         let stack = this.stack
-        let stack_size = this.stack_size
-        let entry = stack + stack_size - fp_size
+        let entry = stack.adr + stack.size - fp_size
         mem:copy(fp_end, entry, fp_size)
 
-        // @ptrv(@ptr_of(this.jmp_buf), ptr, 0) = entry
+        @ptrv(@ptr_of(this.jmp_buf), ptr, 0) = entry
     }
 
     fn resume() {
@@ -124,12 +129,14 @@ class Coro2 {
         run_coroutine = this
 
         if @setjmp(main_jmp_buf) == 0 {
-                print("1.")
+            print("1.")
+            mem:stack_pos = this.gc_stack
             @longjmp(@ptr_of(this.jmp_buf))
-                print("2.")
+            print("2.")
             return
         }
-                print("3.")
+        mem:stack_pos = mem:main_stack_pos
+        print("3.")
 
         if this.done {
             let next = this.follow_up
@@ -187,8 +194,8 @@ class Coro2 {
 
         each coros as coro {
             if isset(coro) {
-                let base = coro.gc_stack
-                let adr = coro.gc_stack_adr
+                let base = coro.gc_stack.base
+                let adr = coro.gc_stack.adr
                 while adr > base {
                     adr -= sizeof(ptr)
                     mem:gc_transfer_item(@ptrv(adr, ptr, 0))
@@ -198,16 +205,16 @@ class Coro2 {
     }
 
     fn _gc_mark() {
-        let base = this.gc_stack
-        let adr = this.gc_stack_adr
+        let base = this.gc_stack.base
+        let adr = this.gc_stack.adr
         while adr > base {
             adr -= sizeof(ptr)
             mem:gc_mark_item(@ptrv(adr, ptr, 0))
         }
     }
     fn _gc_mark_shared() {
-        let base = this.gc_stack
-        let adr = this.gc_stack_adr
+        let base = this.gc_stack.base
+        let adr = this.gc_stack.adr
         while adr > base {
             adr -= sizeof(ptr)
             mem:gc_mark_shared_item(@ptrv(adr, ptr, 0))

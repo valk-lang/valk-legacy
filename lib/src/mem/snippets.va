@@ -13,6 +13,6 @@ snippet run_gc_check() {
 }
 
 snippet stack_reduce() {
-    // @cached_stack_address = @cached_stack_address
-    @cached_stack_instance.stack_adr = @cached_stack_address
+    @cached_stack_address = @cached_stack_address
+    // @cached_stack_instance.stack_adr = @cached_stack_address
 }
