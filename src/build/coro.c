@@ -40,7 +40,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Handler type
     Type *ht = type_make(b->alc, type_func);
-    ht->func_info = fi;
+    ht->func_info = type_clone_function_info(b->alc, fi);
     ht->size = b->ptr_size;
     ht->is_pointer = true;
     idf = idf_make(b->alc, idf_type, ht);
@@ -61,8 +61,9 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         char tnr[33];
         sprintf(nr, "%d", i);
         sprintf(tnr, "T%d", i);
-        Idf *idf = idf_make(b->alc, idf_type, type);
+        Idf *idf = idf_make(b->alc, idf_type, type_clone(b->alc, type));
         scope_set_idf(func->scope, tnr, idf, NULL);
+
         str_flat(code, "let arg");
         str_add(code, nr);
         str_flat(code, " = @ptrv(");

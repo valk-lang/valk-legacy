@@ -127,10 +127,17 @@ class Coro2 {
 
             // Copy stack
             let size = (this.s_bottom - this.s_top) @as uint
-            let stack = mem:alloc(size)
-            mem:copy(this.s_top, stack, size)
-            this.s_size = size
-            this.s_stack = stack
+            let stack = this.s_stack
+            let has_stack = isset(stack)
+            let create_stack = !has_stack || size > this.s_size
+            if create_stack {
+                if has_stack : mem:free(stack @as ptr)
+                stack = mem:alloc(size)
+                this.s_size = size
+                this.s_stack = stack
+            }
+
+            mem:copy(this.s_top, stack @as ptr, size)
 
             // Jump out
             @longjmp(this.s_back_buf)

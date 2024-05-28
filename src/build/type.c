@@ -188,6 +188,29 @@ Type* type_clone(Allocator* alc, Type* type) {
     return t;
 }
 
+TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi) {
+
+    TypeFuncInfo* fi2 = al(alc, sizeof(TypeFuncInfo));
+    *fi2 = *fi;
+    fi2->args = fi->args ? clone_array_of_types(alc, fi->args) : NULL;
+    fi2->default_values = fi->default_values ? array_make(alc, fi->default_values->length + 1) : NULL;
+    fi2->err_names = fi->err_names ? array_make(alc, fi->err_names->length + 1) : NULL;
+    fi2->err_values = fi->err_values ? array_make(alc, fi->err_values->length + 1) : NULL;
+    fi2->rett_types = fi->rett_types ? clone_array_of_types(alc, fi->rett_types) : NULL;
+    fi2->rett = fi->rett ? type_clone(alc, fi->rett) : NULL;
+
+    return fi2;
+}
+
+Array *clone_array_of_types(Allocator *alc, Array *types) {
+    Array *list = array_make(alc, types->length + 1);
+    for(int i = 0; i < types->length; i++) {
+        Type* t = array_get_index(types, i);
+        array_push(list, type_clone(alc, t));
+    }
+    return list;
+}
+
 Type* type_gen_void(Allocator* alc) {
     return type_make(alc, type_void);
 }

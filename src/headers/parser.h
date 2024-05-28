@@ -37,6 +37,7 @@ struct Parser {
     bool on_newline;
     bool parse_last;
     bool reading_coro_fcall;
+    bool init_thread;
 };
 
 #endif

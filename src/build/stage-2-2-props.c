@@ -50,11 +50,17 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             break;
 
         p->parse_last = false;
+        p->init_thread = false;
         if (t == tok_hashtag && p->on_newline) {
             t = tok(p, false, false, false);
             if(str_is(p->tkn, "parse_last")) {
                 t = tok(p, false, false, true);
                 p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else if(str_is(p->tkn, "init_thread")) {
+                t = tok(p, false, false, true);
+                p->init_thread = true;
                 tok_expect_newline(p);
                 t = tok(p, true, true, true);
             } else {
@@ -181,6 +187,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->is_static = is_static;
         func->is_inline = is_inline;
         func->in_header = class->in_header;
+        func->init_thread = p->init_thread;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

@@ -86,10 +86,13 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->block = func->block_code;
 
     if(vfunc == b->func_main_gen) {
-        // Init GcMan & Stack
+        // Init GcMan
         Func* f1 = get_valk_class_func(b, "mem", "GcManager", "init");
-        Func* f2 = get_valk_class_func(b, "mem", "Stack", "init");
         ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1)));
+    }
+    if(vfunc->init_thread) {
+        // Init Thread
+        Func* f2 = get_valk_class_func(b, "mem", "Stack", "init");
         ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
     }
 

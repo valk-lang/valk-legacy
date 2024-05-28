@@ -7,7 +7,11 @@
 Type* type_make(Allocator* alc, int type);
 TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett);
 Type *read_type(Parser *p, Allocator *alc, bool allow_newline);
+// Clone
 Type* type_clone(Allocator* alc, Type* type);
+TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi);
+Array *clone_array_of_types(Allocator *alc, Array *types);
+
 Type* type_gen_void(Allocator* alc);
 Type* type_gen_null(Allocator* alc, Build* b);
 Type* type_gen_class(Allocator* alc, Class* class);

@@ -32,6 +32,7 @@ void stage_generate_main(Build *b) {
     Scope* scope = b->func_main ? b->func_main->scope->parent : scope_make(b->alc, sc_default, NULL);
     Func* func = func_make(b->alc, u, scope, "main", "main");
     b->func_main_gen = func;
+    func->init_thread = true;
 
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);

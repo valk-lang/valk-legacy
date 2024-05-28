@@ -47,11 +47,17 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
         }
 
         p->parse_last = false;
+        p->init_thread = false;
         if (t == tok_hashtag && p->on_newline) {
             t = tok(p, false, false, false);
             if(str_is(p->tkn, "parse_last")) {
                 t = tok(p, false, false, true);
                 p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else if(str_is(p->tkn, "init_thread")) {
+                t = tok(p, false, false, true);
+                p->init_thread = true;
                 tok_expect_newline(p);
                 t = tok(p, true, true, true);
             } else {
@@ -196,6 +202,7 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits, bool async) {
     func->exits = exits;
     func->is_async = async;
     func->parse_last = p->parse_last;
+    func->init_thread = p->init_thread;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);

@@ -65,6 +65,7 @@ struct Func {
     bool is_async;
     bool calls_gc_check;
     bool parse_last;
+    bool init_thread;
 };
 struct FuncArg {
     Type* type;
