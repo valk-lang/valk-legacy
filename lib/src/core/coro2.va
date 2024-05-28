@@ -138,18 +138,13 @@ class Coro2 {
     }
 
     fn start() {
-        let pad = @stack(inline [u8, 300]) @as ptr
-        print("|")
-        pad.print()
-        print("\n")
+        let pad = @stack(inline [u8, 2048]) @as ptr
         this.started = true
         this.s_bottom = pad
         let start = this.start_func
         start(this)
     }
     fn continue() {
-        let pad = (@stack(inline [u8, 10]) @as ptr) + 290
-
         let size = (this.s_bottom - this.s_top) @as uint
         let stack = this.s_stack @as ptr
         mem:copy(stack, this.s_top, size);
