@@ -78,17 +78,17 @@ class Connection {
         return this.parser.input_pos == 0 || this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
     }
 
-    async fn read_more() uint !err {
+    fn read_more() uint !err {
         let parser = this.parser
         let input = parser.input
         let rbytes : uint = 65535
-        let bytes = await this.netcon.recv(input, rbytes) err ! {
+        let bytes = this.netcon.recv(input, rbytes) err ! {
             throw err
         }
         return bytes
     }
 
-    async fn handle() {
+    fn handle() {
 
         // Settings
         let server = this.server
@@ -104,7 +104,7 @@ class Connection {
             parser.parse(request) err ! {
                 // Check if we need more data
                 if error_is(err, !need_more_data) {
-                    let bytes = await this.read_more() ! {
+                    let bytes = this.read_more() ! {
                         this.close()
                         return
                     }
@@ -140,7 +140,7 @@ class Connection {
             // Response
             if !is_file {
                 let resp = server.handler(request)
-                await this.respond(resp)
+                this.respond(resp)
             }
 
             // Clear request
@@ -149,7 +149,7 @@ class Connection {
 
             // Flush output
             if this.should_flush_output() {
-                await this.send_response_bytes() err ! {
+                this.send_response_bytes() err ! {
                     this.close()
                     return
                 }
@@ -158,7 +158,7 @@ class Connection {
         }
     }
 
-    async fn respond(resp: Response) void {
+    fn respond(resp: Response) void {
         let filepath = resp.filepath
         if isset(filepath) {
             let stream = fs:stream(filepath, true, false) ! {
@@ -172,7 +172,7 @@ class Connection {
         resp.compile(this.output)
     }
 
-    async fn send_response_bytes() !write {
+    fn send_response_bytes() !write {
 
         let out = this.output
         let file = this.output_file
@@ -182,7 +182,7 @@ class Connection {
             if isset(file) {
                 if this.count_bytes_to_send() == 0 {
                     if file.reading {
-                        let part = await file.read(65535) ? ""
+                        let part = file.read(65535) ? ""
                         out.append_str(part)
                     }
                     if !file.reading {
@@ -196,20 +196,20 @@ class Connection {
             let bytes = out.length - pos
             if bytes == 0 : break
 
-            await this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
+            this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
                 throw write
             }
             this.output_pos += bytes
         }
     }
 
-    async fn send_error(code: uint) {
+    fn send_error(code: uint) {
         if this.output.length == 0 {
             let resp = this.request.response
             resp.reset()
             resp.status = code @as u32
-            await this.respond(resp)
-            await this.send_response_bytes() _
+            this.respond(resp)
+            this.send_response_bytes() _
         }
         this.close()
     }

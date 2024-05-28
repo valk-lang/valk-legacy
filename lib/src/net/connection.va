@@ -15,7 +15,7 @@ class Connection {
         this.open = false;
     }
 
-    async fn send_from_ptr(data: ptr, bytes_to_send: uint) !connection {
+    fn send_from_ptr(data: ptr, bytes_to_send: uint) !connection {
 
         if this.open == false { throw connection }
 
@@ -61,7 +61,7 @@ class Connection {
         }
     }
 
-    async fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection {
+    fn recv(buffer: utils:ByteBuffer, bytes: uint) uint !connection {
 
         if this.open == false { return 0 }
 

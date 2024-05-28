@@ -41,14 +41,14 @@ fn sync() {
 }
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
-async fn read(path: String) String !open_err !read !close {
+fn read(path: String) String !open_err !read !close {
 
 	let fd = open(path, false, false) ! throw open_err
 
 	let res = utils:ByteBuffer.new(4096)
 	while true {
         res.minimum_free_space(4096)
-		let readcount = await io:read(fd, res.data + res.length, 4096) ! throw read
+		let readcount = io:read(fd, res.data + res.length, 4096) ! throw read
         res.length += readcount
 		if(readcount != 4096) {
 			break
@@ -64,7 +64,7 @@ async fn read(path: String) String !open_err !read !close {
 }
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
-async fn write(path: String, content: String, append: bool (true)) !open_err {
+fn write(path: String, content: String, append: bool (true)) !open_err {
 
     let flags = sys:O_TRUNC
     if append : flags = sys:O_APPEND

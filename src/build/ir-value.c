@@ -354,9 +354,6 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VAwait* aw = v->item;
         return ir_await(ir, scope, aw);
     }
-    if (vt == v_this_coro) {
-        return ir->func->var_coro;
-    }
     if (vt == v_frameptr) {
         Str *code = ir->block->code;
         char* framep = ir_var(ir->func);

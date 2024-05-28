@@ -160,7 +160,6 @@ enum VALUES {
     v_await,
     v_cached_stack_adr,
     v_cached_stack_instance,
-    v_this_coro,
     v_setjmp,
     v_longjmp,
     v_frameptr,

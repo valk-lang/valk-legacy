@@ -140,7 +140,7 @@ class SocketTCP {
         return addrinfo @as sys:libc_addrinfo
     }
 
-    async fn accept() Connection !error {
+    fn accept() Connection !error {
 
         while true {
             #if OS == linux

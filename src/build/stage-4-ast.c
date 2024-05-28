@@ -447,10 +447,13 @@ void read_ast(Parser *p, bool single_line) {
                 type_check(p, type_gen_valk(alc, b, "bool"), write->rett);
                 tok_expect(p, ")", true, true);
 
+                // Current coro
+                Global *g_coro = get_valk_global(b, "core", "current_coro");
+                Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
                 // Call Coro.await_fd
                 Class *coro_class = get_valk_class(b, "core", "Coro2");
-                Value *coro = value_make(alc, v_this_coro, NULL, type_gen_class(alc, coro_class));
                 Func* f = map_get(coro_class->funcs, "await_fd");
+                func_mark_used(p->func, f);
                 Value* fptr = vgen_func_ptr(alc, f, NULL);
                 Array* args = array_make(alc, 4);
                 array_push(args, coro);

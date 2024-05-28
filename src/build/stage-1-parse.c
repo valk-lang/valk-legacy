@@ -83,10 +83,6 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_func(p, u, act, fc, false, false);
                 continue;
             }
-            if (str_is(tkn, "async")) {
-                stage_1_func(p, u, act, fc, false, true);
-                continue;
-            }
             if (str_is(tkn, "exit_fn")) {
                 stage_1_func(p, u, act, fc, true, false);
                 continue;

@@ -135,14 +135,30 @@ class Coro2 {
     }
 
     fn start() {
-        let pad = @stack(inline [u8, 300])
+        let pad = @stack(inline [u8, 300]) @as ptr
+        print("START:")
+        pad.print()
+        print("\n")
         this.started = true
         this.s_bottom = pad
         let start = this.start_func
         start(this)
     }
     fn continue() {
-        mem:copy(this.s_stack @as ptr, this.s_top, (this.s_bottom - this.s_top) @as uint);
+        let pad = (@stack(inline [u8, 10]) @as ptr) + 290
+        // print("CON:")
+        // pad.print()
+        // print("\n")
+
+        let size = (this.s_bottom - this.s_top) @as uint
+        let stack = this.s_stack @as ptr
+            // size.print(10)
+            // print(".")
+            // this.s_top.print()
+            // print("_")
+            // stack.print()
+        mem:copy(stack, this.s_top, size);
+            // print(">...\n")
         @longjmp(this.s_cont)
     }
 
