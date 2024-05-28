@@ -4,6 +4,7 @@
 
 #include "typedefs.h"
 
+Type* type_make(Allocator* alc, int type);
 TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett);
 Type *read_type(Parser *p, Allocator *alc, bool allow_newline);
 Type* type_clone(Allocator* alc, Type* type);

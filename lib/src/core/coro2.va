@@ -13,6 +13,7 @@ global g_coro_poll_count : uint
 global g_coro_count : uint
 
 class Coro2 {
+    args: ptr
     gc_stack: mem:StackPos
     result: ptr
     start_func: fn(Coro2)()
@@ -34,11 +35,13 @@ class Coro2 {
 
     static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
 
+        let args = mem:alloc(128)
         let gc_stack = mem:create_stack()
 
         let coro = Coro2 {
+            args: args
             gc_stack: gc_stack
-            result: result_is_gc ? gc_stack.adr : mem:alloc(16) // TODO Fix
+            result: result_is_gc ? gc_stack.adr : args
             //
             start_func: start_func @as fn(Coro2)()
             handler: handler @as fn()()
@@ -136,7 +139,7 @@ class Coro2 {
 
     fn start() {
         let pad = @stack(inline [u8, 300]) @as ptr
-        print("START:")
+        print("|")
         pad.print()
         print("\n")
         this.started = true
@@ -146,19 +149,10 @@ class Coro2 {
     }
     fn continue() {
         let pad = (@stack(inline [u8, 10]) @as ptr) + 290
-        // print("CON:")
-        // pad.print()
-        // print("\n")
 
         let size = (this.s_bottom - this.s_top) @as uint
         let stack = this.s_stack @as ptr
-            // size.print(10)
-            // print(".")
-            // this.s_top.print()
-            // print("_")
-            // stack.print()
         mem:copy(stack, this.s_top, size);
-            // print(">...\n")
         @longjmp(this.s_cont)
     }
 
@@ -192,6 +186,7 @@ class Coro2 {
         g_coro_count--
         g_coros.set(this.g_list_index, null) _
         g_coro_indexes.add(this.g_list_index)
+        @longjmp(this.s_back_buf)
     }
 
     //////////////

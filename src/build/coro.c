@@ -38,13 +38,21 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "setjmp"));
     scope_set_idf(func->scope, "SETJMP", idf, NULL);
 
+    // Handler type
+    Type *ht = type_make(b->alc, type_func);
+    ht->func_info = fi;
+    ht->size = b->ptr_size;
+    ht->is_pointer = true;
+    idf = idf_make(b->alc, idf_type, ht);
+    scope_set_idf(func->scope, "HANDLER_TYPE", idf, NULL);
+
     // Coro start function code
     str_flat(code, "(coro: CORO_CLASS) {\n");
     if(has_arg) {
-        str_flat(code, "let args = coro.stack\n");
+        str_flat(code, "let args = coro.args\n");
     }
     if(has_gc_arg) {
-        str_flat(code, "let gc_args = coro.gc_stack\n");
+        str_flat(code, "let gc_args = coro.gc_stack.base\n");
     }
     // Load args
     for(int i = 0; i < types->length; i++) {
@@ -53,7 +61,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         char tnr[33];
         sprintf(nr, "%d", i);
         sprintf(tnr, "T%d", i);
-        Idf *idf = idf_make(alc, idf_type, type);
+        Idf *idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(func->scope, tnr, idf, NULL);
         str_flat(code, "let arg");
         str_add(code, nr);
@@ -71,7 +79,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     if(has_rett) {
         str_flat(code, "let res = ");
     }
-    str_flat(code, "coro.handler(");
+    str_flat(code, "(coro.handler @as HANDLER_TYPE)(");
     // Args
     for(int i = 0; i < types->length; i++) {
         Type* type = array_get_index(types, i);
@@ -90,6 +98,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
+    // printf("------------\n%s\n-----------\n", content);
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
@@ -112,39 +121,39 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     str_clear(code);
 
-    Scope* sub = scope_sub_make(alc, sc_default, scope);
+    Scope* sub = scope_sub_make(b->alc, sc_default, scope);
 
-    idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(sub, "CORO_CLASS", idf, NULL);
-    idf = idf_make(alc, idf_value, fcall->on);
+    idf = idf_make(b->alc, idf_value, fcall->on);
     scope_set_idf(sub, "HANDLER", idf, NULL);
-    idf = idf_make(alc, idf_value, vgen_func_ptr(alc, func, NULL));
+    idf = idf_make(b->alc, idf_value, vgen_func_ptr(b->alc, func, NULL));
     scope_set_idf(sub, "START_FUNC", idf, NULL);
 
     // Coro start function code
     str_flat(code, "<{\n");
     str_flat(code, "let coro = CORO_CLASS.new(HANDLER, START_FUNC, true)\n");
     if(has_arg) {
-        str_flat(code, "let args = coro.stack_adr\n");
+        str_flat(code, "let args = coro.args\n");
     }
     if(has_gc_arg) {
-        str_flat(code, "let gc_args = coro.gc_stack_adr\n");
+        str_flat(code, "let gc_args = coro.gc_stack.adr\n");
     }
     // Load args
     Array* values = fcall->args;
     for(int i = 0; i < values->length; i++) {
-        Value* val = array_get_index(types, i);
+        Value* val = array_get_index(values, i);
         Type* type = val->rett;
 
         char nr[32];
         char tnr[33];
         sprintf(nr, "%d", i);
         sprintf(tnr, "ARG_T_%d", i);
-        idf = idf_make(alc, idf_type, type);
+        idf = idf_make(b->alc, idf_type, type);
         scope_set_idf(sub, tnr, idf, NULL);
 
         sprintf(tnr, "ARG_V_%d", i);
-        idf = idf_make(alc, idf_value, val);
+        idf = idf_make(b->alc, idf_value, val);
         scope_set_idf(sub, tnr, idf, NULL);
 
         str_flat(code, "@ptrv(");
@@ -160,16 +169,14 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, ")\n");
     }
     // Update adr
-    if(has_arg) {
-        str_flat(code, "coro.stack_adr = args\n");
-    }
     if(has_gc_arg) {
-        str_flat(code, "coro.gc_stack_adr = gc_args\n");
+        str_flat(code, "coro.gc_stack.adr = gc_args\n");
     }
     str_flat(code, "return coro\n");
     str_flat(code, "}\n");
 
     content = str_to_chars(b->alc, code);
+    // printf("------------\n%s\n-----------\n", content);
     chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
