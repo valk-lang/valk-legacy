@@ -81,6 +81,13 @@ class Coro2 {
         return poll @as io:SimplePoll[Coro2]
     }
 
+    static fn yield_current() {
+        let current = current_coro
+        if current != null {
+            await_last_coro
+        }
+    }
+
     //////////////
     // AWAIT
     //////////////
