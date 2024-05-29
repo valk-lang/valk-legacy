@@ -29,6 +29,7 @@ class Coro2 {
     s_size: uint (0)
     s_back_buf: ptr (0 @as ptr)
 
+    test: uint (10)
     error: u32 (0)
     started: bool (false)
     done: bool (false)
@@ -132,6 +133,10 @@ class Coro2 {
             this.s_cont = here @as ptr
             this.s_top = this.s_cont - 32
 
+            #if OS == win
+            @ptrv(here, ptr, 0) += 0x80 @as ptr
+            #end
+
             // Copy stack
             let size = (this.s_bottom - this.s_top) @as uint
             let stack = this.s_stack
@@ -152,7 +157,7 @@ class Coro2 {
     }
 
     fn start() {
-        let pad = @stack(inline [u8, 2048]) @as ptr
+        let pad = @stack(inline [u8, 4096]) @as ptr
         this.started = true
         this.s_bottom = pad
         let start = this.start_func
@@ -165,13 +170,26 @@ class Coro2 {
         @longjmp(this.s_cont)
     }
 
+    static fn setjmp(buf: ptr) i32 {
+        if @setjmp(buf) == 0 {
+            return 0
+        }
+        return 1
+    }
     fn resume() {
         if this.done : return
         current_coro = this
 
+        let x : Coro2 = this
+        x = this
         let jmpbuf = @stack(inline [ptr, 5])
         let current_stack = mem:stack_pos
         if @setjmp(jmpbuf) == 0 {
+
+            #if OS == win
+            @ptrv(jmpbuf, ptr, 0) += 0x80 @as ptr
+            #end
+
             this.s_back_buf = jmpbuf
             mem:stack_pos = this.gc_stack
             if this.started == false {
@@ -182,8 +200,8 @@ class Coro2 {
         }
         mem:stack_pos = current_stack
 
-        if this.done {
-            let next = this.follow_up
+        if x.done {
+            let next = x.follow_up
             if isset(next) {
                 next.resume()
             }

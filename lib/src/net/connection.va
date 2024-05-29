@@ -21,7 +21,7 @@ class Connection {
 
         while true {
             #if OS == win
-            let wbytes = sys:send(this.fd, data, bytes_to_send @as i32, 0);
+            let wbytes = sys:send(this.fd @as uint, data, bytes_to_send @as i32, 0);
             #else
             let wbytes = sys:send(this.fd @as i32, data, bytes_to_send, 0);
             #end
@@ -70,7 +70,7 @@ class Connection {
 
         while true {
             #if OS == win
-            let rcvd = sys:recv(this.fd, buffer.data + buffer.length, bytes @as i32, 0);
+            let rcvd = sys:recv(this.fd @as uint, buffer.data + buffer.length, bytes @as i32, 0);
             #else
             let rcvd = sys:recv(this.fd @as i32, buffer.data + buffer.length, bytes, 0);
             #end

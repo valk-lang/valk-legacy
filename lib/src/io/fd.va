@@ -69,6 +69,7 @@ fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
     throw failed;
 }
 
-fn close(fd: FD) {
+fn close(fd: FD) i32 {
     let c = sys:close(fd @as i32);
+    return c
 }

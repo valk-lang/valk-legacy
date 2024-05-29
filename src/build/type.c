@@ -551,6 +551,12 @@ Type* type_cache_u32(Build* b) {
         tcache_u32 = type_gen_valk(b->alc, b, "u32");
     return tcache_u32;
 }
+Type* tcache_i32;
+Type* type_cache_i32(Build* b) {
+    if(!tcache_i32)
+        tcache_i32 = type_gen_valk(b->alc, b, "i32");
+    return tcache_i32;
+}
 
 Type* class_pool_type(Parser* p, Class* class) {
     Build* b = p->b;

@@ -36,12 +36,12 @@ class SocketTCP {
         let sock_fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
         let fd = io:valk_fd(sock_fd)
         let nonblock = 1
-        sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock))
+        sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
         #end
 
         #end
 
-        if ufd == -1 {
+        if fd == -1 {
             //#if OS == win
             //println("WSA socket error: " + sys:WSAGetLastError())
             //#end
@@ -183,7 +183,7 @@ class SocketTCP {
             #end
             #if OS == win
             let nonblock = 1
-            sys:ioctlsocket(fd, sys:FIONBIO, @ptr_of(nonblock))
+            sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
             #end
 
             return Connection {

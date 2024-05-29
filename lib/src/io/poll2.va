@@ -42,7 +42,12 @@ class SimplePoll[T] {
         pi.fd = fd @as i32
         #end
 
+        #if OS == win
+        let events = 0 @as i16
+        #else
         let events = sys:POLLRDHUP @as i16
+        #end
+
         if read : events = events | sys:POLLIN
         if write : events = events | sys:POLLOUT
         pi.events = events

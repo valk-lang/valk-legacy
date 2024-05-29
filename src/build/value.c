@@ -123,7 +123,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             if(!buf->rett->is_pointer) {
                 parse_err(p, -1, "Expected a value that return a pointer type");
             }
-            v = value_make(alc, v_setjmp, buf, type_cache_u32(b));
+            v = value_make(alc, v_setjmp, buf, type_cache_i32(b));
         } else if (str_is(tkn, "@longjmp")) {
             tok_expect(p, "(", false, false);
             Value* buf = read_value(alc, p, true, 0);

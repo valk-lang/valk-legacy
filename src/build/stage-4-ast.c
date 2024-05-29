@@ -200,6 +200,9 @@ void read_ast(Parser *p, bool single_line) {
                 }
 
                 Value* val = read_value(alc, p, true, 0);
+                if(type_is_void(val->rett)) {
+                    parse_err(p, -1, "Right side returns a 'void' value");
+                }
 
                 VFuncCall* fcall = value_extract_func_call(val);
                 Array* fcall_rett_types = NULL;

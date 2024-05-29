@@ -2,8 +2,9 @@
 header "sys" as sys;
 
 fn setjmp(jmpbuf: ptr) i32 {
-    return sys:_setjmp(jmpbuf)
+    // return sys:_setjmp(jmpbuf)
+    return 0
 }
 fn longjmp(jmpbuf: ptr, v: i32 (1)) {
-    sys:_longjmp(jmpbuf, v)
+    // sys:_longjmp(jmpbuf, v)
 }

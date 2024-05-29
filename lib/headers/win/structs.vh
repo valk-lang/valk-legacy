@@ -33,7 +33,7 @@ struct libc_timeval {
 }
 
 struct libc_poll_item {
-    fd: SOCKET
+    fd: int // SOCKET (aka. HANDLE)
     events: i16  // detect events
     revents: i16 // detected events
 }

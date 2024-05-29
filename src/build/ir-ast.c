@@ -57,10 +57,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         if (tt == t_return) {
             Value *v = t->item;
-            if(ir->func->is_async){
-                ir_coro_return(ir, v);
-                continue;
-            }
             if(v) {
                 char* irv = ir_value(ir, scope, v);
                 ir_func_return(ir, ir_type(ir, v->rett), irv);
