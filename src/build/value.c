@@ -132,6 +132,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Expected a value that return a pointer type");
             }
             v = value_make(alc, v_longjmp, buf, type_gen_void(alc));
+            p->scope->did_return = true;
         } else if (str_is(tkn, "@gc_get_vtable")) {
             tok_expect(p, "(", false, false);
             Value* index = read_value(alc, p, true, 0);

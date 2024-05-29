@@ -406,6 +406,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         str_flat(code, "  call void @llvm.eh.sjlj.longjmp(ptr ");
         str_add(code, buf);
         str_flat(code, ")\n");
+        str_flat(code, "unreachable\n");
         return "";
     }
 

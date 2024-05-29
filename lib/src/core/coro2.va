@@ -157,7 +157,7 @@ class Coro2 {
     }
 
     fn start() {
-        let pad = @stack(inline [u8, 4096]) @as ptr
+        let pad = @stack(inline [u8, 2048]) @as ptr
         this.started = true
         this.s_bottom = pad
         let start = this.start_func
