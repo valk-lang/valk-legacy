@@ -37,6 +37,8 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
     idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "setjmp"));
     scope_set_idf(func->scope, "SETJMP", idf, NULL);
+    idf = idf_make(b->alc, idf_type, fi->rett);
+    scope_set_idf(func->scope, "RETT", idf, NULL);
 
     // Handler type
     Type *ht = type_make(b->alc, type_func);
@@ -90,10 +92,18 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
             str_flat(code, ", ");
         str_add(code, argname);
     }
-    str_flat(code, ")\n");
+    str_flat(code, ")");
+    if(fi->can_error) {
+        // TODO
+    }
+    str_flat(code, "\n");
     // Finish
+    if(has_gc_arg) {
+        // Clear gc args
+        str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base\n");
+    }
     if(has_rett) {
-        str_flat(code, "@ptrv(coro.result, RETT, 0) = res\n");
+        str_flat(code, "@ptrv(coro.result, RETT) = res\n");
     }
     str_flat(code, "coro.complete()\n");
     str_flat(code, "}\n");
@@ -124,11 +134,11 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     Scope* sub = scope_sub_make(b->alc, sc_default, scope);
 
-    idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(sub, "CORO_CLASS", idf, NULL);
-    idf = idf_make(b->alc, idf_value, fcall->on);
+    idf = idf_make(alc, idf_value, fcall->on);
     scope_set_idf(sub, "HANDLER", idf, NULL);
-    idf = idf_make(b->alc, idf_value, vgen_func_ptr(b->alc, func, NULL));
+    idf = idf_make(alc, idf_value, vgen_func_ptr(alc, func, NULL));
     scope_set_idf(sub, "START_FUNC", idf, NULL);
 
     // Coro start function code
@@ -180,6 +190,53 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     content = str_to_chars(b->alc, code);
     // printf("------------\n%s\n-----------\n", content);
     chunk = chunk_make(b->alc, b, NULL);
+    chunk_set_content(b, chunk, content, code->length);
+
+    // Create new parser
+    parser_new_context(&p);
+
+    *p->chunk = *chunk;
+    p->scope = sub;
+    Value* v = read_value(alc, p, true, 0);
+
+    // Return parser
+    parser_pop_context(&p);
+
+    v->rett = type_gen_promise(alc, b, fi);
+
+    return v;
+}
+
+Value* coro_await(Allocator* alc, Parser* p, Value* on) {
+
+    Build* b = p->b;
+    Str* code = b->str_buf;
+    str_clear(code);
+
+    TypeFuncInfo* fi = on->rett->func_info;
+    Scope* sub = scope_sub_make(b->alc, sc_default, p->scope);
+
+    Idf* idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    scope_set_idf(sub, "CORO_CLASS", idf, NULL);
+    idf = idf_make(alc, idf_value, on);
+    scope_set_idf(sub, "CORO_VAL", idf, NULL);
+    idf = idf_make(alc, idf_type, fi->rett);
+    scope_set_idf(sub, "RETT", idf, NULL);
+    Global *g_cc = get_valk_global(b, "core", "current_coro");
+    idf = idf_make(alc, idf_global, g_cc);
+    scope_set_idf(sub, "CURRENT_CORO", idf, NULL);
+
+    // Coro start function code
+    str_flat(code, "<{\n");
+    str_flat(code, "let coro = CORO_VAL @as CORO_CLASS\n");
+    str_flat(code, "while(!coro.done) { CURRENT_CORO.await_coro(coro) }\n");
+    str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
+    str_flat(code, "return retv\n");
+    str_flat(code, "}\n");
+
+    char* content = str_to_chars(b->alc, code);
+    // printf("------------\n%s\n-----------\n", content);
+    Chunk* chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
     // Create new parser

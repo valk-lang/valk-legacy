@@ -49,9 +49,9 @@ struct StackPos {
     base: ptr
     adr: ptr
     size: uint
-    static fn free(pos: StackPos) {
-        free(pos.base)
-        free(pos)
+    fn free() {
+        free(this.base)
+        free(this)
     }
 }
 fn create_stack() StackPos {

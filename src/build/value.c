@@ -310,26 +310,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Using 'await' on a non-promise value");
             }
 
-            bool on_decl = on->type == v_decl;
-
-            VAwait* aw = al(alc, sizeof(VAwait));
-            aw->decl = on_decl ? on->item : decl_make(alc, NULL, type_gen_valk(alc, b, "ptr"), false);
-            aw->on = on;
-            aw->on_decl = on_decl;
-            aw->block = NULL;
-            aw->rett = on->rett->func_info->rett;
-            aw->errh = NULL;
-
-            TypeFuncInfo *fi = on->rett->func_info;
-            if (fi->err_names && fi->err_names->length > 0) {
-                aw->errh = read_err_handler(alc, p, v, fi);
-            }
-
-            if(!on_decl) {
-                scope_add_decl(alc, p->scope, aw->decl);
-            }
-
-            v = value_make(alc, v_await, aw, aw->rett);
+            v = coro_await(alc, p, on);
 
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 

@@ -5,6 +5,7 @@
 #include "typedefs.h"
 
 Value* coro_generate(Allocator* alc, Parser* p, Value* on);
+Value* coro_await(Allocator* alc, Parser* p, Value* on);
 
 struct VAwait {
     Decl* decl;

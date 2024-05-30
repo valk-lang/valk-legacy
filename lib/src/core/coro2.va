@@ -36,13 +36,13 @@ class Coro2 {
 
     static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
 
-        let args = mem:alloc(128)
         let gc_stack = mem:create_stack()
+        let args = gc_stack.base + gc_stack.size - 128
 
         let coro = Coro2 {
             args: args
             gc_stack: gc_stack
-            result: result_is_gc ? gc_stack.adr : args
+            result: result_is_gc ? gc_stack.base : args
             //
             start_func: start_func @as fn(Coro2)()
             handler: handler @as fn()()
@@ -284,6 +284,10 @@ class Coro2 {
     }
 
     fn _gc_free() {
-        // mem:free(this.gc_stack)
+        this.gc_stack.free()
+        let s = this.s_stack
+        if isset(s) {
+            mem:free(s)
+        }
     }
 }
