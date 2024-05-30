@@ -159,16 +159,35 @@ struct GcPool2[T] {
     }
 
     fn reset() {
-        //
+        // Update usage percentage
         let current = this.block
-        let block = this.first
+        let first = this.first
+        let block = first
+        let prev = first
         while block != current {
             let b = block
             let count = @ptrv(b, uint, 1)
             let used = @ptrv(b, uint, 2)
             @ptrv(b, uint, 3) = used * 100 / count
+            block = @ptrv(b, ptr, 0)
+        }
 
-            block = @ptrv(block, ptr, 0)
+        // Free unused blocks after current
+        block = @ptrv(current, ptr, 0)
+        prev = current
+        while block != null {
+            let b = block
+            let used = @ptrv(b, uint, 2)
+            let next = @ptrv(b, ptr, 0)
+
+            if used == 0 {
+                @ptrv(prev, ptr, 0) = next
+                free(block)
+                block = next
+                continue
+            }
+            prev = b
+            block = next
         }
         //
         this.set_block(this.first)
