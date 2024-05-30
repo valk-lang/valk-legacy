@@ -124,7 +124,7 @@ void stage_generate_main(Build *b) {
         str_flat(code, "CORO_CLASS.loop()\n");
 
         if (main_has_return)
-            str_flat(code, "return main_res\n");
+            str_flat(code, "return await main_res\n");
         else
             str_flat(code, "return 0\n");
     }

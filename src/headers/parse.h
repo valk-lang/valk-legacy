@@ -41,6 +41,7 @@ struct Global {
     Chunk *chunk_value;
     Scope *declared_scope;
     Fc* fc;
+    Unit* unit;
     int act;
     bool is_shared;
     bool is_mut;

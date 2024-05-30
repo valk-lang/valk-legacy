@@ -72,6 +72,7 @@ void generate_class_pool(Parser* p, Class* class) {
         Global *g = al(alc, sizeof(Global));
         g->act = act_public;
         g->fc = NULL;
+        g->unit = class->unit;
         g->name = NULL;
         g->export_name = gen_export_name(class->unit->nsc, buf);
         g->type = class_pool_type(p, class);

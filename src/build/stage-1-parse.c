@@ -263,8 +263,6 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     class->scope = scope_sub_make(b->alc, sc_default, p->scope);
     class->in_header = p->in_header;
 
-    generate_class_pool(p, class);
-
     t = tok(p, false, false, false);
     if(t == tok_sq_bracket_open) {
         tok(p, false, false, true);
@@ -414,6 +412,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
     Global* g = al(b->alc, sizeof(Global));
     g->act = act;
     g->fc = fc;
+    g->unit = u;
     g->name = name;
     g->export_name = gen_export_name(u->nsc, name);
     g->type = NULL;

@@ -11,7 +11,6 @@ void stage_4_ast(Build *b) {
     for (int i = 0; i < units->length; i++) {
         Unit* u = array_get_index(units, i);
         u->ir = ir_make(u);
-        ir_gen_globals(u->ir);
     }
 
     b->building_ast = true;
@@ -27,6 +26,11 @@ void stage_4_ast(Build *b) {
     // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "complete"));
 
     b->parse_last = true;
+
+    for (int i = 0; i < units->length; i++) {
+        Unit* u = array_get_index(units, i);
+        ir_gen_globals(u->ir);
+    }
 
     stage_ast_func(get_valk_func(b, "mem", "pools_init"));
 
