@@ -36,8 +36,6 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
-    idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "setjmp"));
-    scope_set_idf(func->scope, "SETJMP", idf, NULL);
     idf = idf_make(b->alc, idf_type, fi->rett);
     scope_set_idf(func->scope, "RETT", idf, NULL);
 

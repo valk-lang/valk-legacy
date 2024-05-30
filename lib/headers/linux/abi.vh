@@ -15,9 +15,6 @@ fn signal(signum: i32, handler: ?fn(i32)(void)) void;
 fn raise(sig: i32) i32;
 fn __errno_location() ptr;
 
-fn _setjmp(jmpbuf: ptr) i32;
-fn _longjmp(jmpbuf: ptr, v: i32) void;
-
 fn sync() void;
 fn read(fd: i32, buf: ptr, size: uint) int;
 fn write(fd: i32, data: ptr, length: uint) i32;
