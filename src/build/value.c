@@ -305,10 +305,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
         } else if (str_is(tkn, "await")) {
 
-            if(!p->func->is_async) {
-                parse_err(p, -1, "Using 'await' in a non-async function");
-            }
-
             Value* on = read_value(alc, p, true, 1);
             if(on->rett->type != type_promise) {
                 parse_err(p, -1, "Using 'await' on a non-promise value");
@@ -319,7 +315,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             VAwait* aw = al(alc, sizeof(VAwait));
             aw->decl = on_decl ? on->item : decl_make(alc, NULL, type_gen_valk(alc, b, "ptr"), false);
             aw->on = on;
-            aw->suspend_index = ++p->func->suspend_index;
             aw->on_decl = on_decl;
             aw->block = NULL;
             aw->rett = on->rett->func_info->rett;
@@ -333,13 +328,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             if(!on_decl) {
                 scope_add_decl(alc, p->scope, aw->decl);
             }
-
-            Array* awas = p->func->awaits;
-            if(!awas) {
-                awas = array_make(b->alc, 2);
-                p->func->awaits = awas;
-            }
-            array_push(awas, aw);
 
             v = value_make(alc, v_await, aw, aw->rett);
 

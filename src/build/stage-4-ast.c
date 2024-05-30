@@ -401,20 +401,20 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *scope_each = scope_sub_make(alc, sc_loop, scope);
 
                 Decl *on_decl = decl_make(alc, NULL, on->rett, false);
-                on_decl->is_mut = p->func->is_async ? true : on_decl->is_mut;
+                on_decl->is_mut = on_decl->is_mut;
                 array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
                 on = vgen_decl(alc, on_decl);
 
                 Decl *kd = NULL;
                 if (kname) {
                     kd = decl_make(alc, kname, array_get_index(func->rett_types, 1), false);
-                    kd->is_mut = p->func->is_async ? true : kd->is_mut;
+                    kd->is_mut = kd->is_mut;
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
                 Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 0), false);
-                vd->is_mut = p->func->is_async ? true : vd->is_mut;
+                vd->is_mut = vd->is_mut;
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
@@ -679,8 +679,7 @@ void read_ast(Parser *p, bool single_line) {
     VNumber *raise_stack_amount = NULL;
     Scope *start;
     Scope *end;
-    bool is_async = p->func->is_async && scope->type == sc_func;
-    if (!is_async && scope->has_gc_decls) {
+    if (scope->has_gc_decls) {
         // Start scope
         start = scope_sub_make(alc, sc_default, scope);
         start->ast = array_make(alc, 10);

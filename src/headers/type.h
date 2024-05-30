@@ -64,7 +64,6 @@ struct TypeFuncInfo {
     bool has_unknown_errors;
     bool can_error;
     bool will_exit;
-    bool is_async;
 };
 
 #endif

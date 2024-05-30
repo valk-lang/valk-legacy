@@ -12,7 +12,6 @@ struct VAwait {
     void* block;
     Type* rett;
     ErrorHandler* errh;
-    int suspend_index;
     bool on_decl;
 };
 

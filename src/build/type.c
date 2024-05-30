@@ -26,7 +26,6 @@ TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_va
     t->has_unknown_errors = false;
     t->can_error = false;
     t->will_exit = false;
-    t->is_async = false;
     return t;
 }
 
@@ -252,7 +251,6 @@ Type* type_gen_func(Allocator* alc, Func* func) {
         t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
         t->func_info->can_error = func->errors ? true : false;
         t->func_info->will_exit = func->exits;
-        t->func_info->is_async = func->is_async;
         func->reference_type = t;
     }
     return func->reference_type;

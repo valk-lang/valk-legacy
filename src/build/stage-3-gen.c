@@ -112,7 +112,7 @@ void stage_generate_main(Build *b) {
         str_flat(code, "return 0;\n");
     } else {
         if (b->func_main) {
-            if (main_has_return || b->func_main->is_async)
+            if (main_has_return)
                 str_flat(code, "let main_res = ");
             str_flat(code, "co main(");
             if (main_has_arg) {

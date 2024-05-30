@@ -30,9 +30,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->cached_values = NULL;
     f->errors = NULL;
     // Coro
-    f->awaits = NULL;
-    f->result_decl = NULL;
-    f->suspend_index = 0;
     f->alloca_size = 0;
     f->gc_decl_count = 0;
 
@@ -48,7 +45,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->use_if_class_is_used = false;
     f->exits = false;
     f->parsed = false;
-    f->is_async = false;
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
@@ -233,7 +229,7 @@ void func_generate_args(Allocator* alc, Func* func, Map* args) {
         FuncArg *arg = func_arg_make(alc, type);
         map_set_force_new(func->args, name, arg);
         array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(alc, name, arg->type, !func->is_async);
+        Decl *decl = decl_make(alc, name, arg->type, true);
         Idf *idf = idf_make(alc, idf_decl, decl);
         scope_set_idf(func->scope, name, idf, NULL);
         arg->decl = decl;
@@ -365,9 +361,6 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
 
 
 void func_set_decl_offset(Func* func, Decl* decl) {
-    if (func->is_async)
-        decl->is_mut = true;
-
     if (decl->is_gc) {
         decl->offset = func->gc_decl_count++;
     } else {

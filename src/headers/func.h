@@ -41,12 +41,8 @@ struct Func {
     Array* used_functions;
     Array* used_classes;
     Type* reference_type;
-    // Coro
-    Array* awaits;
-    Decl* result_decl;
     //
     int act;
-    int suspend_index;
     int alloca_size;
     int gc_decl_count;
     //
@@ -62,7 +58,6 @@ struct Func {
     bool use_if_class_is_used;
     bool exits;
     bool parsed;
-    bool is_async;
     bool calls_gc_check;
     bool parse_last;
     bool init_thread;

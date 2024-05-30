@@ -27,12 +27,7 @@ Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args) {
     item->args = args;
     item->rett_refs = NULL;
     item->errh = NULL;
-
     Type* rett = on->rett->func_info->rett;
-    if(on->rett->func_info->is_async) {
-        rett = type_gen_promise(alc, b, on->rett->func_info);
-    }
-
     return value_make(alc, v_func_call, item, rett);
 }
 
