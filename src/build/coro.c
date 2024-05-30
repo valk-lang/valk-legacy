@@ -14,6 +14,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     bool has_rett = !type_is_void(rett);
     bool has_arg = false;
     bool has_gc_arg = false;
+    bool rett_is_gc = has_rett && type_is_gc(rett);
     for(int i = 0; i < types->length; i++) {
         Type* type = array_get_index(types, i); 
         if(type_is_gc(type)) {
@@ -98,12 +99,15 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     }
     str_flat(code, "\n");
     // Finish
-    if(has_gc_arg) {
+    if(!rett_is_gc && has_gc_arg) {
         // Clear gc args
         str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base\n");
     }
     if(has_rett) {
         str_flat(code, "@ptrv(coro.result, RETT) = res\n");
+        if(rett_is_gc) {
+            str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base + sizeof(ptr)\n");
+        }
     }
     str_flat(code, "coro.complete()\n");
     str_flat(code, "}\n");
