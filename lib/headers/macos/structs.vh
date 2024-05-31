@@ -5,7 +5,7 @@ struct libc_dirent {
    d_reclen: u16 // Length of this record
    d_type: u8 // Type of file
    d_namelen: u8
-   d_pad: u32
+   d_pad: u8
    d_name: inline [u8, 256]
 }
 
