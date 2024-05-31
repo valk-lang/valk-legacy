@@ -232,8 +232,12 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     str_flat(code, "<{\n");
     str_flat(code, "let coro = CORO_VAL @as CORO_CLASS\n");
     str_flat(code, "while(!coro.done) { CURRENT_CORO.await_coro(coro) }\n");
-    str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
-    str_flat(code, "return retv\n");
+    if(type_is_void(fi->rett)) {
+        str_flat(code, "return 0\n");
+    } else {
+        str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
+        str_flat(code, "return retv\n");
+    }
     str_flat(code, "}\n");
 
     char* content = str_to_chars(b->alc, code);
