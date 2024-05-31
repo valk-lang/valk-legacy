@@ -3,9 +3,8 @@ struct libc_dirent {
    d_ino: uint // Inode number
    d_off: uint // Not an offset see below
    d_reclen: u16 // Length of this record
+   d_namelen: u16
    d_type: u8 // Type of file
-   d_namelen: u8
-   d_pad: u8
    d_name: inline [u8, 256]
 }
 
