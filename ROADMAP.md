@@ -13,7 +13,8 @@
 
 ```
 // Prio
-- coroutines
+- improve syntax
+- fix math between numbers and pointers
 - http: parse post data / file uploads
 // Other
 - error messages
