@@ -54,10 +54,10 @@ jobs:
       run: ./valk build ./tests/*.va -o _test.exe --target win-x64
     
   macos:
-    name: "test on macos-latest"
+    name: "test on macos-13 x64"
     strategy:
       fail-fast: false
-    runs-on: macos-latest
+    runs-on: macos-13
     if: github.event.pull_request.draft == false
     steps:
     - name: Checkout
