@@ -1,7 +1,7 @@
 
 struct libc_jmp_buf {
     #if ARCH == arm64
-    data: inline [i64, 22]
+    data: inline [i32, 6]
     #else
     data: inline [i64, 8]
     #end
