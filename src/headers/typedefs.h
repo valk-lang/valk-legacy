@@ -68,8 +68,10 @@ typedef struct Value Value;
 typedef struct VPair VPair;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VFuncCall VFuncCall;
+typedef struct ErrorHandler ErrorHandler;
 typedef struct VNumber VNumber;
 typedef struct VGcBuffer VGcBuffer;
+typedef struct VClassInit VClassInit;
 typedef struct VClassPA VClassPA;
 typedef struct VPtrv VPtrv;
 typedef struct VPtrOffset VPtrOffset;
@@ -82,6 +84,7 @@ typedef struct VScope VScope;
 typedef struct VVar VVar;
 typedef struct VThisOrThat VThisOrThat;
 typedef struct VError VError;
+typedef struct VAwait VAwait;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;

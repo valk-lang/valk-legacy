@@ -11,16 +11,38 @@ void stage_4_ast(Build *b) {
     for (int i = 0; i < units->length; i++) {
         Unit* u = array_get_index(units, i);
         u->ir = ir_make(u);
-        ir_gen_globals(u->ir);
     }
 
     b->building_ast = true;
 
     stage_ast_func(b->func_main_gen);
-    stage_ast_func(get_valk_func(b, "mem", "gc_alloc_class"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
+    stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
+    stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
+    // TODO: only include Coro.new if an async function was used
+    stage_ast_func(get_valk_class_func(b, "core", "Coro2", "new"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_fd"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_coro"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "complete"));
+
+    b->parse_last = true;
+
+    for (int i = 0; i < units->length; i++) {
+        Unit* u = array_get_index(units, i);
+        ir_gen_globals(u->ir);
+    }
+
+    stage_ast_func(get_valk_func(b, "mem", "pools_init"));
+
+    Array* funcs = b->parse_later;
+    for(int i = 0; i < funcs->length; i++) {
+        Func* func = array_get_index(funcs, i);
+        func->parsed = false;
+        stage_ast_func(func);
+    }
 
     b->building_ast = false;
+    b->parse_last = false;
 
     Unit* um = b->nsc_main->unit;
     ir_vtable_define_extern(um);
@@ -56,6 +78,11 @@ void stage_ast_func(Func *func) {
     Unit* u = func->unit;
     Build* b = u->b;
     Parser* p = u->parser;
+
+    if(func->parse_last && !b->parse_last) {
+        array_push(b->parse_later, func);
+        return;
+    }
 
     if (u->b->verbose > 2)
         printf("Stage 4 | Parse AST: %s\n", func->export_name);
@@ -177,6 +204,9 @@ void read_ast(Parser *p, bool single_line) {
                 }
 
                 Value* val = read_value(alc, p, true, 0);
+                if(type_is_void(val->rett)) {
+                    parse_err(p, -1, "Right side returns a 'void' value");
+                }
 
                 VFuncCall* fcall = value_extract_func_call(val);
                 Array* fcall_rett_types = NULL;
@@ -374,14 +404,21 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *ls = p->loop_scope;
                 Scope *scope_each = scope_sub_make(alc, sc_loop, scope);
 
+                Decl *on_decl = decl_make(alc, NULL, on->rett, false);
+                on_decl->is_mut = on_decl->is_mut;
+                array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
+                on = vgen_decl(alc, on_decl);
+
                 Decl *kd = NULL;
                 if (kname) {
                     kd = decl_make(alc, kname, array_get_index(func->rett_types, 1), false);
+                    kd->is_mut = kd->is_mut;
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
                 Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 0), false);
+                vd->is_mut = vd->is_mut;
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
@@ -402,6 +439,51 @@ void read_ast(Parser *p, bool single_line) {
                     p->chunk->i = scope_end_i;
 
                 array_push(scope->ast, tgen_each(alc, on, func, kd, vd, scope_each, index, vindex));
+                continue;
+            }
+            if (str_is(tkn, "await_fd")){
+
+                tok_expect(p, "(", false, false);
+                Value* fd = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "FD"), fd->rett);
+                tok_expect(p, ",", true, true);
+                Value* read = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "bool"), read->rett);
+                tok_expect(p, ",", true, true);
+                Value* write = read_value(alc, p, true, 0);
+                type_check(p, type_gen_valk(alc, b, "bool"), write->rett);
+                tok_expect(p, ")", true, true);
+
+                // Current coro
+                Global *g_coro = get_valk_global(b, "core", "current_coro");
+                Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
+                // Call Coro.await_fd
+                Class *coro_class = get_valk_class(b, "core", "Coro2");
+                Func* f = map_get(coro_class->funcs, "await_fd");
+                func_mark_used(p->func, f);
+                Value* fptr = vgen_func_ptr(alc, f, NULL);
+                Array* args = array_make(alc, 4);
+                array_push(args, coro);
+                array_push(args, fd);
+                array_push(args, read);
+                array_push(args, write);
+                Value* fcall = vgen_func_call(alc, b, fptr, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
+                continue;
+
+            } else if (str_is(tkn, "await_last_coro")) {
+                //
+                Global *g_coro = get_valk_global(b, "core", "current_coro");
+                Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
+                // Call Coro.await_last_coro
+                Class *coro_class = get_valk_class(b, "core", "Coro2");
+                Func* f = map_get(coro_class->funcs, "await_last_coro");
+                func_mark_used(p->func, f);
+                Value* fptr = vgen_func_ptr(alc, f, NULL);
+                Array* args = array_make(alc, 4);
+                array_push(args, coro);
+                Value* fcall = vgen_func_call(alc, b, fptr, args);
+                array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
             // Check if macro
@@ -443,7 +525,7 @@ void read_ast(Parser *p, bool single_line) {
                 Array* args = array_make(alc, 2);
                 array_push(args, v);
                 Value *on = vgen_func_ptr(alc, share, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
+                Value *fcall = vgen_func_call(alc, b, on, args);
                 array_push(scope->ast, token_make(alc, t_statement, fcall));
                 continue;
             }
@@ -514,7 +596,7 @@ void read_ast(Parser *p, bool single_line) {
                     Array *args = array_make(alc, 2);
                     array_push(args, right);
                     Value *on = vgen_func_ptr(alc, share, NULL);
-                    Value *fcall = vgen_func_call(alc, on, args);
+                    Value *fcall = vgen_func_call(alc, b, on, args);
                     array_push(scope->ast, token_make(alc, t_statement, fcall));
                 }
             }
@@ -598,10 +680,10 @@ void read_ast(Parser *p, bool single_line) {
         parse_err(p, -1, "Missing return statement");
     }
 
-    Scope* start;
-    Scope* end;
-    bool is_main_func_scope = p->func == b->func_main_gen && scope->type == sc_func;
-    if (scope->has_gc_decls || scope->gc_check || is_main_func_scope) {
+    VNumber *raise_stack_amount = NULL;
+    Scope *start;
+    Scope *end;
+    if (scope->has_gc_decls) {
         // Start scope
         start = scope_sub_make(alc, sc_default, scope);
         start->ast = array_make(alc, 10);
@@ -612,41 +694,32 @@ void read_ast(Parser *p, bool single_line) {
         end->ast = array_make(alc, 10);
         array_push(scope->ast, token_make(alc, t_ast_scope, end));
         // Swap return/continue/break token & end-scope
-        if(scope->did_return) {
+        if (scope->did_return) {
             int last_index = scope->ast->length - 1;
-            void* a = array_get_index(scope->ast, last_token_index);
-            void* b = array_get_index(scope->ast, last_index);
+            void *a = array_get_index(scope->ast, last_token_index);
+            void *b = array_get_index(scope->ast, last_index);
             array_set_index(scope->ast, last_token_index, b);
             array_set_index(scope->ast, last_index, a);
         }
-    }
 
-    if(is_main_func_scope) {
-        Scope *boot = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "boot"), map_make(alc), scope);
-        array_push(start->ast, token_make(alc, t_ast_scope, boot));
-    }
+        if (scope->type == sc_loop || scope->type == sc_func) {
+            if(scope->gc_check) {
+            Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+            array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
+            p->func->calls_gc_check = true;
+            }
+        }
 
-    if(scope->gc_check && (scope->type == sc_loop || scope->type == sc_func)){
-        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-        array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
-    }
-
-    if (scope->has_gc_decls) {
         // Stack
         Map *idfs = map_make(alc);
-        Value *amount = vgen_int(alc, scope->gc_decl_count, type_gen_number(alc, b, b->ptr_size, false, false));
-        Idf *idf = idf_make(alc, idf_value, amount);
-        map_set(idfs, "amount", idf);
-
-        // Cache stack & stack_adr variable
-        Scope *cache = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_cache"), idfs, start);
-        array_push(start->ast, token_make(alc, t_ast_scope, cache));
-
-        idf = map_get(cache->identifiers, "STACK_ADR");
-        Value *stack_adr = idf->item;
 
         if (scope->type == sc_func) {
             // Stack reserve
+            Value *amount = vgen_int(alc, 0, type_gen_number(alc, b, b->ptr_size, false, false));
+            Idf *idf = idf_make(alc, idf_value, amount);
+            map_set(idfs, "amount", idf);
+            raise_stack_amount = amount->item;
+
             Scope *reserve = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reserve"), idfs, start);
             array_push(start->ast, token_make(alc, t_ast_scope, reserve));
 
@@ -657,22 +730,19 @@ void read_ast(Parser *p, bool single_line) {
                 Decl *decl = array_get_index(decls, i);
                 if (!decl->is_gc)
                     continue;
-                Value *offset = vgen_ptrv(alc, b, stack_adr, type_gen_valk(alc, b, "ptr"), vgen_int(alc, x++, type_gen_valk(alc, b, "i32")));
-                TDeclare *item = al(alc, sizeof(TDeclare));
-                item->decl = decl;
-                item->value = offset;
-                array_push(start->ast, token_make(alc, t_set_decl_store_var, item));
                 array_push(start->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
             }
 
             // Stack reduce
-            Func* func = p->func;
-            Scope* reduce_scope = scope_sub_make(alc, sc_default, scope);
+            Func *func = p->func;
+            Scope *reduce_scope = scope_sub_make(alc, sc_default, scope);
             reduce_scope->ast = array_make(alc, 10);
             func->scope_stack_reduce = reduce_scope;
             Scope *scope_end = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "stack_reduce"), idfs, scope);
             array_push(reduce_scope->ast, token_make(alc, t_ast_scope, scope_end));
 
+        } else if (scope->type == sc_vscope) {
+            // Dont set local vars to null in value scope because it will return one of those variables
         } else {
             // if / while : At end of scope, set local variables to null
             Array *decls = scope->decls;
@@ -682,10 +752,23 @@ void read_ast(Parser *p, bool single_line) {
             }
         }
     }
-    //
-    if(is_main_func_scope) {
-        Scope *shutdown = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "shutdown"), map_make(alc), scope);
-        array_push(end->ast, token_make(alc, t_ast_scope, shutdown));
+
+    // Calculate decl offsets
+    if(scope->type == sc_func) {
+        Func* func = p->func;
+        Array* args = func->args->values;
+        for (int i = 0; i < args->length; i++) {
+            FuncArg* fa = array_get_index(args, i);
+            func_set_decl_offset(func, fa->decl);
+        }
+        Array* decls = func->scope->decls;
+        for (int i = 0; i < decls->length; i++) {
+            Decl* decl = array_get_index(decls, i);
+            func_set_decl_offset(func, decl);
+        }
+
+        if (raise_stack_amount)
+            raise_stack_amount->value_int = func->gc_decl_count;
     }
 }
 

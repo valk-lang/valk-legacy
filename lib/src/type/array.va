@@ -23,7 +23,7 @@ class Array[T] {
         let data = this.data
 
         if length == size {
-            data = this.increase_size()
+            data = this.increase_size(size * 2)
         }
 
         @ptrv(data, T, length) = @gc_link(this, item)
@@ -39,7 +39,7 @@ class Array[T] {
         let data = this.data
 
         if length == size {
-            data = this.increase_size()
+            data = this.increase_size(size * 2)
         }
 
         let to_pos = length
@@ -52,12 +52,12 @@ class Array[T] {
         this.length = length + 1
     }
 
-    fn increase_size() ptr {
+    fn increase_size(new_size: uint) ptr {
         let data = this.data
         let size = this.size
-        let new_size = size * 2
+        if size >= new_size : return data
 
-        let new_data = mem:alloc(new_size * sizeof(T));
+        let new_data = mem:alloc(new_size * sizeof(T))
         mem:copy(data, new_data, size * sizeof(T));
         mem:free(data)
 
@@ -73,11 +73,34 @@ class Array[T] {
         return @ptrv(this.data, T, index);
     }
 
-    fn set(index: uint, value: T) void !out_of_range {
+    fn set(index: uint, value: T) !out_of_range {
         if index >= this.length {
             throw out_of_range;
         }
         let data = this.data;
+        @ptrv(data, T, index) = @gc_link(this, value)
+    }
+    fn set_expand(index: uint, value: T, filler_value: T) {
+        let size = this.size
+        if index >= size {
+            let new_size = size * 2
+            if index >= new_size {
+                new_size = index + 1
+            }
+            this.increase_size(new_size)
+        }
+        let len = this.length
+        if index >= len {
+            this.length = index + 1
+        }
+
+        let data = this.data;
+        // fill
+        let i = len
+        while i < index {
+            @ptrv(data, T, i++) = @gc_link(this, filler_value)
+        }
+        // Set index
         @ptrv(data, T, index) = @gc_link(this, value)
     }
 

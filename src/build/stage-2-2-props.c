@@ -49,9 +49,24 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         if(t == tok_curly_close)
             break;
 
+        p->parse_last = false;
+        p->init_thread = false;
         if (t == tok_hashtag && p->on_newline) {
-            cc_parse(p);
-            continue;
+            t = tok(p, false, false, false);
+            if(str_is(p->tkn, "parse_last")) {
+                t = tok(p, false, false, true);
+                p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else if(str_is(p->tkn, "init_thread")) {
+                t = tok(p, false, false, true);
+                p->init_thread = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else {
+                cc_parse(p);
+                continue;
+            }
         }
 
         int act = act_public;
@@ -95,6 +110,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             prop->chunk_type = chunk_clone(b->alc, p->chunk);
             prop->chunk_value = NULL;
             prop->index = class->props->values->length;
+            prop->skip_default_value = false;
             map_set_force_new(class->props, name, prop);
 
             prop->type = read_type(p, b->alc, false);
@@ -171,6 +187,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->is_static = is_static;
         func->is_inline = is_inline;
         func->in_header = class->in_header;
+        func->init_thread = p->init_thread;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

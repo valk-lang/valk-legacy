@@ -7,8 +7,8 @@ Idf* idf_make(Allocator* alc, int type, void* item) {
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
-    bool is_gc = !is_arg && type_is_gc(type);
+Decl* decl_make(Allocator* alc, char* name, Type* type, bool never_gc) {
+    bool is_gc = !never_gc && type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->name = name;
     d->type = type;
@@ -16,7 +16,7 @@ Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
     d->ir_store_var = NULL;
     d->is_mut = false;
     d->is_gc = is_gc;
-    d->is_arg = is_arg;
+    d->offset = -1;
     return d;
 }
 
@@ -27,7 +27,7 @@ char* gen_export_name(Nsc* nsc, char* suffix) {
     if(nsc == b->nsc_main) {
         sprintf(name, "%s", suffix);
     } else {
-        sprintf(name, "%s__%s__%s_%d", pkc->name, nsc->name, suffix, nsc->unit->export_count++);
+        sprintf(name, "%s__%s__%s", pkc->name, nsc->name, suffix);
     }
     return dups(b->alc, name);
 }
@@ -91,7 +91,7 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
             char* name = get_number_type_name(b, b->ptr_size, true, false);
             Nsc* ns = get_valk_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map") || str_is(name, "array") || str_is(name, "map")) {
+        } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map") || str_is(name, "array") || str_is(name, "map") || str_is(name, "Pool")) {
             Nsc* ns = get_valk_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(str_is(name, "print") || str_is(name, "println") || str_is(name, "FD")) {

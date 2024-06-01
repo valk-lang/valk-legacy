@@ -1,281 +1,195 @@
 
-global pools : ptr (null)
-global pool_count : uint
-global pool_usage : uint
-
 use io
-use os
 
-struct GcPool {
-    size: uint
-    first : ptr
-    current : ptr
-    index : uint (0)
-    items_used: uint (0)
-    items_total: uint
-    items_total_last: uint
-    state_used: u8 (0)
-    items_use_gc_free: bool
+value GP_DATA_OFFSET (sizeof(ptr) * 4)
 
-    static fn init() {
-        pools = alloc(50 * sizeof(ptr))
-        let size : uint = 8
-        let index : uint = 0
-        while size <= 64 {
-            @ptrv(pools, ptr, index++) = CLASS.new(size, false)
-            @ptrv(pools, ptr, index++) = CLASS.new(size, true)
-            size += 8
-        }
-        @ptrv(pools, ptr, index++) = CLASS.new(128, false)
-        @ptrv(pools, ptr, index++) = CLASS.new(128, true)
-        @ptrv(pools, ptr, index++) = CLASS.new(256, false)
-        @ptrv(pools, ptr, index++) = CLASS.new(256, true)
-        @ptrv(pools, ptr, index++) = CLASS.new(512, false)
-        @ptrv(pools, ptr, index++) = CLASS.new(512, true)
+struct GcPool2[T] {
+    blockc: uint
+    first: ptr
+    block: ptr
+    index: uint (0)
+    isize: uint (0)
 
-        pool_count = index
-    }
-    static fn new(size_: uint, items_use_gc_free: bool) CLASS {
-        let size = size_ + 8
-        let block = GcPool.create_block(size, 10)
-        let pool = CLASS{
-            size: size
+    static fn init() CLASS {
+        let isize : uint = (sizeof(inline T) + 8) @as uint
+        let blockc : uint = 1
+        let block = CLASS.create_block(blockc * 2, isize)
+        return CLASS{
+            blockc: blockc
             first: block
-            current: block
-            items_total: @ptrv(block, uint, 1)
-            items_total_last: @ptrv(block, uint, 1)
-            items_use_gc_free: items_use_gc_free
+            block: block
+            isize: isize
         }
-        if items_use_gc_free {
-            pool.state_used = state_used
+    }
+    static fn create_block(size: uint, isize: uint) ptr {
+        if size > 248 : size = 248
+        let b = alloc(size * isize + GP_DATA_OFFSET)
+        // Settings
+        @ptrv(b, ?ptr, 0) = null // next block
+        @ptrv(b, uint, 1) = size // count
+        @ptrv(b, uint, 2) = 0 // used
+        @ptrv(b, uint, 3) = 0 // usage percent
+        // Set indexes
+        let data = b + GP_DATA_OFFSET
+        let i : uint = 0
+        while i < size {
+            let item : ptr = data + i * isize
+            @ptrv(item, u8, 0) = state_new
+            @ptrv(item, u8, 1) = i @as u8
+            @ptrv(item, u16, 1) = 0
+            @ptrv(item, u32, 1) = @type_vtable_index(T)
+            i++
         }
-        return pool
+        return b
     }
 
-    // ptr next, ptr itemc, ptr transferc, {...items...}
-    static fn create_block(size: uint, itemc: uint) ptr {
-        if itemc > 250 {
-            itemc = 250
-        }
-        let fsize = itemc * size + 3 * sizeof(ptr)
-        let block = alloc(fsize)
-        clear(block, fsize)
-        // @ptrv(block, ptr, 0) = null
-        @ptrv(block, uint, 1) = itemc
-        // @ptrv(block, uint, 2) = 0
-        return block
-    }
-
-    fn get_next_block_or_create(current: ptr) ptr {
-
-        let next = @ptrv(current, ptr)
-        if next == null {
-            next = GcPool.create_block(this.size, this.items_total * 2)
-            this.items_total += @ptrv(next, uint, 1)
-            @ptrv(current, ptr) = next
-        }
-
-        let usage = this.items_used * 100 / (this.items_total_last + 100)
-
-        if usage > pool_usage {
-            pool_usage = usage
-            if usage > 90 {
-                stack.run_gc = true
-                stack.bumper_overflow = true
+    fn get() T {
+        let isize = this.isize
+        while true {
+            let block = this.block
+            if @ptrv(block, uint, 3) > 75 {
+                this.set_next_block(block)
+                continue
             }
-        }
+            let index = this.index
+            if index == @ptrv(block, uint, 1) {
+                this.set_next_block(block)
+                continue
+            }
+            this.index++
+            let data = block + GP_DATA_OFFSET
+            let item = data + index * isize
+            if @ptrv(item, u8, byte_state) != state_new {
+                continue
+            }
 
-        return next
+            #if @type_has_method(T, _gc_free)
+            @ptrv(item, u8, byte_state) = state_used
+            #end
+
+            // Increase mem usage
+            mem_new += sizeof(inline T)
+
+            return (item + 8) @as T
+        }
+        exit(1)
     }
 
-    fn get(vtable: u32) ptr {
-        let size = this.size
-        let block = this.current
-        let index = this.index
-        let itemc = @ptrv(block, uint, 1) // Item count
-        let tc = @ptrv(block, uint, 2) // Transfer count
-        while tc > itemc * 7 / 10 {
-            block = this.get_next_block_or_create(block)
-            index = 0
-            itemc = @ptrv(block, uint, 1)
-            tc = @ptrv(block, uint, 2)
-            this.current = block
-        } 
-        //
-        let base = block + sizeof(ptr) * 3
-        let item = base + (size * index)
-        while @ptrv(item, u8) != 0 {
-            index++
-            if index == itemc {
-
-                block = this.get_next_block_or_create(block)
-                index = 0
-                base = block + sizeof(ptr) * 3
-                itemc = @ptrv(block, uint, 1)
-                this.current = block
-
-                let tc = @ptrv(block, uint, 2)
-                while tc > itemc * 7 / 10 {
-                    block = this.get_next_block_or_create(block)
-                    index = 0
-                    itemc = @ptrv(block, uint, 1)
-                    tc = @ptrv(block, uint, 2)
-                    this.current = block
-                    base = block + sizeof(ptr) * 3
-                } 
-            }
-            item = base + (size * index)
+    fn set_next_block(block: ptr) {
+        let next = @ptrv(block, ?ptr, 0)
+        if isset(next) {
+            this.set_block(next)
+        } else {
+            // Create new block
+            let blockc = ++this.blockc
+            let new = CLASS.create_block(blockc * blockc, this.isize)
+            // Set next
+            @ptrv(block, ptr, 0) = new
+            this.set_block(new)
         }
-        let res = item
-        let new_index = index + 1
-        this.index = new_index
-        if new_index == itemc {
-            this.current = this.get_next_block_or_create(block)
-            this.index = 0
-        }
-        @ptrv(res, u8, 0) = this.state_used
-        @ptrv(res, u8, 1) = index @as u8
-        @ptrv(res, u16, 1) = 0
-        @ptrv(res, u32, 1) = vtable
 
-        this.items_used++
-
-        return res + 8
-    }
-
-    static fn free_unused_all() {
-        let pc = pool_count
-        while pc-- > 0 {
-            let pool = @ptrv(pools, GcPool, pc)
-            if pool.items_use_gc_free {
-                pool.free_unused()
-            }
-        }
-    }
-    fn free_unused() {
-        let current = this.current
-        let block = this.first
-        let size = this.size
-        while block != null {
-            let b = block
-            let itemc_ = @ptrv(b, uint, 1)
-            if b == current {
-                itemc_ = this.index
-            }
-            let itemc = itemc_
-            let base = b + sizeof(ptr) * 3
-            let i : uint = 0
-            while i < itemc {
-                let item = base + (size * i++)
-                let state = @ptrv(item, u8, 0)
-
-                if state == state_used {
-                    let vtable = @ptrv(item, u32, 1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, ?fn(ptr)(void), vt_gc_free)
-                    func(item + 8);
-
-                    @ptrv(item, u8, 0) = state_unused
-                }
-            }
-            // 
-            if b == current : break
-            // Next block
-            block = @ptrv(b, ptr)
+        // Check mem usage
+        mem_usage = mem_new * 100 / mem_marked
+        if mem_usage > 30 {
+            stack.run_gc = true
         }
     }
 
-    static fn reset_all() {
-        let pc = pool_count
-        while pc-- > 0 {
-            let pool = @ptrv(pools, GcPool, pc)
-            pool.reset()
-        }
-    }
-    fn reset() {
-        // Clear all un-used blocks after current
-        let block = this.current
-        let prev = block
-        let next = @ptrv(block, ptr)
-        while next != null {
-            let block = next
-            next = @ptrv(block, ptr)
-            if @ptrv(block, uint, 2) == 0 {
-                // Delete block
-                this.items_total -= @ptrv(block, uint, 1)
-                free(block)
-                @ptrv(prev, ptr) = next
-            } else {
-                // Keep block
-                prev = block
-            }
-        }
-
-        // Set current to first
-        this.current = this.first
+    fn set_block(block: ptr) {
+        this.block = block
         this.index = 0
-        this.items_used = 0
-        this.items_total_last = this.items_total
-        pool_usage = 0
     }
 
-    static fn clean_old_all(age: u8) {
-        let pc = pool_count
-        while pc-- > 0 {
-            let pool = @ptrv(pools, GcPool, pc)
-            pool.clean_old_age(age)
+    fn swap_transfers() {
+        #if @type_has_method(T, _gc_free)
+        let current = this.block
+        let block = this.first
+        let isize = this.isize
+
+        while block != current {
+            let b = block
+            let count = @ptrv(b, uint, 1)
+            // Loop items
+            let i : uint = 0
+            let data = b + GP_DATA_OFFSET
+            while i < count {
+                let item = data + i * isize
+                if @ptrv(item, u8, byte_state) == state_used {
+                    ((item + 8) @as T)._gc_free()
+                    @ptrv(item, u8, byte_state) = state_new
+                }
+                i++
+            }
+
+            block = @ptrv(block, ptr, 0)
+        }
+        #end
+    }
+
+    fn clean_unmarked(age: u8) {
+        let current = this.block
+        let block = this.first
+        let isize = this.isize
+
+        while block != current {
+            let b = block
+            let count = @ptrv(b, uint, 1)
+            let used = @ptrv(b, uint, 2)
+            // Loop items
+            let i : uint = 0
+            let data = b + GP_DATA_OFFSET
+            while i < count {
+                let item = data + i * isize
+                let iage = @ptrv(item, u8, byte_age)
+                if iage != age && @ptrv(item, u8, byte_state) == state_solid {
+                    #if @type_has_method(T, _gc_free)
+                    ((item + 8) @as T)._gc_free()
+                    #end
+                    @ptrv(item, u8, byte_state) = state_new
+                    @ptrv(item, u16, 1) = 0
+                    used--
+                }
+                i++
+            }
+
+            @ptrv(b, uint, 2) = used
+
+            block = @ptrv(block, ptr, 0)
         }
     }
-    fn clean_old_age(age: u8) {
-        let block = this.first
-        let size = this.size
-        let call_gc_free = this.items_use_gc_free
+
+    fn reset() {
+        // Update usage percentage
+        let current = this.block
+        let first = this.first
+        let block = first
+        let prev = first
+        while block != current {
+            let b = block
+            let count = @ptrv(b, uint, 1)
+            let used = @ptrv(b, uint, 2)
+            @ptrv(b, uint, 3) = used * 100 / count
+            block = @ptrv(b, ptr, 0)
+        }
+
+        // Free unused blocks after current
+        block = @ptrv(current, ptr, 0)
+        prev = current
         while block != null {
             let b = block
-            let itemc = @ptrv(b, uint, 1)
-            let base = b + sizeof(ptr) * 3
-            let removed_count : uint = 0 
-            // Loop items
-            while itemc-- > 0 {
-                let item = base + (size * itemc)
-                let state = @ptrv(item, u8, 0)
-                if state != state_solid {
-                    continue
-                }
-                if @ptrv(item, u8, byte_age) != age {
-                    if call_gc_free {
-                        let vtable = @ptrv(item, u32, 1)
-                        let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, ?fn(ptr)(void), vt_gc_free)
-                        func(item + 8);
-                    }
-                    @ptrv(item, u8, 0) = state_unused
-                    removed_count++
-                }
-            }
-            // Adjust transfer count
-            @ptrv(b, uint, 2) -= removed_count
-            // Next block
-            block = @ptrv(b, ptr)
-        }
-    }
+            let used = @ptrv(b, uint, 2)
+            let next = @ptrv(b, ptr, 0)
 
-    static fn delete_all() {
-        let pc = pool_count
-        while pc-- > 0 {
-            let pool = @ptrv(pools, GcPool, pc)
-            pool.delete()
-        }
-    }
-    fn delete() {
-        let block = this.first
-        while block != null {
-            let next = @ptrv(block, ptr)
-            free(block)
+            if used == 0 {
+                @ptrv(prev, ptr, 0) = next
+                free(block)
+                block = next
+                continue
+            }
+            prev = b
             block = next
         }
-
-        free(this)
+        //
+        this.set_block(this.first)
     }
 }
-

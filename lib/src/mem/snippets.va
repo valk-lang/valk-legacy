@@ -2,42 +2,17 @@
 use io;
 use os;
 
-snippet boot() {
-    GcManager.init()
-    Stack.init()
-}
-snippet shutdown() {
-    stack.shutdown()
-    gc_manager_instance.shutdown()
-}
-
-snippet stack_cache() {
-    @cache_value(stack) as STACK
-    @cache_value(STACK.stack_adr) as STACK_ADR
-}
-
 snippet stack_reserve(amount: V) {
-    STACK_ADR = @ptr_offset(STACK_ADR, amount, sizeof(ptr))
+    @cached_stack_address = @ptr_offset(@cached_stack_address, amount, sizeof(ptr))
 }
 
 snippet run_gc_check() {
-    if disable_gc == false {
-        let s = stack
-        let sa = s.stack_adr
-        if sa < s.lowest_next {
-            s.lowest_next = sa
-        }
-        if sa <= s.lowest {
-            if pool_usage > 30 {
-                s.run_gc = true
-            }
-        }
-        if s.run_gc {
-            s.gc()
-        }
+    if !disable_gc && @cached_stack_instance.run_gc {
+        @cached_stack_instance.gc()
     }
 }
 
 snippet stack_reduce() {
-    STACK_ADR = STACK_ADR
+    @cached_stack_address = @cached_stack_address
+    // @cached_stack_instance.stack_adr = @cached_stack_address
 }

@@ -14,6 +14,8 @@ char *ir_type(IR *ir, Type *type) {
         return "void";
     } else if (type->type == type_bool) {
         return "i1";
+    } else if (type->type == type_error) {
+        return "i32";
     } else if (type->type == type_struct) {
 
         ir_define_struct(ir, class);
@@ -38,6 +40,7 @@ char *ir_type(IR *ir, Type *type) {
         return dups(ir->alc, name);
     }
 
+    printf("Type: %d\n", type->type);
     printf("Type: %s\n", type_to_str(type, name));
     die("Unknown IR type (compiler bug)");
     return NULL;

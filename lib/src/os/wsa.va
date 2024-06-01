@@ -26,11 +26,8 @@ fn WSA_init() void {
     }
 }
 
-fn WSA_unix_fd(fd: uint) i32 {
-    if fd == (0^-1) @as uint {
-        return -1
-    }
-    return fd @as i32
+fn WSA_error() i32 {
+    return sys:WSAGetLastError()
 }
 
 #end

@@ -12,6 +12,7 @@ Type* type_make(Allocator* alc, int type) {
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
+    t->ignore_null = false;
     return t;
 }
 TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett) {
@@ -186,6 +187,29 @@ Type* type_clone(Allocator* alc, Type* type) {
     return t;
 }
 
+TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi) {
+
+    TypeFuncInfo* fi2 = al(alc, sizeof(TypeFuncInfo));
+    *fi2 = *fi;
+    fi2->args = fi->args ? clone_array_of_types(alc, fi->args) : NULL;
+    fi2->default_values = fi->default_values ? array_make(alc, fi->default_values->length + 1) : NULL;
+    fi2->err_names = fi->err_names ? array_make(alc, fi->err_names->length + 1) : NULL;
+    fi2->err_values = fi->err_values ? array_make(alc, fi->err_values->length + 1) : NULL;
+    fi2->rett_types = fi->rett_types ? clone_array_of_types(alc, fi->rett_types) : NULL;
+    fi2->rett = fi->rett ? type_clone(alc, fi->rett) : NULL;
+
+    return fi2;
+}
+
+Array *clone_array_of_types(Allocator *alc, Array *types) {
+    Array *list = array_make(alc, types->length + 1);
+    for(int i = 0; i < types->length; i++) {
+        Type* t = array_get_index(types, i);
+        array_push(list, type_clone(alc, t));
+    }
+    return list;
+}
+
 Type* type_gen_void(Allocator* alc) {
     return type_make(alc, type_void);
 }
@@ -220,37 +244,60 @@ Type* type_gen_class(Allocator* alc, Class* class) {
     return t;
 }
 Type* type_gen_func(Allocator* alc, Func* func) {
-    Type* t = type_make(alc, type_func);
-    t->size = func->b->ptr_size;
-    t->is_pointer = true;
-    t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
-    t->func_info->can_error = func->errors ? true : false;
-    t->func_info->will_exit = func->exits;
-    return t;
+    if (!func->reference_type) {
+        Type *t = type_make(alc, type_func);
+        t->size = func->b->ptr_size;
+        t->is_pointer = true;
+        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
+        t->func_info->can_error = func->errors ? true : false;
+        t->func_info->will_exit = func->exits;
+        func->reference_type = t;
+    }
+    return func->reference_type;
 }
 
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
     t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL, NULL);
+    t->size = sizeof(int);
+    return t;
+}
+
+Type* type_gen_promise(Allocator* alc, Build* b, TypeFuncInfo* fi) {
+    Type* t = type_make(alc, type_promise);
+    t->func_info = fi;
+    t->is_pointer = true;
+    t->size = b->ptr_size;
+    // t->class = type_gen_class(alc, get_valk_class(, "core", "Coro"));
     return t;
 }
 
 
 Type* type_gen_valk(Allocator* alc, Build* b, char* name) {
+    char *ns = "type";
     if (name[0] == 'u' && str_is(name, "uint")) {
         name = get_number_type_name(b, b->ptr_size, false, false);
     } else if (name[0] == 'i' && str_is(name, "int")) {
         name = get_number_type_name(b, b->ptr_size, false, true);
     } else if (name[0] == 'f' && str_is(name, "float")) {
         name = get_number_type_name(b, b->ptr_size, true, false);
+    } else if (name[0] == 'F' && str_is(name, "FD")) {
+        ns = "io";
     }
-    Nsc* nsc = get_valk_nsc(b, "type");
+    Nsc* nsc = get_valk_nsc(b, ns);
     Idf* idf = scope_find_idf(nsc->scope, name, false);
     if(idf && idf->type == idf_class) {
         return type_gen_class(alc, idf->item);
     }
     printf("VALK TYPE NOT FOUND: '%s'", name);
     exit(1);
+}
+
+Type *type_gen_valk_class(Allocator *alc, Build *b, char *ns, char *name, bool nullable) {
+    Class* class = get_valk_class(b, ns, name);
+    Type* t = type_gen_class(alc, class);
+    t->nullable = nullable;
+    return t;
 }
 
 char* get_number_type_name(Build* b, int size, bool is_float, bool is_signed) {
@@ -396,6 +443,17 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
             type_to_str_append(sub, res, use_export_name);
         }
         strcat(res, use_export_name ? "_" : ")");
+    } else if (t->type == type_promise) {
+        strcat(res, use_export_name ? "PROMISE_" : "promise(");
+        Array* types = t->func_info->rett_types;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0) {
+                strcat(res, use_export_name ? "_" : ", ");
+            }
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        strcat(res, use_export_name ? "_" : ")");
     } else if (t->class) {
         Class *class = t->class;
         strcat(res, use_export_name ? class->ir_name : class->name);
@@ -468,5 +526,45 @@ Type* vscope_get_result_type(Array* values) {
     }
     if (type->is_pointer)
         type->nullable = contains_nullable;
+    return type;
+}
+
+Type* tcache_ptr;
+Type* type_cache_ptr(Build* b) {
+    if(!tcache_ptr)
+        tcache_ptr = type_gen_valk(b->alc, b, "ptr");
+    return tcache_ptr;
+}
+
+Type* tcache_uint;
+Type* type_cache_uint(Build* b) {
+    if(!tcache_uint)
+        tcache_uint = type_gen_valk(b->alc, b, "uint");
+    return tcache_uint;
+}
+
+Type* tcache_u32;
+Type* type_cache_u32(Build* b) {
+    if(!tcache_u32)
+        tcache_u32 = type_gen_valk(b->alc, b, "u32");
+    return tcache_u32;
+}
+Type* tcache_i32;
+Type* type_cache_i32(Build* b) {
+    if(!tcache_i32)
+        tcache_i32 = type_gen_valk(b->alc, b, "i32");
+    return tcache_i32;
+}
+
+Type* class_pool_type(Parser* p, Class* class) {
+    Build* b = p->b;
+    Allocator* alc = b->alc;
+    Type* gt = type_gen_class(alc, class);
+    Array* gtypes = array_make(alc, 2);
+    array_push(gtypes, gt);
+    Class* base = get_valk_class(b, "mem", "GcPool2");
+    Class* gen = get_generic_class(p, base, gtypes);
+    Type* type = type_gen_class(alc, gen);
+    type->ignore_null = true;
     return type;
 }

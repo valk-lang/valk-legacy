@@ -1,4 +1,8 @@
 
+struct libc_jmp_buf {
+    data: inline [ptr, 5]
+}
+
 struct libc_stat {
     st_dev: uint
     st_ino: uint
@@ -33,7 +37,7 @@ struct libc_timeval {
 }
 
 struct libc_poll_item {
-    fd: SOCKET
+    fd: int // SOCKET (aka. HANDLE)
     events: i16  // detect events
     revents: i16 // detected events
 }

@@ -6,7 +6,6 @@
 
 // Core
 IR* ir_make(Unit* u);
-void ir_gen_globals(IR* ir);
 void ir_gen_final(IR* ir);
 // Type
 char *ir_type(IR *ir, Type *type);
@@ -22,12 +21,12 @@ char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size);
 void ir_func_return_nothing(IR* ir);
 void ir_func_return(IR* ir, char* type, char* value);
-char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall);
+char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bool on_await);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
 void ir_write_ast(IR* ir, Scope* scope);
-char* ir_gc_link(IR* ir, char* on, char* to);
+char* ir_gc_link(IR* ir, char* on, char* to, bool nullable);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
@@ -120,6 +119,13 @@ struct IRFunc {
     char* gc_stack;
     char* gc_stack_adr;
     char* gc_stack_adr_val;
+    //
+    char* var_coro;
+    char* var_alloca_stack;
+    char* var_stack_adr;
+    char* var_g_stack;
+    char* var_g_stack_adr;
+    char* var_g_stack_adr_ref;
     //
     int var_count;
     int gc_count;

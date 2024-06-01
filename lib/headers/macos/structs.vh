@@ -1,13 +1,36 @@
 
+struct libc_jmp_buf {
+    #if ARCH == arm64
+    data: inline [i64, 22]
+    #else
+    data: inline [i64, 8]
+    #end
+    num: i32
+    sig: inline libc_sigset
+}
+struct libc_sigset {
+    data: inline [i64, 16]
+}
+
+#if ARCH == x64
 struct libc_dirent {
    d_ino: uint // Inode number
    d_off: uint // Not an offset see below
    d_reclen: u16 // Length of this record
    d_type: u8 // Type of file
    d_namelen: u8
-   //d_pad: u32
-   d_name: inline [u8, 256]
+   d_name: inline [u8, 255]
 }
+#elif ARCH == arm64
+struct libc_dirent {
+   d_ino: uint // Inode number
+   d_off: uint // Not an offset see below
+   d_reclen: u16 // Length of this record
+   d_namelen: u16
+   d_type: u8 // Type of file
+   d_name: inline [u8, 1024]
+}
+#end
 
 struct libc_stat {
     st_dev: uint

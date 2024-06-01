@@ -21,15 +21,14 @@ Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
     return value_make(alc, v_func_ptr, item, type_gen_func(alc, func));
 }
 
-Value *vgen_func_call(Allocator *alc, Value *on, Array *args) {
+Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args) {
     VFuncCall *item = al(alc, sizeof(VFuncCall));
     item->on = on;
     item->args = args;
     item->rett_refs = NULL;
-    item->err_scope = NULL;
-    item->err_value = NULL;
-    item->err_decl = NULL;
-    return value_make(alc, v_func_call, item, on->rett->func_info->rett);
+    item->errh = NULL;
+    Type* rett = on->rett->func_info->rett;
+    return value_make(alc, v_func_call, item, rett);
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
@@ -94,43 +93,35 @@ Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
     Array *alloc_values = array_make(alc, func->args->values->length);
     Value *vint = vgen_int(alc, size, type_gen_valk(alc, b, "uint"));
     array_push(alloc_values, vint);
-    Value *res = vgen_func_call(alc, fptr, alloc_values);
+    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
     if(cast_as)
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
 }
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* class) {
-    //
-    Value* pool = NULL;
-    int index = class->pool_index;
-    if(index > -1) {
-        Global *g_pools = get_valk_global(b, "mem", "pools");
-        Value *pools = value_make(alc, v_global, g_pools, g_pools->type);
-        pool = vgen_ptrv(alc, b, pools, type_gen_class(alc, get_valk_class(b, "mem", "GcPool")), vgen_int(alc, index, type_gen_valk(alc, b, "i32")));
-    }
-    if(!pool){
-        build_err(b, "Cannot find correct pool to allocate class");
-    }
 
-    Func *func = get_valk_func(b, "mem", "gc_alloc_class");
+Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
+    Global* pool = class->pool;
+    Class* pc = pool->type->class;
+    Value* pv = value_make(alc, v_global, pool, pool->type);
+
+    Func *func = map_get(pc->funcs, "get");
+    func_mark_used(p->func, func);
 
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    array_push(alloc_values, pool);
-    Value *v_index = vgen_int(alc, class->gc_vtable_index, type_gen_valk(alc, b, "u32"));
-    array_push(alloc_values, v_index);
-    Value *res = vgen_func_call(alc, fptr, alloc_values);
-    if(class)
-        res->rett = type_gen_class(alc, class);
+    array_push(alloc_values, pv);
+    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
+    // res->rett = type_gen_class(alc, class);
     return res;
 }
+
 // Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right) {
 //     Func *func = get_valk_class_func(b, "mem", "Stack", "link");
 //     Value *fptr = vgen_func_ptr(alc, func, NULL);
 //     Array *alloc_values = array_make(alc, func->args->values->length);
 //     array_push(alloc_values, left);
 //     array_push(alloc_values, right);
-//     Value *res = vgen_func_call(alc, fptr, alloc_values);
+//     Value *res = vgen_func_call(alc, b, fptr, alloc_values);
 //     res = vgen_cast(alc, res, left->rett);
 //     return res;
 // }
@@ -192,30 +183,27 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     sub->ast = array_make(alc, 10);
 
     // Disable gc
-    Global* g_disable = get_valk_global(b, "mem", "disable_gc");
-    Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
+    Global *g_disable = get_valk_global(b, "mem", "disable_gc");
+    Value *disable = value_make(alc, v_global, g_disable, g_disable->type);
     Value *var_disable = vgen_var(alc, b, disable);
-    array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
-    array_push(sub->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
+    if(contains_gc_values) {
+        array_push(sub->ast, token_make(alc, t_set_var, var_disable->item));
+        array_push(sub->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
+    }
 
     // Buffer arguments
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
-        if(value_needs_gc_buffer(arg)) {
-            Decl *decl = decl_make(alc, NULL, arg->rett, false);
-            array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
-            arg = value_make(alc, v_decl, decl, decl->type);
-        } else {
-            // Get values
-            arg = vgen_var(alc, b, arg);
-            array_push(sub->ast, token_make(alc, t_set_var, arg->item));
-        }
-        // Replace args
+        Decl *decl = decl_make(alc, NULL, arg->rett, false);
+        array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
+        arg = value_make(alc, v_decl, decl, decl->type);
         array_set_index(args, i, arg);
     }
 
     // Set disable_gc to previous value
-    array_push(sub->ast, tgen_assign(alc, disable, var_disable));
+    if(contains_gc_values) {
+        array_push(sub->ast, tgen_assign(alc, disable, var_disable));
+    }
 
     Value *var_result = vgen_var(alc, b, val);
     array_push(sub->ast, token_make(alc, t_set_var, var_result->item));

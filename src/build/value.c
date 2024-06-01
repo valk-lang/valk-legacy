@@ -76,7 +76,16 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Type* type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
             int size = (type->class ? type->class->size : type->size);
-            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), type);
+            Type* rett = type;
+            if(!type->is_pointer) {
+                if(type->type == type_static_array) {
+                    rett = type_clone(alc, type);
+                    rett->is_pointer = true;
+                } else {
+                    rett = type_cache_ptr(b);
+                }
+            }
+            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), rett);
 
         } else if (str_is(tkn, "@stack_bytes")) {
             tok_expect(p, "(", false, false);
@@ -86,6 +95,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
             tok_expect(p, ")", true, true);
             v = value_make(alc, v_stack, val, type_gen_valk(alc, b, "ptr"));
+
+        } else if (str_is(tkn, "@cached_stack_address")) {
+            v = value_make(alc, v_cached_stack_adr, NULL, type_cache_ptr(b));
+        } else if (str_is(tkn, "@cached_stack_instance")) {
+            v = value_make(alc, v_cached_stack_instance, NULL, type_gen_valk_class(alc, b, "mem", "Stack", false));
 
         } else if (str_is(tkn, "@gc_link")){
             tok_expect(p, "(", false, false);
@@ -98,11 +112,46 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             } else {
                 v = to;
             }
+        } else if (str_is(tkn, "@frameptr")) {
+            v = value_make(alc, v_frameptr, NULL, type_cache_ptr(b));
+        } else if (str_is(tkn, "@stackptr")) {
+            v = value_make(alc, v_stackptr, NULL, type_cache_ptr(b));
+        } else if (str_is(tkn, "@setjmp")) {
+            tok_expect(p, "(", false, false);
+            Value* buf = read_value(alc, p, true, 0);
+            tok_expect(p, ")", true, true);
+            if(!buf->rett->is_pointer) {
+                parse_err(p, -1, "Expected a value that return a pointer type");
+            }
+            v = value_make(alc, v_setjmp, buf, type_cache_i32(b));
+        } else if (str_is(tkn, "@longjmp")) {
+            tok_expect(p, "(", false, false);
+            Value* buf = read_value(alc, p, true, 0);
+            tok_expect(p, ")", true, true);
+            if(!buf->rett->is_pointer) {
+                parse_err(p, -1, "Expected a value that return a pointer type");
+            }
+            v = value_make(alc, v_longjmp, buf, type_gen_void(alc));
+            p->scope->did_return = true;
         } else if (str_is(tkn, "@gc_get_vtable")) {
             tok_expect(p, "(", false, false);
             Value* index = read_value(alc, p, true, 0);
             tok_expect(p, ")", true, true);
             v = value_make(alc, v_gc_get_table, index, type_gen_valk(alc, b, "ptr"));
+        } else if (str_is(tkn, "@type_vtable_index")) {
+            tok_expect(p, "(", false, false);
+            Type *type = read_type(p, alc, true);
+            tok_expect(p, ")", true, true);
+            v = vgen_int(alc, type->class->gc_vtable_index, type_gen_valk(alc, b, "int"));
+        } else if (str_is(tkn, "@class_of")) {
+            tok_expect(p, "(", false, false);
+            Type *type = read_type(p, alc, true);
+            tok_expect(p, ")", true, true);
+            Class* class = type->class;
+            if(!class) {
+                parse_err(p, -1, "Type has no class");
+            }
+            v = value_handle_class(alc, p, class);
         }
     } else if (t == tok_string) {
         char *body = tkn;
@@ -228,6 +277,41 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             tok_expect(p, ")", true, true);
 
+        } else if (str_is(tkn, "error_value")) {
+
+            tok_expect(p, "(", false, false);
+            Id id;
+            read_id(p, NULL, &id);
+            Idf *idf = idf_by_id(p, p->scope, &id, true);
+            if(idf->type != idf_error) {
+                parse_err(p, -1, "Expected an error identifier here");
+            }
+            tok_expect(p, ")", true, true);
+
+            Decl* edecl = idf->item;
+            v = value_make(alc, v_decl, edecl, type_gen_number(alc, b, 4, false, false));
+
+        } else if (str_is(tkn, "co")) {
+
+            bool before = p->reading_coro_fcall;
+            p->reading_coro_fcall = true;
+            Value* on = read_value(alc, p, true, 1);
+            p->reading_coro_fcall = before;
+
+            if(on->type != v_func_call) {
+                parse_err(p, -1, "Missing function call statement after 'co' token");
+            }
+            v = coro_generate(alc, p, on);
+
+        } else if (str_is(tkn, "await")) {
+
+            Value* on = read_value(alc, p, true, 1);
+            if(on->rett->type != type_promise) {
+                parse_err(p, -1, "Using 'await' on a non-promise value");
+            }
+
+            v = coro_await(alc, p, on);
+
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
             tok_expect(p, "(", false, false);
@@ -251,7 +335,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
             array_push(args, vgen_int(alc, p->line, type_gen_valk(alc, b, "uint")));
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
-            v = vgen_func_call(alc, fptr, args);
+            v = vgen_func_call(alc, b, fptr, args);
 
         } else {
             // Identifiers
@@ -667,7 +751,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
 
-    parse_err(p, -1, "Identifier cannot be used as a value", idf->type);
+    parse_err(p, -1, "Identifier cannot be used as a value: %d", idf->type);
     return NULL;
 }
 
@@ -766,104 +850,28 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
-    Value* fcall = vgen_func_call(alc, on, args);
+    Value* fcall = vgen_func_call(alc, b, on, args);
     if(on->rett->func_info->will_exit) {
         p->scope->did_return = true;
     }
 
-    if(ont->func_info->err_names && ont->func_info->err_names->length > 0) {
-        VFuncCall* f = fcall->item;
-        bool void_rett = type_is_void(fcall->rett);
-        bool ignore = false;
-        char t = tok(p, true, false, true);
-        char* name = NULL;
-        if(t == tok_id && !str_is(p->tkn, "_")) {
-            name = p->tkn;
-            t = tok(p, true, false, true);
-        }
-        if(void_rett) {
-            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?") && !str_is(p->tkn, "_")){
-                parse_err(p, -1, "Expected one the following error handler tokens: ! ? _ (Found: '%s')", p->tkn);
+    Value *buffer = fcall;
+    // Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+    // if(buffer->type == v_gc_buffer && p->scope->ast) {
+    //     p->scope->gc_check = true;
+    // }
+
+    if (!p->reading_coro_fcall) {
+        TypeFuncInfo *fi = ont->func_info;
+        if (fi->err_names && fi->err_names->length > 0) {
+            VFuncCall *c = fcall->item;
+            c->errh = read_err_handler(alc, p, buffer, fi);
+            if (c->errh && c->errh->err_value) {
+                buffer->rett = c->errh->err_value->rett;
             }
-        } else {
-            if(!str_is(p->tkn, "!") && !str_is(p->tkn, "?")){
-                parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
-            }
-        }
-
-        if(t == tok_not) {
-
-            t = tok(p, true, true, false);
-
-            Chunk* chunk_end = NULL;
-            int scope_end_i = -1;
-            if (t == tok_curly_open) {
-                tok(p, true, true, true);
-                scope_end_i = p->scope_end_i;
-            }
-            bool single = scope_end_i == -1;
-
-            Scope *scope = p->scope;
-            Scope* err_scope = scope_sub_make(alc, sc_default, scope);
-            f->err_scope = err_scope;
-
-            if(name) {
-                // Error identifier
-                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
-                Idf* idf = idf_make(alc, idf_error, decl);
-                scope_set_idf(err_scope, name, idf, p);
-                scope_add_decl(alc, err_scope, decl);
-                f->err_decl = decl;
-            }
-
-            p->scope = err_scope;
-            read_ast(p, single);
-            p->scope = scope;
-            if(!single)
-                p->chunk->i = scope_end_i;
-
-            if(!void_rett && !err_scope->did_return) {
-                parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
-            }
-
-        } else if(t == tok_qmark) {
-            if (void_rett) {
-                parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
-            }
-            Scope* scope = p->scope;
-            Scope* sub_scope = scope_sub_make(alc, sc_default, p->scope);
-            p->scope = sub_scope;
-
-            if(name) {
-                // Error identifier
-                Decl *decl = decl_make(alc, name, type_gen_error(alc, ont->func_info->err_names, ont->func_info->err_values), true);
-                Idf* idf = idf_make(alc, idf_error, decl);
-                scope_set_idf(sub_scope, name, idf, p);
-                scope_add_decl(alc, sub_scope, decl);
-                f->err_decl = decl;
-            }
-
-            Value* errv = read_value(alc, p, false, 0);
-            errv = try_convert(alc, p, sub_scope, errv, fcall->rett);
-
-            p->scope = scope;
-
-            // Mix nullable
-            if(fcall->rett->is_pointer && errv->rett->nullable) {
-                Type* t = type_clone(alc, fcall->rett);
-                t->nullable = true;
-                fcall->rett = t;
-            }
-            //
-            type_check(p, fcall->rett, errv->rett);
-            f->err_value = errv;
         }
     }
 
-    Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
-    if(buffer->type == v_gc_buffer && p->scope->ast) {
-        p->scope->gc_check = true;
-    }
     return buffer;
 }
 
@@ -940,6 +948,8 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         if(!map_contains(values, name)) {
             if(prop->skip_default_value)
                 continue;
+            if(prop->type->type == type_static_array)
+                continue;
             if(!prop->chunk_value) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);
             }
@@ -950,7 +960,16 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
     }
 
-    Value* init = value_make(alc, v_class_init, values, type_gen_class(alc, class));
+    VClassInit* ci = al(alc, sizeof(VClassInit));
+    ci->prop_values = values;
+
+    if (class->type == ct_class) {
+        ci->item = vgen_call_pool_alloc(alc, p, b, class);
+    } else {
+        ci->item = vgen_call_alloc(alc, b, class->size, class);
+    }
+
+    Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
     Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
@@ -980,6 +999,11 @@ Value* value_handle_ptrv(Allocator *alc, Parser* p) {
         index = read_value(alc, p, true, 0);
         if (index->rett->type != type_int) {
             parse_err(p, -1, "@ptrv index must be of type integer");
+        }
+        Build* b = p->b;
+        if (index->rett->size < b->ptr_size && index->rett->is_signed == false) {
+            // Increase index type size
+            index = vgen_cast(alc, index, type_gen_number(alc, b, b->ptr_size, false, true));
         }
     }
     tok_expect(p, ")", true, true);
@@ -1021,7 +1045,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
             array_push(args, right);
             type_check(p, arg_type, right->rett);
             Value *on = vgen_func_ptr(alc, add, NULL);
-            Value *fcall = vgen_func_call(alc, on, args);
+            Value *fcall = vgen_func_call(alc, b, on, args);
             return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
         }
     }
@@ -1137,7 +1161,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
                 array_push(args, right);
                 type_check(p, arg_type, right->rett);
                 Value *on = vgen_func_ptr(alc, eq, NULL);
-                Value *fcall = vgen_func_call(alc, on, args);
+                Value *fcall = vgen_func_call(alc, b, on, args);
                 Value* result = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
                 if(op == op_ne) {
                     result = value_make(alc, v_not, result, result->rett);
@@ -1182,11 +1206,12 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
 }
 
 bool value_is_assignable(Value *v) {
-    if(v->type == v_ir_cached) {
+    int vt = v->type;
+    if(vt == v_ir_cached) {
         VIRCached* vc = v->item;
         return value_is_assignable(vc->value);
     }
-    return v->type == v_decl || v->type == v_decl_overwrite || v->type == v_class_pa || v->type == v_ptrv || v->type == v_global; 
+    return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global || vt == v_cached_stack_adr; 
 }
 
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
@@ -1233,7 +1258,7 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
             Array *args = array_make(alc, 2);
             array_push(args, val);
             Value *on = vgen_func_ptr(alc, to_str, NULL);
-            Value *fcall = vgen_func_call(alc, on, args);
+            Value *fcall = vgen_func_call(alc, b, on, args);
             return vgen_gc_buffer(alc, b, scope, fcall, args, true);
         }
     }
@@ -1391,4 +1416,100 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
     }
     unsigned int errv = array_get_index_u32(err_values, index);
     return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
+}
+
+ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
+
+    Type* frett = fi->rett;
+    bool void_rett = type_is_void(frett);
+    bool ignore = false;
+    char t = tok(p, true, false, true);
+    char *name = NULL;
+
+    if(type_is_void(frett) && str_is(p->tkn, "_")) {
+        return NULL;
+    }
+
+    ErrorHandler* errh = al(alc, sizeof(ErrorHandler));
+    errh->err_scope = NULL;
+    errh->err_value = NULL;
+    errh->err_decl = NULL;
+
+    if (t == tok_id) {
+        name = p->tkn;
+        t = tok(p, true, false, true);
+    }
+    if (!str_is(p->tkn, "!") && !str_is(p->tkn, "?")) {
+        parse_err(p, -1, "Expected one the following error handler tokens: ! or ? (Found: '%s')", p->tkn);
+    }
+
+    if (t == tok_not) {
+
+        t = tok(p, true, true, false);
+
+        Chunk *chunk_end = NULL;
+        int scope_end_i = -1;
+        if (t == tok_curly_open) {
+            tok(p, true, true, true);
+            scope_end_i = p->scope_end_i;
+        }
+        bool single = scope_end_i == -1;
+
+        Scope *scope = p->scope;
+        Scope *err_scope = scope_sub_make(alc, sc_default, scope);
+        errh->err_scope = err_scope;
+
+        if (name) {
+            // Error identifier
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
+            Idf *idf = idf_make(alc, idf_error, decl);
+            scope_set_idf(err_scope, name, idf, p);
+            scope_add_decl(alc, err_scope, decl);
+            errh->err_decl = decl;
+        }
+
+        p->scope = err_scope;
+        read_ast(p, single);
+        p->scope = scope;
+        if (!single)
+            p->chunk->i = scope_end_i;
+
+        if (!void_rett && !err_scope->did_return) {
+            parse_err(p, -1, "Expected scope to contain one of the following tokens: return, throw, break, continue");
+        }
+
+    } else if (t == tok_qmark) {
+        if (void_rett) {
+            parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
+        }
+        Scope *scope = p->scope;
+        Scope *sub_scope = scope_sub_make(alc, sc_default, p->scope);
+        p->scope = sub_scope;
+
+        if (name) {
+            // Error identifier
+            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
+            Idf *idf = idf_make(alc, idf_error, decl);
+            scope_set_idf(sub_scope, name, idf, p);
+            scope_add_decl(alc, sub_scope, decl);
+            errh->err_decl = decl;
+        }
+
+        Value *errv = read_value(alc, p, false, 0);
+        errv = try_convert(alc, p, sub_scope, errv, frett);
+
+        p->scope = scope;
+
+        // Mix nullable
+        if (frett->is_pointer && errv->rett->nullable) {
+            Type *t = type_clone(alc, frett);
+            t->nullable = true;
+            frett = t;
+        }
+        //
+        type_check(p, frett, errv->rett);
+        errh->err_value = errv;
+    }
+
+    return errh;
 }

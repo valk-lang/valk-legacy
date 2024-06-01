@@ -15,22 +15,14 @@ class FileStream {
     ~reading: bool (true)
 
     fn read(bytes: uint (10240)) String !read_err {
-        if(this.can_read == false){
-            return ""
-        }
-        if(this.reading == false) {
-            return ""
-        }
+        if !this.can_read || !this.reading : return ""
 
-        let buf = @stack_bytes(bytes)
-        let rcount = io:read(this.fd, buf, bytes) ! throw read_err
+        let str = String.make_empty(bytes)
+        let rcount = io:read(this.fd, str.data, bytes) ! throw read_err
+        str.bytes = rcount
+        @ptrv(str.data, u8, rcount) = 0
 
-        let str = String.make_empty(rcount)
-        mem:copy(buf, str.data, rcount)
-
-        if(rcount < bytes) {
-            this.close()
-        }
+        if rcount < bytes : this.close()
 
         return str
     }

@@ -9,7 +9,7 @@ use fs
 class Connection {
     server: Server
     netcon: net:Connection
-    fd: uint
+    fd: FD
 
     // uploads: ?Array[String] (null)
     request: Request (Request{})
@@ -75,10 +75,21 @@ class Connection {
     }
 
     fn should_flush_output() bool {
-        return this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
+        return this.parser.input_pos == 0 || this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
     }
 
-    fn handle_event(read: bool, write: bool) {
+    fn read_more() uint !err {
+        let parser = this.parser
+        let input = parser.input
+        let rbytes : uint = 65535
+        let bytes = this.netcon.recv(input, rbytes) err ! {
+            throw err
+        }
+        return bytes
+    }
+
+    fn handle() {
+
         // Settings
         let server = this.server
         let max_hs = server.max_request_header_size
@@ -86,37 +97,20 @@ class Connection {
         let max_sbs = server.max_server_wide_body_size
 
         let parser = this.parser
-        let input = parser.input
         let request = this.request
         let file = this.output_file
 
-        // Write output
-        if write {
-            this.send_response_bytes() err ! {
-                if error_is(err, !again) : return
-                this.close()
-                return
-            }
-            this.reset_output()
-            if !read {
-                return
-            }
-        }
-
-        while read {
-            // Read bytes
-            let rbytes : uint = 65535
-            let bytes = this.netcon.recv(input, 65535) err ! {
-                if error_is(err, !again) : break
-                this.close()
-                return
-            }
-            if rbytes != bytes : break
-        }
-
-        // While has input
-        while parser.input_pos < parser.input.length {
+        while true {
             parser.parse(request) err ! {
+                // Check if we need more data
+                if error_is(err, !need_more_data) {
+                    let bytes = this.read_more() ! {
+                        this.close()
+                        return
+                    }
+                    if bytes == 0 : return
+                    continue
+                }
                 if error_is(err, !http413) {
                     this.send_error(413)
                     return
@@ -125,78 +119,43 @@ class Connection {
                 return
             }
 
-            // Check limits
-            if parser.parsed_headers {
-                let len = parser.content_length
-                if len > 0 {
-                    if len > max_bs {
-                        this.send_error(413)
-                        return
-                    }
-                    if server.active_body_size + len > max_sbs {
-                        this.send_error(413)
-                        return
-                    }
-                    if !this.added_active_body_size {
-                        this.added_active_body_size = true
-                        atomic(server.active_body_size + len)
-                    }
-                }
-            }
+            parser.soft_reset()
 
-            if parser.parsed_body {
-                if this.added_active_body_size {
-                    this.added_active_body_size = false
-                    atomic(server.active_body_size - parser.content_length)
-                }
-
-                parser.soft_reset()
-
-                if server.static_dirs.length > 0 {
-                    let path = request.path.trim("/")
-                    let found = false
+            let is_file = false
+            if server.static_dirs.length > 0 {
+                let path = request.path.trim("/")
+                if path.bytes > 0 {
                     each server.static_dirs as dir {
                         let fullpath = dir + path 
                         if fs:is_file(fullpath) {
                             let stream = fs:stream(fullpath, true, false) ! continue
                             this.send_file(stream, null)
-                            request.reset()
-                            found = true
+                            is_file = true
                             break
                         }
                     }
-                    if found : break
                 }
+            }
 
-                // Response
+            // Response
+            if !is_file {
                 let resp = server.handler(request)
                 this.respond(resp)
-
-                // Clear request
-                request.reset()
-                // TODO: Delete uploads
-
-                // Flush output
-                if this.should_flush_output() {
-                    this.send_response_bytes() err ! {
-                        if error_is(err, !again) : return
-                        this.close()
-                        return
-                    }
-                    this.reset_output()
-                }
-                continue
             }
-            break
-        }
 
-        // Write output
-        this.send_response_bytes() err ! {
-            if error_is(err, !again) : return
-            this.close()
-            return
+            // Clear request
+            request.reset()
+            // TODO: Delete uploads
+
+            // Flush output
+            if this.should_flush_output() {
+                this.send_response_bytes() err ! {
+                    this.close()
+                    return
+                }
+                this.reset_output()
+            }
         }
-        this.reset_output()
     }
 
     fn respond(resp: Response) void {
@@ -213,7 +172,7 @@ class Connection {
         resp.compile(this.output)
     }
 
-    fn send_response_bytes() !write !again {
+    fn send_response_bytes() !write {
 
         let out = this.output
         let file = this.output_file
@@ -228,6 +187,7 @@ class Connection {
                     }
                     if !file.reading {
                         this.output_file = null
+                        file = null
                     }
                 }
             }
@@ -236,12 +196,10 @@ class Connection {
             let bytes = out.length - pos
             if bytes == 0 : break
 
-            let wbytes = this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
-                if error_is(err, !again) : throw again
+            this.netcon.send_from_ptr(out.data + pos, bytes) err ! {
                 throw write
             }
-            this.output_pos += wbytes
-            if wbytes < bytes : break
+            this.output_pos += bytes
         }
     }
 
@@ -257,14 +215,14 @@ class Connection {
     }
 
     fn close() {
-        if this.added_active_body_size {
-            atomic(this.server.active_body_size - this.parser.content_length)
-            this.added_active_body_size = false
-        }
+        println("[+] Close connection: " + this.fd)
+        // if this.added_active_body_size {
+        //     atomic(this.server.active_body_size - this.parser.content_length)
+        //     this.added_active_body_size = false
+        // }
         this.full_reset()
-        net:Socket.close(this.fd)
+        this.netcon.close()
     }
-
 }
 
 

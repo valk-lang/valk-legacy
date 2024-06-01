@@ -23,8 +23,13 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, scope, fcall->on);
         Array *values = ir_fcall_args(ir, scope, fcall->args, fcall->rett_refs);
-        char *res = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
-        return ir_func_err_handler(ir, scope, res, fcall);
+        char *call = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
+
+        ErrorHandler* errh = fcall->errh;
+        if (errh) {
+            return ir_func_err_handler(ir, scope, errh, call, false);
+        }
+        return call;
     }
     if (vt == v_gc_buffer) {
         VGcBuffer* buf = v->item;
@@ -74,7 +79,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         Type *on_type = on->rett;
         char *ir_on = ir_value(ir, scope, on);
         char *ir_to = ir_value(ir, scope, to);
-        char *res = ir_gc_link(ir, ir_on, ir_to);
+        char *res = ir_gc_link(ir, ir_on, ir_to, to->rett->nullable);
         return res;
     }
     if (vt == v_decl) {
@@ -189,6 +194,12 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         item->ir_value = val;
         return val;
     }
+    if (vt == v_cached_stack_adr) {
+        return ir->func->var_g_stack_adr;
+    }
+    if (vt == v_cached_stack_instance) {
+        return ir->func->var_g_stack;
+    }
     if (vt == v_ir_value) {
         return v->item;
     }
@@ -216,9 +227,10 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         return ir_cast(ir, lval, from_type, to_type);
     }
     if (vt == v_class_init) {
-        Map* values = v->item;
+        VClassInit* ci = v->item;
+        Value* ob = ci->item;
+        Map* values = ci->prop_values;
         Class* class = v->rett->class;
-        Value* ob = NULL;
 
         // Write prop values
         Array* ir_props = array_make(ir->alc, values->keys->length);
@@ -228,12 +240,7 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
             array_push(ir_props, lval);
         }
 
-        // Alloc memory
-        if(class->type == ct_class) {
-            ob = vgen_call_gc_alloc(ir->alc, ir->b, class->size, class);
-        } else {
-            ob = vgen_call_alloc(ir->alc, ir->b, class->size, class);
-        }
+        // Init object
         char* obj = ir_value(ir, scope, ob);
 
         // Set props
@@ -343,6 +350,82 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         ir->block = block_after;
         return ir_phi(ir, values, ir_type(ir, v->rett));
     }
+    if (vt == v_await) {
+        VAwait* aw = v->item;
+    //     return ir_await(ir, scope, aw);
+    }
+    if (vt == v_frameptr) {
+        Str *code = ir->block->code;
+        char* framep = ir_var(ir->func);
+        str_flat(code, "  ");
+        str_add(code, framep);
+        str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+        return framep;
+    }
+    if (vt == v_stackptr) {
+        Str *code = ir->block->code;
+        char* ptr = ir_var(ir->func);
+        str_flat(code, "  ");
+        str_add(code, ptr);
+        str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+        return ptr;
+    }
+    if (vt == v_setjmp) {
+        Value* val = v->item;
+        char* buf = ir_value(ir, scope, val);
+        char* framep = ir_var(ir->func);
+        char* stackp = ir_var(ir->func);
+        char* result = ir_var(ir->func);
+        Str *code = ir->block->code;
+
+        if (ir->b->target_os == os_win) {
+            // Frame pointer
+            str_flat(code, "  ");
+            str_add(code, framep);
+            str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+            char *s1 = ir_ptrv(ir, buf, "ptr", 0);
+            ir_store(ir, s1, framep, "ptr", ir->b->ptr_size * 2);
+
+            // Stack pointer
+            str_flat(code, "  ");
+            str_add(code, stackp);
+            str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+            char *s2 = ir_ptrv(ir, buf, "ptr", 2);
+            ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size * 2);
+
+            // Call setjmp
+            str_flat(code, "  ");
+            str_add(code, result);
+            str_flat(code, " = tail call i32 @llvm.eh.sjlj.setjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+        } else {
+            str_flat(code, "  ");
+            str_add(code, result);
+            str_flat(code, " = call i32 @_setjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+        }
+        return result;
+    }
+    if (vt == v_longjmp) {
+        Value* val = v->item;
+        char* buf = ir_value(ir, scope, val);
+        Str *code = ir->block->code;
+
+        if (ir->b->target_os == os_win) {
+            str_flat(code, "  call void @llvm.eh.sjlj.longjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+            str_flat(code, "unreachable\n");
+        } else {
+            str_flat(code, "  call void @longjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ", i32 1)\n");
+            str_flat(code, "unreachable\n");
+        }
+        return "";
+    }
 
     printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
     exit(1);
@@ -403,6 +486,9 @@ char* ir_assign_value(IR* ir, Scope* scope, Value* v) {
         char *var = ir_assign_value(ir, scope, item->value);
         item->ir_var = var;
         return var;
+    }
+    if (vt == v_cached_stack_adr) {
+        return ir->func->var_g_stack_adr_ref;
     }
     return "?-?";
 }

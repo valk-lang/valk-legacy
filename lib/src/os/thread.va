@@ -2,6 +2,8 @@
 header "sys" as sys;
 
 use valk:mem;
+use valk:core;
+use io;
 
 struct ThreadEntry {
     func: ptr
@@ -11,15 +13,17 @@ struct ThreadEntry {
 
 struct Thread {
 
+    #init_thread
     - static fn entry(e: ThreadEntry) {
         mem:Stack.init()
         if e.has_data {
             let func = e.func @as fn(ptr)(void);
-            func(e.data @as ptr);
+            co func(e.data @as ptr);
         } else {
             let func = e.func @as fn()(void);
-            func();
+            co func();
         }
+        core:Coro2.loop()
         mem:stack.shutdown()
     }
 

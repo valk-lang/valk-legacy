@@ -4,6 +4,10 @@ pointer ptr math {
         return (this @as uint).to_hex()
     }
 
+    fn _string() String {
+        return (this @as uint).to_hex()
+    }
+
     fn print() {
         (this @as uint).print(16)
     }

@@ -45,7 +45,7 @@
 
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
-#define str_flat(str, chars) str_add_x(str, chars, sizeof(chars) - 1)
+#define str_flat(str, chars) str_append_chars(str, chars)
 
 #define v_i64 long long int
 #define v_u64 unsigned long long int
@@ -92,5 +92,6 @@ extern bool is_watching;
 #include "headers/test.h"
 #include "headers/thread.h"
 #include "headers/macro.h"
+#include "headers/coro.h"
 
 #endif

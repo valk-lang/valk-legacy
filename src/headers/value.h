@@ -13,12 +13,13 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
 bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 VFuncCall* value_extract_func_call(Value* from);
+ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
 
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
-Value *vgen_func_call(Allocator *alc, Value *on, Array *args);
+Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args);
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type);
 Value *vgen_float(Allocator *alc, double value, Type *type);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
@@ -28,7 +29,7 @@ Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
 Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
-Value* vgen_call_gc_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
+Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class);
 // Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);
@@ -62,11 +63,14 @@ struct VFuncCall {
     Value *on;
     Array *args;
     Array *rett_refs;
+    ErrorHandler* errh;
+    int line;
+    int col;
+};
+struct ErrorHandler {
     Scope *err_scope;
     Value *err_value;
     Decl* err_decl;
-    int line;
-    int col;
 };
 struct VNumber {
     v_i64 value_int;
@@ -76,6 +80,10 @@ struct VGcBuffer {
     VVar* result;
     Scope* scope;
     Value* on;
+};
+struct VClassInit {
+    Value* item;
+    Map* prop_values;
 };
 struct VClassPA {
     Value* on;

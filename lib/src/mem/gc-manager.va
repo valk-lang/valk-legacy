@@ -75,6 +75,7 @@ struct GcManager {
 
         //
         while true {
+            break
             //
             let sc = gm.stack_count;
             let up_to_date_count : uint = 0;

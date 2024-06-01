@@ -158,12 +158,13 @@ int cmd_build(int argc, char *argv[]) {
 
     b->globals = array_make(alc, 40);
 
-    b->units = array_make(alc, 40);
-    b->classes = array_make(alc, 40);
+    b->units = array_make(alc, 100);
+    b->classes = array_make(alc, 1000);
     b->pool_str = array_make(alc, 20);
     b->strings = array_make(alc, 100);
-    b->links = array_make(alc, 10);
+    b->links = array_make(alc, 20);
     b->link_settings = map_make(alc);
+    b->parse_later = array_make(alc, 20);
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
@@ -180,11 +181,14 @@ int cmd_build(int argc, char *argv[]) {
     b->ptr_size = 8;
     b->export_count = 0;
     b->string_count = 0;
+    b->coro_count = 0;
     b->gc_vtables = 0;
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
     b->building_ast = true;
+    b->parse_last = false;
+    b->stage_1_done = false;
 
     b->is_test = is_test;
     b->is_clean = is_clean;

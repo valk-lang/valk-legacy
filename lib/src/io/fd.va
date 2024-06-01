@@ -1,7 +1,15 @@
 
 header "sys" as sys;
 
-alias FD as uint;
+use os
+
+alias FD as int;
+
+#if OS == win
+fn valk_fd(fd: uint) FD {
+    return (fd == (0^-1) @as uint) ? -1 : fd @as int
+}
+#end
 
 fn write(fd: FD, str: String) !failed !again {
     #if OS == win
@@ -9,6 +17,7 @@ fn write(fd: FD, str: String) !failed !again {
     #else
     let bytes = str.bytes;
     #end
+    if bytes == 0 : return
     let c = sys:write(fd @as i32, str.data, bytes);
     if c == -2 {
         throw again;
@@ -35,16 +44,32 @@ fn write_from_ptr(fd: FD, data: ptr, length: uint) uint !failed !again {
 }
 
 fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
-    let rcvd = sys:read(fd @as i32, buffer, buffer_size);
-    if rcvd == -2 {
-        throw again;
+    while true {
+        let rcvd = sys:read(fd @as i32, buffer, buffer_size);
+        if rcvd < 0 {
+            #if OS == win
+            let err = os:WSA_error()
+            if err == sys:WSAEWOULDBLOCK {
+                // EAGAIN
+                await_fd(fd, false, true)
+                continue;
+            }
+            #else
+            let err = os:libc_errno()
+            if err == sys:EAGAIN {
+                // EAGAIN
+                await_fd(fd, false, true)
+                continue;
+            }
+            #end
+            throw failed;
+        }
+        return rcvd @as uint;
     }
-    if rcvd < 0 {
-        throw failed;
-    }
-    return rcvd @as uint;
+    throw failed;
 }
 
-fn close(fd: FD) {
+fn close(fd: FD) i32 {
     let c = sys:close(fd @as i32);
+    return c
 }

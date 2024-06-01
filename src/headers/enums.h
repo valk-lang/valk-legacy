@@ -111,7 +111,8 @@ enum TYPES {
     type_undefined,
     type_null,
     type_static_array,
-    type_error,
+    type_error, // 10
+    type_promise,
 };
 
 enum CLASSTYPES {
@@ -129,33 +130,40 @@ enum VALUES {
     v_class_pa,
     v_ptrv,
     v_ptr_offset,
-    v_global,
-    v_func_ptr, // 5
+    v_global, // 5
+    v_func_ptr,
     v_func_call, 
     v_number,
     v_cast,
-    v_string,
-    v_op, // 10
+    v_string, // 10
+    v_op,
     v_compare, 
     v_class_init,
     v_incr,
-    v_null,
-    v_stack, // 15
+    v_null, // 15
+    v_stack,
     v_atomic,
     v_ptr_of,
     v_ir_cached,
-    v_gc_link,
-    v_gc_buffer, // 20
+    v_gc_link, // 20
+    v_gc_buffer,
     v_ir_value, 
     v_gc_get_table,
     v_value_scope,
-    v_var,
-    v_isset, // 25
+    v_var, // 25
+    v_isset,
     v_and_or,
     v_not,
     v_this_or_that,
-    v_vscope,
-    v_null_alt_value, // 30
+    v_vscope, // 30
+    v_null_alt_value,
+    v_await,
+    v_cached_stack_adr,
+    v_cached_stack_instance,
+    v_setjmp,
+    v_longjmp,
+    v_frameptr,
+    v_stackptr,
 };
 
 enum TOKENS {
@@ -169,11 +177,12 @@ enum TOKENS {
     t_continue,
     t_throw,
     t_set_var,
-    t_ast_scope,
+    t_ast_scope, // 10
     t_set_decl_store_var,
     t_set_return_value,
     t_each,
     t_return_vscope,
+    t_yield,
 };
 
 enum OPERATORS {

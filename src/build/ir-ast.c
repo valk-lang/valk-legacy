@@ -46,7 +46,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 Type* on_type = pa->on->rett;
                 char* on = ir_value(ir, scope, pa->on);
                 char* var = ir_class_pa(ir, on_type->class, on, pa->prop);
-                char* result = ir_gc_link(ir, on, value);
+                char* result = ir_gc_link(ir, on, value, right->rett->nullable);
                 ir_store(ir, var, result, "ptr", ir->b->ptr_size);
             } else {
                 char* var = ir_assign_value(ir, scope, left);
@@ -153,12 +153,13 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_each) {
             TEach* item = t->item;
-            char* on = ir_value(ir, scope, item->on);
             IRBlock *block_cond = ir_block_make(ir, ir->func, "each_cond_");
             IRBlock *block_code = ir_block_make(ir, ir->func, "each_code_");
             IRBlock *block_after = ir_block_make(ir, ir->func, "each_after_");
             ir_jump(ir, block_cond);
             ir->block = block_cond;
+
+            char* on = ir_value(ir, scope, item->on);
 
             Decl* kd = item->kd;
             Decl* kd_buf = item->kd_buf;
@@ -232,27 +233,32 @@ void ir_write_ast(IR* ir, Scope* scope) {
     }
 }
 
-char* ir_gc_link(IR* ir, char* on, char* to) {
+char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     Build* b = ir->b;
 
     Type* type_u8 = type_gen_valk(ir->alc, b, "u8");
     Type* type_ptr = type_gen_valk(ir->alc, b, "ptr");
 
-    char* on_state_var = ir_ptrv(ir, on, "i8", -8);
-    char* on_state = ir_load(ir, type_u8, on_state_var);
-
     IRBlock *current = ir->block;
+    IRBlock *block_not_null = nullable ? ir_block_make(ir, ir->func, "if_link_not_null_") : NULL;
     IRBlock *block_if = ir_block_make(ir, ir->func, "if_link_");
     IRBlock *after = ir_block_make(ir, ir->func, "link_after_");
 
+    // Not null
+    if(block_not_null) {
+        char *comp = ir_compare(ir, op_ne, to, "null", "ptr", false, false);
+        ir_cond_jump(ir, comp, block_not_null, after);
+        ir->block = block_not_null;
+    }
+
     // On state > transfer
+    char* on_state_var = ir_ptrv(ir, on, "i8", -8);
+    char* on_state = ir_load(ir, type_u8, on_state_var);
     char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);
     ir_cond_jump(ir, comp_on, block_if, after);
 
     ir->block = block_if;
     Func *func = get_valk_class_func(b, "mem", "Stack", "link");
-    func_mark_used(ir->func->func, func);
-
     Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
     //
     Array* types = array_make(ir->alc, 2);

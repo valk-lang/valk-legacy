@@ -6,12 +6,13 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func);
 void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func);
 void class_generate_share(Parser* p, Build* b, Class* class, Func* func);
 
-Class* class_make(Allocator* alc, Build* b, int type) {
+Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     Class* c = al(alc, sizeof(Class));
     c->b = b;
     c->type = type;
     c->act = act_public;
     c->fc = NULL;
+    c->unit = u;
     c->name = NULL;
     c->ir_name = NULL;
     c->body = NULL;
@@ -22,7 +23,6 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->size = -1;
     c->gc_fields = 0;
     c->gc_vtable_index = 0;
-    c->pool_index = -1;
     //
     c->packed = false;
     c->is_signed = true;
@@ -30,8 +30,12 @@ Class* class_make(Allocator* alc, Build* b, int type) {
     c->generics = NULL;
     c->generic_names = NULL;
     c->generic_types = NULL;
+    c->generic_of = NULL;
     c->is_generic_base = false;
     c->in_header = false;
+    c->is_used = false;
+
+    c->pool = NULL;
     //
     return c;
 }
@@ -52,6 +56,38 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name) {
         build_err(b, b->char_buf);
     }
     return prop;
+}
+
+void generate_class_pool(Parser* p, Class* class) {
+    Build* b = p->b;
+    if (b->stage_1_done && class->type == ct_class && !class->is_generic_base) {
+        // Generate pool global
+        Allocator* alc = b->alc;
+        Unit* u = class->unit;
+
+        char buf[512];
+        strcpy(buf, "CLASS_POOL_");
+        strcat(buf, class->ir_name);
+
+        Global *g = al(alc, sizeof(Global));
+        g->act = act_public;
+        g->fc = NULL;
+        g->unit = class->unit;
+        g->name = NULL;
+        g->export_name = gen_export_name(class->unit->nsc, buf);
+        g->type = class_pool_type(p, class);
+        g->value = NULL;
+        g->chunk_type = NULL;
+        g->chunk_value = NULL;
+        g->declared_scope = NULL;
+        g->is_shared = false;
+        g->is_mut = true;
+
+        array_push(u->globals, g);
+        array_push(b->globals, g);
+
+        class->pool = g;
+    }
 }
 
 int class_determine_size(Build* b, Class* class) {
@@ -119,10 +155,6 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
 
     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
         char* buf = b->char_buf;
-        class->pool_index = get_class_pool_index(class);
-        if (class->pool_index == -1) {
-            parse_err(p, -1, "Invalid class pool index: '%s' (compiler bug)\n", class->name);
-        }
 
         // VTABLE_INDEX
         if(b->verbose > 2)
@@ -134,21 +166,12 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
         scope_set_idf(class->scope, "STACK", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "pools"));
-        scope_set_idf(class->scope, "POOLS", idf, p);
-        //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->pool_index, type_gen_number(b->alc, b, b->ptr_size, false, false)));
-        scope_set_idf(class->scope, "POOL_INDEX", idf, p);
-        //
-        idf = idf_make(b->alc, idf_class, get_valk_class(b, "mem", "GcPool"));
-        scope_set_idf(class->scope, "POOL_CLASS", idf, p);
-        //
         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_transfer_size"));
+        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));
         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_mark_size"));
+        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_marked"));
         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_age"));
         scope_set_idf(class->scope, "GC_AGE", idf, p);
@@ -223,14 +246,11 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "(to_state: u8) void {\n");
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
-
-    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
-
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
+
+    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+    str_flat(code, "  @ptrv(data, uint, -2)++\n");
 
     // Props
     for(int i = 0; i < props->values->length; i++) {
@@ -386,11 +406,9 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
     str_flat(code, "  if state < 4 {\n");
-    str_flat(code, "  let pool = @ptrv(POOLS, POOL_CLASS, POOL_INDEX)\n");
     str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let base = (this @as ptr) - (index * pool.size) - 8\n");
-    str_flat(code, "  let transfer_count = @ptrv(base, uint, -1)\n");
-    str_flat(code, "  @ptrv(base, uint, -1) = transfer_count + 1\n");
+    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+    str_flat(code, "  @ptrv(data, uint, -2)++\n");
     str_flat(code, "  }\n");
 
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
@@ -438,6 +456,9 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
 
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Build* b = p->b;
+    if(b->parse_last) {
+        parse_err(p, -1, "You cannot generate a new generic class inside a #parse_last function");
+    }
     //
     Str* hash = build_get_str_buf(b);
     for (int i = 0; i < generic_types->length; i++) {
@@ -487,18 +508,20 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gclass = class_make(b->alc, b, class->type);
+    gclass = class_make(b->alc, b, p->unit, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
     gclass->scope = scope_sub_make(b->alc, sc_default, class->scope->parent);
     gclass->type = class->type;
     gclass->b = class->b;
-    gclass->unit = p->unit;
     gclass->act = class->act;
     gclass->fc = class->fc;
     gclass->packed = class->packed;
+    gclass->generic_of = class;
 
     gclass->name = name;
     gclass->ir_name = export_name;
+
+    generate_class_pool(p, gclass);
 
     if (b->building_ast) {
         array_push(b->classes, gclass);
@@ -532,7 +555,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     // Class size
     int size = class_determine_size(b, gclass);
     if(size == -1) {
-        parse_err(p, -1, "Cannot determine size of class: '%s'\n", gclass->name);
+        parse_err(p, -1, "Cannot determine size of class: '%s'", gclass->name);
     }
     // Internals
     class_generate_internals(p, b, gclass);
@@ -554,24 +577,3 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     return gclass;
 }
 
-
-int get_class_pool_index(Class* class) {
-    int size = class->size;
-    int index = -1;
-    if(size <= 64) {
-        int psize = size + (size % 8);
-        index = ((psize / 8) - 1) * 2;
-    } else if(size <= 128) {
-        index = (64 / 8) * 2;
-    } else if(size <= 256) {
-        index = (64 / 8 + 1) * 2;
-    } else if(size <= 512) {
-        index = (64 / 8 + 2) * 2;
-    }
-    if(index > -1) {
-        if(map_get(class->funcs, "_gc_free")) {
-            index++;
-        }
-    }
-    return index;
-}

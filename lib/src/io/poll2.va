@@ -1,0 +1,80 @@
+
+header "sys" as sys
+
+use mem
+use io
+use os
+use type
+
+class SimplePoll[T] {
+    poll_items: type:StructArray[sys:libc_poll_item]
+    items: Array[?T]
+    result: Array[T]
+
+    static fn new() CLASS {
+        let poll = CLASS {
+            poll_items: type:StructArray[sys:libc_poll_item].new(4),
+            items: Array[?T].new(4),
+            result: Array[T].new(4)
+        }
+        each poll.poll_items as pi {
+            pi.fd = -1
+        }
+        return poll
+    }
+
+    fn set(fd: FD, data: T, read: bool, write: bool) {
+        if fd < 0 : return
+        let pis = this.poll_items
+        let s1 = pis.size
+        let pi = pis.get(fd @as uint)
+        let s2 = pis.size
+        if s1 != s2 {
+            each pis as i, pi {
+                if i < s1 : continue
+                pi.fd = -1
+            }
+        }
+
+        #if OS == win
+        pi.fd = fd
+        #else
+        pi.fd = fd @as i32
+        #end
+
+        #if OS == win
+        let events = 0 @as i16
+        #else
+        let events = sys:POLLRDHUP @as i16
+        #end
+
+        if read : events = events | sys:POLLIN
+        if write : events = events | sys:POLLOUT
+        pi.events = events
+
+        let items = this.items
+        items.set_expand(fd @as uint, data, null)
+    }
+
+    fn wait(timeout: i32 (-1)) Array[T] {
+        let result = this.result
+        result.clear()
+        let pis = this.poll_items
+        let items = this.items
+        let len = pis.size
+        let count = sys:poll(pis.data, len @as u32, timeout)
+        let i = 0 @as uint
+        if count > 0 {
+            while i < len {
+                let pi = pis.get(i++)
+                if pi.revents == 0 : continue
+
+                pi.fd = -1
+
+                let item = items.get(i - 1) ! continue
+                if isset(item) : result.push(item)
+            }
+        }
+        return result
+    }
+}

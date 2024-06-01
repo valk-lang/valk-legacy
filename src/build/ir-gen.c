@@ -139,7 +139,6 @@ char* ir_load(IR* ir, Type* type, char* var) {
     char *var_result = ir_var(ir->func);
     char *ltype = ir_type(ir, type);
 
-
     char bytes[20];
 
     Str *code = ir->block->code;
