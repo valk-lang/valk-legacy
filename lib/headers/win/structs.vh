@@ -1,4 +1,8 @@
 
+struct libc_jmp_buf {
+    data: inline [ptr, 5]
+}
+
 struct libc_stat {
     st_dev: uint
     st_ino: uint
