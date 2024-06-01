@@ -1,4 +1,14 @@
 
+#if ARCH == x64
+struct libc_dirent {
+   d_ino: uint // Inode number
+   d_off: uint // Not an offset see below
+   d_reclen: u16 // Length of this record
+   d_type: u8 // Type of file
+   d_namelen: u8
+   d_name: inline [u8, 255]
+}
+#elif ARCH == arm64
 struct libc_dirent {
    d_ino: uint // Inode number
    d_off: uint // Not an offset see below
@@ -7,6 +17,7 @@ struct libc_dirent {
    d_type: u8 // Type of file
    d_name: inline [u8, 1024]
 }
+#end
 
 struct libc_stat {
     st_dev: uint
