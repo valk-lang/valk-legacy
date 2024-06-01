@@ -377,36 +377,53 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
         char* stackp = ir_var(ir->func);
         char* result = ir_var(ir->func);
         Str *code = ir->block->code;
-        // Frame pointer
-        str_flat(code, "  ");
-        str_add(code, framep);
-        str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
-        char* s1 = ir_ptrv(ir, buf, "ptr", 0);
-        ir_store(ir, s1, framep, "ptr", ir->b->ptr_size * 2);
 
-        // // Stack pointer
-        str_flat(code, "  ");
-        str_add(code, stackp);
-        str_flat(code, " = tail call ptr @llvm.stacksave()\n");
-        char* s2 = ir_ptrv(ir, buf, "ptr", 2);
-        ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size * 2);
+        if (ir->b->target_os == os_win) {
+            // Frame pointer
+            str_flat(code, "  ");
+            str_add(code, framep);
+            str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
+            char *s1 = ir_ptrv(ir, buf, "ptr", 0);
+            ir_store(ir, s1, framep, "ptr", ir->b->ptr_size * 2);
 
-        // Call setjmp
-        str_flat(code, "  ");
-        str_add(code, result);
-        str_flat(code, " = tail call i32 @llvm.eh.sjlj.setjmp(ptr ");
-        str_add(code, buf);
-        str_flat(code, ")\n");
+            // Stack pointer
+            str_flat(code, "  ");
+            str_add(code, stackp);
+            str_flat(code, " = tail call ptr @llvm.stacksave()\n");
+            char *s2 = ir_ptrv(ir, buf, "ptr", 2);
+            ir_store(ir, s2, stackp, "ptr", ir->b->ptr_size * 2);
+
+            // Call setjmp
+            str_flat(code, "  ");
+            str_add(code, result);
+            str_flat(code, " = tail call i32 @llvm.eh.sjlj.setjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+        } else {
+            str_flat(code, "  ");
+            str_add(code, result);
+            str_flat(code, " = call i32 @_setjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+        }
         return result;
     }
     if (vt == v_longjmp) {
         Value* val = v->item;
         char* buf = ir_value(ir, scope, val);
         Str *code = ir->block->code;
-        str_flat(code, "  call void @llvm.eh.sjlj.longjmp(ptr ");
-        str_add(code, buf);
-        str_flat(code, ")\n");
-        str_flat(code, "unreachable\n");
+
+        if (ir->b->target_os == os_win) {
+            str_flat(code, "  call void @llvm.eh.sjlj.longjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ")\n");
+            str_flat(code, "unreachable\n");
+        } else {
+            str_flat(code, "  call void @longjmp(ptr ");
+            str_add(code, buf);
+            str_flat(code, ", i32 1)\n");
+            str_flat(code, "unreachable\n");
+        }
         return "";
     }
 

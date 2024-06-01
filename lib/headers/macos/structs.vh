@@ -1,4 +1,17 @@
 
+struct libc_jmp_buf {
+    #if ARCH == arm64
+    data: inline [i64, 22]
+    #else
+    data: inline [i64, 8]
+    #end
+    num: i32
+    sig: inline libc_sigset
+}
+struct libc_sigset {
+    data: inline [i64, 16]
+}
+
 #if ARCH == x64
 struct libc_dirent {
    d_ino: uint // Inode number

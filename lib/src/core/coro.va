@@ -1,4 +1,6 @@
 
+header "sys" as sys;
+
 use mem
 use io
 
@@ -128,7 +130,8 @@ class Coro2 {
     //////////////
 
     fn block() {
-        let here = @stack(inline [ptr, 5])
+        // let here = @stack(inline [ptr, 5])
+        let here = @stack(inline sys:libc_jmp_buf)
         if @setjmp(here) == 0 {
             this.s_cont = here @as ptr
             this.s_top = this.s_cont - 32
@@ -182,7 +185,7 @@ class Coro2 {
 
         let x : Coro2 = this
         x = this
-        let jmpbuf = @stack(inline [ptr, 5])
+        let jmpbuf = @stack(inline sys:libc_jmp_buf)
         let current_stack = mem:stack_pos
         if @setjmp(jmpbuf) == 0 {
 

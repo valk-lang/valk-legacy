@@ -25,6 +25,8 @@ void ir_gen_final(IR* ir) {
     str_append_chars(code, "declare ptr @llvm.stacksave() nounwind\n");
     str_append_chars(code, "declare i32 @llvm.eh.sjlj.setjmp(ptr) nounwind returns_twice\n");
     str_append_chars(code, "declare void @llvm.eh.sjlj.longjmp(ptr) nounwind\n");
+    str_append_chars(code, "declare void @_setjmp(ptr) nounwind\n");
+    str_append_chars(code, "declare void @longjmp(ptr, i32) nounwind\n");
     str_append_chars(code, "\n");
 
     // Attrs
