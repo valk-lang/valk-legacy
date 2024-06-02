@@ -54,8 +54,9 @@ function get_valk_type(string $type, array &$structs, array &$unions): string
     return $type;
 }
 
-function gen_valk_structs(string $ir, array $vars): string
+function gen_valk_structs(string $ir, array $target): string
 {
+    $vars = $target['vars'];
     $structs = [];
     $unions = [];
 
@@ -93,6 +94,9 @@ function gen_valk_structs(string $ir, array $vars): string
 
         if(isset($vars[$name]['fields'])) {
             $fields = $vars[$name]['fields'];
+            if (isset($vars[$name]['fields_arch'][$target['arch']])) {
+                $fields = $vars[$name]['fields_arch'][$target['arch']];
+            }
             $structs[$struct_name]['fields'] = $fields;
             $structs[$struct_name]['valk_name'] = 'libc_' . $name;
             if(count($fields) !== count($structs[$struct_name]['types'])) {
@@ -109,8 +113,13 @@ function gen_valk_structs(string $ir, array $vars): string
     foreach($structs as $cname => $s) {
         $valk_name = $s['valk_name'] ?? $cname;
         $code .= "\nstruct " . $valk_name  . ($s['packed'] ? ' packed' : '') . " {\n";
+
+        $names = $s['fields'] ?? [];
+        if(isset($s['fields_arch'][$target['arch']])) {
+            $names = $s['fields_arch'][$target['arch']];
+        }
+
         foreach($s['types'] as $i => $type) {
-            $names = $s['fields'] ?? [];
             $fn = $names[$i] ?? ('prop_' . $i);
             $vtype = get_valk_type($type, $structs, $unions);
             $code .= "    $fn: $vtype\n";

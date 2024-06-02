@@ -57,11 +57,19 @@ $macos_vars = array_merge($vars, [
     ],
     'stat' => [
         'ctype' => 'struct stat',
-        'fields' => ['st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev', 'st_atime', 'st_mtime', 'st_ctime', 'st_size', 'st_blocks', 'st_blksize', 'st_flags', 'st_gen', 'st_lspare', '__unused']
+        'fields' => ['st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev', 'st_atime', 'st_mtime', 'st_ctime', 'st_size', 'st_blocks', 'st_blksize', 'st_flags', 'st_gen', 'st_lspare', '__unused'],
+        'fields_arch' => [
+            'arm64' => [
+                'st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev', 'st_atime', 'st_mtime', 'st_xtime', 'st_ctime', 'st_size', 'st_blocks', 'st_blksize', 'st_flags', 'st_gen', 'st_lspare', '__unused'
+            ]
+        ]
     ],
     'dirent' => [
         'ctype' => 'struct dirent',
-        'fields' => ['d_ino', 'd_off', 'd_reclen', 'd_type', 'd_name']
+        'fields' => ['d_ino', 'd_off', 'd_reclen', 'd_type', 'd_name'],
+        'fields_arch' => [
+            'arm64' => ['unknown1', 'unknown2', 'unknown3', 'd_reclen', 'd_type', 'd_name']
+        ]
     ],
     'timezone' => [
         'ctype' => 'struct timezone',
@@ -100,10 +108,12 @@ $win_vars = array_merge($vars, [
 ]);
 
 $targets = [
-    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-x64/x86_64-buildroot-linux-gnu/sysroot', 'imports' => $linux_imports, 'vars' => $linux_vars],
-    'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
-    'win-x64' => [
+    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-x64/x86_64-buildroot-linux-gnu/sysroot', 'imports' => $linux_imports, 'vars' => $linux_vars],
+    'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'arch' => 'x64', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
+    'macos-arm64' => ['target' => 'arm64-apple-darwin-macho', 'arch' => 'arm64', 'header_dir' => 'macos/arm64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
+    'win-arm64' => [
         'target' => 'x86_64-pc-windows-msvc',
+        'arch' => 'x64',
         'header_dir' => 'win/x64',
         'toolchain' => 'win-sdk-x64',
         'clang_args' => "-ftime-trace",
@@ -167,7 +177,7 @@ foreach($targets as $valk_target => $target) {
     $ir = file_get_contents($path_ir);
 
     // Gen valk structs
-    $code = gen_valk_structs($ir, $target['vars']);
+    $code = gen_valk_structs($ir, $target);
 
     $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
     file_put_contents($hpath, $code);
