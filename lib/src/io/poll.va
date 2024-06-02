@@ -27,7 +27,7 @@ class Poll[T] {
         }
         #else
         let poll = CLASS {
-            epoll_buffer: mem:alloc(20 * sizeof(inline sys:libc_poll_item)),
+            epoll_buffer: mem:alloc(20 * sizeof(inline sys:libc_pollfd)),
             lsn_by_index: mem:alloc(20 * sizeof(ptr)),
         }
         #end
@@ -62,7 +62,7 @@ class Poll[T] {
         let buf = this.epoll_buffer
         let i : uint = 0
         each this.listeners as lsn {
-            let item = (buf + (i * sizeof(inline sys:libc_poll_item))) @as sys:libc_poll_item
+            let item = (buf + (i * sizeof(inline sys:libc_pollfd))) @as sys:libc_pollfd
             #if OS == macos
             item.fd = lsn.fd @as i32
             #else
@@ -83,7 +83,7 @@ class Poll[T] {
         let count = count_ @as uint
         i = 0
         while i < all {
-            let item = (buf + (i * sizeof(inline sys:libc_poll_item))) @as sys:libc_poll_item
+            let item = (buf + (i * sizeof(inline sys:libc_pollfd))) @as sys:libc_pollfd
             if item.revents == 0 {
                 i++
                 continue
@@ -126,7 +126,7 @@ class Poll[T] {
             mem:free(this.lsn_by_index)
             mem:free(this.epoll_buffer)
             this.lsn_by_index = mem:alloc(size * sizeof(ptr))
-            this.epoll_buffer = mem:alloc(size * sizeof(inline sys:libc_poll_item))
+            this.epoll_buffer = mem:alloc(size * sizeof(inline sys:libc_pollfd))
         }
         #end
 

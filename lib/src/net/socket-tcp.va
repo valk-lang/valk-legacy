@@ -105,7 +105,7 @@ class SocketTCP {
         let err : i32 = 0
 
         sys:setsockopt(this.fd @autocast, sys:SOL_SOCKET, sys:SO_REUSEADDR, yes_ptr, sizeof(i32))
-        err = sys:bind(this.fd @autocast, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @autocast)
+        err = sys:bind(this.fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
 
         if err != 0 {
             throw bind

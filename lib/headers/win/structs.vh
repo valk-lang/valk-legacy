@@ -36,7 +36,7 @@ struct libc_timeval {
     tv_usec: int // microseconds
 }
 
-struct libc_poll_item {
+struct libc_pollfd {
     fd: int // SOCKET (aka. HANDLE)
     events: i16  // detect events
     revents: i16 // detected events
