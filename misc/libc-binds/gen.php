@@ -179,15 +179,15 @@ foreach($targets as $valk_target => $target) {
     $cmd .= " -S -emit-llvm $path -o $path_ir";
 
     // echo $cmd . "\n";
-    echo $ast_cmd . "\n";
+    // echo $ast_cmd . "\n";
     exec($cmd);
     exec($ast_cmd);
 
-    // $ir = file_get_contents($path_ir);
+    $ir = file_get_contents($path_ir);
 
-    // // Gen valk structs
-    // $code = gen_valk_structs($ir, $target);
+    // Gen valk structs
+    $code = gen_valk_structs($ir, $target);
 
-    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
-    // file_put_contents($hpath, $code);
+    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
+    file_put_contents($hpath, $code);
 }
