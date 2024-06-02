@@ -178,8 +178,8 @@ class SocketTCP {
             }
 
             #if OS == macos
-            let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
-            sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+            let flags = sys:fcntl(fd, sys:F_GETFL, 0)
+            sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK)
             #end
             #if OS == win
             let nonblock = 1

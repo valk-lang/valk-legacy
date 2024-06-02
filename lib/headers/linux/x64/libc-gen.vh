@@ -20,13 +20,13 @@ struct libc_pollfd {
     revents: i16
 }
 
-struct libc___jmp_buf_tag {
+struct __jmp_buf_tag {
     prop_0: inline [i64, 8]
     prop_1: i32
-    prop_2: inline libc___sigset_t
+    prop_2: inline __sigset_t
 }
 
-struct libc___sigset_t {
+struct __sigset_t {
     prop_0: inline [i64, 16]
 }
 
@@ -78,5 +78,5 @@ struct libc_epoll_event packed {
 }
 
 struct libc_jmp_buf {
-    prop_0: inline [inline libc___jmp_buf_tag, 1]
+    prop_0: inline [inline __jmp_buf_tag, 1]
 }

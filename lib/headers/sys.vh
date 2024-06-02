@@ -22,7 +22,7 @@ header "pthread"
 
 link_dynamic "System"
 
-header "macos/structs"
+// header "macos/structs"
 header "macos/abi"
 //header "macos-[ARCH]/enum"
 #if ARCH == arm64
@@ -46,5 +46,6 @@ header "win/structs"
 header "win/abi"
 //header "win-[ARCH]/enum"
 header "win/x64/enum"
+header "win/x64/libc-gen"
 
 #end

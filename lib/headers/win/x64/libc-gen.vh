@@ -44,3 +44,21 @@ struct libc_addrinfo {
     ai_canonname: ptr
     ai_next: ptr
 }
+
+struct libc_WIN32_FIND_DATAA {
+    dwFileAttributes: i32
+    ftCreationTime: inline libc_FILETIME
+    ftLastAccessTime: inline libc_FILETIME
+    ftLastWriteTime: inline libc_FILETIME
+    nFileSizeHigh: i32
+    nFileSizeLow: i32
+    dwReserved0: i32
+    dwReserved1: i32
+    cFileName: inline [i8, 260]
+    cAlternateFileName: inline [i8, 14]
+}
+
+struct libc_FILETIME {
+    dwLowDateTime: i32
+    dwHighDateTime: i32
+}

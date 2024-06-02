@@ -129,7 +129,7 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
     let path = directory.rtrim("\\").rtrim("//") + "\\"
     let pat = path + "*"
     let pattern = pat.data
-    let data = @stack(sys:WIN32_FIND_DATAA)
+    let data = @stack(sys:libc_WIN32_FIND_DATAA)
     let hFind = sys:FindFirstFileA(pattern, data)
     if hFind != -1 @as ptr {
         let loop = true

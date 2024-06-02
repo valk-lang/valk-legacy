@@ -89,6 +89,14 @@ $win_vars = array_merge($vars, [
         'ctype' => 'ADDRINFOA',
         'fields' => ['ai_flags', 'ai_family', 'ai_socktype', 'ai_protocol', 'ai_addrlen', 'ai_addr', 'ai_canonname', 'ai_next']
     ],
+    'WIN32_FIND_DATAA' => [
+        'ctype' => 'WIN32_FIND_DATAA',
+        'fields' => ['dwFileAttributes', 'ftCreationTime', 'ftLastAccessTime', 'ftLastWriteTime', 'nFileSizeHigh', 'nFileSizeLow', 'dwReserved0', 'dwReserved1', 'cFileName', 'cAlternateFileName']
+    ],
+    'FILETIME' => [
+        'ctype' => 'FILETIME',
+        'fields' => ['dwLowDateTime', 'dwHighDateTime']
+    ],
 ]);
 
 $targets = [
