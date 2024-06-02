@@ -7,13 +7,13 @@ use os
 use type
 
 class SimplePoll[T] {
-    poll_items: type:StructArray[sys:libc_poll_item]
+    poll_items: type:StructArray[sys:libc_pollfd]
     items: Array[?T]
     result: Array[T]
 
     static fn new() CLASS {
         let poll = CLASS {
-            poll_items: type:StructArray[sys:libc_poll_item].new(4),
+            poll_items: type:StructArray[sys:libc_pollfd].new(4),
             items: Array[?T].new(4),
             result: Array[T].new(4)
         }

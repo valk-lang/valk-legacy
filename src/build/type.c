@@ -485,6 +485,8 @@ int type_get_size(Build* b, Type* type) {
         return b->ptr_size;
     } else if (type->class) {
         return type->class->size;
+    } else if (type->array_type) {
+        return type_get_size(b, type->array_type) * type->array_size;
     }
     return -1;
 }
