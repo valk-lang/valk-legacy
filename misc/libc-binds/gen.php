@@ -111,12 +111,11 @@ $targets = [
     'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-x64/x86_64-buildroot-linux-gnu/sysroot', 'imports' => $linux_imports, 'vars' => $linux_vars],
     'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'arch' => 'x64', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
     'macos-arm64' => ['target' => 'arm64-apple-darwin-macho', 'arch' => 'arm64', 'header_dir' => 'macos/arm64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
-    'win-arm64' => [
+    'win-x64' => [
         'target' => 'x86_64-pc-windows-msvc',
         'arch' => 'x64',
         'header_dir' => 'win/x64',
         'toolchain' => 'win-sdk-x64',
-        'clang_args' => "-ftime-trace",
         'tc_includes' => [
             'Include/10.0.22621.0/ucrt',
             'Include/10.0.22621.0/um',
@@ -164,21 +163,31 @@ foreach($targets as $valk_target => $target) {
     $path = $tmp . '/' . $valk_target . '.c';
     file_put_contents($path, $code);
 
+    // Paths
     $path_ir = $tmp . '/' . $valk_target . '.ir';
+    $path_ast = $tmp . '/' . $valk_target . '-ast.json';
     $ttc_dir = $tc_dir . '/' . $target['toolchain'];
-    $cmd = "clang-15 -S -emit-llvm " . ($target['clang_args'] ?? '') . " $path -o $path_ir --target=" . $target['target'] . " --sysroot=$ttc_dir";
+    // Args
+    $args = $target['clang_args'] ?? '';
+    $trg = $target['target'];
+    // Commands
+    $cmd = "clang-15 $args --target=$trg --sysroot=$ttc_dir";
     foreach($target['tc_includes'] ?? [] as $inc) {
         $cmd .= ' -I' . $ttc_dir . '/' . $inc;
     }
+    $ast_cmd = $cmd . " -c $path -Xclang -ast-dump=json > $path_ast";
+    $cmd .= " -S -emit-llvm $path -o $path_ir";
+
     // echo $cmd . "\n";
+    echo $ast_cmd . "\n";
     exec($cmd);
+    exec($ast_cmd);
 
-    var_dump($path_ir);
-    $ir = file_get_contents($path_ir);
+    // $ir = file_get_contents($path_ir);
 
-    // Gen valk structs
-    $code = gen_valk_structs($ir, $target);
+    // // Gen valk structs
+    // $code = gen_valk_structs($ir, $target);
 
-    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
-    file_put_contents($hpath, $code);
+    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
+    // file_put_contents($hpath, $code);
 }
