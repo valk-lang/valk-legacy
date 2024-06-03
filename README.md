@@ -58,8 +58,17 @@ Note: we dont have many tests yet to compare valk vs rust or other languages. Th
 
 <div align="center"><p>
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-bintree.png">
+</p>
+The binary object tree test revolves around creating large amount of objects in a tree structure and iterating over them.
+</div>
+
+---
+
+<div align="center"><p>
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-http.png">
 </p></div>
+
+For the http server test we used single header over local network requests because that resembles a more natural way of http servers. Some other benchmarks like Techempower use bundled piped requests, in that case the results are: Valk 10m req/s, Rust 10m req/s, Go 12m req/s.
 
 ## Language design facts
 
