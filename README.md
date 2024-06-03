@@ -50,7 +50,9 @@ make
 
 ## How can it have faster/similar performance as Rust?
 
-Valk is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and use less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Valk being faster than Rust sometimes. Note that our way of doing GC is very different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. 9 out of 10 times we simply reset the pools with 1 line of code.
+Valk is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and use less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Valk being faster than Rust sometimes. Note that our way of doing GC is very different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. The other 9 out of 10 times we simply reset the pools with 1 line of code. This is something that's only possible (in a simple way) if your compiler was built based around this idea. And that is what Valk does. 👏
+
+Note: we dont have many tests yet to compare valk vs rust or other languages. These are just conclusions from the small amount of tests we have right now. Feel free to make your own and share them.
 
 ## Benchmarks
 
