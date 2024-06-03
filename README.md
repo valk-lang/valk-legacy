@@ -82,7 +82,7 @@ For the http server test we used single header over local network requests becau
 
 ## Contributions
 
-Once we hit version 0.1.0, we want to look for people who can help with: the standard library, packages and supporting SIMD. If you want to contribute, just hop into the discord and post in general chat or send a private message to the discord owner.
+Once we hit version 0.1.0, we want to look for people who can help with the standard library & 3rd party packages. If you want to contribute, just hop into the discord and post in general chat or send a private message to the discord owner.
 
 ## References
 
