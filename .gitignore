@@ -30,6 +30,7 @@ out.txt
 *.i*86
 *.x86_64
 *.hex
+*.Identifier
 
 # Debug files
 *.dSYM/
