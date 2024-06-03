@@ -11,9 +11,10 @@
 
 Valk is a programming language aimed to be fast & simple at the same time. It can be used for high & mid level programming. Valk is unique because of its new way of doing garbage collection. Its runtime is much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
-**Features**: Super fast non-pausing GC ⚡, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
+**Features**: Fastest GC ⚡ (no stop-the-world), Coroutines, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
-**Valk is still in alpha, alot of features are not ready yet and the stdlib only contains core functions**
+**Coroutines** are purely for concurrency. Threads can be used for parallelism.
+
 
 ## Install
 
