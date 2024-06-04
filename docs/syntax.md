@@ -2,36 +2,43 @@
 # Syntax
 
 ```
-use valk.mem
+use valk:mem
 
-pub global {name} : int = 0 // thread local global (recommended)
-pub shared {name} : int = 1 // shared global
+global {name} : int = 0 // thread local global (recommended)
+shared {name} : int = 1 // shared global
 readonly shared {name} : int = 2 // readonly shared global, public in this file
-const {name} : {type} = {value} // constant value
+private const {name} : {type} = {value} // private constant value
 
-// Public struct
-pub struct A[T] is MyInterface, MyInterface2 {
+// Struct
+struct A[T] is MyInterface, MyInterface2 {
     // Properties
     {name} : {type} [= {default-value}] // private, public in this file
-    pub {name} : {type} [= {default-value}] // public everywhere
-    pub.ns {name} : {type} [= {default-value}] // private, public in this namespace
-    pub.pkg {name} : {type} [= {default-value}] // private, public in this package
+    private {name} : {type} [= {default-value}] // public everywhere
+    private.ns {name} : {type} [= {default-value}] // private, public in this namespace
+    private.pkg {name} : {type} [= {default-value}] // private, public in this package
     readonly {name} : {type} [= {default-value}] // readonly, public in this file
     readonly.ns {name} : {type} [= {default-value}] // readonly, public in this namespace
     readonly.pkg {name} : {type} [= {default-value}] // readonly, public in this package
 
     // Traits
     use {trait-name}
+    use {class-name} // use other class as a trait
 
-    // private static function
+    // Private static function
     static fn {name}(arg: int = 100) String { ... }
 
-    // public function
-    pub fn {name}() { ... }
+    // Public function
+    fn {name}() { ... }
 
-    pub global {name} : {type} = {default-value} // define a global in this struct, aka. static property
-    pub shared {name} : {type} = {default-value} // define a shared global in this struct, aka. shared static property
-    pub enum {name} : {type} {
+    // Function meta info
+    #display_name "{display-name}"
+    #description "A function that..."
+    #exit_fn
+    inline fn {name}() { ... }
+
+    global {name} : {type} = {default-value} // define a global in this struct, aka. static property
+    shared {name} : {type} = {default-value} // define a shared global in this struct, aka. shared static property
+    enum {name} : {type} {
         NAME1
         NAME2 = {value}
         NAME3
@@ -55,12 +62,12 @@ fn alloc(size: uint = 100) ptr {
     def global g1 : int = 10
     // Inline enum
     def enum e1 : {type} { ... values ... }
-    return mem.alloc(size)
+    return mem:alloc(size)
 }
 
 enum {type} : {name} {
-    NAME1
+    NAME1 // auto value (if possible)
     NAME2 = {value}
-    NAME3
+    NAME3 // auto value
 }
 ```
