@@ -4,44 +4,44 @@
 ```
 use valk.mem
 
-global g1 : int = 0 // thread local global (recommended)
-shared s1 : int = 1 // shared global
+pub global {name} : int = 0 // thread local global (recommended)
+pub shared {name} : int = 1 // shared global
+readonly shared {name} : int = 2 // readonly shared global, public in this file
+const {name} : {type} = {value} // constant value
 
-struct A[T] is MyInterface, MyInterface2 {
+// Public struct
+pub struct A[T] is MyInterface, MyInterface2 {
     // Properties
-    a : int = 1 // public - access anywhere
-    b :: int = 2 // private - this file only
-    c :ns: int = 3 // private - this namespace only
-    d :pkg: int = 4 // private - this package only
+    {name} : {type} [= {default-value}] // private, public in this file
+    pub {name} : {type} [= {default-value}] // public everywhere
+    pub.ns {name} : {type} [= {default-value}] // public in namespace
+    pub.pkg {name} : {type} [= {default-value}] // public in package
+    readonly {name} : {type} [= {default-value}] // readonly, public in this file
+    readonly.ns {name} : {type} [= {default-value}] // readonly, public in namespace
+    readonly.pkg {name} : {type} [= {default-value}] // readonly, public in package
 
     // Traits
-    use MyTrait1
-    use MyTrait2
+    use {trait-name}
 
     // private static function
-    static fn f1(arg: int = 100) String {
-        let x : int = 10
-        println("Value: " + x)
-        return x.to_str()
-    }
+    static fn {name}(arg: int = 100) String { ... }
 
     // public function
-    fn f2() {
-        println(this.a)
-    }
+    pub fn {name}() { ... }
 
-    global g1 : SELF = SELF {} // define a global for this struct, aka. static property
-    shared s1 : uint = 5 // define a shared global for this struct, aka. shared static property
-    enum e1 : int {
-        VAL1
-        VAL2 = 10
+    pub global {name} : {type} = {default-value} // define a global in this struct, aka. static property
+    pub shared {name} : {type} = {default-value} // define a shared global in this struct, aka. shared static property
+    pub enum {name} : {type} {
+        NAME1
+        NAME2 = {value}
+        NAME3
     }
 }
 
 type B : A[String] // Type alias
 value C : "Valk value alias" // Value alias
 
-// Function
+// Private function
 fn alloc(size: uint = 100) ptr {
     // Inline function 1
     def fn myfunc() { ... code ... }
@@ -58,9 +58,9 @@ fn alloc(size: uint = 100) ptr {
     return mem.alloc(size)
 }
 
-enum my_enum : int {
-    VAL1 // 0
-    VAL2 = 10
-    VAL3 // 1
+enum {type} : {name} {
+    NAME1
+    NAME2 = {value}
+    NAME3
 }
 ```
