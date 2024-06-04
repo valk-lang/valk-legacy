@@ -1,12 +1,12 @@
 
 use io
 
-class Map[T] {
+struct Map[T] {
     ~ _keys : Array[String] (Array[String].new())
     ~ _values : Array[T] (Array[T].new())
 
-    static fn new() CLASS {
-        return CLASS{};
+    static fn new() SELF {
+        return SELF{};
     }
 
     fn set(key: String, value: T) void {

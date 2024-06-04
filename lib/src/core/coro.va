@@ -14,7 +14,7 @@ global g_coro_indexes : @ignu(Pool[uint])
 global g_coro_poll_count : uint
 global g_coro_count : uint
 
-class Coro2 {
+struct Coro2 {
     args: ptr
     gc_stack: mem:StackPos
     result: ptr
@@ -36,7 +36,7 @@ class Coro2 {
     started: bool (false)
     done: bool (false)
 
-    static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) CLASS {
+    static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) SELF {
 
         let gc_stack = mem:create_stack()
         let args = gc_stack.base + gc_stack.size - 128

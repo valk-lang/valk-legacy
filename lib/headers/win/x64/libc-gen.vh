@@ -1,26 +1,26 @@
 
-struct libc_timespec {
+cstruct libc_timespec {
     tv_sec: i64
     tv_nsec: i32
 }
 
-struct libc_timeval {
+cstruct libc_timeval {
     tv_sec: i32
     tv_usec: i32
 }
 
-struct libc_sockaddr {
+cstruct libc_sockaddr {
     sa_family: i16
     sa_data: inline [i8, 14]
 }
 
-struct libc_pollfd {
+cstruct libc_pollfd {
     fd: i64
     events: i16
     revents: i16
 }
 
-struct libc_stat {
+cstruct libc_stat {
     st_gid: i32
     st_atime: i16
     st_ctime: i16
@@ -34,7 +34,7 @@ struct libc_stat {
     st_uid: i64
 }
 
-struct libc_addrinfo {
+cstruct libc_addrinfo {
     ai_flags: i32
     ai_family: i32
     ai_socktype: i32
@@ -45,7 +45,7 @@ struct libc_addrinfo {
     ai_next: ptr
 }
 
-struct libc_WIN32_FIND_DATAA {
+cstruct libc_WIN32_FIND_DATAA {
     dwFileAttributes: i32
     ftCreationTime: inline libc_FILETIME
     ftLastAccessTime: inline libc_FILETIME
@@ -58,7 +58,7 @@ struct libc_WIN32_FIND_DATAA {
     cAlternateFileName: inline [i8, 14]
 }
 
-struct libc_FILETIME {
+cstruct libc_FILETIME {
     dwLowDateTime: i32
     dwHighDateTime: i32
 }

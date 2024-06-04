@@ -1,7 +1,7 @@
 
 use mem
 
-struct GcRing {
+cstruct GcRing {
     --- data: ptr
     --- size: uint
     ~ length: uint (0)
@@ -9,9 +9,9 @@ struct GcRing {
     --- tail: uint (0)
     --- lock: GcLock
 
-    static fn new() CLASS {
+    static fn new() SELF {
         let size : uint = 4;
-        return CLASS {
+        return SELF {
             data: mem:alloc(size * sizeof(ptr))
             size: size
             lock: GcLock.new()

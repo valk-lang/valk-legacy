@@ -712,7 +712,7 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_class) {
         Class* class = idf->item;
-        value_check_act(class->act, class->fc, p, "class");
+        value_check_act(class->act, class->fc, p, "struct");
         return value_handle_class(alc, p, class);
     }
     if (type == idf_value_alias) {

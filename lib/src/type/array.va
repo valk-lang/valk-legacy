@@ -2,16 +2,16 @@
 use mem
 use io
 
-class Array[T] {
+struct Array[T] {
     ~ size: uint
     ~ length: uint (0)
     ~ data: ptr
 
-    static fn new(start_size: uint (2)) CLASS {
+    static fn new(start_size: uint (2)) SELF {
         if start_size < 2 {
             start_size = 2
         }
-        return CLASS {
+        return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
         };

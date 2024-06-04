@@ -93,11 +93,11 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_func(p, u, act, fc, true);
                 continue;
             }
-            if (str_is(tkn, "struct")) {
+            if (str_is(tkn, "cstruct")) {
                 stage_1_class(p, u, ct_struct, act, fc);
                 continue;
             }
-            if (str_is(tkn, "class")) {
+            if (str_is(tkn, "struct")) {
                 stage_1_class(p, u, ct_class, act, fc);
                 continue;
             }
@@ -288,7 +288,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
     if(!class->is_generic_base) {
-        scope_set_idf(class->scope, "CLASS", idf, p);
+        scope_set_idf(class->scope, "SELF", idf, p);
         array_push(b->classes, class);
         array_push(u->classes, class);
         if(class->type == ct_class) {

@@ -5,7 +5,7 @@ use os;
 use io;
 use utils;
 
-class Connection {
+struct Connection {
     ~ fd: FD
     ~ open: bool (true)
 

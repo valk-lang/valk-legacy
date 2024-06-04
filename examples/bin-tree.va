@@ -1,5 +1,5 @@
 
-class Node {
+struct Node {
     left : ?Node (null)
     right : ?Node (null)
 

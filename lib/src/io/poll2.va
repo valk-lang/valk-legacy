@@ -6,13 +6,13 @@ use io
 use os
 use type
 
-class SimplePoll[T] {
+struct SimplePoll[T] {
     poll_items: type:StructArray[sys:libc_pollfd]
     items: Array[?T]
     result: Array[T]
 
-    static fn new() CLASS {
-        let poll = CLASS {
+    static fn new() SELF {
+        let poll = SELF {
             poll_items: type:StructArray[sys:libc_pollfd].new(4),
             items: Array[?T].new(4),
             result: Array[T].new(4)

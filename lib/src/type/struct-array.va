@@ -2,15 +2,15 @@
 use mem
 use io
 
-class StructArray[T] {
+struct StructArray[T] {
     ~ size: uint
     ~ data: ptr
 
-    static fn new(start_size: uint (2)) CLASS {
+    static fn new(start_size: uint (2)) SELF {
         if start_size < 2 {
             start_size = 2
         }
-        return CLASS {
+        return SELF {
             size: start_size
             data: mem:calloc(start_size * sizeof(inline T))
         };

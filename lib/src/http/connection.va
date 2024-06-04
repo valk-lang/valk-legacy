@@ -6,7 +6,7 @@ use net
 use utils
 use fs
 
-class Connection {
+struct Connection {
     server: Server
     netcon: net:Connection
     fd: FD

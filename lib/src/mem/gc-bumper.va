@@ -4,7 +4,7 @@
 
 -- global bumper_usage : uint
 
--- struct GcBumpBlock {
+-- cstruct GcBumpBlock {
     next: ?GcBumpBlock (null)
     size: uint
     space_left: uint
@@ -28,7 +28,7 @@
     }
 }
 
--- struct GcBumper {
+-- cstruct GcBumper {
     first_block_private: ?GcBumpBlock (null)
     last_block_private: ?GcBumpBlock (null)
     first_block: GcBumpBlock

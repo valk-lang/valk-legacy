@@ -45,7 +45,7 @@ shared stack_count: uint
 global stack_pos: @ignu(StackPos)
 global main_stack_pos: @ignu(StackPos)
 
-struct StackPos {
+cstruct StackPos {
     base: ptr
     adr: ptr
     size: uint
@@ -63,7 +63,7 @@ fn create_stack() StackPos {
     }
 }
 
-struct Stack {
+cstruct Stack {
     id: uint
 
     transfer : ObjectChain

@@ -3,18 +3,18 @@ use io
 
 value GP_DATA_OFFSET (sizeof(ptr) * 4)
 
-struct GcPool2[T] {
+cstruct GcPool2[T] {
     blockc: uint
     first: ptr
     block: ptr
     index: uint (0)
     isize: uint (0)
 
-    static fn init() CLASS {
+    static fn init() SELF {
         let isize : uint = (sizeof(inline T) + 8) @as uint
         let blockc : uint = 1
-        let block = CLASS.create_block(blockc * 2, isize)
-        return CLASS{
+        let block = SELF.create_block(blockc * 2, isize)
+        return SELF{
             blockc: blockc
             first: block
             block: block
@@ -82,7 +82,7 @@ struct GcPool2[T] {
         } else {
             // Create new block
             let blockc = ++this.blockc
-            let new = CLASS.create_block(blockc * blockc, this.isize)
+            let new = SELF.create_block(blockc * blockc, this.isize)
             // Set next
             @ptrv(block, ptr, 0) = new
             this.set_block(new)

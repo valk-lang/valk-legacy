@@ -10,7 +10,7 @@ fn test(req: Request) Response {
     return Response.html("Hello world!")
 }
 
-class Server {
+struct Server {
     - host: String
     - port: u16
     - socket: net:SocketTCP

@@ -1,7 +1,7 @@
 
 -- value chain_size (1000)
 
--- struct ObjectChain {
+-- cstruct ObjectChain {
     olist_first : ptr
     olist_last : ptr
     index : uint (0)

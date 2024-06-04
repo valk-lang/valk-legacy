@@ -14,7 +14,7 @@ fn gc_manager() GcManager {
     return gc @as GcManager
 }
 
-struct GcManager {
+cstruct GcManager {
     stacks : ptr
     stack_count : uint (0)
     free_index : uint(0)

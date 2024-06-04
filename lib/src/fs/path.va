@@ -11,7 +11,7 @@ use mem
 
 value PATH_MAX (4096)
 
-// class Path {
+// struct Path {
 // 	parts: Array[String]
 
 // 	static fn new(path: String) Path {

@@ -1,7 +1,7 @@
 
 use mem
 
-class RingBuffer[T] {
+struct RingBuffer[T] {
     - data: ptr
     - size: uint
     ~ length: uint (0)
@@ -9,7 +9,7 @@ class RingBuffer[T] {
 
     static fn new() {
         let size : uint = 4;
-        return CLASS {
+        return SELF {
             data: mem:alloc(size * sizeof(T))
             size: size
         }

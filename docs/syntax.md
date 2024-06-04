@@ -3,6 +3,7 @@
 
 ```
 use valk:mem
+use valk:mem { alloc, free as {alias}, copy }
 
 global {name} : int = 0 // thread local global (recommended)
 shared {name} : int = 1 // shared global

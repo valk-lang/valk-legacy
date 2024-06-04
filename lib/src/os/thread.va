@@ -5,13 +5,13 @@ use valk:mem;
 use valk:core;
 use io;
 
-struct ThreadEntry {
+cstruct ThreadEntry {
     func: ptr
     data: ?ptr
     has_data: bool
 }
 
-struct Thread {
+cstruct Thread {
 
     #init_thread
     - static fn entry(e: ThreadEntry) {
@@ -28,11 +28,11 @@ struct Thread {
     }
 
     static fn start(start_func: ptr) {
-        CLASS.init(start_func, null, false);
+        SELF.init(start_func, null, false);
     }
     static fn start_with_data(start_func: ptr, data: ?ptr) {
         @gc_share(data)
-        CLASS.init(start_func, data, true);
+        SELF.init(start_func, data, true);
     }
 
     static fn init(start_func: ptr, data: ?ptr, has_data: bool) {

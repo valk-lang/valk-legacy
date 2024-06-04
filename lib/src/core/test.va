@@ -1,7 +1,7 @@
 
 use os
 
-struct TestResult {
+cstruct TestResult {
     name: ?String (null)
     // Asserts
     as_count: uint (0)
