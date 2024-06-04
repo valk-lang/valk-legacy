@@ -14,11 +14,11 @@ pub struct A[T] is MyInterface, MyInterface2 {
     // Properties
     {name} : {type} [= {default-value}] // private, public in this file
     pub {name} : {type} [= {default-value}] // public everywhere
-    pub.ns {name} : {type} [= {default-value}] // public in namespace
-    pub.pkg {name} : {type} [= {default-value}] // public in package
+    pub.ns {name} : {type} [= {default-value}] // private, public in this namespace
+    pub.pkg {name} : {type} [= {default-value}] // private, public in this package
     readonly {name} : {type} [= {default-value}] // readonly, public in this file
-    readonly.ns {name} : {type} [= {default-value}] // readonly, public in namespace
-    readonly.pkg {name} : {type} [= {default-value}] // readonly, public in package
+    readonly.ns {name} : {type} [= {default-value}] // readonly, public in this namespace
+    readonly.pkg {name} : {type} [= {default-value}] // readonly, public in this package
 
     // Traits
     use {trait-name}
@@ -38,8 +38,8 @@ pub struct A[T] is MyInterface, MyInterface2 {
     }
 }
 
-type B : A[String] // Type alias
-value C : "Valk value alias" // Value alias
+type {name} : {type} // Type alias
+value {name} : {value} // Value alias
 
 // Private function
 fn alloc(size: uint = 100) ptr {
