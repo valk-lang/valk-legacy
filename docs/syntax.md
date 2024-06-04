@@ -4,47 +4,61 @@
 ```
 use valk.mem
 
-g1 : global int = 0 // thread local global (recommended)
-s1 : shared int = 1 // shared global
+global g1 : int = 0 // thread local global (recommended)
+shared s1 : int = 1 // shared global
 
-A : struct[T] is MyInterface, MyInterface2 {
+struct A[T] is MyInterface, MyInterface2 {
+    // Properties
     a : int = 1 // public - access anywhere
     b :: int = 2 // private - this file only
     c :ns: int = 3 // private - this namespace only
     d :pkg: int = 4 // private - this package only
-    -
 
+    // Traits
     use MyTrait1
     use MyTrait2
 
     // private static function
-    f1 : static fn(arg: int = 100) String {
+    static fn f1(arg: int = 100) String {
         let x : int = 10
         println("Value: " + x)
         return x.to_str()
     }
 
     // public function
-    f2 : fn() {
+    fn f2() {
         println(this.a)
     }
 
-    g1 : global SELF = SELF {} // define a global for this struct, aka. static property
-    s1 : shared uint = 5 // define a shared global for this struct, aka. shared static property
-    e1 : enum int {
+    global g1 : SELF = SELF {} // define a global for this struct, aka. static property
+    shared s1 : uint = 5 // define a shared global for this struct, aka. shared static property
+    enum e1 : int {
         VAL1
         VAL2 = 10
     }
 }
 
-B : type A[String] // Type alias
-C : value "Valk value alias" // Value alias
+type B : A[String] // Type alias
+value C : "Valk value alias" // Value alias
 
-alloc : fn(size: uint = 100) ptr {
+// Function
+fn alloc(size: uint = 100) ptr {
+    // Inline function 1
+    def fn myfunc() { ... code ... }
+    myfunc()
+    // Inline function 2 (closure)
+    let myfunc = fn() { ... code ... }
+    myfunc()
+    // Inline struct
+    def struct myStruct { ... props & functions ... }
+    // Inline global
+    def global g1 : int = 10
+    // Inline enum
+    def enum e1 : {type} { ... values ... }
     return mem.alloc(size)
 }
 
-my_enum : enum int {
+enum my_enum : int {
     VAL1 // 0
     VAL2 = 10
     VAL3 // 1
