@@ -66,23 +66,13 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             }
         }
 
-        int act = act_public;
-        if (t == tok_sub) {
-            act = act_private_fc;
-        } else if (t == tok_subsub) {
-            act = act_private_nsc;
-        } else if (t == tok_triple_sub) {
-            act = act_private_pkc;
-        }
+        char* act_tkn = p->tkn;
+        char res[2];
+        read_access_type(p, t, res);
+        int act = res[0];
+        t = res[1];
 
         char* tkn = p->tkn;
-        char* act_tkn;
-
-        if(act != act_public) {
-            t = tok(p, true, false, true);
-            act_tkn = tkn;
-            tkn = p->tkn;
-        }
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {

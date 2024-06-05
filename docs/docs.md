@@ -279,12 +279,12 @@ private.ns fn ...  // function is private except in this namespace
 private.pkg fn ... // function is private except in this package
 
 struct MyStruct {
-    private {prop-name}: ...    // property is private except in this file
-    private.ns {prop-name}:  ...  // property is private except in this namespace
-    private.pkg {prop-name}: ...  // property is private except in this package
-    readonly {prop-name}: ...    // property is public but can only be modified from this file
-    readonly.ns {prop-name}: ...   // property is public but can only be modified from this namespace
-    readonly.pkg {prop-name}: ...  // property is public but can only be modified from this package
+    - {prop-name}: ...    // property is private except in this file
+    -ns {prop-name}:  ...  // property is private except in this namespace
+    -pkg {prop-name}: ...  // property is private except in this package
+    ~ {prop-name}: ...    // property is public but can only be modified from this file
+    ~ns {prop-name}: ...   // property is public but can only be modified from this namespace
+    ~pkg {prop-name}: ...  // property is public but can only be modified from this package
 }
 ```
 

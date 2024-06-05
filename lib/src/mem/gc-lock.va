@@ -1,7 +1,7 @@
 
 header "sys" as sys;
 
--- cstruct GcLock {
+-ns cstruct GcLock {
 	- mutex: ptr
 
 	static fn new() SELF { 

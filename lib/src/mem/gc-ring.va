@@ -2,12 +2,12 @@
 use mem
 
 cstruct GcRing {
-    --- data: ptr
-    --- size: uint
+    -pkg data: ptr
+    -pkg size: uint
     ~ length: uint (0)
-    --- head: uint (0)
-    --- tail: uint (0)
-    --- lock: GcLock
+    -pkg head: uint (0)
+    -pkg tail: uint (0)
+    -pkg lock: GcLock
 
     static fn new() SELF {
         let size : uint = 4;

@@ -254,7 +254,7 @@ struct Coro2 {
     // GC
     ///////////////////
 
-    --- static fn transfer_check() {
+    -pkg static fn transfer_check() {
         let coros = g_coros
 
         each coros as coro {

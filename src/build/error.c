@@ -47,7 +47,7 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     char error[2048];
     vsprintf(error, msg, args);
     va_end(args);
-    printf("code:%s\n", chunk->content);
+    // printf("code:%s\n", chunk->content);
 
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);

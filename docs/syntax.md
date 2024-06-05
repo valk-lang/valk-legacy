@@ -1,31 +1,31 @@
 
 # Syntax
 
-```
+```rust
 use valk:mem
 use valk:mem { alloc, free as {alias}, copy }
 
 global {name} : int = 0 // thread local global (recommended)
 shared {name} : int = 1 // shared global
-readonly shared {name} : int = 2 // readonly shared global, public in this file
-private const {name} : {type} = {value} // private constant value
+~ shared {name} : int = 2 // readonly shared global, public in this file
+- const {name} : {type} = {value} // private constant value
 
 // Struct
 struct A[T] is MyInterface, MyInterface2 {
     // Properties
-    {name} : {type} [= {default-value}] // private, public in this file
-    private {name} : {type} [= {default-value}] // public everywhere
-    private.ns {name} : {type} [= {default-value}] // private, public in this namespace
-    private.pkg {name} : {type} [= {default-value}] // private, public in this package
-    readonly {name} : {type} [= {default-value}] // readonly, public in this file
-    readonly.ns {name} : {type} [= {default-value}] // readonly, public in this namespace
-    readonly.pkg {name} : {type} [= {default-value}] // readonly, public in this package
+    {name} : {type} [= {default-value}] // public everywhere
+    - {name} : {type} [= {default-value}] // private, public in this file
+    -ns {name} : {type} [= {default-value}] // private, public in this namespace
+    -pkg {name} : {type} [= {default-value}] // private, public in this package
+    ~ {name} : {type} [= {default-value}] // readonly, public in this file
+    ~ns {name} : {type} [= {default-value}] // readonly, public in this namespace
+    ~pkg {name} : {type} [= {default-value}] // readonly, public in this package
 
     // Traits
     use {trait-name}
     use {class-name} // use other class as a trait
 
-    // Private static function
+    // Static function
     static fn {name}(arg: int = 100) String { ... }
 
     // Public function
@@ -34,7 +34,6 @@ struct A[T] is MyInterface, MyInterface2 {
     // Function meta info
     #display_name "{display-name}"
     #description "A function that..."
-    #exit_fn
     inline fn {name}() { ... }
 
     global {name} : {type} = {default-value} // define a global in this struct, aka. static property
@@ -49,7 +48,7 @@ struct A[T] is MyInterface, MyInterface2 {
 type {name} : {type} // Type alias
 value {name} : {value} // Value alias
 
-// Private function
+// Function
 fn alloc(size: uint = 100) ptr {
     // Inline function 1
     def fn myfunc() { ... code ... }

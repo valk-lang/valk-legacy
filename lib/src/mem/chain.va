@@ -1,7 +1,7 @@
 
--- value chain_size (1000)
+-ns value chain_size (1000)
 
--- cstruct ObjectChain {
+-ns cstruct ObjectChain {
     olist_first : ptr
     olist_last : ptr
     index : uint (0)

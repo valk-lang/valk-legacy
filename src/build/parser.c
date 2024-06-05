@@ -71,3 +71,38 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
 
     return val;
 }
+
+void read_access_type(Parser *p, char t, char* res) {
+    char act = act_public;
+    if (t == tok_sub) {
+        act = act_private_fc;
+        t = tok(p, false, false, false);
+        if (t == tok_id) {
+            t = tok(p, false, false, true);
+            if (str_is(p->tkn, "ns")) {
+                act = act_private_nsc;
+            } else if (str_is(p->tkn, "pkg")) {
+                act = act_private_pkc;
+            } else {
+                parse_err(p, -1, "Invalid access type '-%s', valid options: '-', '-ns' or '-pkg'", p->tkn);
+            }
+        }
+        t = tok(p, true, false, true);
+    } else if (t == tok_tilde) {
+        act = act_readonly_fc;
+        t = tok(p, false, false, false);
+        if (t == tok_id) {
+            t = tok(p, false, false, true);
+            if (str_is(p->tkn, "ns")) {
+                act = act_readonly_nsc;
+            } else if (str_is(p->tkn, "pkg")) {
+                act = act_readonly_pkc;
+            } else {
+                parse_err(p, -1, "Invalid access type '~%s', valid options: '~', '~ns' or '~pkg'", p->tkn);
+            }
+        }
+        t = tok(p, true, false, true);
+    }
+    res[0] = act;
+    res[1] = t;
+}
