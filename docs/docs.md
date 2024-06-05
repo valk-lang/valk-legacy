@@ -290,6 +290,8 @@ struct MyStruct {
 }
 ```
 
+For rare cases when you want to ignore access types, you can type `@ignore_access_types` at the top of file.
+
 ### Value scopes
 
 With `value scopes` we can execute code that eventually returns a value.

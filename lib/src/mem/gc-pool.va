@@ -47,7 +47,7 @@ cstruct GcPool2[T] {
         let isize = this.isize
         while true {
             let block = this.block
-            if @ptrv(block, uint, 3) > 75 {
+            if @ptrv(block, uint, 3) > 80 {
                 this.set_next_block(block)
                 continue
             }
