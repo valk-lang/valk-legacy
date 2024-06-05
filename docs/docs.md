@@ -271,20 +271,22 @@ each m as v {
 
 ### Access types
 
-With access types we control who can access what. By default your declared types, functions, ... are public, but we can use `private` & `readonly` to limit the access to them.
+With access types we control who can access what. By default your declared types, functions, properties, etc. are public, but we can use `-` (private) and `~` (readonly) to limit the access to them.
 
 ```rust
-private fn ...   // function is private except in this file
-private.ns fn ...  // function is private except in this namespace
-private.pkg fn ... // function is private except in this package
+fn ... // public
+- fn ...   // private, function can only be accessed from this file
+-ns fn ...  // private, function can only be accessed from this namespace
+-pkg fn ... // private, function can only be accessed from this package
 
 struct MyStruct {
-    - {prop-name}: ...    // property is private except in this file
-    -ns {prop-name}:  ...  // property is private except in this namespace
-    -pkg {prop-name}: ...  // property is private except in this package
-    ~ {prop-name}: ...    // property is public but can only be modified from this file
-    ~ns {prop-name}: ...   // property is public but can only be modified from this namespace
-    ~pkg {prop-name}: ...  // property is public but can only be modified from this package
+    {prop-name}: ... // public
+    - {prop-name}: ...    // private, property can only be accessed from this file
+    -ns {prop-name}:  ...  // private, property can only be accessed from this namespace
+    -pkg {prop-name}: ...  // private, property can only be accessed from this package
+    ~ {prop-name}: ...    // readonly, property can only be changed from this file
+    ~ns {prop-name}: ...   // readonly, property can only be changed from this file
+    ~pkg {prop-name}: ...  // readonly, property can only be changed from this file
 }
 ```
 
