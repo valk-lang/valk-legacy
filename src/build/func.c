@@ -29,9 +29,16 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
-    // Coro
+
+    f->ast_start = NULL;
+    f->ast_end = NULL;
+    // Cached values
+    f->v_cache_stack = NULL;
+    f->v_cache_stack_pos = NULL;
+
     f->alloca_size = 0;
     f->gc_decl_count = 0;
+
 
     f->is_inline = false;
     f->is_static = false;

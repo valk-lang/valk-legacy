@@ -2,9 +2,9 @@
 use io;
 use os;
 
-snippet stack_reserve(amount: V) {
-    @cached_stack_address = @ptr_offset(@cached_stack_address, amount, sizeof(ptr))
-}
+// snippet stack_reserve(amount: V) {
+//     @cached_stack_address = @ptr_offset(@cached_stack_address, amount, sizeof(ptr))
+// }
 
 snippet run_gc_check() {
     if !disable_gc && @cached_stack_instance.run_gc {
@@ -12,7 +12,7 @@ snippet run_gc_check() {
     }
 }
 
-snippet stack_reduce() {
-    @cached_stack_address = @cached_stack_address
-    // @cached_stack_instance.stack_adr = @cached_stack_address
-}
+// snippet stack_reduce() {
+//     @cached_stack_address = @cached_stack_address
+//     // @cached_stack_instance.stack_adr = @cached_stack_address
+// }

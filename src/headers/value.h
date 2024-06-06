@@ -19,7 +19,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
-Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args);
+Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args);
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type);
 Value *vgen_float(Allocator *alc, double value, Type *type);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
@@ -28,7 +28,7 @@ Value *vgen_ptr_offset(Allocator *alc, Build* b, Value *on, Value* index, int si
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
-Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as);
+Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as);
 Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class);
 // Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
@@ -42,6 +42,7 @@ Value *vgen_isset(Allocator *alc, Build *b, Value *on);
 Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett);
 Value *vgen_decl(Allocator *alc, Decl* decl);
+Value *vgen_global(Allocator *alc, Global* g);
 Value *vgen_string(Allocator *alc, Unit *u, char *body);
 Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
 
@@ -50,6 +51,11 @@ struct Value {
     void* item;
     Type* rett;
     Array *issets;
+    MultiRett *mrett;
+};
+struct MultiRett {
+    Array* types;
+    Array* decls;
 };
 struct VPair {
     Value* left;

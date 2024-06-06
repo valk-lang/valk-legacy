@@ -12,7 +12,9 @@ char* ir_value(IR* ir, Scope* scope, Value* v) {
     }
     if (vt == v_number) {
         VNumber* item = v->item;
-        if(v->rett->type == type_int || v->rett->type == type_bool)
+        Type* rett = v->rett;
+        int rt = rett->type;
+        if(rt == type_int || rt == type_bool || rett->is_pointer)
             return ir_int(ir, item->value_int);
         return ir_float(ir, item->value_float);
     }

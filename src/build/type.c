@@ -411,6 +411,17 @@ void type_check(Parser* p, Type* t1, Type* t2) {
 bool type_is_void(Type* type) { return type->type == type_void; }
 bool type_is_bool(Type* type) { return type->type == type_bool; }
 bool type_is_gc(Type* type) { return type->is_pointer && type->type == type_struct && type->class->type == ct_class; }
+bool type_fits_pointer(Type* type, Build* b){ return type->size <= b->ptr_size; }
+
+bool types_contain_void(Array* types) {
+    int len = types->length;
+    for(int i = 0; i < len; i++){
+        Type* type = array_get_index(types, i);
+        if (type->type == type_void)
+            return true;
+    }
+    return false;
+}
 
 void type_to_str_append(Type* t, char* res, bool use_export_name) {
     if (t->type == type_void) {

@@ -28,6 +28,8 @@ void type_check(Parser* p, Type* t1, Type* t2);
 bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);
+bool type_fits_pointer(Type* type, Build* b);
+bool types_contain_void(Array* types);
 char* type_to_str(Type* t, char* res);
 char* type_to_str_export(Type* t, char* res);
 void type_to_str_buf_append(Type* t, Str* buf);

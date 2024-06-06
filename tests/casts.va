@@ -1,0 +1,6 @@
+
+test "Casting" {
+    // Compiler must convert numbers to ptr types
+    let v : ptr = 2
+    v = 3 @as ptr
+}

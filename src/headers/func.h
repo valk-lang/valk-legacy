@@ -42,6 +42,12 @@ struct Func {
     Array* used_classes;
     Type* reference_type;
     //
+    Scope* ast_start;
+    Scope* ast_end;
+    //
+    Value* v_cache_stack;
+    Value* v_cache_stack_pos;
+    //
     int act;
     int alloca_size;
     int gc_decl_count;

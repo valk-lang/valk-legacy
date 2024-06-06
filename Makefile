@@ -48,7 +48,7 @@ clean:
 	rm -f valk $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
 test: valk
-	@./valk build tests/*.va --test --run -vv -c || exit 1
+	@./valk build tests/*.va --test --run -vvv -c || exit 1
 
 win: $(OBJECTS_WIN_X64)
 	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \

@@ -7,6 +7,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->item = item;
     v->rett = rett;
     v->issets = NULL;
+    v->mrett = NULL;
     return v;
 }
 
@@ -21,14 +22,30 @@ Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
     return value_make(alc, v_func_ptr, item, type_gen_func(alc, func));
 }
 
-Value *vgen_func_call(Allocator *alc, Build* b, Value *on, Array *args) {
+Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
+    Build* b = p->b;
     VFuncCall *item = al(alc, sizeof(VFuncCall));
     item->on = on;
     item->args = args;
     item->rett_refs = NULL;
     item->errh = NULL;
-    Type* rett = on->rett->func_info->rett;
-    return value_make(alc, v_func_call, item, rett);
+    TypeFuncInfo* fi = on->rett->func_info;
+    Value* v = value_make(alc, v_func_call, item, fi->rett);
+    Array* types = fi->rett_types;
+    if(types && types->length > 1) {
+        MultiRett* mr = al(alc, sizeof(MultiRett));
+        mr->types = types;
+        mr->decls = array_make(alc, types->length);
+        for(int i = 0; types->length; i++) {
+            Type* type = array_get_index(types, i);
+            Decl* decl = decl_make(alc, NULL, type, false);
+            decl->is_mut = true;
+            array_push(mr->decls, decl);
+        }
+        v->mrett = mr;
+        v->rett = NULL;
+    }
+    return v;
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
@@ -87,13 +104,14 @@ Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     return value_make(alc, v_cast, val, to_type);
 }
 
-Value* vgen_call_alloc(Allocator* alc, Build* b, int size, Class* cast_as) {
+Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
+    Build* b = p->b;
     Func *func = get_valk_func(b, "mem", "alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
     Value *vint = vgen_int(alc, size, type_gen_valk(alc, b, "uint"));
     array_push(alloc_values, vint);
-    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
+    Value *res = vgen_func_call(alc, p, fptr, alloc_values);
     if(cast_as)
         res = vgen_cast(alc, res, type_gen_class(alc, cast_as));
     return res;
@@ -110,7 +128,7 @@ Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
     array_push(alloc_values, pv);
-    Value *res = vgen_func_call(alc, b, fptr, alloc_values);
+    Value *res = vgen_func_call(alc, p, fptr, alloc_values);
     // res->rett = type_gen_class(alc, class);
     return res;
 }
@@ -260,6 +278,9 @@ Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type
 
 Value *vgen_decl(Allocator *alc, Decl* decl) {
     return value_make(alc, v_decl, decl, decl->type);
+}
+Value *vgen_global(Allocator *alc, Global* g) {
+    return value_make(alc, v_global, g, g->type);
 }
 
 Value *vgen_string(Allocator *alc, Unit *u, char *body) {

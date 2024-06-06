@@ -335,7 +335,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
             array_push(args, vgen_int(alc, p->line, type_gen_valk(alc, b, "uint")));
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
-            v = vgen_func_call(alc, b, fptr, args);
+            v = vgen_func_call(alc, p, fptr, args);
 
         } else {
             // Identifiers
@@ -850,12 +850,13 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         parse_err(p, -1, "Missing arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
-    Value* fcall = vgen_func_call(alc, b, on, args);
+    Value* fcall = vgen_func_call(alc, p, on, args);
     if(on->rett->func_info->will_exit) {
         p->scope->did_return = true;
     }
 
     Value *buffer = fcall;
+    // TODO: RE-ENABLE FUNC ARGS BUFFER
     // Value* buffer = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
     // if(buffer->type == v_gc_buffer && p->scope->ast) {
     //     p->scope->gc_check = true;
@@ -966,7 +967,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     if (class->type == ct_class) {
         ci->item = vgen_call_pool_alloc(alc, p, b, class);
     } else {
-        ci->item = vgen_call_alloc(alc, b, class->size, class);
+        ci->item = vgen_call_alloc(alc, p, class->size, class);
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
@@ -1045,7 +1046,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
             array_push(args, right);
             type_check(p, arg_type, right->rett);
             Value *on = vgen_func_ptr(alc, add, NULL);
-            Value *fcall = vgen_func_call(alc, b, on, args);
+            Value *fcall = vgen_func_call(alc, p, on, args);
             return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
         }
     }
@@ -1161,7 +1162,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
                 array_push(args, right);
                 type_check(p, arg_type, right->rett);
                 Value *on = vgen_func_ptr(alc, eq, NULL);
-                Value *fcall = vgen_func_call(alc, b, on, args);
+                Value *fcall = vgen_func_call(alc, p, on, args);
                 Value* result = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
                 if(op == op_ne) {
                     result = value_make(alc, v_not, result, result->rett);
@@ -1258,7 +1259,7 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
             Array *args = array_make(alc, 2);
             array_push(args, val);
             Value *on = vgen_func_ptr(alc, to_str, NULL);
-            Value *fcall = vgen_func_call(alc, b, on, args);
+            Value *fcall = vgen_func_call(alc, p, on, args);
             return vgen_gc_buffer(alc, b, scope, fcall, args, true);
         }
     }

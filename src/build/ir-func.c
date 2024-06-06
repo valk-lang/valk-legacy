@@ -22,9 +22,9 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     //
     func->stack_save_vn = NULL;
     func->di_scope = NULL;
-    func->gc_stack = NULL;
-    func->gc_stack_adr = NULL;
-    func->gc_stack_adr_val = NULL;
+    // func->gc_stack = NULL;
+    // func->gc_stack_adr = NULL;
+    // func->gc_stack_adr_val = NULL;
     //
     func->var_count = 0;
     func->gc_count = 0;
@@ -80,37 +80,20 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->func = func;
     ir->block = func->block_code;
 
-    if(vfunc == b->func_main_gen) {
-        // Init GcMan
-        Func* f1 = get_valk_class_func(b, "mem", "GcManager", "init");
-        ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1)));
-    }
-    if(vfunc->init_thread) {
-        // Init Thread
-        Func* f2 = get_valk_class_func(b, "mem", "Stack", "init");
-        ir_value(ir, vfunc->scope, vgen_func_call(alc, b, vgen_func_ptr(alc, f2, NULL), array_make(alc, 1)));
-    }
-
-    if(vfunc->calls_gc_check || vfunc->gc_decl_count > 0) {
-        Global* g = get_valk_global(ir->b, "mem", "stack");
-        char* gs = ir_load(ir, g->type, ir_global(ir, g));
-        func->var_g_stack = gs;
-
-        Global* gp = get_valk_global(ir->b, "mem", "stack_pos");
-        char* gpi = ir_load(ir, gp->type, ir_global(ir, gp));
-        func->var_g_stack_adr_ref = ir_class_pa(ir, gp->type->class, gpi, map_get(gp->type->class->props, "adr"));
-        func->var_g_stack_adr = ir_load(ir, type_cache_ptr(b), func->var_g_stack_adr_ref);
-    }
+    Scope* start = vfunc->ast_start;
+    if(start)
+        ir_write_ast(ir, start);
 
     // Load stack refs
     if (vfunc->alloca_size > 0)
         func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
     if (vfunc->gc_decl_count > 0) {
-        func->var_stack_adr = func->var_g_stack_adr;
+        VIRCached* c = vfunc->v_cache_stack_pos->item;
+        func->var_stack_adr = c->ir_value;
     }
     ir_init_decls(ir, func);
 
-    // // Store arg values
+    // Store arg values
     Array *args = vfunc->args->values;
     for (int i = 0; i < args->length; i++) {
         FuncArg *arg = array_get_index(args, i);

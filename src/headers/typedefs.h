@@ -65,6 +65,7 @@ typedef struct TThrow TThrow;
 typedef struct TSetRetv TSetRetv;
 // Values
 typedef struct Value Value;
+typedef struct MultiRett MultiRett;
 typedef struct VPair VPair;
 typedef struct VFuncPtr VFuncPtr;
 typedef struct VFuncCall VFuncCall;

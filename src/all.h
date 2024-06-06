@@ -80,6 +80,7 @@ extern bool is_watching;
 #include "headers/parse.h"
 #include "headers/token.h"
 #include "headers/value.h"
+#include "headers/ast.h"
 #include "headers/id.h"
 #include "headers/type.h"
 #include "headers/skip.h"
