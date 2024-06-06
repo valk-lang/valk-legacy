@@ -6,7 +6,7 @@ use io
 
 - global coro_run_first : ?Coro2 (null)
 - global coro_run_last : ?Coro2 (null)
-- global current_coro : @ignu(Coro2)
+~ global current_coro : @ignu(Coro2)
 
 - global coro_poll : ?io:SimplePoll[Coro2] (null)
 - global g_coros : @ignu(Array[?Coro2])
