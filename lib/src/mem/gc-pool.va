@@ -220,6 +220,7 @@ cstruct GcPool2[T] {
                 @ptrv(prev, ptr, 0) = next
                 free(b)
                 block = next
+                this.blockc--
                 continue
             }
             prev = b

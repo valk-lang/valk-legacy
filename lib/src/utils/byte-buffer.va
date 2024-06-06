@@ -148,9 +148,10 @@ struct ByteBuffer {
             new_size *= 2;
         }
         if(new_size != size){
+            let data = this.data
             let adr : ptr = mem:alloc(new_size);
-            mem:copy(this.data, adr, this.length);
-            mem:free(this.data);
+            mem:copy(data, adr, this.length);
+            mem:free(data);
             this.size = new_size;
             this.data = adr;
         }

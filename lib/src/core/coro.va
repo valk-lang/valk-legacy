@@ -184,8 +184,6 @@ struct Coro2 {
         if this.done : return
         current_coro = this
 
-        let x : Coro2 = this
-        x = this
         let jmpbuf = @stack(inline sys:libc_jmp_buf)
         let current_stack = mem:stack_pos
         if @setjmp(jmpbuf) == 0 {
@@ -204,10 +202,10 @@ struct Coro2 {
         }
         mem:stack_pos = current_stack
 
-        if x.done {
-            let next = x.follow_up
+        if this.done {
+            let next = this.follow_up
             if isset(next) {
-                x.follow_up = null
+                this.follow_up = null
                 next.resume()
             }
         }
@@ -220,7 +218,6 @@ struct Coro2 {
         let index = this.g_list_index
         g_coros.set(index, null) _
         g_coro_indexes.add(index)
-        print("s")
         @longjmp(this.s_back_buf)
     }
 
@@ -295,7 +292,6 @@ struct Coro2 {
     }
 
     fn _gc_free() {
-        print(".")
         this.gc_stack.free()
         let s = this.s_stack
         if isset(s) {
