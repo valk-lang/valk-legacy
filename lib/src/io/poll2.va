@@ -10,7 +10,6 @@ struct SimplePoll[T] {
     poll_items: type:StructArray[sys:libc_pollfd]
     items1: Array[T]
     items2: Array[T]
-    result: Array[T]
     index: uint (0)
 
     static fn new() SELF {
@@ -18,7 +17,6 @@ struct SimplePoll[T] {
             poll_items: type:StructArray[sys:libc_pollfd].new(4),
             items1: Array[T].new(4),
             items2: Array[T].new(4),
-            result: Array[T].new(4)
         }
         return poll
     }
@@ -48,9 +46,8 @@ struct SimplePoll[T] {
         this.items1.push(data)
     }
 
-    fn wait(timeout: i32 (-1)) Array[T] {
-        let result = this.result
-        result.clear()
+    fn wait(timeout: i32 (-1)) Array[T] !fd_limit !unknown {
+        let result = Array[T].new(8)
         let pis = this.poll_items
         let items1 = this.items1
         let items2 = this.items2
@@ -58,13 +55,10 @@ struct SimplePoll[T] {
         let count = sys:poll(pis.data, len @as u32, timeout)
         if count == -1 {
             let e = os:libc_errno()
-            if e == 22 {
-                print("l:")
-                len.print(10)
-            } else {
-                print("e:")
-                e.print(10)
+            if e == sys:EINVAL {
+                throw fd_limit
             }
+            throw unknown
         }
         let new_index : uint = 0
         let i : uint = 0

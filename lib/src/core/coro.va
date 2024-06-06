@@ -244,9 +244,9 @@ struct Coro2 {
             coro_run_last = null
             // Wait for poll coros
             if g_coro_poll_count > 0 {
-                let coros = poll.wait(1000)
-                // coros.length.print(10)
-                // print(".")
+                let coros = poll.wait(1000) ! {
+                    panic("Too many file descriptors")
+                }
                 if coros.length == 0 && stack.run_gc {
                     stack.gc()
                 }
