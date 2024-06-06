@@ -1,16 +1,16 @@
 
 use mem
 
-class Pool[T] {
+struct Pool[T] {
     - data: ptr
     ~ count: uint (0)
     - size: uint
 
-    static fn new(start_size: uint (2)) CLASS {
+    static fn new(start_size: uint (2)) SELF {
         if start_size < 2 {
             start_size = 2
         }
-        return CLASS {
+        return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
         };
@@ -54,16 +54,16 @@ class Pool[T] {
     }
 }
 
-struct StructPool[T] {
+cstruct StructPool[T] {
     - data: ptr
     ~ count: uint (0)
     - size: uint
 
-    static fn new(start_size: uint (2)) CLASS {
+    static fn new(start_size: uint (2)) SELF {
         if start_size < 2 {
             start_size = 2
         }
-        return CLASS {
+        return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
         };

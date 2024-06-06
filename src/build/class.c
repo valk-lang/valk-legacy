@@ -542,7 +542,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     }
     // Set CLASS identifier
     Idf* idf = idf_make(b->alc, idf_class, gclass);
-    scope_set_idf(gclass->scope, "CLASS", idf, p);
+    scope_set_idf(gclass->scope, "SELF", idf, p);
 
     // Create new parser
     parser_new_context(&p);

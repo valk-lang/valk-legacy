@@ -1,5 +1,5 @@
 
-class Route[T] {
+struct Route[T] {
 	handler: T
 	args: Array[RouteArg]
 

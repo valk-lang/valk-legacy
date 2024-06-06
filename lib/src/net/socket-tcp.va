@@ -5,7 +5,7 @@ use mem
 use os
 use io
 
-class SocketTCP {
+struct SocketTCP {
     ~ host: String
     ~ fd: FD
     ~ port: u16
@@ -49,7 +49,7 @@ class SocketTCP {
         }
 
         // Get host info
-        let addrinfo = CLASS.get_addrinfo(host, port) ! {
+        let addrinfo = SELF.get_addrinfo(host, port) ! {
             throw invalid_host
         }
 
@@ -193,13 +193,13 @@ class SocketTCP {
         throw error
     }
 
-    fn clone() CLASS {
-        return CLASS {
+    fn clone() SELF {
+        return SELF {
             host: this.host,
             fd: this.fd,
             port: this.port,
             blocking: this.blocking,
-            addrinfo: CLASS.get_addrinfo(this.host, this.port) ? this.addrinfo @as sys:libc_addrinfo,
+            addrinfo: SELF.get_addrinfo(this.host, this.port) ? this.addrinfo @as sys:libc_addrinfo,
         }
     }
 

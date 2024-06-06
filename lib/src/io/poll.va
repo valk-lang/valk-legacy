@@ -5,7 +5,7 @@ use mem
 use io
 use os
 
-class Poll[T] {
+struct Poll[T] {
     - epoll_fd: i32 (0)
     - epoll_buffer: ptr
     - listeners: Array[Listener[T]] (Array[Listener[T]].new())
@@ -13,20 +13,20 @@ class Poll[T] {
     - lsn_by_index_size: uint (20)
     - events_result: Array[Listener[T]] (array[Listener[T]]{})
 
-    static fn new() CLASS !poll_create_err {
+    static fn new() SELF !poll_create_err {
 
         #if OS == linux
         let fd = sys:epoll_create(1)
         if fd < 0 {
             throw poll_create_err
         }
-        let poll = CLASS {
+        let poll = SELF {
             epoll_fd: fd
             epoll_buffer: mem:alloc(40 * sizeof(inline sys:libc_epoll_event))
             lsn_by_index: null @as ptr
         }
         #else
-        let poll = CLASS {
+        let poll = SELF {
             epoll_buffer: mem:alloc(20 * sizeof(inline sys:libc_pollfd)),
             lsn_by_index: mem:alloc(20 * sizeof(ptr)),
         }
@@ -137,7 +137,7 @@ class Poll[T] {
     }
 }
 
-class Listener[T] {
+struct Listener[T] {
     data: T
     ~ epoll_fd: i32 (0)
     ~ fd: FD

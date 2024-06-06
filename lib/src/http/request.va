@@ -3,7 +3,7 @@
 
 use utils
 
-class Request {
+struct Request {
     header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
     - headers: Map[String] (map[String]{})
     method: String ("GET")

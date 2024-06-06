@@ -1,36 +1,36 @@
 
-struct libc_timespec {
+cstruct libc_timespec {
     tv_sec: i64
     tv_nsec: i64
 }
 
-struct libc_timeval {
+cstruct libc_timeval {
     tv_sec: i64
     tv_usec: i64
 }
 
-struct libc_sockaddr {
+cstruct libc_sockaddr {
     sa_family: i16
     sa_data: inline [i8, 14]
 }
 
-struct libc_pollfd {
+cstruct libc_pollfd {
     fd: i32
     events: i16
     revents: i16
 }
 
-struct __jmp_buf_tag {
+cstruct __jmp_buf_tag {
     prop_0: inline [i64, 8]
     prop_1: i32
     prop_2: inline __sigset_t
 }
 
-struct __sigset_t {
+cstruct __sigset_t {
     prop_0: inline [i64, 16]
 }
 
-struct libc_stat {
+cstruct libc_stat {
     st_dev: i64
     st_ino: i64
     st_nlink: i64
@@ -48,7 +48,7 @@ struct libc_stat {
     __unused: inline [i64, 3]
 }
 
-struct libc_dirent {
+cstruct libc_dirent {
     d_ino: i64
     d_off: i64
     d_reclen: i16
@@ -56,12 +56,12 @@ struct libc_dirent {
     d_name: inline [i8, 256]
 }
 
-struct libc_timezone {
+cstruct libc_timezone {
     tz_minuteswest: i32
     tz_dsttime: i32
 }
 
-struct libc_addrinfo {
+cstruct libc_addrinfo {
     ai_flags: i32
     ai_family: i32
     ai_socktype: i32
@@ -72,11 +72,11 @@ struct libc_addrinfo {
     ai_next: ptr
 }
 
-struct libc_epoll_event packed {
+cstruct libc_epoll_event packed {
     events: i32
     data: ptr
 }
 
-struct libc_jmp_buf {
+cstruct libc_jmp_buf {
     prop_0: inline [inline __jmp_buf_tag, 1]
 }

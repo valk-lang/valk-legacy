@@ -3,15 +3,15 @@ header "sys" as sys;
 
 use mem;
 
-class Mutex[T] {
+struct Mutex[T] {
 	- mutex: ptr;
 
 	#if @type_is_void(T)
 
-	static fn new() CLASS { 
+	static fn new() SELF { 
 		let mut = mem:calloc(64);
 		sys:pthread_mutex_init(mut);
-		return CLASS { mutex: mut };
+		return SELF { mutex: mut };
 	}
 
 	fn lock() void {
@@ -25,10 +25,10 @@ class Mutex[T] {
 	#else
 	- value: ?T;
 
-	static fn new(value: T) CLASS { 
+	static fn new(value: T) SELF { 
 		let mut = mem:calloc(sys:CONST.mutex_size);
 		sys:pthread_mutex_init(mut);
-		return CLASS { mutex: mut, value: value };
+		return SELF { mutex: mut, value: value };
 	}
 
 	fn lock() T {

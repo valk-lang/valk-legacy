@@ -45,7 +45,7 @@ shared stack_count: uint
 global stack_pos: @ignu(StackPos)
 global main_stack_pos: @ignu(StackPos)
 
-struct StackPos {
+cstruct StackPos {
     base: ptr
     adr: ptr
     size: uint
@@ -63,8 +63,8 @@ fn create_stack() StackPos {
     }
 }
 
-struct Stack {
-    id: uint
+cstruct Stack {
+    // id: uint
 
     transfer : ObjectChain
     shared : GcRing
@@ -85,14 +85,14 @@ struct Stack {
 
     static fn init() {
 
-        let id = atomic(stack_count + 1)
+        // let id = atomic(stack_count + 1)
 
         let pos = create_stack()
         stack_pos = pos
         main_stack_pos = pos
 
         let s = Stack {
-            id: id
+            // id: id
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()

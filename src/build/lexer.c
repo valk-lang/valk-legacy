@@ -269,10 +269,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             if(next == '-') {
                 op = tok_subsub;
                 i++;
-                if(content[i] == '-') {
-                    op = tok_triple_sub;
-                    i++;
-                }
             } else if(next == '=') {
                 op = tok_sub_eq;
                 i++;
@@ -327,14 +323,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             }
         } else if (ch == '~') {
             op = tok_tilde;
-            if(next == '~') {
-                op = tok_tilde2;
-                i++;
-                if(content[i] == '~') {
-                    op = tok_tilde3;
-                    i++;
-                }
-            }
         } else if (ch == '?') {
             op = tok_qmark;
             if(next == '?') {

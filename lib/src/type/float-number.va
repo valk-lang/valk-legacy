@@ -44,7 +44,7 @@ trait FloatNumber {
         while d-- > 0 {
             x *= 10
         }
-        let fpart = value - ipart @as CLASS; 
+        let fpart = value - ipart @as SELF; 
         fpart = fpart * x; 
 
         let tail = fpart @as int

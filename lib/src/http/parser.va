@@ -4,7 +4,7 @@
 use utils
 use mem
 
-class RequestParser {
+struct RequestParser {
     stage: uint (0)
     input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     input_pos: uint (0)

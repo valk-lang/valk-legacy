@@ -2,16 +2,16 @@
 use mem
 use io
 
-class ByteBuffer {
+struct ByteBuffer {
     ~ data: ptr
     ~ size: uint
     length: uint (0)
 
-    static fn new(start_size: uint) CLASS {
+    static fn new(start_size: uint) SELF {
         if start_size < 10 {
             start_size = 10;
         }
-        let res = CLASS {
+        let res = SELF {
             data: mem:alloc(start_size),
             size: start_size,
         };
@@ -27,7 +27,7 @@ class ByteBuffer {
     }
 
     // Appending
-    fn append(buffer: CLASS) {
+    fn append(buffer: SELF) {
         this.append_from_ptr(buffer.data, buffer.length);
     }
 
@@ -148,9 +148,10 @@ class ByteBuffer {
             new_size *= 2;
         }
         if(new_size != size){
+            let data = this.data
             let adr : ptr = mem:alloc(new_size);
-            mem:copy(this.data, adr, this.length);
-            mem:free(this.data);
+            mem:copy(data, adr, this.length);
+            mem:free(data);
             this.size = new_size;
             this.data = adr;
         }

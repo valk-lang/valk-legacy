@@ -1,10 +1,10 @@
 
--- value bump_block_size (1024 * 10)
--- value bump_private_size (1024 * 2)
+-ns value bump_block_size (1024 * 10)
+-ns value bump_private_size (1024 * 2)
 
--- global bumper_usage : uint
+-ns global bumper_usage : uint
 
--- struct GcBumpBlock {
+-ns cstruct GcBumpBlock {
     next: ?GcBumpBlock (null)
     size: uint
     space_left: uint
@@ -28,7 +28,7 @@
     }
 }
 
--- struct GcBumper {
+-ns cstruct GcBumper {
     first_block_private: ?GcBumpBlock (null)
     last_block_private: ?GcBumpBlock (null)
     first_block: GcBumpBlock

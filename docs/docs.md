@@ -14,7 +14,7 @@
 * [Variables](#variables)
 * [Functions](#functions)
    * [Error Handling](#error-handling)
-* [Classes](#classes)
+* [Structs](#structs)
 * [Globals](#globals)
 
 
@@ -196,17 +196,17 @@ fn main() {
 }
 ```
 
-### Classes
+### Structs
 
 ```rust
-class MyClass {
+struct MyStruct {
     a: String
     b: String ("default value")
     c: uint (100)
 }
 
 fn main() {
-    let obj = MyClass {
+    let obj = MyStruct {
         a: "TEST"
     }
     println(obj.a)   // output: TEST
@@ -271,22 +271,26 @@ each m as v {
 
 ### Access types
 
-With access types we control who can access what. We can define things as either `-` (private) or `~` (readonly). We can also control the reach of these access types by repeating the token. Readonly can only be used for class properties. Private can be used for `functions`, `classes`, `traits` & `globals`.
+With access types we control who can access what. By default your declared types, functions, properties, etc. are public, but we can use `-` (private) and `~` (readonly) to limit the access to them.
 
 ```rust
-- fn  ...   // function is private except in this file
--- fn  ...  // function is private except in this namespace
---- fn  ... // function is private except in this package
+fn ... // public
+- fn ...   // private, function can only be accessed from this file
+-ns fn ...  // private, function can only be accessed from this namespace
+-pkg fn ... // private, function can only be accessed from this package
 
-class MyClass {
-    - p1: ...    // property is private except in this file
-    -- p2:  ...  // property is private except in this namespace
-    --- p3: ...  // property is private except in this package
-    ~ p4: ...    // property is public but can only be modified from this file
-    ~~ p5: ...   // property is public but can only be modified from this namespace
-    ~~~ p6: ...  // property is public but can only be modified from this package
+struct MyStruct {
+    {prop-name}: ... // public
+    - {prop-name}: ...    // private, property can only be accessed from this file
+    -ns {prop-name}:  ...  // private, property can only be accessed from this namespace
+    -pkg {prop-name}: ...  // private, property can only be accessed from this package
+    ~ {prop-name}: ...    // readonly, property can only be changed from this file
+    ~ns {prop-name}: ...   // readonly, property can only be changed from this file
+    ~pkg {prop-name}: ...  // readonly, property can only be changed from this file
 }
 ```
+
+For rare cases when you want to ignore access types, you can type `@ignore_access_types` at the top of file.
 
 ### Value scopes
 
@@ -378,12 +382,12 @@ valk build src/*.v ./my-tests/*.va --test --run
 
 Work in progress 🔨
 
-### Structs
+### cstructs
 
-Structs are the same as classes but without being garbage collected. A `struct` is pretty much the same as a struct in `c`.
+cstructs are structs that are not garbage collected and cant be modified by the compiler. It mostly used for integrating c libraries, but can also be used if you just do not want garbage collection on your struct.
 
 ```rust
-struct MyStruct {
+cstruct MyStruct {
     a: i32
     b: i32
 }
@@ -396,7 +400,7 @@ fn main() {
 }
 ```
 
-Valk allocates these objects using `valk:mem:alloc` and you can use `valk:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
+Valk allocates these cstruct objects using `valk:mem:alloc` and you can use `valk:mem:free` to free these objects. But you are free to allocate / free these objects in your own way.
 
 ```rust
 let ob = my_alloc(sizeof(inline MyStruct))

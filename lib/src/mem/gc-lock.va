@@ -1,17 +1,17 @@
 
 header "sys" as sys;
 
--- struct GcLock {
+-ns cstruct GcLock {
 	- mutex: ptr
 
-	static fn new() CLASS { 
+	static fn new() SELF { 
         #if OS == win
 		let mut = sys:CreateMutexA(null, false, null);
         #else
 		let mut = calloc(64);
 		sys:pthread_mutex_init(mut, null);
         #end
-		return CLASS { mutex: mut };
+		return SELF { mutex: mut };
 	}
 
 	fn lock() void {

@@ -7,12 +7,12 @@ fn stream(path: String, read: bool, write: bool) FileStream !err_open {
     return FileStream{ path: path, fd: fd, can_read: read, can_write: write }
 }
 
-class FileStream {
-    ~path: String
-    -fd: FD 
-    -can_read: bool
-    -can_write: bool
-    ~reading: bool (true)
+struct FileStream {
+    ~ path: String
+    - fd: FD 
+    - can_read: bool
+    - can_write: bool
+    ~ reading: bool (true)
 
     fn read(bytes: uint (10240)) String !read_err {
         if !this.can_read || !this.reading : return ""

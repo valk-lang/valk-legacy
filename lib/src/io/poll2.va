@@ -6,19 +6,17 @@ use io
 use os
 use type
 
-class SimplePoll[T] {
+struct SimplePoll[T] {
     poll_items: type:StructArray[sys:libc_pollfd]
-    items: Array[?T]
-    result: Array[T]
+    items1: Array[T]
+    items2: Array[T]
+    index: uint (0)
 
-    static fn new() CLASS {
-        let poll = CLASS {
+    static fn new() SELF {
+        let poll = SELF {
             poll_items: type:StructArray[sys:libc_pollfd].new(4),
-            items: Array[?T].new(4),
-            result: Array[T].new(4)
-        }
-        each poll.poll_items as pi {
-            pi.fd = -1
+            items1: Array[T].new(4),
+            items2: Array[T].new(4),
         }
         return poll
     }
@@ -26,15 +24,8 @@ class SimplePoll[T] {
     fn set(fd: FD, data: T, read: bool, write: bool) {
         if fd < 0 : return
         let pis = this.poll_items
-        let s1 = pis.size
-        let pi = pis.get(fd @as uint)
-        let s2 = pis.size
-        if s1 != s2 {
-            each pis as i, pi {
-                if i < s1 : continue
-                pi.fd = -1
-            }
-        }
+        let index = this.index++
+        let pi = pis.get(index)
 
         #if OS == win
         pi.fd = fd
@@ -52,29 +43,49 @@ class SimplePoll[T] {
         if write : events = events | sys:POLLOUT
         pi.events = events
 
-        let items = this.items
-        items.set_expand(fd @as uint, data, null)
+        this.items1.push(data)
     }
 
-    fn wait(timeout: i32 (-1)) Array[T] {
-        let result = this.result
-        result.clear()
+    fn wait(timeout: i32 (-1)) Array[T] !fd_limit !unknown {
+        let result = Array[T].new(8)
         let pis = this.poll_items
-        let items = this.items
-        let len = pis.size
+        let items1 = this.items1
+        let items2 = this.items2
+        let len = this.index
         let count = sys:poll(pis.data, len @as u32, timeout)
-        let i = 0 @as uint
-        if count > 0 {
-            while i < len {
-                let pi = pis.get(i++)
-                if pi.revents == 0 : continue
-
-                pi.fd = -1
-
-                let item = items.get(i - 1) ! continue
-                if isset(item) : result.push(item)
+        if count == -1 {
+            let e = os:libc_errno()
+            if e == sys:EINVAL {
+                throw fd_limit
             }
+            throw unknown
         }
+        let new_index : uint = 0
+        let i : uint = 0
+        while i < len {
+            let index = i++
+            let item = items1.get(index) ! continue
+            let pi = pis.get(index)
+
+            if pi.revents == 0 {
+                if new_index != index {
+                    let pi2 = pis.get(new_index)
+                    pi2.fd = pi.fd
+                    pi2.events = pi.events
+                }
+                items2.push(item)
+                new_index++
+                continue;
+            }
+
+            result.push(item)
+        }
+
+        this.items1 = items2
+        this.items2 = items1
+        this.index = new_index
+        items1.clear()
+
         return result
     }
 }

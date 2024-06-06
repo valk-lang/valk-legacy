@@ -3,6 +3,11 @@
 #define _H_ALL
 
 #ifdef _WIN32
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wmicrosoft-anon-tag"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <windows.h>
 #else
 // #include <sys/resource.h>

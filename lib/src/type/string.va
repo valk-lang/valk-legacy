@@ -3,7 +3,7 @@ use mem
 use utils
 use io
 
-- struct StringConst {
+- cstruct StringConst {
     v1: u8 (0)
     v2: u8 (0)
     v3: u8 (0)
@@ -13,7 +13,7 @@ use io
     bytes: uint
 }
 
-class String {
+struct String {
     data: ptr
     bytes: uint
 
@@ -261,7 +261,7 @@ class String {
         let add_len = add.bytes
         let len = this_len + add_len
         if len == 0 : return ""
-        let s = CLASS.make_empty(len)
+        let s = SELF.make_empty(len)
         let data = s.data
         mem:copy(this.data, data, this_len)
         mem:copy(add.data, @ptr_offset(data, this_len), add_len + 1) // + 1 for 0 byte
