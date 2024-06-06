@@ -64,7 +64,7 @@ fn create_stack() StackPos {
 }
 
 cstruct Stack {
-    id: uint
+    // id: uint
 
     transfer : ObjectChain
     shared : GcRing
@@ -85,14 +85,14 @@ cstruct Stack {
 
     static fn init() {
 
-        let id = atomic(stack_count + 1)
+        // let id = atomic(stack_count + 1)
 
         let pos = create_stack()
         stack_pos = pos
         main_stack_pos = pos
 
         let s = Stack {
-            id: id
+            // id: id
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()

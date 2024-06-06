@@ -37,17 +37,17 @@ cstruct GcManager {
     fn add_stack(s: Stack) {
         let index = 0 @as uint
         let has_index = false
-        if(this.has_free_index) {
-            let lock = atomic(this.free_index_lock + 1)
-            if lock == this.free_index {
-                index = lock
-                has_index = true
-                atomic(this.free_index_lock - lock)
-                this.has_free_index = false
-            } else {
-                atomic(this.free_index_lock - 1)
-            }
-        }
+        // if(this.has_free_index) {
+        //     let lock = atomic(this.free_index_lock + 1)
+        //     if lock == this.free_index {
+        //         index = lock
+        //         has_index = true
+        //         atomic(this.free_index_lock - lock)
+        //         this.has_free_index = false
+        //     } else {
+        //         atomic(this.free_index_lock - 1)
+        //     }
+        // }
         if has_index == false {
             index = atomic(this.stack_count + 1)
         }
@@ -64,46 +64,49 @@ cstruct GcManager {
         let timeout_count : uint = 0
 
         // Remove GCman stack
-        let si = gm.stack_count;
-        while si-- > 0 {
-            let s = @ptrv(stacks, ?Stack, si);
-            if s == gcm_stack {
-                @ptrv(stacks, ?Stack, si) = null
-                break
-            }
-        }
+        // let si = gm.stack_count;
+        // while si-- > 0 {
+        //     let s = @ptrv(stacks, ?Stack, si);
+        //     if s == gcm_stack {
+        //         @ptrv(stacks, ?Stack, si) = null
+        //         break
+        //     }
+        // }
 
         //
         while true {
-            break
             //
             let sc = gm.stack_count;
             let up_to_date_count : uint = 0;
             let age = gc_age
 
+            if gcm_stack.gc_age != age {
+                gcm_stack.force_full = true
+                gcm_stack.run_gc = true
+                gcm_stack.gc()
+            }
+
             // Loop stacks
             let si = sc;
             while si-- > 0 {
                 let s = @ptrv(stacks, Stack, si);
-                if s @as ?Stack == null {
-                    up_to_date_count++
-                    if gm.has_free_index == false {
-                        gm.free_index = si
-                        atomic(gm.free_index_lock + si)
-                        gm.has_free_index = true
-                    }
-                    continue;
-                }
+                // if s @as ?Stack == null {
+                //     up_to_date_count++
+                //     if gm.has_free_index == false {
+                //         gm.free_index = si
+                //         atomic(gm.free_index_lock + si)
+                //         gm.has_free_index = true
+                //     }
+                //     continue;
+                // }
                 if s.gc_age == age {
                     up_to_date_count++
-                } else {
-                    s.force_full = true
                 }
-                if s.stopped {
-                    @ptrv(stacks, ?Stack, si) = null
-                    free(s @as ptr)
-                    continue
-                }
+                // if s.stopped {
+                //     @ptrv(stacks, ?Stack, si) = null
+                //     free(s @as ptr)
+                //     continue
+                // }
             }
 
             // If all up-to-date
@@ -121,18 +124,19 @@ cstruct GcManager {
                             if s.gc_age == age {
                                 continue
                             }
-                            s.lock.lock()
-                            if s.gc_age == age {
-                                s.lock.unlock()
-                                continue
-                            }
-                            s.mark_stack_gc_age(age)
-                            s.gc_age = age
-                            s.lock.unlock()
+                            s.force_full = true
+                            s.run_gc = true
+                            // s.lock.lock()
+                            // if s.gc_age == age {
+                            //     s.lock.unlock()
+                            //     continue
+                            // }
+                            // s.mark_stack_gc_age(age)
+                            // s.gc_age = age
+                            // s.lock.unlock()
                         }
                     }
 
-                    gcm_stack.gc()
                     timeout_count = 0
                 }
             }

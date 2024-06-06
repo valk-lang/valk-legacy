@@ -28,7 +28,7 @@ struct SimplePoll[T] {
         let pis = this.poll_items
         let s1 = pis.size
         let pi = pis.get(fd @as uint)
-        let s2 = pis.size
+        let s2 = pis.size // pis.get can increase struct array size
         if s1 != s2 {
             each pis as i, pi {
                 if i < s1 : continue
@@ -52,8 +52,7 @@ struct SimplePoll[T] {
         if write : events = events | sys:POLLOUT
         pi.events = events
 
-        let items = this.items
-        items.set_expand(fd @as uint, data, null)
+        this.items.set_expand(fd @as uint, data, null)
     }
 
     fn wait(timeout: i32 (-1)) Array[T] {
@@ -69,10 +68,14 @@ struct SimplePoll[T] {
                 let pi = pis.get(i++)
                 if pi.revents == 0 : continue
 
+                let index = pi.fd @as uint
                 pi.fd = -1
 
-                let item = items.get(i - 1) ! continue
-                if isset(item) : result.push(item)
+                let item = items.get(index) ! continue
+                if isset(item) {
+                    result.push(item)
+                    items.set(index, null) _
+                }
             }
         }
         return result

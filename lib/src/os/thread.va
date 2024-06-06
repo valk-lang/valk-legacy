@@ -15,7 +15,7 @@ cstruct Thread {
 
     #init_thread
     - static fn entry(e: ThreadEntry) {
-        mem:Stack.init()
+        // mem:Stack.init()
         if e.has_data {
             let func = e.func @as fn(ptr)(void);
             co func(e.data @as ptr);

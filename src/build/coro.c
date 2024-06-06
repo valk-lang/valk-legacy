@@ -186,7 +186,10 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, "coro.gc_stack.adr = gc_args\n");
     }
     str_flat(code, "CORO_CLASS.yield_current()\n");
-    str_flat(code, "return coro\n");
+    // Return coro, but clear the value from the stack
+    str_flat(code, "let coro_ptr = coro @as ptr\n");
+    str_flat(code, "@ptrv(@ptr_of(coro), ?ptr) = null\n");
+    str_flat(code, "return coro_ptr @as CORO_CLASS\n");
     str_flat(code, "}\n");
 
     content = str_to_chars(b->alc, code);

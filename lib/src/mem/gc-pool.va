@@ -123,6 +123,18 @@ cstruct GcPool2[T] {
 
             block = @ptrv(block, ptr, 0)
         }
+
+        let index = this.index
+        let i : uint = 0
+        let data = current + GP_DATA_OFFSET
+        while i < index {
+            let item = data + i * isize
+            if @ptrv(item, u8, byte_state) == state_used {
+                ((item + 8) @as T)._gc_free()
+                @ptrv(item, u8, byte_state) = state_new
+            }
+            i++
+        }
         #end
     }
 
@@ -156,6 +168,24 @@ cstruct GcPool2[T] {
 
             block = @ptrv(block, ptr, 0)
         }
+
+        let index = this.index
+        let used = @ptrv(current, uint, 2)
+        let i : uint = 0
+        let data = current + GP_DATA_OFFSET
+        while i < index {
+            let item = data + i * isize
+            if @ptrv(item, u8, byte_state) == state_used {
+                #if @type_has_method(T, _gc_free)
+                ((item + 8) @as T)._gc_free()
+                #end
+                @ptrv(item, u8, byte_state) = state_new
+                @ptrv(item, u16, 1) = 0
+                used--
+            }
+            i++
+        }
+        @ptrv(current, uint, 2) = used
     }
 
     fn reset() {
@@ -164,11 +194,12 @@ cstruct GcPool2[T] {
         let first = this.first
         let block = first
         let prev = first
-        while block != current {
+        while true {
             let b = block
             let count = @ptrv(b, uint, 1)
             let used = @ptrv(b, uint, 2)
             @ptrv(b, uint, 3) = used * 100 / count
+            if b == current : break
             block = @ptrv(b, ptr, 0)
         }
 

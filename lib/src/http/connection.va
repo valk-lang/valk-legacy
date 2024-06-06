@@ -215,7 +215,7 @@ struct Connection {
     }
 
     fn close() {
-        println("[+] Close connection: " + this.fd)
+        // println("[+] Close connection: " + this.fd)
         // if this.added_active_body_size {
         //     atomic(this.server.active_body_size - this.parser.content_length)
         //     this.added_active_body_size = false
