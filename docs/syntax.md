@@ -26,7 +26,7 @@ struct A[T] is MyInterface, MyInterface2 {
     use {class-name} // use other class as a trait
 
     // Static function
-    static fn {name}(arg: int = 100) String { ... }
+    static fn {name}(arg: int (100)) String { ... }
 
     // Public function
     fn {name}() { ... }
@@ -40,7 +40,7 @@ struct A[T] is MyInterface, MyInterface2 {
     shared {name} : {type} ({default-value}) // define a shared global in this struct, aka. shared static property
     enum {name} : {type} {
         NAME1
-        NAME2 = {value}
+        NAME2 ({value})
         NAME3
     }
 }
@@ -49,7 +49,7 @@ type {name} : {type} // Type alias
 value {name} ({value}) // Value alias
 
 // Function
-fn alloc(size: uint = 100) ptr {
+fn alloc(size: uint (100)) ptr {
     // Inline function 1
     def fn myfunc() { ... code ... }
     myfunc()
