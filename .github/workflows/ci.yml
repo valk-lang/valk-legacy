@@ -2,20 +2,15 @@ name: ci
 
 on:
   push:
-    branches: [ main ]
+    if: github.event.pull_request.draft == false
     paths-ignore:
       - "**.md"
       - "README.md"
       - "LICENSE"
       - ".gitignore"
   pull_request:
-    branches: [ main, nightly ]
     types: [review_requested, ready_for_review]
-    paths-ignore:
-      - "**.md"
-      - "README.md"
-      - "LICENSE"
-      - ".gitignore"
+    branches: [ main, nightly ]
 
 jobs:
   linux:
