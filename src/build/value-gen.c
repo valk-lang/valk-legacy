@@ -38,7 +38,7 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
         mr->decls = array_make(alc, types->length);
         for(int i = 0; types->length; i++) {
             Type* type = array_get_index(types, i);
-            Decl* decl = decl_make(alc, NULL, type, false);
+            Decl* decl = decl_make(alc, p->func, NULL, type, false);
             decl->is_mut = true;
             array_push(mr->decls, decl);
         }
@@ -184,7 +184,8 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
     return value_make(alc, v_gc_link, item, rett);
 }
 
-Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array* args, bool store_on_stack) {
+Value* vgen_gc_buffer(Allocator* alc, Parser* p, Scope* scope, Value* val, Array* args, bool store_on_stack) {
+    Build* b = p->b;
     bool contains_gc_values = false;
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
@@ -212,7 +213,7 @@ Value* vgen_gc_buffer(Allocator* alc, Build* b, Scope* scope, Value* val, Array*
     // Buffer arguments
     for (int i = 0; i < args->length; i++) {
         Value* arg = array_get_index(args, i);
-        Decl *decl = decl_make(alc, NULL, arg->rett, false);
+        Decl *decl = decl_make(alc, p->func, NULL, arg->rett, false);
         array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
         arg = value_make(alc, v_decl, decl, decl->type);
         array_set_index(args, i, arg);

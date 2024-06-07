@@ -8,6 +8,53 @@ char *ir_var(IRFunc* func) {
     itos(func->var_count++, res + 2, 10);
     return res;
 }
+char* ir_arg_nr(IR* ir, int nr) {
+    char buf[64];
+    strcpy(buf, "\%arg.");
+    itos(nr, buf + 5, 10);
+    return dups(ir->alc, buf);
+}
+char* ir_decl_var(IR* ir, Decl* decl) {
+    if(decl->custom_ir_name)
+        return decl->custom_ir_name;
+    char buf[64];
+    strcpy(buf, "\%var.");
+    itos(decl->nr, buf + 5, 10);
+    return dups(ir->alc, buf);
+}
+char* ir_decl_imut_val(IR* ir, Decl* decl) {
+    char buf[64];
+    strcpy(buf, "\%var_imut.");
+    itos(decl->nr, buf + 10, 10);
+    return dups(ir->alc, buf);
+}
+void ir_decl_set(IR* ir, Decl* decl, char* val) {
+    Str* code = ir->block->code;
+    str_flat(code, "  ");
+    str_add(code, ir_decl_var(ir, decl));
+    str_flat(code, " = ");
+    str_add(code, val);
+    str_flat(code, "\n");
+}
+void ir_set(IR* ir, char* left, char* right) {
+    Str* code = ir->block->code;
+    str_flat(code, "  ");
+    str_add(code, left);
+    str_flat(code, " = ");
+    str_add(code, right);
+    str_flat(code, "\n");
+}
+void ir_decl_store(IR* ir, Decl* decl, char* val) {
+    if (decl->is_mut) {
+        ir_store_old(ir, decl->type, ir_decl_var(ir, decl), val);
+    } else {
+        if (decl->is_gc) {
+            ir_store_old(ir, decl->type, ir_decl_var(ir, decl), val);
+        }
+        decl->custom_ir_name = val;
+        // ir_set(ir, ir_decl_imut_val(ir, decl), val);
+    }
+}
 
 void ir_jump(IR* ir, IRBlock* block) {
     Str* code = ir->block->code;
@@ -42,19 +89,19 @@ char *ir_float(IR* ir, double value) {
     return res;
 }
 
-Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs) {
+Array *ir_fcall_args(IR *ir, Array *values, Array* rett_refs) {
     Array *ir_values = array_make(ir->alc, values->length + 1);
     Array *types = array_make(ir->alc, values->length + 1);
     for (int i = 0; i < values->length; i++) {
         Value *v = array_get_index(values, i);
-        char *val = ir_value(ir, scope, v);
+        char *val = ir_value(ir, v);
         array_push(ir_values, val);
         array_push(types, v->rett);
     }
     if (rett_refs) {
         for (int i = 0; i < rett_refs->length; i++) {
             Value *v = array_get_index(rett_refs, i);
-            char *val = v ? ir_assign_value(ir, scope, v) : "null";
+            char *val = v ? ir_assign_value(ir, v) : "null";
             array_push(ir_values, val);
             array_push(types, type_gen_valk(ir->alc, ir->b, "ptr"));
         }
@@ -360,7 +407,7 @@ char *ir_i1_cast(IR *ir, char *val) {
     return var_i1;
 }
 
-char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett) {
+char* ir_op(IR* ir, int op, char* left, char* right, Type* rett) {
 
     bool is_float = rett->type == type_float;
     char *ltype = ir_type(ir, rett);
@@ -508,7 +555,7 @@ char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop) {
     return result;
 }
 
-void ir_if(IR *ir, Scope *scope, TIf *ift) {
+void ir_if(IR *ir, TIf *ift) {
     //
     Value *cond = ift->cond;
     Scope *scope_if = ift->scope_if;
@@ -518,7 +565,7 @@ void ir_if(IR *ir, Scope *scope, TIf *ift) {
     IRBlock *block_else = ir_block_make(ir, ir->func, "if_else_");
     IRBlock *after = ir_block_make(ir, ir->func, "if_after_");
 
-    char *lcond = ir_value(ir, scope, cond);
+    char *lcond = ir_value(ir, cond);
     ir_cond_jump(ir, lcond, block_if, block_else);
 
     ir->block = block_if;
@@ -536,7 +583,7 @@ void ir_if(IR *ir, Scope *scope, TIf *ift) {
     ir->block = after;
 }
 
-void ir_while(IR *ir, Scope *scope, TWhile *item) {
+void ir_while(IR *ir, TWhile *item) {
     //
     Value *cond = item->cond;
     Scope *scope_while = item->scope_while;
@@ -548,7 +595,7 @@ void ir_while(IR *ir, Scope *scope, TWhile *item) {
     ir_jump(ir, block_cond);
 
     ir->block = block_cond;
-    char *lcond = ir_value(ir, scope, cond);
+    char *lcond = ir_value(ir, cond);
     ir_cond_jump(ir, lcond, block_while, after);
 
     // Code

@@ -213,11 +213,11 @@ void read_ast(Parser *p, bool single_line) {
                 }
 
                 Value* val = read_value(alc, p, true, 0);
-                if((val->rett == NULL && val->mrett == NULL) || (val->rett ? type_is_void(val->rett) : types_contain_void(val->mrett->types))) {
+                if((val->rett == NULL && val->mrett == NULL) || type_is_void(val->rett) || (val->mrett && types_contain_void(val->mrett->types))) {
                     parse_err(p, -1, "Right side returns a 'void' value");
                 }
 
-                int retc = val->rett ? 1 : val->mrett->types->length;
+                int retc = val->mrett ? val->mrett->types->length : 1;
                 if (names->length != retc) {
                     if (names->length > retc) {
                         parse_err(p, -1, "Right side does not return enough values to fit all your variables");
@@ -230,7 +230,7 @@ void read_ast(Parser *p, bool single_line) {
                     char *name = array_get_index(names, i);
                     Type *type = array_get_index(types, i);
 
-                    Type *vtype = val->rett ? val->rett : array_get_index(val->mrett->types, i);
+                    Type *vtype = val->mrett ? array_get_index(val->mrett->types, i) : val->rett;
 
                     if (!type)
                         type = vtype;
@@ -241,7 +241,7 @@ void read_ast(Parser *p, bool single_line) {
                     }
                     type_check(p, type, vtype);
 
-                    Decl *decl = decl_make(alc, name, type, false);
+                    Decl *decl = decl_make(alc, p->func, name, type, false);
                     Idf *idf = idf_make(b->alc, idf_decl, decl);
                     scope_set_idf(scope, name, idf, p);
 
@@ -408,26 +408,26 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *ls = p->loop_scope;
                 Scope *scope_each = scope_sub_make(alc, sc_loop, scope);
 
-                Decl *on_decl = decl_make(alc, NULL, on->rett, false);
+                Decl *on_decl = decl_make(alc, p->func, NULL, on->rett, false);
                 on_decl->is_mut = on_decl->is_mut;
                 array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
                 on = vgen_decl(alc, on_decl);
 
                 Decl *kd = NULL;
                 if (kname) {
-                    kd = decl_make(alc, kname, array_get_index(func->rett_types, 1), false);
+                    kd = decl_make(alc, p->func, kname, array_get_index(func->rett_types, 1), false);
                     kd->is_mut = kd->is_mut;
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
-                Decl *vd = decl_make(alc, vname, array_get_index(func->rett_types, 0), false);
+                Decl *vd = decl_make(alc, p->func, vname, array_get_index(func->rett_types, 0), false);
                 vd->is_mut = vd->is_mut;
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
                 // Index
-                Decl *index = decl_make(alc, NULL, type_gen_valk(alc, b, "uint"), false);
+                Decl *index = decl_make(alc, p->func, NULL, type_gen_valk(alc, b, "uint"), false);
                 index->is_mut = true;
                 scope_add_decl(alc, scope, index);
                 Value* vindex = value_make(alc, v_decl, index, index->type);
@@ -442,7 +442,7 @@ void read_ast(Parser *p, bool single_line) {
                 if (!single)
                     p->chunk->i = scope_end_i;
 
-                array_push(scope->ast, tgen_each(alc, on, func, kd, vd, scope_each, index, vindex));
+                array_push(scope->ast, tgen_each(alc, p, on, func, kd, vd, scope_each, index, vindex));
                 continue;
             }
             if (str_is(tkn, "await_fd")){

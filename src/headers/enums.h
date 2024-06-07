@@ -175,7 +175,6 @@ enum TOKENS {
     t_throw,
     t_set_var,
     t_ast_scope, // 10
-    t_set_decl_store_var,
     t_set_return_value,
     t_each,
     t_return_vscope,

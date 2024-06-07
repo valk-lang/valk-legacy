@@ -22,11 +22,15 @@ struct Idf {
 struct Decl {
     Type* type;
     char *name;
-    char *ir_var;
-    char *ir_store_var;
-    int offset;
+    char *custom_ir_name;
+    // char *ir_var;
+    // char *ir_store_var;
+    int gc_offset;
+    int nr;
+    int arg_nr;
     bool is_mut;
     bool is_gc;
+    bool is_arg;
 };
 struct DeclOverwrite {
     Decl* decl;

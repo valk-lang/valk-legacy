@@ -971,7 +971,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
-    Value* buffer = vgen_gc_buffer(alc, b, p->scope, init, values->values, false);
+    Value* buffer = vgen_gc_buffer(alc, p, p->scope, init, values->values, false);
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }
@@ -1047,7 +1047,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
             type_check(p, arg_type, right->rett);
             Value *on = vgen_func_ptr(alc, add, NULL);
             Value *fcall = vgen_func_call(alc, p, on, args);
-            return vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+            return vgen_gc_buffer(alc, p, p->scope, fcall, args, true);
         }
     }
 
@@ -1163,7 +1163,7 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
                 type_check(p, arg_type, right->rett);
                 Value *on = vgen_func_ptr(alc, eq, NULL);
                 Value *fcall = vgen_func_call(alc, p, on, args);
-                Value* result = vgen_gc_buffer(alc, b, p->scope, fcall, args, true);
+                Value* result = vgen_gc_buffer(alc, p, p->scope, fcall, args, true);
                 if(op == op_ne) {
                     result = value_make(alc, v_not, result, result->rett);
                 }
@@ -1260,7 +1260,7 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
             array_push(args, val);
             Value *on = vgen_func_ptr(alc, to_str, NULL);
             Value *fcall = vgen_func_call(alc, p, on, args);
-            return vgen_gc_buffer(alc, b, scope, fcall, args, true);
+            return vgen_gc_buffer(alc, p, scope, fcall, args, true);
         }
     }
 
@@ -1462,7 +1462,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
 
         if (name) {
             // Error identifier
-            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
+            Decl *decl = decl_make(alc, p->func, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
             Idf *idf = idf_make(alc, idf_error, decl);
             scope_set_idf(err_scope, name, idf, p);
             scope_add_decl(alc, err_scope, decl);
@@ -1489,7 +1489,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
 
         if (name) {
             // Error identifier
-            Decl *decl = decl_make(alc, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
+            Decl *decl = decl_make(alc, p->func, name, type_gen_error(alc, fi->err_names, fi->err_values), false);
             Idf *idf = idf_make(alc, idf_error, decl);
             scope_set_idf(sub_scope, name, idf, p);
             scope_add_decl(alc, sub_scope, decl);

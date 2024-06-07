@@ -2,7 +2,7 @@
 #include "../all.h"
 
 void ir_gen_func(IR *ir, IRFunc *func);
-char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
+// char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
 void ir_write_async_func_start(IR *ir, IRFunc *func);
 void ir_init_decls(IR *ir, IRFunc *func);
 
@@ -30,12 +30,12 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     func->gc_count = 0;
     func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
     // Coro
-    func->var_coro = NULL;
-    func->var_alloca_stack = NULL;
-    func->var_stack_adr = NULL;
-    func->var_g_stack = NULL;
-    func->var_g_stack_adr = NULL;
-    func->var_g_stack_adr_ref = NULL;
+    // func->var_coro = NULL;
+    // func->var_alloca_stack = NULL;
+    // func->var_stack_adr = NULL;
+    // func->var_g_stack = NULL;
+    // func->var_g_stack_adr = NULL;
+    // func->var_g_stack_adr_ref = NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -80,29 +80,29 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->func = func;
     ir->block = func->block_code;
 
-    Scope* start = vfunc->ast_start;
-    if(start)
-        ir_write_ast(ir, start);
+    Scope* init = vfunc->ast_stack_init;
+    if(init)
+        ir_write_ast(ir, init);
 
     // Load stack refs
-    if (vfunc->alloca_size > 0)
-        func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
-    if (vfunc->gc_decl_count > 0) {
-        VIRCached* c = vfunc->v_cache_stack_pos->item;
-        func->var_stack_adr = c->ir_value;
-    }
+    // if (vfunc->alloca_size > 0)
+    //     func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
+    // if (vfunc->gc_decl_count > 0) {
+    //     VIRCached* c = vfunc->v_cache_stack_pos->item;
+    //     func->var_stack_adr = c->ir_value;
+    // }
     ir_init_decls(ir, func);
 
     // Store arg values
-    Array *args = vfunc->args->values;
-    for (int i = 0; i < args->length; i++) {
-        FuncArg *arg = array_get_index(args, i);
-        Decl* decl = arg->decl;
-        if(decl->is_mut) {
-            // Store passed argument in storage var
-            ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
-        }
-    }
+    // Array *args = vfunc->args->values;
+    // for (int i = 0; i < args->length; i++) {
+    //     FuncArg *arg = array_get_index(args, i);
+    //     Decl* decl = arg->decl;
+    //     if(decl->is_mut) {
+    //         // Store passed argument in storage var
+    //         ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
+    //     }
+    // }
 
     // AST
     ir_write_ast(ir, vfunc->scope);
@@ -152,7 +152,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
 
         if(!is_extern) {
             str_flat(code, " ");
-            str_add(code, arg->decl->ir_var);
+            str_add(code, ir_arg_nr(ir, arg->decl->arg_nr));
         }
     }
     // Return value references
@@ -245,9 +245,8 @@ void ir_func_return(IR* ir, char* type, char* value) {
 
     IRFunc* func = ir->func;
     Func* vfunc = func->func;
-    if(vfunc->scope_stack_reduce) {
-        Scope* sub = vfunc->scope_stack_reduce;
-        ir_write_ast(ir, sub);
+    if(vfunc->ast_end) {
+        ir_write_ast(ir, vfunc->ast_end);
     }
     
     Str* code = ir->block->code;
@@ -260,27 +259,42 @@ void ir_func_return(IR* ir, char* type, char* value) {
     str_flat(code, "\n");
 }
 
-char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
-    if(decl->is_gc) {
-        char* stack = func->var_stack_adr;
-        return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i32", ir->b->ptr_size);
-    }
-    char* stack = func->var_alloca_stack;
-    return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
-}
+// char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
+    // if(decl->is_gc) {
+    //     char* stack = ir_value(ir, func->func->v_cache_stack_pos);
+    //     return ir_ptr_offset(ir, stack, ir_int(ir, decl->gc_offset), "i32", ir->b->ptr_size);
+    // }
+    // char* stack = func->var_alloca_stack;
+    // return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
+// }
 
 void ir_init_decls(IR *ir, IRFunc *func) {
     Func* vfunc = func->func;
 
-    // Arg vars
-    Array *args = vfunc->args->values;
-    for (int i = 0; i < args->length; i++) {
-        FuncArg *arg = array_get_index(args, i);
-        Decl* decl = arg->decl;
-        char* var = ir_var(func);
-        decl->ir_var = var;
-        if(decl->is_mut) {
-            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+    Scope* scope = vfunc->scope;
+    Array* decls = scope->decls;
+    char *stack = ir_value(ir, func->func->v_cache_stack_pos);
+
+    for (int i = 0; i < decls->length; i++) {
+        Decl* decl = array_get_index(decls, i);
+        if(decl->is_gc) {
+            char* offset = ir_ptr_offset(ir, stack, ir_int(ir, decl->gc_offset), "i32", ir->b->ptr_size);
+            // ir_decl_set(ir, decl, offset);
+            decl->custom_ir_name = offset;
+        } else {
+            if(decl->is_mut) {
+                decl->custom_ir_name = ir_alloca(ir, func, decl->type);
+                // ir_decl_set(ir, decl, ir_alloca(ir, func, decl->type));
+            }
+        }
+        if(decl->is_arg) {
+            char *arg = ir_arg_nr(ir, decl->arg_nr);
+            if(decl->is_mut) {
+                ir_store(ir, ir_decl_var(ir, decl), arg, ir_type(ir, decl->type), decl->type->size);
+            } else {
+                decl->custom_ir_name = arg;
+                // ir_decl_set(ir, decl, arg);
+            }
         }
     }
 
@@ -291,13 +305,33 @@ void ir_init_decls(IR *ir, IRFunc *func) {
         array_push(func->rett_refs, var);
     }
 
-    // Decls
-    Scope* scope = vfunc->scope;
-    Array* decls = scope->decls;
-    for (int i = 0; i < decls->length; i++) {
-        Decl* decl = array_get_index(decls, i);
-        if(decl->is_mut || decl->is_gc) {
-            decl->ir_store_var = ir_decl_store_var(ir, func, decl);
-        }
-    }
+    // Array *args = vfunc->args->values;
+    // Str* code = ir->block->code;
+    // for (int i = 0; i < args->length; i++) {
+    //     FuncArg *arg = array_get_index(args, i);
+    //     Decl* decl = arg->decl;
+
+    //     char* var = ir_var(func);
+    //     decl->ir_var = var;
+    //     if(decl->is_mut) {
+    //         decl->ir_store_var = ir_decl_var(ir, decl);
+    //     }
+    // }
+
+    // // Return value references
+    // Array *retts = vfunc->rett_types;
+    // for (int i = 1; i < retts->length; i++) {
+    //     char *var = ir_var(func);
+    //     array_push(func->rett_refs, var);
+    // }
+
+    // // Decls
+    // Scope* scope = vfunc->scope;
+    // Array* decls = scope->decls;
+    // for (int i = 0; i < decls->length; i++) {
+    //     Decl* decl = array_get_index(decls, i);
+    //     if(decl->is_mut || decl->is_gc) {
+    //         decl->ir_store_var = ir_decl_store_var(ir, func, decl);
+    //     }
+    // }
 }

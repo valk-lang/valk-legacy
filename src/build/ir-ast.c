@@ -16,40 +16,29 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         if (tt == t_statement) {
             Value *v = t->item;
-            char *irv = ir_value(ir, scope, v);
+            char *irv = ir_value(ir, v);
             continue;
         }
         if (tt == t_declare) {
             TDeclare* item = t->item;
-            Decl *decl = item->decl;
-            Value *val = item->value;
-
-            char *lval = ir_value(ir, scope, val);
-            if (decl->is_mut) {
-                ir_store_old(ir, decl->type, decl->ir_store_var, lval);
-            } else {
-                if(decl->is_gc) {
-                    ir_store_old(ir, decl->type, decl->ir_store_var, lval);
-                }
-                decl->ir_var = lval;
-            }
+            ir_decl_store(ir, item->decl, ir_value(ir, item->value));
             continue;
         }
         if (tt == t_assign) {
             VPair* pair = t->item;
             Value* left = pair->left;
             Value* right = pair->right;
-            char* value = ir_value(ir, scope, right);
+            char* value = ir_value(ir, right);
             if (left->type == v_class_pa && type_is_gc(left->rett) && type_is_gc(right->rett)) {
                 // GC link
                 VClassPA *pa = left->item;
                 Type* on_type = pa->on->rett;
-                char* on = ir_value(ir, scope, pa->on);
+                char* on = ir_value(ir, pa->on);
                 char* var = ir_class_pa(ir, on_type->class, on, pa->prop);
                 char* result = ir_gc_link(ir, on, value, right->rett->nullable);
                 ir_store(ir, var, result, "ptr", ir->b->ptr_size);
             } else {
-                char* var = ir_assign_value(ir, scope, left);
+                char* var = ir_assign_value(ir, left);
                 ir_store_old(ir, left->rett, var, value);
             }
             continue;
@@ -58,7 +47,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         if (tt == t_return) {
             Value *v = t->item;
             if(v) {
-                char* irv = ir_value(ir, scope, v);
+                char* irv = ir_value(ir, v);
                 ir_func_return(ir, ir_type(ir, v->rett), irv);
             } else {
                 ir_func_return(ir, NULL, "void");
@@ -68,13 +57,13 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         if (tt == t_if) {
             TIf *ift = t->item;
-            ir_if(ir, scope, ift);
+            ir_if(ir, ift);
             continue;
         }
 
         if (tt == t_while) {
             TWhile *item = t->item;
-            ir_while(ir, scope, item);
+            ir_while(ir, item);
             continue;
         }
         if (tt == t_break) {
@@ -104,7 +93,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
         if (tt == t_return_vscope) {
-            char* val = ir_value(ir, scope, t->item);
+            char* val = ir_value(ir, t->item);
             if(!ir->vscope_values) {
                 die("Missing IR value-scope values array (compiler bug)");
             }
@@ -117,18 +106,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_set_var) {
             VVar *vv = t->item;
-            vv->var = ir_value(ir, scope, vv->value);
+            vv->var = ir_value(ir, vv->value);
             continue;
         }
         if (tt == t_ast_scope) {
             Scope *s = t->item;
             ir_write_ast(ir, s);
-            continue;
-        }
-        if (tt == t_set_decl_store_var) {
-            TDeclare* item = t->item;
-            Decl* decl = item->decl;
-            decl->ir_store_var = ir_assign_value(ir, scope, item->value);
             continue;
         }
         if (tt == t_set_return_value) {
@@ -146,7 +129,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             char* nn = ir_notnull_i1(ir, var);
             ir_cond_jump(ir, nn, block_if, after);
             ir->block = block_if;
-            ir_store(ir, var, ir_value(ir, scope, val), type, val->rett->size);
+            ir_store(ir, var, ir_value(ir, val), type, val->rett->size);
             ir_jump(ir, after);
             ir->block = after;
             continue;
@@ -159,7 +142,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_jump(ir, block_cond);
             ir->block = block_cond;
 
-            char* on = ir_value(ir, scope, item->on);
+            char* on = ir_value(ir, item->on);
 
             Decl* kd = item->kd;
             Decl* kd_buf = item->kd_buf;
@@ -173,27 +156,22 @@ void ir_write_ast(IR* ir, Scope* scope) {
             array_push(types, type_ptr);
             Array *values = array_make(ir->alc, 4);
             array_push(values, on);
-            array_push(values, ir_value(ir, scope, vgen_decl(alc, index)));
-            array_push(values, ir_value(ir, scope, kd_buf ? value_make(alc, v_ptr_of, value_make(alc, v_decl, kd_buf, kd_buf->type), type_ptr) : vgen_null(alc, ir->b)));
+            array_push(values, ir_value(ir, vgen_decl(alc, index)));
+            array_push(values, ir_value(ir, kd_buf ? value_make(alc, v_ptr_of, value_make(alc, v_decl, kd_buf, kd_buf->type), type_ptr) : vgen_null(alc, ir->b)));
             Array *args = ir_fcall_ir_args(ir, values, types);
             //
             char* fptr = ir_func_ptr(ir, item->func);
             char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett), 0, 0);
 
             if(kd && !kd->is_mut) {
-                kd->ir_var = ir_value(ir, scope, vgen_decl(alc, kd_buf));
+                // kd->ir_var = ir_value(ir, vgen_decl(alc, kd_buf));
+                ir_decl_store(ir, kd, ir_value(ir, vgen_decl(alc, kd_buf)));
             }
-            if(vd->is_mut) {
-                ir_store_old(ir, vd->type, vd->ir_store_var, fcall);
-            } else {
-                if (vd->is_gc) {
-                    ir_store_old(ir, vd->type, vd->ir_store_var, fcall);
-                }
-                vd->ir_var = fcall;
-            }
+            ir_decl_store(ir, vd, fcall);
+
             // Increment index
-            char* incr = ir_op(ir, scope, op_add, ir_value(ir, scope, vgen_decl(alc, index)), ir_int(ir, 1), index->type);
-            ir_store(ir, ir_assign_value(ir, scope, vgen_decl(alc, index)), incr, ir_type(ir, index->type), index->type->size);
+            char* incr = ir_op(ir, op_add, ir_value(ir, vgen_decl(alc, index)), ir_int(ir, 1), index->type);
+            ir_store(ir, ir_assign_value(ir, vgen_decl(alc, index)), incr, ir_type(ir, index->type), index->type->size);
             // Cond
             Type *type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
             char *load = ir_load(ir, type_i32, "@valk_err_code");
@@ -217,13 +195,16 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir->block = block_after;
             // Clear from stack
             if (kd && kd->is_gc && kd->is_mut) {
-                ir_store_old(ir, kd->type, kd->ir_store_var, "null");
+                ir_decl_store(ir, kd, "null");
+                // ir_store_old(ir, kd->type, kd->ir_store_var, "null");
             }
             if (kd_buf && kd_buf->is_gc && kd_buf->is_mut) {
-                ir_store_old(ir, kd_buf->type, kd_buf->ir_store_var, "null");
+                ir_decl_store(ir, kd_buf, "null");
+                // ir_store_old(ir, kd_buf->type, kd_buf->ir_store_var, "null");
             }
             if (vd->is_gc && vd->is_mut) {
-                ir_store_old(ir, vd->type, vd->ir_store_var, "null");
+                ir_decl_store(ir, vd, "null");
+                // ir_store_old(ir, vd->type, vd->ir_store_var, "null");
             }
             //
             continue;
@@ -269,7 +250,7 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     array_push(values, to);
     Array* args = ir_fcall_ir_args(ir, values, types);
     //
-    char* link = ir_value(ir, NULL, fptr);
+    char* link = ir_value(ir, fptr);
     char* link_rett = ir_func_call(ir, link, args, "ptr", 0, 0);
     ir_jump(ir, after);
 

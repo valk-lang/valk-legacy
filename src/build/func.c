@@ -13,7 +13,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->fc = NULL;
     f->scope = scope_make(alc, sc_func, parent);
     f->scope->func = f;
-    f->scope_stack_reduce = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
@@ -30,6 +29,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->cached_values = NULL;
     f->errors = NULL;
 
+    f->ast_stack_init = NULL;
     f->ast_start = NULL;
     f->ast_end = NULL;
     // Cached values
@@ -38,6 +38,8 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
 
     f->alloca_size = 0;
     f->gc_decl_count = 0;
+    f->decl_nr = 0;
+    f->arg_nr = 0;
 
 
     f->is_inline = false;
@@ -137,7 +139,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bool on_await){
+char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
     IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
     IRBlock *block_else = errh->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
@@ -159,9 +161,10 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
 
     if (errh->err_decl) {
         if(errh->err_decl->is_mut) {
-            ir_store(ir, errh->err_decl->ir_store_var, load, "i32", type_i32->size);
+            ir_store(ir, ir_decl_var(ir, errh->err_decl), load, "i32", type_i32->size);
         } else {
-            errh->err_decl->ir_var = load;
+            errh->err_decl->custom_ir_name = load;
+            // ir_decl_set(ir, errh->err_decl, load);
         }
     }
 
@@ -197,7 +200,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
             ir_store_old(ir, type_i32, "@valk_err_code", "0");
         }
 
-        char* alt_val = ir_value(ir, scope, val);
+        char* alt_val = ir_value(ir, val);
         IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);
 
@@ -225,23 +228,6 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
     }
 
     return NULL;
-}
-
-void func_generate_args(Allocator* alc, Func* func, Map* args) {
-    int count = args->values->length;
-    for(int i = 0; i < count; i++) {
-        char* name = array_get_index(args->keys, i);
-        Type* type = array_get_index(args->values, i);
-
-        FuncArg *arg = func_arg_make(alc, type);
-        map_set_force_new(func->args, name, arg);
-        array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(alc, name, arg->type, true);
-        Idf *idf = idf_make(alc, idf_decl, decl);
-        scope_set_idf(func->scope, name, idf, NULL);
-        arg->decl = decl;
-        array_push(func->arg_values, NULL);
-    }
 }
 
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max) {
@@ -362,23 +348,6 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
         if(ev == v) {
             char* prev = array_get_index(errors->keys, i);
             parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
-        }
-    }
-}
-
-
-void func_set_decl_offset(Func* func, Decl* decl) {
-    if (decl->is_gc) {
-        decl->offset = func->gc_decl_count++;
-    } else {
-        if (decl->is_mut) {
-            Type *type = decl->type;
-            int size = type->size;
-            int offset = func->alloca_size;
-            int skip = size > 0 ? (size - (offset % size)) % size : 0;
-            offset += skip;
-            decl->offset = offset;
-            func->alloca_size = offset + size;
         }
     }
 }

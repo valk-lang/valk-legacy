@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 Idf* idf_make(Allocator* alc, int type, void* item);
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool never_gc);
+Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg);
 char* gen_export_name(Nsc* nsc, char* suffix);
 Id* read_id(Parser* p, char* first_part, Id* buf);
 Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist);

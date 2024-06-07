@@ -6,19 +6,27 @@ void ast_func_start(Allocator* alc, Parser* p) {
     Scope* scope = p->scope;
     Func* func = p->func;
 
-    if (func == b->func_main_gen) {
-        Func* f1 = get_valk_class_func(b, "mem", "GcManager", "init");
-        Value* v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
-        array_push(scope->ast, token_make(alc, t_statement, v));
-    }
-    if (func->init_thread) {
-        Func* f1 = get_valk_class_func(b, "mem", "Stack", "init");
-        Value* v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
-        array_push(scope->ast, token_make(alc, t_statement, v));
+    if (func == b->func_main_gen || func->init_thread) {
+        Scope *init = scope_make(alc, sc_default, scope);
+        init->ast = array_make(alc, 2);
+        func->ast_stack_init = init;
+
+        if (func == b->func_main_gen) {
+            Func *f1 = get_valk_class_func(b, "mem", "GcManager", "init");
+            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
+            array_push(init->ast, token_make(alc, t_statement, v));
+        }
+        if (func->init_thread) {
+            Func *f1 = get_valk_class_func(b, "mem", "Stack", "init");
+            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
+            array_push(init->ast, token_make(alc, t_statement, v));
+        }
     }
 
     Scope *start = scope_make(alc, sc_default, scope);
     start->ast = array_make(alc, 2);
+    array_push(scope->ast, token_make(alc, t_ast_scope, start));
+
     Global* gs = get_valk_global(b, "mem", "stack");
     Global* gsp = get_valk_global(b, "mem", "stack_pos");
     func->v_cache_stack = vgen_ir_cached(alc, vgen_global(alc, gs));
@@ -34,18 +42,6 @@ void ast_func_end(Allocator* alc, Parser* p) {
     Scope* scope = p->scope;
     Func* func = p->func;
 
-    // Count gc decls
-    Array *args = func->args->values;
-    for (int i = 0; i < args->length; i++) {
-        FuncArg *fa = array_get_index(args, i);
-        func_set_decl_offset(func, fa->decl);
-    }
-    Array *decls = func->scope->decls;
-    for (int i = 0; i < decls->length; i++) {
-        Decl *decl = array_get_index(decls, i);
-        func_set_decl_offset(func, decl);
-    }
-
     // Stack reserve & reduce
     int gc_decl_count = func->gc_decl_count;
 
@@ -53,9 +49,11 @@ void ast_func_end(Allocator* alc, Parser* p) {
         Scope* start = func->ast_start;
         if (gc_decl_count > 0) {
             // Stack reserve
-            Value *amount = vgen_int(alc, gc_decl_count, type_cache_ptr(b));
-            Value* increased = vgen_op(alc, op_add, func->v_cache_stack_pos, amount, type_cache_ptr(b));
-            array_push(start->ast, tgen_assign(alc, func->v_cache_stack_pos, increased));
+            Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));
+            Value* to_uint = vgen_cast(alc, func->v_cache_stack_pos, type_cache_uint(b));
+            Value* increased = vgen_op(alc, op_add, to_uint, amount, type_cache_uint(b));
+            Value* to_ptr = vgen_cast(alc, increased, type_cache_ptr(b));
+            array_push(start->ast, tgen_assign(alc, func->v_cache_stack_pos, to_ptr));
 
             // Set stack offset for variables
             Array *decls = scope->decls;
@@ -64,8 +62,8 @@ void ast_func_end(Allocator* alc, Parser* p) {
                 Decl *decl = array_get_index(decls, i);
                 if (!decl->is_gc)
                     continue;
-                Value *offset = vgen_ptrv(alc, b, func->v_cache_stack_pos, type_cache_ptr(b), vgen_int(alc, decl->offset, type_cache_i32(b)));
-                array_push(start->ast, tgen_assign(alc, offset, vgen_null(alc, b)));
+                // Value *offset = vgen_ptrv(alc, b, func->v_cache_stack_pos, type_cache_ptr(b), vgen_int(alc, decl->gc_offset, type_cache_i32(b)));
+                array_push(start->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
             }
 
             // Stack reduce
@@ -82,7 +80,7 @@ void ast_func_end(Allocator* alc, Parser* p) {
         }
 
     } else {
-        // Remove start ast because the code doesnt use it
-        func->ast_start = NULL;
+        // Clear start ast because the code doesnt use it
+        func->ast_start->ast = array_make(alc, 2);
     }
 }

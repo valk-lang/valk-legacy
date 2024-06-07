@@ -7,16 +7,18 @@ Idf* idf_make(Allocator* alc, int type, void* item) {
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool never_gc) {
-    bool is_gc = !never_gc && type_is_gc(type);
+Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg) {
+    bool is_gc = type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->name = name;
     d->type = type;
-    d->ir_var = NULL;
-    d->ir_store_var = NULL;
     d->is_mut = false;
     d->is_gc = is_gc;
-    d->offset = -1;
+    d->is_arg = is_arg;
+    d->arg_nr = is_arg ? func->arg_nr++ : -1;
+    d->nr = func->decl_nr++;
+    d->gc_offset = is_gc ? func->gc_decl_count++ : -1;
+    d->custom_ir_name = NULL;
     return d;
 }
 
