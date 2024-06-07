@@ -50,7 +50,6 @@ struct Func {
     int alloca_size;
     int decl_nr;
     int arg_nr;
-    int gc_decl_count;
     //
     bool is_static;
     bool is_inline;

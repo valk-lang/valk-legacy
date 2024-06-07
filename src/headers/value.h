@@ -14,6 +14,7 @@ bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 VFuncCall* value_extract_func_call(Value* from);
 ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
+void value_enable_cached(VIRCached* v);
 
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
@@ -119,6 +120,7 @@ struct VIRCached {
     Value* value;
     char* ir_value;
     char* ir_var;
+    bool used;
 };
 struct VString {
     char* body;

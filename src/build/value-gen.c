@@ -156,6 +156,7 @@ Value* vgen_ir_cached(Allocator* alc, Value* value) {
     item->value = value;
     item->ir_value = NULL;
     item->ir_var = NULL;
+    item->used = false;
     return value_make(alc, v_ir_cached, item, value->rett);
 }
 

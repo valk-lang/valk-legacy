@@ -202,14 +202,6 @@ char* ir_value(IR* ir, Value* v) {
         item->ir_value = val;
         return val;
     }
-    if (vt == v_cached_stack_adr) {
-        return ir_value(ir, ir->func->func->v_cache_stack_pos);
-        // return ir->func->var_g_stack_adr;
-    }
-    if (vt == v_cached_stack_instance) {
-        return ir_value(ir, ir->func->func->v_cache_stack);
-        // return ir->func->var_g_stack;
-    }
     if (vt == v_ir_value) {
         return v->item;
     }
@@ -496,10 +488,6 @@ char* ir_assign_value(IR* ir, Value* v) {
         char *var = ir_assign_value(ir, item->value);
         item->ir_var = var;
         return var;
-    }
-    if (vt == v_cached_stack_adr) {
-        return ir_assign_value(ir, ir->func->func->v_cache_stack_pos);
-        // return ir->func->var_g_stack_adr_ref;
     }
     return "?-?";
 }

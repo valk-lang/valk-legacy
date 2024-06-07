@@ -17,7 +17,7 @@ Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg)
     d->is_arg = is_arg;
     d->arg_nr = is_arg ? func->arg_nr++ : -1;
     d->nr = func->decl_nr++;
-    d->gc_offset = is_gc ? func->gc_decl_count++ : -1;
+    d->gc_offset = -1;
     d->custom_ir_name = NULL;
     return d;
 }

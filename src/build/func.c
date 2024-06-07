@@ -37,7 +37,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->v_cache_stack_pos = NULL;
 
     f->alloca_size = 0;
-    f->gc_decl_count = 0;
     f->decl_nr = 0;
     f->arg_nr = 0;
 

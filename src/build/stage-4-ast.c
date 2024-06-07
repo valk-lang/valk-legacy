@@ -684,6 +684,9 @@ void read_ast(Parser *p, bool single_line) {
         parse_err(p, -1, "Missing return statement");
     }
 
+    if (scope->gc_check) {
+        p->func->calls_gc_check = true;
+    }
     // if (scope->has_gc_decls) {
     //     // Start scope
     //     Scope *start = scope_sub_make(alc, sc_default, scope);

@@ -97,10 +97,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             v = value_make(alc, v_stack, val, type_gen_valk(alc, b, "ptr"));
 
         } else if (str_is(tkn, "@cached_stack_address")) {
-            v = value_make(alc, v_cached_stack_adr, NULL, type_cache_ptr(b));
+            v = p->func->v_cache_stack_pos;
+            value_enable_cached(v->item);
         } else if (str_is(tkn, "@cached_stack_instance")) {
-            v = value_make(alc, v_cached_stack_instance, NULL, type_gen_valk_class(alc, b, "mem", "Stack", false));
-
+            v = p->func->v_cache_stack;
+            value_enable_cached(v->item);
         } else if (str_is(tkn, "@gc_link")){
             tok_expect(p, "(", false, false);
             Value* on = read_value(alc, p, true, 0);
@@ -1212,7 +1213,7 @@ bool value_is_assignable(Value *v) {
         VIRCached* vc = v->item;
         return value_is_assignable(vc->value);
     }
-    return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global || vt == v_cached_stack_adr; 
+    return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global; 
 }
 
 void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
@@ -1513,4 +1514,8 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
     }
 
     return errh;
+}
+
+void value_enable_cached(VIRCached* v) {
+    v->used = true;
 }

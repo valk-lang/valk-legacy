@@ -85,24 +85,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         ir_write_ast(ir, init);
 
     // Load stack refs
-    // if (vfunc->alloca_size > 0)
-    //     func->var_alloca_stack = ir_alloca_by_size(ir, func, "i32", ir_int(ir, func->func->alloca_size));
-    // if (vfunc->gc_decl_count > 0) {
-    //     VIRCached* c = vfunc->v_cache_stack_pos->item;
-    //     func->var_stack_adr = c->ir_value;
-    // }
     ir_init_decls(ir, func);
-
-    // Store arg values
-    // Array *args = vfunc->args->values;
-    // for (int i = 0; i < args->length; i++) {
-    //     FuncArg *arg = array_get_index(args, i);
-    //     Decl* decl = arg->decl;
-    //     if(decl->is_mut) {
-    //         // Store passed argument in storage var
-    //         ir_store_old(ir, decl->type, decl->ir_store_var, decl->ir_var);
-    //     }
-    // }
 
     // AST
     ir_write_ast(ir, vfunc->scope);
@@ -259,28 +242,21 @@ void ir_func_return(IR* ir, char* type, char* value) {
     str_flat(code, "\n");
 }
 
-// char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl) {
-    // if(decl->is_gc) {
-    //     char* stack = ir_value(ir, func->func->v_cache_stack_pos);
-    //     return ir_ptr_offset(ir, stack, ir_int(ir, decl->gc_offset), "i32", ir->b->ptr_size);
-    // }
-    // char* stack = func->var_alloca_stack;
-    // return ir_ptr_offset(ir, stack, ir_int(ir, decl->offset), "i8", 1);
-// }
-
 void ir_init_decls(IR *ir, IRFunc *func) {
     Func* vfunc = func->func;
 
     Scope* scope = vfunc->scope;
     Array* decls = scope->decls;
-    char *stack = ir_value(ir, func->func->v_cache_stack_pos);
 
     for (int i = 0; i < decls->length; i++) {
         Decl* decl = array_get_index(decls, i);
         if(decl->is_gc) {
+            if(decl->gc_offset > -1) {
+            char *stack = ir_value(ir, func->func->v_cache_stack_pos);
             char* offset = ir_ptr_offset(ir, stack, ir_int(ir, decl->gc_offset), "i32", ir->b->ptr_size);
             // ir_decl_set(ir, decl, offset);
             decl->custom_ir_name = offset;
+            }
         } else {
             if(decl->is_mut) {
                 decl->custom_ir_name = ir_alloca(ir, func, decl->type);
