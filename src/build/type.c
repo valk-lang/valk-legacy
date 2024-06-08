@@ -556,6 +556,12 @@ Type* type_cache_uint(Build* b) {
     return tcache_uint;
 }
 
+Type* tcache_u8;
+Type* type_cache_u8(Build* b) {
+    if(!tcache_u8)
+        tcache_u8 = type_gen_valk(b->alc, b, "u8");
+    return tcache_u8;
+}
 Type* tcache_u32;
 Type* type_cache_u32(Build* b) {
     if(!tcache_u32)

@@ -48,6 +48,7 @@ Value *vgen_stack(Allocator *alc, Build* b, Value* val);
 Value *vgen_stack_size(Allocator *alc, Build* b, int size);
 Value *vgen_string(Allocator *alc, Unit *u, char *body);
 Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
+Value* vgen_memset(Allocator* alc, Value* on, Value* len, Value* with);
 
 struct Value {
     int type;
@@ -156,6 +157,11 @@ struct VError {
     Array* err_values;
     Decl* decl;
     bool has_unknown;
+};
+struct VMemset {
+    Value* on;
+    Value* length;
+    Value* with;
 };
 
 #endif

@@ -40,6 +40,7 @@ Type* vscope_get_result_type(Array* values);
 // Type cache
 Type* type_cache_ptr(Build* b);
 Type* type_cache_uint(Build* b);
+Type* type_cache_u8(Build* b);
 Type* type_cache_u32(Build* b);
 Type* type_cache_i32(Build* b);
 Type* class_pool_type(Parser* p, Class* class);

@@ -148,6 +148,27 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Type has no class");
             }
             v = value_handle_class(alc, p, class);
+        } else if (str_is(tkn, "@memset")) {
+            tok_expect(p, "(", false, false);
+            Type *t_u8 = type_cache_u8(b);
+            Type *t_uint = type_cache_uint(b);
+
+            Value *on = read_value(alc, p, true, 0);
+            Type *rett = on->rett;
+            if (!rett->is_pointer) {
+                parse_err(p, -1, "@memset first parameter must be a pointer");
+            }
+            tok_expect(p, ",", true, true);
+            Value *length = read_value(alc, p, true, 0);
+            length = try_convert(alc, p, p->scope, length, t_uint);
+            type_check(p, t_uint, length->rett);
+            tok_expect(p, ",", true, true);
+            Value *with = read_value(alc, p, true, 0);
+            with = try_convert(alc, p, p->scope, with, t_u8);
+            type_check(p, t_u8, length->rett);
+            tok_expect(p, ")", true, true);
+
+            v = vgen_memset(alc, on, length, with);
         }
     } else if (t == tok_string) {
         char *body = tkn;

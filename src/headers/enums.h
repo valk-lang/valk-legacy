@@ -159,6 +159,7 @@ enum VALUES {
     v_longjmp,
     v_frameptr,
     v_stackptr,
+    v_memset,
 };
 
 enum TOKENS {

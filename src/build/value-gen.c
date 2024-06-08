@@ -312,3 +312,11 @@ Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right) {
     item->right = right;
     return value_make(alc, v_null_alt_value, item, right->rett);
 }
+
+Value* vgen_memset(Allocator* alc, Value* on, Value* len, Value* with) {
+    VMemset *ms = al(alc, sizeof(VMemset));
+    ms->on = on;
+    ms->length = len;
+    ms->with = with;
+    return value_make(alc, v_memset, ms, type_gen_void(alc));
+}

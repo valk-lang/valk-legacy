@@ -73,17 +73,21 @@ void ast_func_end(Allocator* alc, Parser* p) {
         array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
     }
 
+    // Zero out gc stack
+    if(gc_decl_count > 0) {
+        Value *ms = vgen_memset(alc, func->v_cache_stack_pos, vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b)), vgen_int(alc, 0, type_cache_u8(b)));
+        array_push(start->ast, token_make(alc, t_statement, ms));
+    }
+
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
         // Stack reserve
-        // Todo: we can skip this if our function doesnt call other functions
         Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));
         Value *offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, amount, 1);
         func->t_stack_incr = tgen_assign(alc, func->v_cache_stack_pos, offset);
         array_push(start->ast, func->t_stack_incr);
 
         // Stack reduce
-        // Todo: we can skip this if our function doesnt call other functions
         Scope *end = scope_make(alc, sc_default, scope);
         end->ast = array_make(alc, 1);
         func->t_stack_decr = tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos);
@@ -113,12 +117,12 @@ void ast_func_end(Allocator* alc, Parser* p) {
         // Store args
         if (decl->is_arg) {
             array_push(start->ast, tgen_decl_set_arg(alc, decl));
-        } else {
-            // Set null
-            if (decl->offset > -1 && decl->is_gc) {
-                Value* vdecl = vgen_decl(alc, decl);
-                array_push(start->ast, tgen_assign(alc, vdecl, vgen_null(alc, b)));
-            }
+        // } else {
+        //     // Set null
+        //     if (decl->offset > -1 && decl->is_gc) {
+        //         Value* vdecl = vgen_decl(alc, decl);
+        //         array_push(start->ast, tgen_assign(alc, vdecl, vgen_null(alc, b)));
+        //     }
         }
     }
 }

@@ -407,6 +407,21 @@ char* ir_value(IR* ir, Value* v) {
         }
         return "";
     }
+    if (vt == v_memset) {
+        VMemset* ms = v->item;
+        char* on = ir_value(ir, ms->on);
+        char* len = ir_value(ir, ms->length);
+        char* with = ir_value(ir, ms->with);
+        Str *code = ir->block->code;
+        str_flat(code, "  call void @llvm.memset.inline.p0.p0.i64(ptr ");
+        str_add(code, on);
+        str_flat(code, ", i8 ");
+        str_add(code, with);
+        str_flat(code, ", i64 ");
+        str_add(code, len);
+        str_flat(code, ", i1 0)\n");
+        return "";
+    }
 
     printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
     exit(1);
