@@ -691,13 +691,13 @@ void read_ast(Parser *p, bool single_line) {
 
     if (scope_type == sc_loop && scope->has_gc_decls) {
         Array *decls = scope->decls;
-        // Scope *defer = scope_get_defer(alc, scope);
-        // for (int i = 0; i < decls->length; i++) {
-        //     Decl *decl = array_get_index(decls, i);
-        //     if (!decl->is_gc)
-        //         continue;
-        //     array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
-        // }
+        Scope *defer = scope_get_defer(alc, scope);
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            if (!decl->is_gc)
+                continue;
+            array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
+        }
     }
     // if (scope->has_gc_decls) {
     //     // Start scope

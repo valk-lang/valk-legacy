@@ -15,10 +15,11 @@ char* ir_arg_nr(IR* ir, int nr) {
     return dups(ir->alc, buf);
 }
 void ir_decl_store(IR* ir, Decl* decl, char* val) {
-    if (decl->is_mut) {
-        ir_store_old(ir, decl->type, decl->ir_store, val);
-    } else {
+    if(!decl->is_mut){
         decl->ir_var = val;
+    }
+    if (decl->ir_store) {
+        ir_store_old(ir, decl->type, decl->ir_store, val);
     }
 }
 

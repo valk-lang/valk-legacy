@@ -75,6 +75,11 @@ void ast_func_end(Allocator* alc, Parser* p) {
         array_push(start->ast, token_make(alc, t_statement, func->v_cache_stack_pos));
     }
 
+    if (func->calls_gc_check) {
+        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
+    }
+
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
         // Stack reserve
@@ -120,10 +125,5 @@ void ast_func_end(Allocator* alc, Parser* p) {
                 array_push(start->ast, tgen_assign(alc, vdecl, vgen_null(alc, b)));
             }
         }
-    }
-
-    if (func->calls_gc_check) {
-        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-        array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
     }
 }
