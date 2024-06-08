@@ -38,9 +38,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->v_cache_alloca = NULL;
 
     f->alloca_size = 0;
-    f->decl_nr = 0;
     f->arg_nr = 0;
-
 
     f->is_inline = false;
     f->is_static = false;

@@ -78,7 +78,6 @@ char* ir_value(IR* ir, Value* v) {
         Value* on = pair->left;
         Value* to = pair->right;
         //
-        Type *on_type = on->rett;
         char *ir_on = ir_value(ir, on);
         char *ir_to = ir_value(ir, to);
         char *res = ir_gc_link(ir, ir_on, ir_to, to->rett->nullable);

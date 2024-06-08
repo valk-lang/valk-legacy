@@ -699,48 +699,6 @@ void read_ast(Parser *p, bool single_line) {
             array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
         }
     }
-    // if (scope->has_gc_decls) {
-    //     // Start scope
-    //     Scope *start = scope_sub_make(alc, sc_default, scope);
-    //     start->ast = array_make(alc, 10);
-    //     array_shift(scope->ast, token_make(alc, t_ast_scope, start));
-    //     // End scope
-    //     int last_token_index = scope->ast->length - 1;
-    //     Scope* end = scope_sub_make(alc, sc_default, scope);
-    //     end->ast = array_make(alc, 10);
-    //     array_push(scope->ast, token_make(alc, t_ast_scope, end));
-    //     // Swap return/continue/break token & end-scope
-    //     if (scope->did_return) {
-    //         int last_index = scope->ast->length - 1;
-    //         void *a = array_get_index(scope->ast, last_token_index);
-    //         void *b = array_get_index(scope->ast, last_index);
-    //         array_set_index(scope->ast, last_token_index, b);
-    //         array_set_index(scope->ast, last_index, a);
-    //     }
-
-    //     if (scope->type == sc_loop || scope->type == sc_func) {
-    //         if(scope->gc_check) {
-    //             Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-    //             array_push(start->ast, token_make(alc, t_ast_scope, gcscope));
-    //             p->func->calls_gc_check = true;
-    //         }
-    //     }
-
-    //     // Stack
-    //     Map *idfs = map_make(alc);
-
-    //     if (scope->type == sc_func) {
-    //     } else if (scope->type == sc_vscope) {
-    //         // Dont set local vars to null in value scope because it will return one of those variables
-    //     } else {
-    //         // if / while : At end of scope, set local variables to null
-    //         Array *decls = scope->decls;
-    //         for (int i = 0; i < decls->length; i++) {
-    //             Decl *decl = array_get_index(decls, i);
-    //             array_push(end->ast, tgen_assign(alc, value_make(alc, v_decl, decl, decl->type), vgen_null(alc, b)));
-    //         }
-    //     }
-    // }
 
     if(is_func_scope) {
         ast_func_end(alc, p);

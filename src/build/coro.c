@@ -84,7 +84,6 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     str_flat(code, "(coro.handler @as HANDLER_TYPE)(");
     // Args
     for(int i = 0; i < types->length; i++) {
-        Type* type = array_get_index(types, i);
         char argname[36];
         sprintf(argname, "arg%d", i);
         if(i > 0)

@@ -49,7 +49,6 @@ struct Func {
     //
     int act;
     int alloca_size;
-    int decl_nr;
     int arg_nr;
     //
     bool is_static;

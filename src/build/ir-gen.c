@@ -119,7 +119,7 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
     str_flat(code, "(");
     if(values) {
         int argc = values->length;
-        for (int i = 0; i < values->length; i++) {
+        for (int i = 0; i < argc; i++) {
             str_preserve(ir->block->code, 200);
             char *lval = array_get_index(values, i);
             if (i > 0) {
@@ -380,18 +380,6 @@ char* ir_op(IR* ir, int op, char* left, char* right, Type* rett) {
     char *ltype = ir_type(ir, rett);
     char *var = ir_var(ir->func);
     Str *code = ir->block->code;
-
-    // if(rett->is_pointer) {
-    //     // Add / sub pointers
-    //     str_flat(code, "  ");
-    //     str_add(code, var);
-    //     str_flat(code, " = getelementptr i8, ptr ");
-    //     str_add(code, left);
-    //     str_flat(code, ", i64 ");
-    //     str_add(code, right);
-    //     str_flat(code, "\n");
-    //     return var;
-    // }
 
     str_flat(code, "  ");
     str_add(code, var);

@@ -16,7 +16,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
 
         if (tt == t_statement) {
             Value *v = t->item;
-            char *irv = ir_value(ir, v);
+            ir_value(ir, v);
             continue;
         }
         if (tt == t_decl_set_store) {
@@ -220,15 +220,12 @@ void ir_write_ast(IR* ir, Scope* scope) {
             // Clear from stack
             if (kd && kd->is_gc && kd->is_mut) {
                 ir_decl_store(ir, kd, "null");
-                // ir_store_old(ir, kd->type, kd->ir_store_var, "null");
             }
             if (kd_buf && kd_buf->is_gc && kd_buf->is_mut) {
                 ir_decl_store(ir, kd_buf, "null");
-                // ir_store_old(ir, kd_buf->type, kd_buf->ir_store_var, "null");
             }
             if (vd->is_gc && vd->is_mut) {
                 ir_decl_store(ir, vd, "null");
-                // ir_store_old(ir, vd->type, vd->ir_store_var, "null");
             }
             //
             continue;

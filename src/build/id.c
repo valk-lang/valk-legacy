@@ -37,7 +37,6 @@ Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg)
     d->is_gc = is_gc;
     d->is_arg = is_arg;
     d->arg_nr = is_arg ? func->arg_nr++ : -1;
-    d->nr = func->decl_nr++;
     d->offset = -1;
     d->ir_store = NULL;
     d->ir_var = NULL;
@@ -60,7 +59,6 @@ Id *read_id(Parser *p, char *first_part, Id *buf) {
 
     char* ns = NULL;
     char* name = first_part;
-    Build* b = p->b;
 
     if(first_part == NULL) {
         char t = tok(p, true, true, true);

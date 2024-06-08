@@ -118,16 +118,6 @@ struct IRFunc {
     //
     char* stack_save_vn;
     char* di_scope;
-    // char* gc_stack;
-    // char* gc_stack_adr;
-    // char* gc_stack_adr_val;
-    //
-    // char* var_coro;
-    // char* var_alloca_stack;
-    // char* var_stack_adr;
-    // char* var_g_stack;
-    // char* var_g_stack_adr;
-    // char* var_g_stack_adr_ref;
     //
     int var_count;
     int gc_count;

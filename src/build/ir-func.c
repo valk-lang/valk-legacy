@@ -22,20 +22,10 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     //
     func->stack_save_vn = NULL;
     func->di_scope = NULL;
-    // func->gc_stack = NULL;
-    // func->gc_stack_adr = NULL;
-    // func->gc_stack_adr_val = NULL;
     //
     func->var_count = 0;
     func->gc_count = 0;
     func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
-    // Coro
-    // func->var_coro = NULL;
-    // func->var_alloca_stack = NULL;
-    // func->var_stack_adr = NULL;
-    // func->var_g_stack = NULL;
-    // func->var_g_stack_adr = NULL;
-    // func->var_g_stack_adr_ref = NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -80,10 +70,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->func = func;
     ir->block = func->block_code;
 
-    Scope* init = vfunc->ast_stack_init;
-    if(init)
-        ir_write_ast(ir, init);
-
     // Return value references
     Array *retts = vfunc->rett_types;
     for (int i = 1; i < retts->length; i++) {
@@ -91,8 +77,9 @@ void ir_gen_func(IR *ir, IRFunc *func) {
         array_push(func->rett_refs, var);
     }
 
-    // Load stack refs
-    // ir_init_decls(ir, func);
+    Scope* init = vfunc->ast_stack_init;
+    if(init)
+        ir_write_ast(ir, init);
 
     // AST
     ir_write_ast(ir, vfunc->scope);

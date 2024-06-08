@@ -129,20 +129,8 @@ Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
     Array *alloc_values = array_make(alc, func->args->values->length);
     array_push(alloc_values, pv);
     Value *res = vgen_func_call(alc, p, fptr, alloc_values);
-    // res->rett = type_gen_class(alc, class);
     return res;
 }
-
-// Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right) {
-//     Func *func = get_valk_class_func(b, "mem", "Stack", "link");
-//     Value *fptr = vgen_func_ptr(alc, func, NULL);
-//     Array *alloc_values = array_make(alc, func->args->values->length);
-//     array_push(alloc_values, left);
-//     array_push(alloc_values, right);
-//     Value *res = vgen_func_call(alc, b, fptr, alloc_values);
-//     res = vgen_cast(alc, res, left->rett);
-//     return res;
-// }
 
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before) {
     VIncr *item = al(alc, sizeof(VIncr));
