@@ -75,7 +75,6 @@ void ast_func_end(Allocator* alc, Parser* p) {
 
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
-        p->func->will_increase_stack = true;
         // Stack reserve
         // Todo: we can skip this if our function doesnt call other functions
         Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));

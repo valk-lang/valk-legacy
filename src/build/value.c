@@ -769,9 +769,6 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     if(on->type == v_func_ptr) {
         VFuncPtr* item = on->item;
         array_push(p->func->called_functions, item->func);
-    } else {
-        p->func->calls_increase_stack = true;
-        p->func->will_increase_stack = true;
     }
 
     Array* args = array_make(alc, func_args->length + 1);

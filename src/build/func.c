@@ -58,8 +58,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
-    f->will_increase_stack = false;
-    f->calls_increase_stack = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

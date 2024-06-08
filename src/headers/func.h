@@ -69,8 +69,6 @@ struct Func {
     bool calls_gc_check;
     bool parse_last;
     bool init_thread;
-    bool will_increase_stack;
-    bool calls_increase_stack;
 };
 struct FuncArg {
     Type* type;

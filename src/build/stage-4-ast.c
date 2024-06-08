@@ -123,23 +123,10 @@ void stage_ast_func(Func *func) {
         Func* f = array_get_index(used, i);
         stage_ast_func(f);
     }
-    Array* called = func->called_functions;
-    for (int i = 0; i < called->length; i++) {
-        Func* f = array_get_index(called, i);
-        if(f->will_increase_stack) {
-            func->calls_increase_stack = true;
-            func->will_increase_stack = true;
-            break;
-        }
-    }
     Array *classes = func->used_classes;
     for(int i = 0; i < classes->length; i++) {
         Class* class = array_get_index(classes, i);
         stage_ast_class(class);
-    }
-    if(!func->calls_increase_stack && func->t_stack_incr) {
-        disable_token(func->t_stack_incr);
-        disable_token(func->t_stack_decr);
     }
 }
 void stage_ast_class(Class *class) {
