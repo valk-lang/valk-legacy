@@ -1,15 +1,8 @@
 name: ci
 
 on:
-  push:
-    if: github.event.pull_request.draft == false
-    paths-ignore:
-      - "**.md"
-      - "README.md"
-      - "LICENSE"
-      - ".gitignore"
   pull_request:
-    types: [review_requested, ready_for_review]
+    types: [ready_for_review]
     branches: [ main, nightly ]
 
 jobs:
@@ -53,7 +46,6 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: macos-13
-    if: github.event.pull_request.draft == false
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -80,7 +72,6 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: windows-latest
-    if: github.event.pull_request.draft == false
     defaults:
       run:
         shell: msys2 {0}
