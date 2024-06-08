@@ -4,7 +4,7 @@
 void ir_gen_func(IR *ir, IRFunc *func);
 // char* ir_decl_store_var(IR* ir, IRFunc* func, Decl* decl);
 void ir_write_async_func_start(IR *ir, IRFunc *func);
-void ir_init_decls(IR *ir, IRFunc *func);
+// void ir_init_decls(IR *ir, IRFunc *func);
 
 void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
 
@@ -84,14 +84,21 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     if(init)
         ir_write_ast(ir, init);
 
+    // Return value references
+    Array *retts = vfunc->rett_types;
+    for (int i = 1; i < retts->length; i++) {
+        char *var = ir_var(func);
+        array_push(func->rett_refs, var);
+    }
+
     // Load stack refs
-    ir_init_decls(ir, func);
+    // ir_init_decls(ir, func);
 
     // AST
     ir_write_ast(ir, vfunc->scope);
     //
     if (!vfunc->scope->did_return) {
-        ir_func_return(ir, NULL, "void");
+        ir_func_return(ir, vfunc->scope, NULL, "void");
     }
 
     // Jump from start to code block
@@ -210,24 +217,25 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size) {
     return var;
 }
 
-void ir_func_return_nothing(IR* ir) {
+void ir_func_return_nothing(IR* ir, Scope* scope) {
     Func* func = ir->func->func;
     if(!func->rett || type_is_void(func->rett)) {
-        ir_func_return(ir, NULL, "void");
+        ir_func_return(ir, scope, NULL, "void");
     } else {
         if(func->rett->is_pointer) {
-            ir_func_return(ir, "ptr", "null");
+            ir_func_return(ir, scope, "ptr", "null");
         } else {
             char* type = ir_type(ir, func->rett);
-            ir_func_return(ir, type, "0");
+            ir_func_return(ir, scope, type, "0");
         }
     }
 }
 
-void ir_func_return(IR* ir, char* type, char* value) {
+void ir_func_return(IR* ir, Scope* scope, char* type, char* value) {
 
     IRFunc* func = ir->func;
     Func* vfunc = func->func;
+
     if(vfunc->ast_end) {
         ir_write_ast(ir, vfunc->ast_end);
     }
@@ -242,72 +250,3 @@ void ir_func_return(IR* ir, char* type, char* value) {
     str_flat(code, "\n");
 }
 
-void ir_init_decls(IR *ir, IRFunc *func) {
-    Func* vfunc = func->func;
-
-    Scope* scope = vfunc->scope;
-    Array* decls = scope->decls;
-
-    for (int i = 0; i < decls->length; i++) {
-        Decl* decl = array_get_index(decls, i);
-        if(decl->is_gc) {
-            if(decl->gc_offset > -1) {
-            char *stack = ir_value(ir, func->func->v_cache_stack_pos);
-            char* offset = ir_ptr_offset(ir, stack, ir_int(ir, decl->gc_offset), "i32", ir->b->ptr_size);
-            // ir_decl_set(ir, decl, offset);
-            decl->custom_ir_name = offset;
-            }
-        } else {
-            if(decl->is_mut) {
-                decl->custom_ir_name = ir_alloca(ir, func, decl->type);
-                // ir_decl_set(ir, decl, ir_alloca(ir, func, decl->type));
-            }
-        }
-        if(decl->is_arg) {
-            char *arg = ir_arg_nr(ir, decl->arg_nr);
-            if(decl->is_mut) {
-                ir_store(ir, ir_decl_var(ir, decl), arg, ir_type(ir, decl->type), decl->type->size);
-            } else {
-                decl->custom_ir_name = arg;
-                // ir_decl_set(ir, decl, arg);
-            }
-        }
-    }
-
-    // Return value references
-    Array *retts = vfunc->rett_types;
-    for (int i = 1; i < retts->length; i++) {
-        char *var = ir_var(func);
-        array_push(func->rett_refs, var);
-    }
-
-    // Array *args = vfunc->args->values;
-    // Str* code = ir->block->code;
-    // for (int i = 0; i < args->length; i++) {
-    //     FuncArg *arg = array_get_index(args, i);
-    //     Decl* decl = arg->decl;
-
-    //     char* var = ir_var(func);
-    //     decl->ir_var = var;
-    //     if(decl->is_mut) {
-    //         decl->ir_store_var = ir_decl_var(ir, decl);
-    //     }
-    // }
-
-    // // Return value references
-    // Array *retts = vfunc->rett_types;
-    // for (int i = 1; i < retts->length; i++) {
-    //     char *var = ir_var(func);
-    //     array_push(func->rett_refs, var);
-    // }
-
-    // // Decls
-    // Scope* scope = vfunc->scope;
-    // Array* decls = scope->decls;
-    // for (int i = 0; i < decls->length; i++) {
-    //     Decl* decl = array_get_index(decls, i);
-    //     if(decl->is_mut || decl->is_gc) {
-    //         decl->ir_store_var = ir_decl_store_var(ir, func, decl);
-    //     }
-    // }
-}

@@ -43,13 +43,23 @@ void ast_func_end(Allocator* alc, Parser* p) {
 
     // Count gc decls
     int gc_decl_count = 0;
+    int alloca_size = 0;
     Array *decls = scope->decls;
     for (int i = 0; i < decls->length; i++) {
         Decl *decl = array_get_index(decls, i);
-        if (!decl->is_gc || (decl->is_arg && !decl->is_mut))
+        if (!decl->is_gc) {
+            if (decl->is_mut) {
+                decl->offset = alloca_size;
+                alloca_size += type_get_size(b, decl->type);
+                alloca_size += ((b->ptr_size - (alloca_size % b->ptr_size)) % b->ptr_size);
+            }
             continue;
-        decl->gc_offset = gc_decl_count++;
+        }
+        if (decl->is_mut || !decl->is_arg) {
+            decl->offset = gc_decl_count++;
+        }
     }
+    func->alloca_size = alloca_size;
 
     //
     if (gc_decl_count > 0) {
@@ -68,26 +78,48 @@ void ast_func_end(Allocator* alc, Parser* p) {
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
         // Stack reserve
+        // Todo: we can skip this if our function doesnt call other functions
         Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));
         Value *offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, amount, 1);
         array_push(start->ast, tgen_assign(alc, func->v_cache_stack_pos, offset));
 
-        // Set stack offset for variables
-        int x = 0;
-        for (int i = 0; i < decls->length; i++) {
-            Decl *decl = array_get_index(decls, i);
-            // if (!decl->is_gc)
-            if (!decl->is_gc || (decl->is_arg && !decl->is_mut))
-                continue;
-            // Value *offset = vgen_ptrv(alc, b, func->v_cache_stack_pos, type_cache_ptr(b), vgen_int(alc, decl->gc_offset, type_cache_i32(b)));
-            array_push(start->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
-        }
-
         // Stack reduce
+        // Todo: we can skip this if our function doesnt call other functions
         Scope *end = scope_make(alc, sc_default, scope);
         end->ast = array_make(alc, 1);
         array_push(end->ast, tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos));
         func->ast_end = end;
+    }
+
+    Value* alloca = NULL;
+    if (alloca_size > 0) {
+        alloca = vgen_ir_cached(alc, vgen_stack_size(alc, b, alloca_size));
+        array_push(start->ast, token_make(alc, t_statement, alloca));
+        func->v_cache_alloca = alloca;
+    }
+
+    for (int i = 0; i < decls->length; i++) {
+        Decl *decl = array_get_index(decls, i);
+        // Set stack offset for variables
+        if (decl->offset > -1) {
+            if (decl->is_gc) {
+                Value* offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, vgen_int(alc, decl->offset, type_cache_u32(b)), b->ptr_size);
+                array_push(start->ast, tgen_decl_set_store(alc, decl, offset));
+            } else {
+                Value* offset = vgen_ptr_offset(alc, b, alloca, vgen_int(alc, decl->offset, type_cache_u32(b)), 1);
+                array_push(start->ast, tgen_decl_set_store(alc, decl, offset));
+            }
+        }
+        // Store args
+        if (decl->is_arg) {
+            array_push(start->ast, tgen_decl_set_arg(alc, decl));
+        } else {
+            // Set null
+            if (decl->offset > -1 && decl->is_gc) {
+                Value* vdecl = vgen_decl(alc, decl);
+                array_push(start->ast, tgen_assign(alc, vdecl, vgen_null(alc, b)));
+            }
+        }
     }
 
     if (func->calls_gc_check) {

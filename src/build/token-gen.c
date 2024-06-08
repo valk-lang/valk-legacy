@@ -82,3 +82,13 @@ Token *tgen_each(Allocator *alc, Parser* p, Value *on, Func *func, Decl *kd, Dec
     }
     return token_make(alc, t_each, item);
 }
+
+Token *tgen_decl_set_store(Allocator *alc, Decl *decl, Value *val) {
+    VDeclVal *pair = al(alc, sizeof(VDeclVal));
+    pair->decl = decl;
+    pair->value = val;
+    return token_make(alc, t_decl_set_store, pair);
+}
+Token *tgen_decl_set_arg(Allocator *alc, Decl *decl) {
+    return token_make(alc, t_decl_set_arg, decl);
+}

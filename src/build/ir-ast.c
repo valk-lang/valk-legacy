@@ -19,9 +19,28 @@ void ir_write_ast(IR* ir, Scope* scope) {
             char *irv = ir_value(ir, v);
             continue;
         }
+        if (tt == t_decl_set_store) {
+            VDeclVal *item = t->item;
+            char* store = ir_value(ir, item->value);
+            item->decl->ir_store = store;
+            continue;
+        }
+        if (tt == t_decl_set_arg) {
+            Decl *decl = t->item;
+            if(decl->ir_store) {
+                char* arg = ir_arg_nr(ir, decl->arg_nr);
+                ir_store(ir, decl->ir_store, arg, ir_type(ir, decl->type), decl->type->size);
+            }
+            if(!decl->is_mut) {
+                decl->ir_var = ir_arg_nr(ir, decl->arg_nr);
+            }
+            continue;
+        }
         if (tt == t_declare) {
             TDeclare* item = t->item;
-            ir_decl_store(ir, item->decl, ir_value(ir, item->value));
+            Decl* decl = item->decl;
+            char* val = ir_value(ir, item->value);
+            ir_decl_store(ir, decl, val);
             continue;
         }
         if (tt == t_assign) {
@@ -48,9 +67,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Value *v = t->item;
             if(v) {
                 char* irv = ir_value(ir, v);
-                ir_func_return(ir, ir_type(ir, v->rett), irv);
+                ir_func_return(ir, scope, ir_type(ir, v->rett), irv);
             } else {
-                ir_func_return(ir, NULL, "void");
+                ir_func_return(ir, scope, NULL, "void");
             }
             continue;
         }
@@ -68,6 +87,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_break) {
             Scope* loop_scope = t->item;
+            if (loop_scope->defer) {
+                ir_write_ast(ir, loop_scope->defer);
+            }
             IRBlock* after = ir->block_after;
             if(!after) {
                 die("Missing IR after block for 'break' (compiler bug)");
@@ -77,6 +99,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
         if (tt == t_continue) {
             Scope* loop_scope = t->item;
+            if (loop_scope->defer) {
+                ir_write_ast(ir, loop_scope->defer);
+            }
             IRBlock* cond = ir->block_cond;
             if(!cond) {
                 die("Missing IR condition block for 'break' (compiler bug)");
@@ -89,7 +114,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_store_old(ir, type_gen_valk(alc, ir->b, "i32"), "@valk_err_code", ir_int(ir, tt->value));
             char *msg = ir_string(ir, tt->msg);
             ir_store_old(ir, type_gen_valk(alc, ir->b, "ptr"), "@valk_err_msg", msg);
-            ir_func_return_nothing(ir);
+            ir_func_return_nothing(ir, scope);
             continue;
         }
         if (tt == t_return_vscope) {
@@ -164,7 +189,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
             char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett), 0, 0);
 
             if(kd && !kd->is_mut) {
-                // kd->ir_var = ir_value(ir, vgen_decl(alc, kd_buf));
                 ir_decl_store(ir, kd, ir_value(ir, vgen_decl(alc, kd_buf)));
             }
             ir_decl_store(ir, vd, fcall);
@@ -211,6 +235,11 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
 
         die("Unhandled IR token (compiler bug)");
+    }
+
+    // Defer
+    if(scope->defer && !scope->did_return) {
+        ir_write_ast(ir, scope->defer);
     }
 }
 

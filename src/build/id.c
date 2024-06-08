@@ -1,6 +1,27 @@
 
 #include "../all.h"
 
+// Decl logic
+
+// mut decls: give offset
+// imut gc !is_arg: give offset
+
+// Func start:
+// alloca
+// load stack adr
+// if has offset: set ir_store based on offset
+// if is_arg:
+// -- if has ir_store, store arg in ir_store
+// -- if imut, ir_var = arg
+// if !is_arg: 
+// -- if has offset && is_gc, store null in ir_store
+// increase + store stack adr
+
+// Func end
+// decrease stack adr
+
+// before continue/break or end of loop, set all gc decls to null
+
 Idf* idf_make(Allocator* alc, int type, void* item) {
     Idf* idf = al(alc, sizeof(Idf));
     idf->type = type;
@@ -17,8 +38,9 @@ Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg)
     d->is_arg = is_arg;
     d->arg_nr = is_arg ? func->arg_nr++ : -1;
     d->nr = func->decl_nr++;
-    d->gc_offset = -1;
-    d->custom_ir_name = NULL;
+    d->offset = -1;
+    d->ir_store = NULL;
+    d->ir_var = NULL;
     return d;
 }
 

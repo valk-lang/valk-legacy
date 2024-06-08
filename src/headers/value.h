@@ -44,6 +44,8 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op);
 Value *vgen_this_or_that(Allocator *alc, Value* cond, Value *v1, Value *v2, Type* rett);
 Value *vgen_decl(Allocator *alc, Decl* decl);
 Value *vgen_global(Allocator *alc, Global* g);
+Value *vgen_stack(Allocator *alc, Build* b, Value* val);
+Value *vgen_stack_size(Allocator *alc, Build* b, int size);
 Value *vgen_string(Allocator *alc, Unit *u, char *body);
 Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
 
@@ -61,6 +63,10 @@ struct MultiRett {
 struct VPair {
     Value* left;
     Value* right;
+};
+struct VDeclVal {
+    Decl* decl;
+    Value* value;
 };
 struct VFuncPtr {
     Func* func;

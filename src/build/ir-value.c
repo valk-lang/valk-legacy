@@ -86,36 +86,16 @@ char* ir_value(IR* ir, Value* v) {
     }
     if (vt == v_decl) {
         Decl *decl = v->item;
-        if(decl->is_mut) {
-            // if (!decl->ir_store_var) {
-            //     build_err(ir->b, "Missing decl storage variable (compiler bug)");
-            // }
-            return ir_load(ir, decl->type, ir_decl_var(ir, decl));
-        }
-        return decl->custom_ir_name;
-        // if (!decl->ir_var) {
-        //     build_err(ir->b, "Missing decl value variable (compiler bug)");
-        // }
-        // return decl->ir_var;
+        if(decl->ir_var)
+            return decl->ir_var;
+        return ir_load(ir, decl->type, decl->ir_store);
     }
     if (vt == v_decl_overwrite) {
         DeclOverwrite *dov = v->item;
         Decl *decl = dov->decl;
-        if(decl->is_mut) {
-            return ir_load(ir, decl->type, ir_decl_var(ir, decl));
-        }
-        return decl->custom_ir_name;
-        // return ir_decl_imut_val(ir, decl);
-        // if(decl->is_mut) {
-        //     if (!decl->ir_store_var) {
-        //         build_err(ir->b, "Missing decl storage variable (compiler bug)");
-        //     }
-        //     return ir_load(ir, decl->type, decl->ir_store_var);
-        // }
-        // if (!decl->ir_var) {
-        //     build_err(ir->b, "Missing decl value variable (compiler bug)");
-        // }
-        // return decl->ir_var;
+        if(decl->ir_var)
+            return decl->ir_var;
+        return ir_load(ir, decl->type, decl->ir_store);
     }
     if (vt == v_global) {
         Global* g = v->item;
@@ -437,12 +417,12 @@ char* ir_assign_value(IR* ir, Value* v) {
     int vt = v->type;
     if (vt == v_decl) {
         Decl *decl = v->item;
-        return ir_decl_var(ir, decl);
+        return decl->ir_store;
     }
     if (vt == v_decl_overwrite) {
         DeclOverwrite *dov = v->item;
         Decl *decl = dov->decl;
-        return ir_decl_var(ir, decl);
+        return decl->ir_store;
     }
     if (vt == v_global) {
         Global* g = v->item;

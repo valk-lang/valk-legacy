@@ -284,6 +284,12 @@ Value *vgen_decl(Allocator *alc, Decl* decl) {
 Value *vgen_global(Allocator *alc, Global* g) {
     return value_make(alc, v_global, g, g->type);
 }
+Value *vgen_stack(Allocator *alc, Build* b, Value* val) {
+    return value_make(alc, v_stack, val, type_cache_ptr(b));
+}
+Value *vgen_stack_size(Allocator *alc, Build* b, int size) {
+    return vgen_stack(alc, b, vgen_int(alc, size, type_cache_uint(b)));
+}
 
 Value *vgen_string(Allocator *alc, Unit *u, char *body) {
     Build *b = u->b;

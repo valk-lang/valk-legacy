@@ -22,10 +22,9 @@ struct Idf {
 struct Decl {
     Type* type;
     char *name;
-    char *custom_ir_name;
-    // char *ir_var;
-    // char *ir_store_var;
-    int gc_offset;
+    char *ir_store;
+    char *ir_var;
+    int offset;
     int nr;
     int arg_nr;
     bool is_mut;

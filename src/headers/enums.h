@@ -177,6 +177,8 @@ enum TOKENS {
     t_each,
     t_return_vscope,
     t_yield,
+    t_decl_set_store,
+    t_decl_set_arg,
 };
 
 enum OPERATORS {

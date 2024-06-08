@@ -16,6 +16,9 @@ Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while);
 Token *tgen_throw(Allocator *alc, Build* b, Unit* u, unsigned int value, char* msg);
 Token *tgen_each(Allocator *alc, Parser* p, Value *on, Func *func, Decl *kd, Decl *vd, Scope *scope, Decl* index, Value* vindex);
 
+Token *tgen_decl_set_store(Allocator *alc, Decl *decl, Value *val);
+Token *tgen_decl_set_arg(Allocator *alc, Decl *decl);
+
 struct Token {
     int type;
     void* item;

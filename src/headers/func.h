@@ -45,6 +45,7 @@ struct Func {
     //
     Value* v_cache_stack;
     Value* v_cache_stack_pos;
+    Value* v_cache_alloca;
     //
     int act;
     int alloca_size;

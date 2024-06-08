@@ -14,45 +14,11 @@ char* ir_arg_nr(IR* ir, int nr) {
     itos(nr, buf + 5, 10);
     return dups(ir->alc, buf);
 }
-char* ir_decl_var(IR* ir, Decl* decl) {
-    if(decl->custom_ir_name)
-        return decl->custom_ir_name;
-    char buf[64];
-    strcpy(buf, "\%var.");
-    itos(decl->nr, buf + 5, 10);
-    return dups(ir->alc, buf);
-}
-char* ir_decl_imut_val(IR* ir, Decl* decl) {
-    char buf[64];
-    strcpy(buf, "\%var_imut.");
-    itos(decl->nr, buf + 10, 10);
-    return dups(ir->alc, buf);
-}
-void ir_decl_set(IR* ir, Decl* decl, char* val) {
-    Str* code = ir->block->code;
-    str_flat(code, "  ");
-    str_add(code, ir_decl_var(ir, decl));
-    str_flat(code, " = ");
-    str_add(code, val);
-    str_flat(code, "\n");
-}
-void ir_set(IR* ir, char* left, char* right) {
-    Str* code = ir->block->code;
-    str_flat(code, "  ");
-    str_add(code, left);
-    str_flat(code, " = ");
-    str_add(code, right);
-    str_flat(code, "\n");
-}
 void ir_decl_store(IR* ir, Decl* decl, char* val) {
     if (decl->is_mut) {
-        ir_store_old(ir, decl->type, ir_decl_var(ir, decl), val);
+        ir_store_old(ir, decl->type, decl->ir_store, val);
     } else {
-        if (decl->is_gc) {
-            ir_store_old(ir, decl->type, ir_decl_var(ir, decl), val);
-        }
-        decl->custom_ir_name = val;
-        // ir_set(ir, ir_decl_imut_val(ir, decl), val);
+        decl->ir_var = val;
     }
 }
 

@@ -249,10 +249,12 @@ void read_ast(Parser *p, bool single_line) {
                         if(type_fits_pointer(type, b)) {
                             array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                         } else {
+                            decl->is_mut = true;
                             array_push(scope->ast, token_make(alc, t_statement, val));
                             array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
                         }
                     } else {
+                        decl->is_mut = true;
                         array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
                     }
                 }
@@ -409,20 +411,19 @@ void read_ast(Parser *p, bool single_line) {
                 Scope *scope_each = scope_sub_make(alc, sc_loop, scope);
 
                 Decl *on_decl = decl_make(alc, p->func, NULL, on->rett, false);
-                on_decl->is_mut = on_decl->is_mut;
+                on_decl->is_mut = true;
                 array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
-                on = vgen_decl(alc, on_decl);
 
                 Decl *kd = NULL;
                 if (kname) {
                     kd = decl_make(alc, p->func, kname, array_get_index(func->rett_types, 1), false);
-                    kd->is_mut = kd->is_mut;
+                    kd->is_mut = true;
                     Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
                     scope_add_decl(alc, scope, kd);
                 }
                 Decl *vd = decl_make(alc, p->func, vname, array_get_index(func->rett_types, 0), false);
-                vd->is_mut = vd->is_mut;
+                vd->is_mut = true;
                 Idf *idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
@@ -442,7 +443,7 @@ void read_ast(Parser *p, bool single_line) {
                 if (!single)
                     p->chunk->i = scope_end_i;
 
-                array_push(scope->ast, tgen_each(alc, p, on, func, kd, vd, scope_each, index, vindex));
+                array_push(scope->ast, tgen_each(alc, p, vgen_decl(alc, on_decl), func, kd, vd, scope_each, index, vindex));
                 continue;
             }
             if (str_is(tkn, "await_fd")){
@@ -686,6 +687,17 @@ void read_ast(Parser *p, bool single_line) {
 
     if (scope->gc_check) {
         p->func->calls_gc_check = true;
+    }
+
+    if (scope_type == sc_loop && scope->has_gc_decls) {
+        Array *decls = scope->decls;
+        // Scope *defer = scope_get_defer(alc, scope);
+        // for (int i = 0; i < decls->length; i++) {
+        //     Decl *decl = array_get_index(decls, i);
+        //     if (!decl->is_gc)
+        //         continue;
+        //     array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
+        // }
     }
     // if (scope->has_gc_decls) {
     //     // Start scope

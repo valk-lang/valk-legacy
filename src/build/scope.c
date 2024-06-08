@@ -13,6 +13,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->decls = type == sc_func ? array_make(alc, 20) : NULL;
 
     sc->func = NULL;
+    sc->defer = NULL;
 
     sc->rett = NULL;
     sc->must_return = false;
@@ -26,6 +27,16 @@ Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
     Scope* sub = scope_make(alc, type, parent);
     sub->rett = parent->rett;
     return sub;
+}
+
+Scope* scope_get_defer(Allocator* alc, Scope* scope) {
+    Scope* d = scope->defer;
+    if(d)
+        return d;
+    d = scope_sub_make(alc, sc_default, scope);
+    d->ast = array_make(alc, 2);
+    scope->defer = d;
+    return d;
 }
 
 void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p) {

@@ -19,8 +19,8 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size);
-void ir_func_return_nothing(IR* ir);
-void ir_func_return(IR* ir, char* type, char* value);
+void ir_func_return_nothing(IR* ir, Scope* scope);
+void ir_func_return(IR* ir, Scope* scope, char* type, char* value);
 char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
@@ -36,10 +36,6 @@ char* ir_assign_value(IR* ir, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
 char* ir_arg_nr(IR* ir, int nr);
-char* ir_decl_var(IR* ir, Decl* decl);
-char* ir_decl_imut_val(IR* ir, Decl* decl);
-void ir_decl_set(IR* ir, Decl* decl, char* val);
-void ir_set(IR* ir, char* left, char* right);
 void ir_decl_store(IR* ir, Decl* decl, char* val);
 void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);

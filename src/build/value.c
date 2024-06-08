@@ -85,7 +85,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                     rett = type_cache_ptr(b);
                 }
             }
-            v = value_make(alc, v_stack, vgen_int(alc, size, type_gen_valk(alc, b, "uint")), rett);
+            v = vgen_stack_size(alc, b, size);
+            v->rett = rett;
 
         } else if (str_is(tkn, "@stack_bytes")) {
             tok_expect(p, "(", false, false);
@@ -94,7 +95,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "The first argument for @stack_bytes must be a valid integer value");
             }
             tok_expect(p, ")", true, true);
-            v = value_make(alc, v_stack, val, type_gen_valk(alc, b, "ptr"));
+            v = vgen_stack(alc, b, val);
 
         } else if (str_is(tkn, "@cached_stack_address")) {
             v = p->func->v_cache_stack_pos;

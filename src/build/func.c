@@ -35,6 +35,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     // Cached values
     f->v_cache_stack = NULL;
     f->v_cache_stack_pos = NULL;
+    f->v_cache_alloca = NULL;
 
     f->alloca_size = 0;
     f->decl_nr = 0;
@@ -160,10 +161,9 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
     if (errh->err_decl) {
         if(errh->err_decl->is_mut) {
-            ir_store(ir, ir_decl_var(ir, errh->err_decl), load, "i32", type_i32->size);
+            ir_store(ir, errh->err_decl->ir_store, load, "i32", type_i32->size);
         } else {
-            errh->err_decl->custom_ir_name = load;
-            // ir_decl_set(ir, errh->err_decl, load);
+            errh->err_decl->ir_var = load;
         }
     }
 
