@@ -5,6 +5,9 @@ use os
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
+fn gc() {
+    stack.gc();
+}
 fn force_gc() {
     stack.force_full = true
     stack.gc();

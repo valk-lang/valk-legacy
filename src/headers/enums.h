@@ -179,6 +179,7 @@ enum TOKENS {
     t_yield,
     t_decl_set_store,
     t_decl_set_arg,
+    t_disabled,
 };
 
 enum OPERATORS {

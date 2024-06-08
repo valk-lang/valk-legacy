@@ -226,7 +226,6 @@ struct Coro2 {
     //////////////
 
     static fn loop() {
-        let stack = mem:stack
         let poll = Coro2.get_poll()
         while g_coro_count > 0 {
             // Run coro chain
@@ -244,8 +243,8 @@ struct Coro2 {
                 let coros = poll.wait(1000) ! {
                     panic("Too many file descriptors")
                 }
-                if coros.length == 0 && stack.run_gc {
-                    stack.gc()
+                if coros.length == 0 && mem:run_gc {
+                    mem:gc()
                 }
                 g_coro_poll_count -= coros.length
                 each coros as coro {

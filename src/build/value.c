@@ -97,12 +97,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             v = vgen_stack(alc, b, val);
 
-        } else if (str_is(tkn, "@cached_stack_address")) {
-            v = p->func->v_cache_stack_pos;
-            value_enable_cached(v->item);
-        } else if (str_is(tkn, "@cached_stack_instance")) {
-            v = p->func->v_cache_stack;
-            value_enable_cached(v->item);
         } else if (str_is(tkn, "@gc_link")){
             tok_expect(p, "(", false, false);
             Value* on = read_value(alc, p, true, 0);
@@ -764,12 +758,17 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
     
     Build* b = p->b;
-    Array* func_args = ont->func_info->args;
-    Array* func_default_values = ont->func_info->default_values;
-    Type *rett = ont->func_info->rett;
+    TypeFuncInfo* fi = ont->func_info;
+    Array* func_args = fi->args;
+    Array* func_default_values = fi->default_values;
+    Type *rett = fi->rett;
 
     if (!func_args || !rett) {
         parse_err(p, -1, "Function pointer value is missing function type information (compiler bug)\n");
+    }
+    if(on->type != v_func_ptr) {
+        p->func->calls_increase_stack = true;
+        p->func->will_increase_stack = true;
     }
 
     Array* args = array_make(alc, func_args->length + 1);

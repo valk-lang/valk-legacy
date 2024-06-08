@@ -1,6 +1,10 @@
 
 #include "../all.h"
 
+void disable_token(Token* t) {
+    t->type = t_disabled;
+}
+
 Token *tgen_assign(Allocator *alc, Value *left, Value *right) {
     VPair *pair = al(alc, sizeof(VPair));
     pair->left = left;

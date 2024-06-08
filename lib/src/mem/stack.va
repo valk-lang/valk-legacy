@@ -8,6 +8,7 @@ use core
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
+global run_gc : bool;
 
 global mem_new : uint;
 global mem_marked : uint;
@@ -77,7 +78,7 @@ cstruct Stack {
     age: u8 (33)
     gc_age: u8 (0)
 
-    run_gc: bool (false)
+    run_gc_ref: ptr
     bumper_overflow: bool (false)
 
     force_full: bool (false)
@@ -96,10 +97,12 @@ cstruct Stack {
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
+            run_gc_ref: @ptr_of(run_gc)
         }
 
         stack = s;
         disable_gc = false
+        run_gc = false
         mem_marked = mem_marked_default
 
         pools_init()
@@ -163,7 +166,7 @@ cstruct Stack {
         // io:print_fake("GC.")
 
         disable_gc = true
-        this.run_gc = false
+        run_gc = false
 
         // mem_new.print(10)
         // io:print_fake("/")

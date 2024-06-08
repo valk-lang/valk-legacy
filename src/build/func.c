@@ -33,9 +33,11 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->ast_start = NULL;
     f->ast_end = NULL;
     // Cached values
-    f->v_cache_stack = NULL;
     f->v_cache_stack_pos = NULL;
     f->v_cache_alloca = NULL;
+    // Toggle tokens
+    f->t_stack_incr = NULL;
+    f->t_stack_decr = NULL;
 
     f->alloca_size = 0;
     f->arg_nr = 0;
@@ -55,6 +57,8 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
+    f->will_increase_stack = false;
+    f->calls_increase_stack = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

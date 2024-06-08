@@ -14,6 +14,9 @@ void ir_write_ast(IR* ir, Scope* scope) {
         Token *t = array_get_index(ast, i);
         int tt = t->type;
 
+        if (tt == t_disabled) {
+            continue;
+        }
         if (tt == t_statement) {
             Value *v = t->item;
             ir_value(ir, v);

@@ -43,9 +43,11 @@ struct Func {
     Scope* ast_start;
     Scope* ast_end;
     //
-    Value* v_cache_stack;
     Value* v_cache_stack_pos;
     Value* v_cache_alloca;
+    //
+    Token* t_stack_incr;
+    Token* t_stack_decr;
     //
     int act;
     int alloca_size;
@@ -66,6 +68,8 @@ struct Func {
     bool calls_gc_check;
     bool parse_last;
     bool init_thread;
+    bool will_increase_stack;
+    bool calls_increase_stack;
 };
 struct FuncArg {
     Type* type;

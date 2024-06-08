@@ -29,7 +29,6 @@ void ast_func_start(Allocator* alc, Parser* p) {
 
     Global* gs = get_valk_global(b, "mem", "stack");
     Global* gsp = get_valk_global(b, "mem", "stack_pos");
-    func->v_cache_stack = vgen_ir_cached(alc, vgen_global(alc, gs));
     func->v_cache_stack_pos = vgen_ir_cached(alc, vgen_class_pa(alc, vgen_global(alc, gsp), map_get(gsp->type->class->props, "adr")));
 
     func->ast_start = start;
@@ -65,12 +64,6 @@ void ast_func_end(Allocator* alc, Parser* p) {
     if (gc_decl_count > 0) {
         value_enable_cached(func->v_cache_stack_pos->item);
     }
-    if (func->calls_gc_check) {
-        value_enable_cached(func->v_cache_stack->item);
-    }
-    if(((VIRCached*)(func->v_cache_stack->item))->used) {
-        array_push(start->ast, token_make(alc, t_statement, func->v_cache_stack));
-    }
     if(((VIRCached*)(func->v_cache_stack_pos->item))->used) {
         array_push(start->ast, token_make(alc, t_statement, func->v_cache_stack_pos));
     }
@@ -82,17 +75,20 @@ void ast_func_end(Allocator* alc, Parser* p) {
 
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
+        p->func->will_increase_stack = true;
         // Stack reserve
         // Todo: we can skip this if our function doesnt call other functions
         Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));
         Value *offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, amount, 1);
-        array_push(start->ast, tgen_assign(alc, func->v_cache_stack_pos, offset));
+        func->t_stack_incr = tgen_assign(alc, func->v_cache_stack_pos, offset);
+        array_push(start->ast, func->t_stack_incr);
 
         // Stack reduce
         // Todo: we can skip this if our function doesnt call other functions
         Scope *end = scope_make(alc, sc_default, scope);
         end->ast = array_make(alc, 1);
-        array_push(end->ast, tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos));
+        func->t_stack_decr = tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos);
+        array_push(end->ast, func->t_stack_decr);
         func->ast_end = end;
     }
 

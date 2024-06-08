@@ -4,6 +4,7 @@
 
 #include "typedefs.h"
 
+void disable_token(Token* t);
 Token *token_make(Allocator *alc, int type, void *item);
 void token_if(Allocator* alc, Parser* p);
 void token_while(Allocator* alc, Parser* p);
