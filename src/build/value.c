@@ -1288,8 +1288,12 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
 
 
     // If number literal, change the type
-    if(val->type == v_number && (type->type == type_int || type->type == type_float)){
-        try_convert_number(val, type);
+    if(val->type == v_number){
+        if (type->type == type_int || type->type == type_float) {
+            try_convert_number(val, type);
+        } else if (val->rett->type == type_int && type->type == type_ptr) {
+            val = vgen_cast(alc, val, type);
+        }
     }
 
     // If number value, cast if appropriate

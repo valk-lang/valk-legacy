@@ -36,14 +36,14 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
         MultiRett* mr = al(alc, sizeof(MultiRett));
         mr->types = types;
         mr->decls = array_make(alc, types->length);
-        for(int i = 0; types->length; i++) {
+        for(int i = 0; i < types->length; i++) {
             Type* type = array_get_index(types, i);
             Decl* decl = decl_make(alc, p->func, NULL, type, false);
             decl->is_mut = true;
+            scope_add_decl(alc, p->scope, decl);
             array_push(mr->decls, decl);
         }
         v->mrett = mr;
-        v->rett = NULL;
     }
     return v;
 }
