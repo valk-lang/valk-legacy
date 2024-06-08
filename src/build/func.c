@@ -23,6 +23,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->arg_values = array_make(alc, 4);
     f->rett_types = array_make(alc, 1);
     f->used_functions = array_make(alc, 4);
+    f->called_functions = array_make(alc, 4);
     f->used_classes = array_make(alc, 4);
 
     f->class = NULL;

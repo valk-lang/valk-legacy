@@ -36,6 +36,7 @@ struct Func {
     Array* cached_values;
     Map* errors;
     Array* used_functions;
+    Array* called_functions;
     Array* used_classes;
     Type* reference_type;
     //

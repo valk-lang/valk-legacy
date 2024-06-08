@@ -122,8 +122,14 @@ void stage_ast_func(Func *func) {
     for (int i = 0; i < used->length; i++) {
         Func* f = array_get_index(used, i);
         stage_ast_func(f);
+    }
+    Array* called = func->called_functions;
+    for (int i = 0; i < called->length; i++) {
+        Func* f = array_get_index(called, i);
         if(f->will_increase_stack) {
             func->calls_increase_stack = true;
+            func->will_increase_stack = true;
+            break;
         }
     }
     Array *classes = func->used_classes;

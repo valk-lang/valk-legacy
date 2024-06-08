@@ -766,7 +766,10 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     if (!func_args || !rett) {
         parse_err(p, -1, "Function pointer value is missing function type information (compiler bug)\n");
     }
-    if(on->type != v_func_ptr) {
+    if(on->type == v_func_ptr) {
+        VFuncPtr* item = on->item;
+        array_push(p->func->called_functions, item->func);
+    } else {
         p->func->calls_increase_stack = true;
         p->func->will_increase_stack = true;
     }
