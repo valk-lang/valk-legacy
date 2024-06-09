@@ -72,7 +72,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
                 char* irv = ir_value(ir, v);
                 ir_func_return(ir, scope, ir_type(ir, v->rett), irv);
             } else {
-                ir_func_return(ir, scope, NULL, "void");
+                ir_func_return_nothing(ir, scope);
             }
             continue;
         }
@@ -143,6 +143,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
         if (tt == t_set_return_value) {
+            die("TODO: DELETE\n");
             TSetRetv* sr = t->item;
             int index = sr->index;
             Value* val = sr->value;
@@ -189,7 +190,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Array *args = ir_fcall_ir_args(ir, values, types);
             //
             char* fptr = ir_func_ptr(ir, item->func);
-            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett), 0, 0);
+            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, func_get_eax_rett(item->func)), 0, 0);
 
             if(kd && !kd->is_mut) {
                 ir_decl_store(ir, kd, ir_value(ir, vgen_decl(alc, kd_buf)));

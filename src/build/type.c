@@ -15,14 +15,13 @@ Type* type_make(Allocator* alc, int type) {
     t->ignore_null = false;
     return t;
 }
-TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types, Type* rett) {
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types) {
     TypeFuncInfo* t = al(alc, sizeof(TypeFuncInfo));
     t->args = args;
     t->default_values = default_values;
     t->err_names = err_names;
     t->err_values = err_values;
     t->rett_types = rett_types;
-    t->rett = rett;
     t->has_unknown_errors = false;
     t->can_error = false;
     t->will_exit = false;
@@ -88,10 +87,8 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             // TODO
 
             // Generate type
-            Type* rett = array_get_index(return_types, 0);
-            rett = rett ? rett : type_gen_void(alc);
             Type *t = type_make(alc, type_func);
-            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, return_types, rett);
+            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, return_types);
             t->size = b->ptr_size;
             t->is_pointer = true;
             t->nullable = nullable;
@@ -248,7 +245,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
         Type *t = type_make(alc, type_func);
         t->size = func->b->ptr_size;
         t->is_pointer = true;
-        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types, func->rett);
+        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types);
         t->func_info->can_error = func->errors ? true : false;
         t->func_info->will_exit = func->exits;
         func->reference_type = t;
@@ -258,7 +255,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
 
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
-    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL, NULL);
+    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, array_make(alc, 1));
     t->size = sizeof(int);
     return t;
 }
@@ -339,6 +336,8 @@ Type* type_merge(Allocator* alc, Type* t1, Type* t2) {
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
+    if (!t1 || !t2)
+        return false;
     if (t2->type == type_null && (t1->type == type_ptr || t1->nullable || t1->ignore_null)) {
         return true;
     }
@@ -424,7 +423,7 @@ bool types_contain_void(Array* types) {
 }
 
 void type_to_str_append(Type* t, char* res, bool use_export_name) {
-    if (t->type == type_void) {
+    if (!t || t->type == type_void) {
         strcat(res, "void");
         return;
     } else if (t->type == type_null) {

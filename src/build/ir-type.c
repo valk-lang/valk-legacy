@@ -3,6 +3,8 @@
 
 char *ir_type(IR *ir, Type *type) {
     //
+    if (!type)
+        return "void";
     if (type->is_pointer)
         return "ptr";
 

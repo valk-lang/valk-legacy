@@ -70,12 +70,12 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->func = func;
     ir->block = func->block_code;
 
-    // Return value references
-    Array *retts = vfunc->rett_types;
-    for (int i = 1; i < retts->length; i++) {
-        char *var = ir_var(func);
-        array_push(func->rett_refs, var);
-    }
+    // // Return value references
+    // Array *retts = vfunc->rett_types;
+    // for (int i = 1; i < retts->length; i++) {
+    //     char *var = ir_var(func);
+    //     array_push(func->rett_refs, var);
+    // }
 
     Scope* init = vfunc->ast_stack_init;
     if(init)
@@ -108,7 +108,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     } else {
         str_flat(code, "define dso_local ");
     }
-    str_add(code, ir_type(ir, vfunc->rett));
+    str_add(code, ir_type(ir, func_get_eax_rett(vfunc)));
     str_flat(code, " @");
     str_add(code, vfunc->export_name);
     str_flat(code, "(");
@@ -206,13 +206,14 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size) {
 
 void ir_func_return_nothing(IR* ir, Scope* scope) {
     Func* func = ir->func->func;
-    if(!func->rett || type_is_void(func->rett)) {
+    Type* rett = func_get_eax_rett(func);
+    if(!rett) {
         ir_func_return(ir, scope, NULL, "void");
     } else {
-        if(func->rett->is_pointer) {
+        if(rett->is_pointer) {
             ir_func_return(ir, scope, "ptr", "null");
         } else {
-            char* type = ir_type(ir, func->rett);
+            char* type = ir_type(ir, rett);
             ir_func_return(ir, scope, type, "0");
         }
     }

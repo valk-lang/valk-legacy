@@ -249,12 +249,10 @@ void read_ast(Parser *p, bool single_line) {
                         if(type_fits_pointer(type, b)) {
                             array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                         } else {
-                            decl->is_mut = true;
                             array_push(scope->ast, token_make(alc, t_statement, val));
                             array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
                         }
                     } else {
-                        decl->is_mut = true;
                         array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
                     }
                 }
@@ -299,48 +297,91 @@ void read_ast(Parser *p, bool single_line) {
                 if(!func) {
                     parse_err(p, -1, "Using 'return' outside a function scope");
                 }
-                // Main return value
-                if(!type_is_void(func->rett)) {
-                    val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, p, p->scope, val, func->rett);
-                    type_check(p, func->rett, val->rett);
-                } else {
-                    char t = tok(p, true, false, true);
-                    if(t != tok_none && t != tok_semi && t != tok_curly_close) {
-                        parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
-                    }
-                }
-                if(val) {
-                    // Important for GC
-                    val = vgen_var(alc, b, val);
-                    array_push(scope->ast, token_make(alc, t_set_var, val->item));
-                }
-                // Extra return values
-                if(func->rett_types->length > 1) {
-                    int extra_c = func->rett_types->length - 1;
-                    int i = 1;
+                Array* retts = func->rett_types;
+
+                // disable gc if multi rett & main rett doesnt fit eax
+                Global *g_disable = get_valk_global(b, "mem", "disable_gc");
+                Value *disable = NULL;
+                Value *var_disable = NULL;
+                bool disable_gc = !func->rett_fits_register && retts->length > 1;
+                if(disable_gc) {
                     // Disable gc
-                    Global* g_disable = get_valk_global(b, "mem", "disable_gc");
-                    Value* disable = value_make(alc, v_global, g_disable, g_disable->type);
-                    Value *var_disable = vgen_var(alc, b, disable);
+                    disable = value_make(alc, v_global, g_disable, g_disable->type);
+                    var_disable = vgen_var(alc, b, disable);
                     array_push(scope->ast, token_make(alc, t_set_var, var_disable->item));
                     array_push(scope->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
-                    while(i <= extra_c) {
-                        tok_expect(p, ",", true, true);
-                        Type* type = array_get_index(func->rett_types, i);
-                        Value* val = read_value(alc, p, true, 0);
-                        val = try_convert(alc, p, p->scope, val, type);
-                        type_check(p, type, val->rett);
-                        // Store
-                        TSetRetv* sr = al(alc, sizeof(TSetRetv));
-                        sr->index = i - 1;
-                        sr->value = val;
-                        array_push(scope->ast, token_make(alc, t_set_return_value, sr));
-                        i++;
-                    }
-                    // Set disable_gc to previous value
-                    array_push(scope->ast, tgen_assign(alc, disable, var_disable));
                 }
+
+                int expectedc = retts->length;
+                int i = 0;
+                int rett_decl_i = 0;
+                Value* main_retv = NULL;
+                while(i != expectedc) {
+                    if(i > 0) {
+                        tok_expect(p, ",", true, true);
+                    }
+                    Type* type = array_get_index(retts, i);
+                    Value* val = read_value(alc, p, false, 0);
+                    val = try_convert(alc, p, p->scope, val, type);
+                    type_check(p, type, val->rett);
+
+                    if(i == 0 && func->rett_fits_register) {
+                        main_retv = vgen_var(alc, b, val);
+                        array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                    } else {
+                        Decl* decl = array_get_index(func->rett_decls, rett_decl_i++);
+                        Value* var = vgen_ptrv(alc, b, vgen_decl(alc, decl), decl->type, vgen_int(alc, 0, type_cache_i32(b)));
+                        array_push(scope->ast, tgen_assign(alc, var, val));
+                    }
+                    i++;
+                }
+
+
+                // if(disable_gc) {
+                //     // Set disable_gc to previous value
+                //     array_push(scope->ast, tgen_assign(alc, disable, var_disable));
+                // }
+
+
+                // // Main return value
+                // if(!type_is_void(func->rett)) {
+                //     val = read_value(alc, p, false, 0);
+                //     val = try_convert(alc, p, p->scope, val, func->rett);
+                //     type_check(p, func->rett, val->rett);
+                // } else {
+                //     char t = tok(p, true, false, true);
+                //     if(t != tok_none && t != tok_semi && t != tok_curly_close) {
+                //         parse_err(p, -1, "Return statement should not return a value if the function has a 'void' return type");
+                //     }
+                // }
+                // if(val) {
+                //     // Important for GC
+                //     val = vgen_var(alc, b, val);
+                //     array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                // }
+                // // Extra return values
+                // if(func->rett_types->length > 1) {
+                //     int rettc = func->rett_types->length;
+                //     int i = 0;
+                //     while(i <= extra_c) {
+                //         tok_expect(p, ",", true, true);
+                //         Type* type = array_get_index(func->rett_types, i);
+                //         Value* val = read_value(alc, p, true, 0);
+                //         val = try_convert(alc, p, p->scope, val, type);
+                //         type_check(p, type, val->rett);
+                //         //
+                //         Decl* decl = p->ret;
+                //         Value* left = vgen_ptrv(alc, b, vgen_decl(alc, decl), decl->type, NULL);
+                //         array_push(scope->ast, tgen_assign(alc, left, val));
+
+                //         // Store
+                //         TSetRetv* sr = al(alc, sizeof(TSetRetv));
+                //         sr->index = i - 1;
+                //         sr->value = val;
+                //         array_push(scope->ast, token_make(alc, t_set_return_value, sr));
+                //         i++;
+                //     }
+                // }
 
                 array_push(scope->ast, tgen_return(alc, val));
                 scope->did_return = true;
@@ -664,20 +705,7 @@ void read_ast(Parser *p, bool single_line) {
         //
         if(scope->did_return && p->func) {
             // Value contains an exit function call
-            Value* retv = NULL;
-            Type* rett = p->func->rett;
-            if(!type_is_void(rett)) {
-                if(rett->is_pointer) {
-                    retv = vgen_null(alc, b);
-                } else {
-                    if(rett->type == type_float) {
-                        retv = vgen_float(alc, 0, rett);
-                    } else {
-                        retv = vgen_int(alc, 0, rett);
-                    }
-                }
-            }
-            array_push(scope->ast, token_make(alc, t_return, retv));
+            array_push(scope->ast, token_make(alc, t_return, NULL));
         }
     }
 

@@ -18,6 +18,7 @@ void value_enable_cached(VIRCached* v);
 
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
+Value *vgen_ptr_of(Allocator *alc, Build* b, Value* from);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args);

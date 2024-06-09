@@ -15,7 +15,6 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->func = NULL;
     sc->defer = NULL;
 
-    sc->rett = NULL;
     sc->must_return = false;
     sc->did_return = false;
     sc->gc_check = false;
@@ -25,7 +24,6 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
 }
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
     Scope* sub = scope_make(alc, type, parent);
-    sub->rett = parent->rett;
     return sub;
 }
 

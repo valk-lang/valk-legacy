@@ -11,6 +11,10 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     return v;
 }
 
+Value *vgen_ptr_of(Allocator *alc, Build* b, Value* from) {
+    return value_make(alc, v_ptr_of, from, type_gen_valk(alc, b, "ptr"));
+}
+
 Value* vgen_bool(Allocator *alc, Build* b, bool value) {
     return vgen_int(alc, value, type_gen_valk(alc, b, "bool"));
 }
@@ -42,6 +46,9 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
             decl->is_mut = true;
             scope_add_decl(alc, p->scope, decl);
             array_push(mr->decls, decl);
+            if(i > 0 || !type_fits_pointer(type, b)) {
+                array_push(args,  vgen_ptr_of(alc, b, vgen_decl(alc, decl)));
+            }
         }
         v->mrett = mr;
     }

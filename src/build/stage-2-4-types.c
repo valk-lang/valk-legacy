@@ -56,8 +56,6 @@ void stage_types_func(Parser* p, Func* func) {
         Idf* idf = idf_make(alc, idf_decl, decl);
         scope_set_idf(func->scope, "VALK_TEST_RESULT", idf, p);
         arg->decl = decl;
-
-        func->rett = type_gen_void(alc);
         return;
     }
 
@@ -126,34 +124,41 @@ void stage_types_func(Parser* p, Func* func) {
             }
         }
     }
-    if(func->has_rett) {
+    if(func->read_rett_type) {
         *p->chunk = *func->chunk_rett;
         if(func->multi_rett) {
             tok_expect(p, "(", true, true);
             // Return types
-            Array* types = array_make(b->alc, 2);
+            int x = 0;
             while(true) {
+                x++;
                 Type *type = read_type(p, b->alc, false);
                 if(type_is_void(type)) {
                     parse_err(p, -1, "You cannot use 'void' here");
                 }
-                array_push(types, type);
+                array_push(func->rett_types, type);
+                //
+                if(x == 1)
+                    func->rett_fits_register = type_fits_pointer(type, b);
+                if(x > 1 || !func->rett_fits_register) {
+                    Decl *decl = decl_make(alc, func, NULL, type_cache_ptr(b), true);
+                    array_push(func->rett_decls, decl);
+                    array_push(func->rett_arg_types, type);
+                }
                 // next
                 char t = tok_expect_two(p, ",", ")", true, true);
                 if(t == tok_bracket_close)
                     break;
             }
-            func->rett_types = types;
-            func->rett = array_get_index(types, 0);
         } else {
             Type *type = read_type(p, b->alc, false);
-            func->rett = type;
-            array_push(func->rett_types, type);
+            if(!type_is_void(type)) {
+                array_push(func->rett_types, type);
+            }
         }
-        func->scope->must_return = !type_is_void(func->rett);
-        func->scope->rett = func->rett;
-    } else {
-        func->rett = type_gen_void(b->alc);
+        func->scope->must_return = func->rett_types->length > 0;
+        Type* first_rett = array_get_index(func->rett_types, 0);
+        func->rett_fits_register = first_rett ? type_fits_pointer(first_rett, b) : false;
     }
 
     type_gen_func(alc, func);

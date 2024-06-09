@@ -17,7 +17,7 @@ struct Scope {
     Scope* idf_parent;
     Map* identifiers;
     Array* ast;
-    Type* rett;
+    // Type* rett;
     Array* decls;
     Func* func;
     Scope* defer;

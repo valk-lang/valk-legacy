@@ -22,6 +22,8 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
     f->rett_types = array_make(alc, 1);
+    f->rett_arg_types = array_make(alc, 1);
+    f->rett_decls = array_make(alc, 1);
     f->used_functions = array_make(alc, 4);
     f->called_functions = array_make(alc, 4);
     f->used_classes = array_make(alc, 4);
@@ -48,7 +50,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->can_error = false;
     f->types_parsed = false;
     f->in_header = false;
-    f->has_rett = false;
+    f->read_rett_type = false;
     f->multi_rett = false;
     f->is_test = false;
     f->is_used = false;
@@ -58,6 +60,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
+    f->rett_fits_register = true;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -93,7 +96,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
 
     char t = tok(p, true, true, false);
     if (t != tok_curly_open && t != tok_not) {
-        func->has_rett = true;
+        func->read_rett_type = true;
         if(t == tok_bracket_open) {
             func->multi_rett = true;
             skip_body(p);
@@ -301,14 +304,20 @@ void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_typ
     }
 }
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
+    Array *retts = func->rett_types;
+    Type *rett = array_get_index(retts, 0);
+    if(!rett)
+        rett = type_gen_void(p->b->alc);
+    //
     bool has_valid = false;
-    Type *rett = func->rett;
     int count = allowed_types->length;
-    for (int i = 0; i < count; i++) {
-        Type *valid = array_get_index(allowed_types, i);
-        if(rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
-            has_valid = true;
-            break;
+    if (rett) {
+        for (int i = 0; i < count; i++) {
+            Type *valid = array_get_index(allowed_types, i);
+            if (rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
+                has_valid = true;
+                break;
+            }
         }
     }
     if(!has_valid){
@@ -330,10 +339,11 @@ void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
 }
 
 void func_validate_rett_void(Parser *p, Func *func) {
-    if (!type_is_void(func->rett)) {
-        *p->chunk = *func->chunk_rett;
+    Array *retts = func->rett_types;
+    if(retts->length != 0) {
+        Type* type = array_get_index(retts, 0);
         char buf[512];
-        type_to_str(func->rett, buf);
+        type_to_str(type, buf);
         parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
     }
 }
@@ -350,4 +360,12 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
             parse_err(p, -1, "Error '%s' and '%s' have the same error hash value, you must rename one of them. The error value is based on the hash value of the error name. There is no other solution than renaming one of them.", prev, str_v);
         }
     }
+}
+
+
+Type* func_get_eax_rett(Func* func) {
+    if(!func->rett_fits_register || func->rett_types->length == 0) {
+        return NULL;
+    }
+    return array_get_index(func->rett_types, 0);
 }

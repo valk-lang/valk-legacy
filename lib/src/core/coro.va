@@ -17,7 +17,6 @@ use io
 struct Coro2 {
     args: ptr
     gc_stack: mem:StackPos
-    result: ptr
     start_func: fn(Coro2)()
     handler: fn()()
     follow_up: ?Coro2 (null)
@@ -36,7 +35,7 @@ struct Coro2 {
     started: bool (false)
     done: bool (false)
 
-    static fn new(handler: ptr, start_func: ptr, result_is_gc: bool) SELF {
+    static fn new(handler: ptr, start_func: ptr) SELF {
 
         let gc_stack = mem:create_stack()
         let args = gc_stack.base + gc_stack.size - 128
@@ -44,7 +43,6 @@ struct Coro2 {
         let coro = Coro2 {
             args: args
             gc_stack: gc_stack
-            result: result_is_gc ? gc_stack.base : args
             //
             start_func: start_func @as fn(Coro2)()
             handler: handler @as fn()()
