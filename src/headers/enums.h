@@ -110,6 +110,7 @@ enum TYPES {
     type_static_array,
     type_error, // 10
     type_promise,
+    type_multi,
 };
 
 enum CLASSTYPES {

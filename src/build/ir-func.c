@@ -25,7 +25,6 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     //
     func->var_count = 0;
     func->gc_count = 0;
-    func->rett_refs = vfunc->multi_rett ? array_make(ir->alc, 4) : NULL;
 
     IRBlock *start = ir_block_make(ir, func, "start_");
     IRBlock *code_block = ir_block_make(ir, func, "code_");
@@ -41,7 +40,7 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     // Collect final IR
     Str* code = b->str_buf;
     str_clear(code);
-    ir_func_definition(code, ir, func->func, false, func->rett_refs);
+    ir_func_definition(code, ir, func->func, false);
     // Blocks
     if (func->block_code->code->length > 0) {
         for (int o = 0; o < func->blocks->length; o++) {
@@ -96,7 +95,7 @@ void ir_gen_func(IR *ir, IRFunc *func) {
     ir->block = NULL;
 }
 
-void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs) {
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
 
     Array *args = vfunc->args->values;
     int argc = args->length;
@@ -108,7 +107,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
     } else {
         str_flat(code, "define dso_local ");
     }
-    str_add(code, ir_type(ir, func_get_eax_rett(vfunc)));
+    str_add(code, ir_type(ir, vfunc->rett_eax));
     str_flat(code, " @");
     str_add(code, vfunc->export_name);
     str_flat(code, "(");
@@ -133,15 +132,16 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* r
         }
     }
     // Return value references
-    Array *retts = vfunc->rett_types;
-    for (int i = 1; i < retts->length; i++) {
+    Array *decls = vfunc->rett_decls;
+    for (int i = 0; i < decls->length; i++) {
+        Decl* decl = array_get_index(decls, i);
         str_preserve(code, 1000);
-        if (i > 1 || argc > 0)
+        if (i > 0 || argc > 0)
             str_flat(code, ", ");
         str_flat(code, "ptr noundef");
         if (!is_extern) {
             str_flat(code, " ");
-            str_add(code, array_get_index(rett_refs, i - 1));
+            str_add(code, ir_arg_nr(ir, decl->arg_nr));
         }
     }
     //
@@ -163,7 +163,7 @@ void ir_define_ext_func(IR* ir, Func* func) {
         return;
     if(!array_contains(ir->declared_funcs, func, arr_find_adr)) {
         Str *code = ir->code_extern;
-        ir_func_definition(code, ir, func, true, NULL);
+        ir_func_definition(code, ir, func, true);
         array_push(ir->declared_funcs, func);
     }
 }
@@ -206,7 +206,7 @@ char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size) {
 
 void ir_func_return_nothing(IR* ir, Scope* scope) {
     Func* func = ir->func->func;
-    Type* rett = func_get_eax_rett(func);
+    Type* rett = func->rett_eax;
     if(!rett) {
         ir_func_return(ir, scope, NULL, "void");
     } else {

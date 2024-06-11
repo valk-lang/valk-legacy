@@ -13,7 +13,6 @@ void func_validate_rett_count(Parser* p, Func* func, bool is_static, int rett_co
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types);
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types);
 void func_validate_rett_void(Parser *p, Func *func);
-Type* func_get_eax_rett(Func* func);
 
 struct Func {
     char* name;
@@ -31,6 +30,8 @@ struct Func {
     Map* args;
     Array* arg_types;
     Array* arg_values;
+    Type* rett;
+    Type* rett_eax;
     Array* rett_types;
     Array* rett_arg_types;
     Array* rett_decls;
@@ -55,6 +56,7 @@ struct Func {
     int act;
     int alloca_size;
     int arg_nr;
+    int rett_count;
     //
     bool is_static;
     bool is_inline;
@@ -62,7 +64,6 @@ struct Func {
     bool types_parsed;
     bool in_header;
     bool read_rett_type;
-    bool multi_rett;
     bool is_test;
     bool is_used;
     bool use_if_class_is_used;
@@ -71,7 +72,6 @@ struct Func {
     bool calls_gc_check;
     bool parse_last;
     bool init_thread;
-    bool rett_fits_register;
 };
 struct FuncArg {
     Type* type;

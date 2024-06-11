@@ -9,14 +9,8 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     VFuncCall *fcall = vfcall->item;
     TypeFuncInfo *fi = fcall->on->rett->func_info;
     Array *types = fi->args;
-    Array *rett_types = fi->rett_types;
-
-    bool has_rett = rett_types->length > 0;
-    // bool has_main_rett = false;
-    // if(has_rett) {
-    //     Type* first = array_get_index(rett_types, 0);
-    //     has_main_rett = type_fits_pointer(first, b);
-    // }
+    Type *rett = fi->rett;
+    Array *rett_types = rett_types_of(alc, rett);
 
     bool has_arg = false;
     bool has_gc_arg = false;
@@ -93,7 +87,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, ")\n");
     }
     // Call handler
-    if(has_rett) {
+    if(rett) {
         str_flat(code, "let ");
         for(int i = 0; i < rett_types->length; i++) {
             if(i > 0)
@@ -120,11 +114,11 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     }
     str_flat(code, "\n");
     // Finish
-    if(has_gc_arg && (gc_rett_count == 0 || !has_rett)) {
+    if(has_gc_arg && (gc_rett_count == 0 || !rett)) {
         // Clear gc args
         str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base\n");
     }
-    if(has_rett) {
+    if(rett) {
         int s_pos = 0;
         int s_pos_gc = 0;
         for(int i = 0; i < rett_types->length; i++) {
@@ -275,7 +269,8 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     str_clear(code);
 
     TypeFuncInfo* fi = on->rett->func_info;
-    Array* rett_types = fi->rett_types;
+    Type* rett = fi->rett;
+    Array* rett_types = rett_types_of(alc, rett);
     Scope* sub = scope_sub_make(b->alc, sc_default, p->scope);
 
     Idf* idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));

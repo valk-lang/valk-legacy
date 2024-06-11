@@ -9,7 +9,7 @@ exit_fn panic(msg: String) {
     sys:exit(1)
 }
 
-fn signal(sig: int, handler: fn(i32)(void)) void {
+fn signal(sig: int, handler: fn(i32)()) void {
     sys:signal(sig @as i32, handler);
 }
 

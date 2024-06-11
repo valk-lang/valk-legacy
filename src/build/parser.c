@@ -27,6 +27,7 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->reading_coro_fcall = false;
     p->parse_last = false;
     p->init_thread = false;
+    p->allow_multi_type = false;
 
     return p;
 }

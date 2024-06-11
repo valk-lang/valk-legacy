@@ -125,40 +125,43 @@ void stage_types_func(Parser* p, Func* func) {
         }
     }
     if(func->read_rett_type) {
+        func->scope->must_return = true;
         *p->chunk = *func->chunk_rett;
-        if(func->multi_rett) {
-            tok_expect(p, "(", true, true);
-            // Return types
-            int x = 0;
-            while(true) {
-                x++;
-                Type *type = read_type(p, b->alc, false);
-                if(type_is_void(type)) {
-                    parse_err(p, -1, "You cannot use 'void' here");
-                }
-                array_push(func->rett_types, type);
-                //
-                if(x == 1)
-                    func->rett_fits_register = type_fits_pointer(type, b);
-                if(x > 1 || !func->rett_fits_register) {
-                    Decl *decl = decl_make(alc, func, NULL, type_cache_ptr(b), true);
-                    array_push(func->rett_decls, decl);
-                    array_push(func->rett_arg_types, type);
-                }
-                // next
-                char t = tok_expect_two(p, ",", ")", true, true);
-                if(t == tok_bracket_close)
-                    break;
-            }
-        } else {
-            Type *type = read_type(p, b->alc, false);
-            if(!type_is_void(type)) {
-                array_push(func->rett_types, type);
-            }
+        p->allow_multi_type = true;
+        Type *rett = read_type(p, b->alc, false);
+        if(type_is_void(rett)) {
+            rett = NULL;
         }
-        func->scope->must_return = func->rett_types->length > 0;
-        Type* first_rett = array_get_index(func->rett_types, 0);
-        func->rett_fits_register = first_rett ? type_fits_pointer(first_rett, b) : false;
+        func->rett = rett;
+        func->rett_eax = rett;
+
+        // Argument based returns
+        if(rett && rett->type == type_multi) {
+            func->rett_eax = NULL;
+            Array* types = rett->multi_types;
+            Array * rett_decls = array_make(alc, 2);
+            Array * rett_arg_types = array_make(alc, 2);
+            loop(types, i) {
+                Type* type = array_get_index(types, i);
+                array_push(func->rett_types, type);
+                if(i == 0 && type_fits_pointer(type, b)) {
+                    func->rett_eax = type;
+                    continue;
+                }
+                Type* ptr = type_cache_ptr(b); // TOBE: type_ptr_of(type)
+                Decl *decl = decl_make(alc, func, NULL, ptr, true);
+                array_push(rett_decls, decl);
+                array_push(rett_arg_types, ptr);
+            }
+            func->rett_decls = rett_decls;
+            func->rett_arg_types = rett_arg_types;
+        } else {
+            if(rett)
+                array_push(func->rett_types, rett);
+        }
+
+        // Count return types
+        func->rett_count = rett ? (rett->type == type_multi ? rett->multi_types->length : 1) : 0;
     }
 
     type_gen_func(alc, func);

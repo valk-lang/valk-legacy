@@ -57,6 +57,7 @@ struct Value {
     Type* rett;
     Array *issets;
     MultiRett *mrett;
+    Array *decls;
 };
 struct MultiRett {
     Array* types;

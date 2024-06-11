@@ -35,8 +35,9 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     item->errh = NULL;
     TypeFuncInfo* fi = on->rett->func_info;
     Value* v = value_make(alc, v_func_call, item, fi->rett);
-    Array* types = fi->rett_types;
-    if(types && types->length > 1) {
+    Type* rett = fi->rett;
+    if(rett && rett->type == type_multi) {
+        Array* types = rett->multi_types;
         MultiRett* mr = al(alc, sizeof(MultiRett));
         mr->types = types;
         mr->decls = array_make(alc, types->length);

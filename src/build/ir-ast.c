@@ -142,27 +142,27 @@ void ir_write_ast(IR* ir, Scope* scope) {
             ir_write_ast(ir, s);
             continue;
         }
-        if (tt == t_set_return_value) {
-            die("TODO: DELETE\n");
-            TSetRetv* sr = t->item;
-            int index = sr->index;
-            Value* val = sr->value;
-            Array* rett_refs = ir->func->rett_refs;
-            char* var = array_get_index(rett_refs, index);
-            if(!var) {
-                build_err(ir->b, "Missing return value IR variable (compiler bug)");
-            }
-            char* type = ir_type(ir, val->rett);
-            IRBlock *block_if = ir_block_make(ir, ir->func, "if_set_ret_");
-            IRBlock *after = ir_block_make(ir, ir->func, "set_ret_after_");
-            char* nn = ir_notnull_i1(ir, var);
-            ir_cond_jump(ir, nn, block_if, after);
-            ir->block = block_if;
-            ir_store(ir, var, ir_value(ir, val), type, val->rett->size);
-            ir_jump(ir, after);
-            ir->block = after;
-            continue;
-        }
+        // if (tt == t_set_return_value) {
+        //     die("TODO: DELETE\n");
+        //     TSetRetv* sr = t->item;
+        //     int index = sr->index;
+        //     Value* val = sr->value;
+        //     Array* rett_refs = ir->func->rett_refs;
+        //     char* var = array_get_index(rett_refs, index);
+        //     if(!var) {
+        //         build_err(ir->b, "Missing return value IR variable (compiler bug)");
+        //     }
+        //     char* type = ir_type(ir, val->rett);
+        //     IRBlock *block_if = ir_block_make(ir, ir->func, "if_set_ret_");
+        //     IRBlock *after = ir_block_make(ir, ir->func, "set_ret_after_");
+        //     char* nn = ir_notnull_i1(ir, var);
+        //     ir_cond_jump(ir, nn, block_if, after);
+        //     ir->block = block_if;
+        //     ir_store(ir, var, ir_value(ir, val), type, val->rett->size);
+        //     ir_jump(ir, after);
+        //     ir->block = after;
+        //     continue;
+        // }
         if (tt == t_each) {
             TEach* item = t->item;
             IRBlock *block_cond = ir_block_make(ir, ir->func, "each_cond_");
@@ -190,7 +190,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Array *args = ir_fcall_ir_args(ir, values, types);
             //
             char* fptr = ir_func_ptr(ir, item->func);
-            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, func_get_eax_rett(item->func)), 0, 0);
+            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett_eax), 0, 0);
 
             if(kd && !kd->is_mut) {
                 ir_decl_store(ir, kd, ir_value(ir, vgen_decl(alc, kd_buf)));

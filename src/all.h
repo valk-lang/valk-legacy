@@ -51,6 +51,7 @@
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 #define str_flat(str, chars) str_append_chars(str, chars)
+#define loop(arr, i) int len = arr->length; for(int i = 0; i < len; i++)
 
 #define v_i64 long long int
 #define v_u64 unsigned long long int

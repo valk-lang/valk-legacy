@@ -21,9 +21,11 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
+    f->rett = NULL;
+    f->rett_eax = NULL;
     f->rett_types = array_make(alc, 1);
-    f->rett_arg_types = array_make(alc, 1);
-    f->rett_decls = array_make(alc, 1);
+    f->rett_arg_types = NULL;
+    f->rett_decls = NULL;
     f->used_functions = array_make(alc, 4);
     f->called_functions = array_make(alc, 4);
     f->used_classes = array_make(alc, 4);
@@ -44,6 +46,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
 
     f->alloca_size = 0;
     f->arg_nr = 0;
+    f->rett_count = 0;
 
     f->is_inline = false;
     f->is_static = false;
@@ -51,7 +54,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->types_parsed = false;
     f->in_header = false;
     f->read_rett_type = false;
-    f->multi_rett = false;
     f->is_test = false;
     f->is_used = false;
     f->use_if_class_is_used = false;
@@ -60,7 +62,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
-    f->rett_fits_register = true;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -97,12 +98,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
     char t = tok(p, true, true, false);
     if (t != tok_curly_open && t != tok_not) {
         func->read_rett_type = true;
-        if(t == tok_bracket_open) {
-            func->multi_rett = true;
-            skip_body(p);
-        } else {
-            skip_type(p);
-        }
+        skip_type(p);
     }
 
     t = tok(p, true, true, false);
@@ -362,10 +358,3 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
     }
 }
 
-
-Type* func_get_eax_rett(Func* func) {
-    if(!func->rett_fits_register || func->rett_types->length == 0) {
-        return NULL;
-    }
-    return array_get_index(func->rett_types, 0);
-}

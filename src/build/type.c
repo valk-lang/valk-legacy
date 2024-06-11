@@ -9,19 +9,20 @@ Type* type_make(Allocator* alc, int type) {
     t->class = NULL;
     t->func_info = NULL;
     t->array_type = NULL;
+    t->multi_types = NULL;
     t->is_pointer = false;
     t->is_signed = false;
     t->nullable = false;
     t->ignore_null = false;
     return t;
 }
-TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types) {
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Type* rett) {
     TypeFuncInfo* t = al(alc, sizeof(TypeFuncInfo));
     t->args = args;
     t->default_values = default_values;
     t->err_names = err_names;
     t->err_values = err_values;
-    t->rett_types = rett_types;
+    t->rett = rett;
     t->has_unknown_errors = false;
     t->can_error = false;
     t->will_exit = false;
@@ -36,8 +37,41 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
     Type *type = NULL;
     bool nullable = false;
     bool is_inline = false;
+    bool allow_multi = false;
+    if(p->allow_multi_type) {
+        allow_multi = true;
+        p->allow_multi_type = false;
+    }
 
     char t = tok(p, true, allow_newline, true);
+
+    if(t == tok_bracket_open && allow_multi) {
+        // Void
+        t = tok(p, true, allow_newline, false);
+        if(t == tok_bracket_close) {
+            t = tok(p, true, allow_newline, true);
+            return type_gen_void(alc);
+        }
+        // Multi types
+        Array* types = array_make(alc, 2);
+        while (true) {
+            Type *type = read_type(p, b->alc, false);
+            if (type_is_void(type)) {
+                parse_err(p, -1, "You cannot use 'void' in a type group");
+            }
+            array_push(types, type);
+            t = tok_expect_two(p, ",", ")", true, true);
+            if (t == tok_bracket_close)
+                break;
+        }
+        if(types->length == 1) {
+            // Return single type if only 1 type
+            return array_get_index(types, 0);
+        }
+        Type* mt = type_make(alc, type_multi);
+        mt->multi_types = types;
+        return mt;
+    }
 
     if(t == tok_at_word) {
         if (str_is(p->tkn, "@ignu")) {
@@ -73,22 +107,17 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             }
             tok_expect(p, ")", false, false);
             // Return types
-            Array *return_types = array_make(alc, 2);
+            int before_i = p->chunk->i;
             tok_expect(p, "(", false, false);
-            char tt = tok(p, true, false, false);
-            if (tt == tok_bracket_close)
-                tok(p, true, false, true);
-            while (tt != tok_bracket_close) {
-                Type* rett = read_type(p, alc, false);
-                array_push(return_types, rett);
-                tt = tok_expect_two(p, ",", ")", true, false);
-            }
+            p->chunk->i = before_i;
+            p->allow_multi_type = true;
+            Type* rett = read_type(p, alc, false);
             // Errors
             // TODO
 
             // Generate type
             Type *t = type_make(alc, type_func);
-            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, return_types);
+            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, rett);
             t->size = b->ptr_size;
             t->is_pointer = true;
             t->nullable = nullable;
@@ -192,7 +221,6 @@ TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi) {
     fi2->default_values = fi->default_values ? array_make(alc, fi->default_values->length + 1) : NULL;
     fi2->err_names = fi->err_names ? array_make(alc, fi->err_names->length + 1) : NULL;
     fi2->err_values = fi->err_values ? array_make(alc, fi->err_values->length + 1) : NULL;
-    fi2->rett_types = fi->rett_types ? clone_array_of_types(alc, fi->rett_types) : NULL;
     fi2->rett = fi->rett ? type_clone(alc, fi->rett) : NULL;
 
     return fi2;
@@ -245,7 +273,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
         Type *t = type_make(alc, type_func);
         t->size = func->b->ptr_size;
         t->is_pointer = true;
-        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett_types);
+        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett);
         t->func_info->can_error = func->errors ? true : false;
         t->func_info->will_exit = func->exits;
         func->reference_type = t;
@@ -255,7 +283,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
 
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
-    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, array_make(alc, 1));
+    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL);
     t->size = sizeof(int);
     return t;
 }
@@ -345,6 +373,18 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
         *reason = "different kind of types";
         return false;
     }
+    if (t1->type == type_multi) {
+        if(t1->multi_types->length != t2->multi_types->length)
+            return false;
+        for (int i = 0; i < t1->multi_types->length; i++) {
+            Type* tt1 = array_get_index(t1->multi_types, i);
+            Type* tt2 = array_get_index(t2->multi_types, i);
+            if(!type_compat(tt1, tt2, reason)) {
+                return false;
+            }
+        }
+        return true;
+    }
     if (t1->is_signed != t2->is_signed) {
         *reason = "signed vs unsigned";
         return false;
@@ -381,19 +421,11 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
             }
         }
         // Return types
-        t1s = t1->func_info->rett_types;
-        t2s = t2->func_info->rett_types;
-        if(t1s->length != t2s->length){
-            *reason = "different amount of return types";
+        Type* t1r = t1->func_info->rett;
+        Type* t2r = t2->func_info->rett;
+        if (!type_compat(t1r, t2r, reason)) {
+            *reason = "return types not compatible";
             return false;
-        }
-        for(int i = 0; i < t1s->length; i++) {
-            Type *ft1 = array_get_index(t1s, i);
-            Type* ft2 = array_get_index(t2s, i);
-            if (!type_compat(ft1, ft2, reason)) {
-                *reason = "return types not compatible";
-                return false;
-            }
         }
     }
     return true;
@@ -407,7 +439,7 @@ void type_check(Parser* p, Type* t1, Type* t2) {
     }
 }
 
-bool type_is_void(Type* type) { return type->type == type_void; }
+bool type_is_void(Type* type) { return type ? (type->type == type_void) : true; }
 bool type_is_bool(Type* type) { return type->type == type_bool; }
 bool type_is_gc(Type* type) { return type->is_pointer && type->type == type_struct && type->class->type == ct_class; }
 bool type_fits_pointer(Type* type, Build* b){ return type->size <= b->ptr_size; }
@@ -433,6 +465,17 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
     if (t->nullable) {
         strcat(res, use_export_name ? "NULL_" : "?");
     }
+    if (t->type == type_multi) {
+        // strcat(res, use_export_name ? "_" : "(");
+        Array * types = t->multi_types;
+        for(int i = 0; i < types->length; i++) {
+            if(i > 0)
+                strcat(res, use_export_name ? "_" : ", ");
+            Type* sub = array_get_index(types, i);
+            type_to_str_append(sub, res, use_export_name);
+        }
+        // strcat(res, use_export_name ? "_" : ")");
+    }
     if (t->type == type_func) {
         strcat(res, use_export_name ? "fn_" : "fn(");
         Array * types = t->func_info->args;
@@ -444,25 +487,13 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
             type_to_str_append(sub, res, use_export_name);
         }
         strcat(res, use_export_name ? "__" : ")(");
-        types = t->func_info->rett_types;
-        for(int i = 0; i < types->length; i++) {
-            if(i > 0) {
-                strcat(res, use_export_name ? "_" : ", ");
-            }
-            Type* sub = array_get_index(types, i);
-            type_to_str_append(sub, res, use_export_name);
-        }
+        Type* rett = t->func_info->rett;
+        type_to_str_append(rett, res, use_export_name);
         strcat(res, use_export_name ? "_" : ")");
     } else if (t->type == type_promise) {
         strcat(res, use_export_name ? "PROMISE_" : "promise(");
-        Array* types = t->func_info->rett_types;
-        for(int i = 0; i < types->length; i++) {
-            if(i > 0) {
-                strcat(res, use_export_name ? "_" : ", ");
-            }
-            Type* sub = array_get_index(types, i);
-            type_to_str_append(sub, res, use_export_name);
-        }
+        Type* rett = t->func_info->rett;
+        type_to_str_append(rett, res, use_export_name);
         strcat(res, use_export_name ? "_" : ")");
     } else if (t->class) {
         Class *class = t->class;
@@ -585,4 +616,16 @@ Type* class_pool_type(Parser* p, Class* class) {
     Type* type = type_gen_class(alc, gen);
     type->ignore_null = true;
     return type;
+}
+
+Array* rett_types_of(Allocator* alc, Type* type) {
+    if(!type)
+        return NULL;
+    if(type->type == type_void)
+        return NULL;
+    if(type->multi_types)
+        return type->multi_types;
+    Array* arr = array_make(alc, 1);
+    type->multi_types = arr;
+    return arr;
 }

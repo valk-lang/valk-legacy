@@ -784,7 +784,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     Array* func_default_values = fi->default_values;
     Type *rett = fi->rett;
 
-    if (!func_args || !rett) {
+    if (!func_args) {
         parse_err(p, -1, "Function pointer value is missing function type information (compiler bug)\n");
     }
     if(on->type == v_func_ptr) {

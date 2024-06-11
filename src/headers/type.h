@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 Type* type_make(Allocator* alc, int type);
-TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Array* rett_types);
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Type* rett);
 Type *read_type(Parser *p, Allocator *alc, bool allow_newline);
 // Clone
 Type* type_clone(Allocator* alc, Type* type);
@@ -37,6 +37,7 @@ int type_get_size(Build* b, Type* type);
 Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable);
 Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2);
 Type* vscope_get_result_type(Array* values);
+Array* rett_types_of(Allocator* alc, Type* type);
 // Type cache
 Type* type_cache_ptr(Build* b);
 Type* type_cache_uint(Build* b);
@@ -49,6 +50,7 @@ struct Type {
     Class* class;
     TypeFuncInfo* func_info;
     Type* array_type;
+    Array* multi_types;
     int type;
     int size;
     int array_size;
@@ -62,7 +64,7 @@ struct TypeFuncInfo {
     Array* default_values;
     Array* err_names;
     Array* err_values;
-    Array* rett_types;
+    Type* rett;
     bool has_unknown_errors;
     bool can_error;
     bool will_exit;
