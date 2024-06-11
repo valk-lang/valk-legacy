@@ -43,6 +43,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     // Toggle tokens
     f->t_stack_incr = NULL;
     f->t_stack_decr = NULL;
+    f->t_run_gc = NULL;
 
     f->alloca_size = 0;
     f->arg_nr = 0;
@@ -62,6 +63,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
+    f->can_create_objects = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

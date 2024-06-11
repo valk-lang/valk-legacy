@@ -991,6 +991,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
 
     if (class->type == ct_class) {
         ci->item = vgen_call_pool_alloc(alc, p, b, class);
+        p->func->can_create_objects = true;
     } else {
         ci->item = vgen_call_alloc(alc, p, class->size, class);
     }

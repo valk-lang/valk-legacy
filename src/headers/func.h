@@ -52,6 +52,7 @@ struct Func {
     //
     Token* t_stack_incr;
     Token* t_stack_decr;
+    Token* t_run_gc;
     //
     int act;
     int alloca_size;
@@ -72,6 +73,7 @@ struct Func {
     bool calls_gc_check;
     bool parse_last;
     bool init_thread;
+    bool can_create_objects;
 };
 struct FuncArg {
     Type* type;

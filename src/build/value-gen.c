@@ -27,6 +27,12 @@ Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
 }
 
 Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
+    if (on->type == v_func_ptr) {
+        VFuncPtr* item = on->item;
+        array_push(p->func->called_functions, item->func);
+    } else {
+        p->func->can_create_objects = true;
+    }
     Build* b = p->b;
     VFuncCall *item = al(alc, sizeof(VFuncCall));
     item->on = on;
