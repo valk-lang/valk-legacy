@@ -44,7 +44,8 @@ char *ir_type(IR *ir, Type *type) {
 
     printf("Type: %d\n", type->type);
     printf("Type: %s\n", type_to_str(type, name));
-    die("Unknown IR type (compiler bug)");
+    printf("Unknown IR type (compiler bug)\n");
+    raise(11);
     return NULL;
 }
 

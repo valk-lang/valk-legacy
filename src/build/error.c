@@ -20,6 +20,15 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     Build *b = p->b;
     Chunk* chunk = p->chunk;
     char *content = chunk->content;
+
+    if(!chunk->fc) {
+        printf("########## CODE ##########\n");
+        printf("%s", chunk->content);
+        if(chunk->content[chunk->length - 1] != '\n') 
+            printf("\n");
+        printf("######## END CODE ########\n");
+    }
+
     // Trace
     if (p->prev) {
         printf("------------------------------\n");
@@ -47,7 +56,6 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     char error[2048];
     vsprintf(error, msg, args);
     va_end(args);
-    // printf("code:%s\n", chunk->content);
 
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);

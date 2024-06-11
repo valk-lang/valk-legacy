@@ -226,6 +226,7 @@ void read_ast(Parser *p, bool single_line) {
                     }
                 }
 
+                int mrett_decl_i = 0;
                 for(int i = 0; i < names->length; i++) {
                     char *name = array_get_index(names, i);
                     Type *type = array_get_index(types, i);
@@ -250,10 +251,10 @@ void read_ast(Parser *p, bool single_line) {
                             array_push(scope->ast, tgen_declare(alc, scope, decl, val));
                         } else {
                             array_push(scope->ast, token_make(alc, t_statement, val));
-                            array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
+                            array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, mrett_decl_i++))));
                         }
                     } else {
-                        array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, i))));
+                        array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, mrett_decl_i++))));
                     }
                 }
                 continue;
@@ -330,10 +331,10 @@ void read_ast(Parser *p, bool single_line) {
 
                     if (i == 0 && func->rett_eax) {
                         main_retv = vgen_var(alc, b, val);
-                        array_push(scope->ast, token_make(alc, t_set_var, val->item));
+                        array_push(scope->ast, token_make(alc, t_set_var, main_retv->item));
                     } else {
                         Decl *decl = array_get_index(func->rett_decls, rett_decl_i++);
-                        Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), decl->type, vgen_int(alc, 0, type_cache_i32(b)));
+                        Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), type, vgen_int(alc, 0, type_cache_i32(b)));
                         array_push(scope->ast, tgen_assign(alc, var, val));
                     }
                     i++;
@@ -344,7 +345,7 @@ void read_ast(Parser *p, bool single_line) {
                     array_push(scope->ast, tgen_assign(alc, disable, var_disable));
                 }
 
-                array_push(scope->ast, tgen_return(alc, val));
+                array_push(scope->ast, tgen_return(alc, main_retv));
                 scope->did_return = true;
                 continue;
             }
@@ -416,17 +417,17 @@ void read_ast(Parser *p, bool single_line) {
                 on_decl->is_mut = true;
                 array_push(scope->ast, tgen_declare(alc, scope, on_decl, on));
 
-                Decl *kd = NULL;
+                Decl *kd = decl_make(alc, p->func, kname, array_get_index(func->rett_types, 1), false);
+                kd->is_mut = true;
+                Idf *idf = idf_make(b->alc, idf_decl, kd);
+                scope_add_decl(alc, scope, kd);
                 if (kname) {
-                    kd = decl_make(alc, p->func, kname, array_get_index(func->rett_types, 1), false);
-                    kd->is_mut = true;
-                    Idf *idf = idf_make(b->alc, idf_decl, kd);
                     scope_set_idf(scope_each, kname, idf, p);
-                    scope_add_decl(alc, scope, kd);
                 }
+
                 Decl *vd = decl_make(alc, p->func, vname, array_get_index(func->rett_types, 0), false);
                 vd->is_mut = true;
-                Idf *idf = idf_make(b->alc, idf_decl, vd);
+                idf = idf_make(b->alc, idf_decl, vd);
                 scope_set_idf(scope_each, vname, idf, p);
                 scope_add_decl(alc, scope, vd);
                 // Index

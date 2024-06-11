@@ -125,7 +125,6 @@ void stage_types_func(Parser* p, Func* func) {
         }
     }
     if(func->read_rett_type) {
-        func->scope->must_return = true;
         *p->chunk = *func->chunk_rett;
         p->allow_multi_type = true;
         Type *rett = read_type(p, b->alc, false);
@@ -134,6 +133,7 @@ void stage_types_func(Parser* p, Func* func) {
         }
         func->rett = rett;
         func->rett_eax = rett;
+        func->scope->must_return = rett != NULL;
 
         // Argument based returns
         if(rett && rett->type == type_multi) {
@@ -152,6 +152,7 @@ void stage_types_func(Parser* p, Func* func) {
                 Decl *decl = decl_make(alc, func, NULL, ptr, true);
                 array_push(rett_decls, decl);
                 array_push(rett_arg_types, ptr);
+                scope_add_decl(alc, func->scope, decl);
             }
             func->rett_decls = rett_decls;
             func->rett_arg_types = rett_arg_types;

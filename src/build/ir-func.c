@@ -133,15 +133,17 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
     }
     // Return value references
     Array *decls = vfunc->rett_decls;
-    for (int i = 0; i < decls->length; i++) {
-        Decl* decl = array_get_index(decls, i);
-        str_preserve(code, 1000);
-        if (i > 0 || argc > 0)
-            str_flat(code, ", ");
-        str_flat(code, "ptr noundef");
-        if (!is_extern) {
-            str_flat(code, " ");
-            str_add(code, ir_arg_nr(ir, decl->arg_nr));
+    if (decls) {
+        for (int i = 0; i < decls->length; i++) {
+            Decl *decl = array_get_index(decls, i);
+            str_preserve(code, 1000);
+            if (i > 0 || argc > 0)
+                str_flat(code, ", ");
+            str_flat(code, "ptr noundef");
+            if (!is_extern) {
+                str_flat(code, " ");
+                str_add(code, ir_arg_nr(ir, decl->arg_nr));
+            }
         }
     }
     //

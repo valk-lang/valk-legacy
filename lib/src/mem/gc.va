@@ -17,21 +17,21 @@ fn gc_transfer_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
     func(item, state_solid);
 }
 fn gc_mark_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
     func(item, stack.age);
 }
 fn gc_mark_shared_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
     func(item, gc_age);
 }
 fn gc_share(item: ptr) {
@@ -39,7 +39,7 @@ fn gc_share(item: ptr) {
     // disable_gc = true;
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr)(void), vt_share)
+    let func = @ptrv(table, fn(ptr)(), vt_share)
     func(item);
     // disable_gc = dis;
 }

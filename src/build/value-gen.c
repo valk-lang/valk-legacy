@@ -36,22 +36,25 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     TypeFuncInfo* fi = on->rett->func_info;
     Value* v = value_make(alc, v_func_call, item, fi->rett);
     Type* rett = fi->rett;
-    if(rett && rett->type == type_multi) {
-        Array* types = rett->multi_types;
-        MultiRett* mr = al(alc, sizeof(MultiRett));
-        mr->types = types;
-        mr->decls = array_make(alc, types->length);
-        for(int i = 0; i < types->length; i++) {
-            Type* type = array_get_index(types, i);
-            Decl* decl = decl_make(alc, p->func, NULL, type, false);
-            decl->is_mut = true;
-            scope_add_decl(alc, p->scope, decl);
-            array_push(mr->decls, decl);
-            if(i > 0 || !type_fits_pointer(type, b)) {
-                array_push(args,  vgen_ptr_of(alc, b, vgen_decl(alc, decl)));
+    if(rett) {
+        Array* types = rett_types_of(alc, rett);
+        if(types) {
+            MultiRett *mr = al(alc, sizeof(MultiRett));
+            mr->types = types;
+            mr->decls = array_make(alc, types->length);
+            for (int i = 0; i < types->length; i++) {
+                Type *type = array_get_index(types, i);
+                if (i > 0 || !type_fits_pointer(type, b)) {
+                    Decl *decl = decl_make(alc, p->func, NULL, type, false);
+                    decl->is_mut = true;
+                    scope_add_decl(alc, p->scope, decl);
+                    array_push(mr->decls, decl);
+                    array_push(args, vgen_ptr_of(alc, b, vgen_decl(alc, decl)));
+                }
             }
+            if(mr->decls->length > 0)
+                v->mrett = mr;
         }
-        v->mrett = mr;
     }
     return v;
 }
@@ -76,6 +79,7 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
 
 Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) {
     if(!index) {
+        // return on;
         index = vgen_int(alc, 0, type_gen_valk(alc, b, "int"));
     }
     VPtrv *item = al(alc, sizeof(VPtrv));

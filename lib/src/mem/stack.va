@@ -287,7 +287,7 @@ cstruct Stack {
                 }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
+                let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
                 func(item, state_solid);
             }
             if is_last {
@@ -323,7 +323,7 @@ cstruct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -342,7 +342,7 @@ cstruct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -361,7 +361,7 @@ cstruct Stack {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }
@@ -376,7 +376,7 @@ cstruct Stack {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }

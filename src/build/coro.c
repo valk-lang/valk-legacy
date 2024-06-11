@@ -37,15 +37,17 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
-    for(int i = 0; i < rett_types->length; i++) {
-        char buf[16];
-        sprintf(buf, "RETT%d", i);
-        Type* rett = array_get_index(rett_types, i);
-        if(type_is_gc(rett)){
-            gc_rett_count++;
+    if (rett_types) {
+        for (int i = 0; i < rett_types->length; i++) {
+            char buf[16];
+            sprintf(buf, "RETT%d", i);
+            Type *rett = array_get_index(rett_types, i);
+            if (type_is_gc(rett)) {
+                gc_rett_count++;
+            }
+            idf = idf_make(b->alc, idf_type, rett);
+            scope_set_idf(func->scope, buf, idf, NULL);
         }
-        idf = idf_make(b->alc, idf_type, rett);
-        scope_set_idf(func->scope, buf, idf, NULL);
     }
 
     // Handler type
@@ -87,7 +89,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, ")\n");
     }
     // Call handler
-    if(rett) {
+    if(rett_types) {
         str_flat(code, "let ");
         for(int i = 0; i < rett_types->length; i++) {
             if(i > 0)
@@ -118,7 +120,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         // Clear gc args
         str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base\n");
     }
-    if(rett) {
+    if(rett_types) {
         int s_pos = 0;
         int s_pos_gc = 0;
         for(int i = 0; i < rett_types->length; i++) {
@@ -194,7 +196,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Coro start function code
     str_flat(code, "<{\n");
-    str_flat(code, "let coro = CORO_CLASS.new(HANDLER, START_FUNC, true)\n");
+    str_flat(code, "let coro = CORO_CLASS.new(HANDLER, START_FUNC)\n");
     if(has_arg) {
         str_flat(code, "let args = coro.args\n");
     }
@@ -279,12 +281,14 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     scope_set_idf(sub, "CORO_VAL", idf, NULL);
 
     // Return type identifiers
-    for(int i = 0; i < rett_types->length; i++) {
-        char buf[16];
-        sprintf(buf, "RETT%d", i);
-        Type* rett = array_get_index(rett_types, i);
-        idf = idf_make(b->alc, idf_type, rett);
-        scope_set_idf(sub, buf, idf, NULL);
+    if (rett_types) {
+        for (int i = 0; i < rett_types->length; i++) {
+            char buf[16];
+            sprintf(buf, "RETT%d", i);
+            Type *rett = array_get_index(rett_types, i);
+            idf = idf_make(b->alc, idf_type, rett);
+            scope_set_idf(sub, buf, idf, NULL);
+        }
     }
 
     Global *g_cc = get_valk_global(b, "core", "current_coro");
@@ -295,7 +299,7 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     str_flat(code, "<{\n");
     str_flat(code, "let coro = CORO_VAL @as CORO_CLASS\n");
     str_flat(code, "while(!coro.done) { CURRENT_CORO.await_coro(coro) }\n");
-    if(rett_types->length == 0) {
+    if(!rett_types || rett_types->length == 0) {
         str_flat(code, "return 0\n");
     } else {
         // Return values

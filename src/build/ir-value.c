@@ -25,7 +25,8 @@ char* ir_value(IR* ir, Value* v) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, fcall->on);
         Array *values = ir_fcall_args(ir, fcall->args, fcall->rett_refs);
-        char *call = ir_func_call(ir, on, values, ir_type(ir, v->rett), fcall->line, fcall->col);
+        Type* rett = rett_extract_eax(ir->b, v->rett);
+        char *call = ir_func_call(ir, on, values, ir_type(ir, rett), fcall->line, fcall->col);
 
         ErrorHandler* errh = fcall->errh;
         if (errh) {

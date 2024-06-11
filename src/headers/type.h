@@ -38,6 +38,7 @@ Array* gen_type_array_1(Allocator* alc, Build* b, char* type1, bool nullable);
 Array* gen_type_array_2(Allocator* alc, Build* b, char* type1, bool nullable1, char* type2, bool nullable2);
 Type* vscope_get_result_type(Array* values);
 Array* rett_types_of(Allocator* alc, Type* type);
+Type* rett_extract_eax(Build* b, Type* type);
 // Type cache
 Type* type_cache_ptr(Build* b);
 Type* type_cache_uint(Build* b);

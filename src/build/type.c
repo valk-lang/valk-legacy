@@ -364,6 +364,10 @@ Type* type_merge(Allocator* alc, Type* t1, Type* t2) {
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
+    if (!t1 || type_is_void(t2))
+        return true;
+    if (!t2 || type_is_void(t1))
+        return true;
     if (!t1 || !t2)
         return false;
     if (t2->type == type_null && (t1->type == type_ptr || t1->nullable || t1->ignore_null)) {
@@ -623,9 +627,21 @@ Array* rett_types_of(Allocator* alc, Type* type) {
         return NULL;
     if(type->type == type_void)
         return NULL;
-    if(type->multi_types)
+    if(type->multi_types || type->type == type_multi)
         return type->multi_types;
     Array* arr = array_make(alc, 1);
-    type->multi_types = arr;
+    // type->multi_types = arr;
+    array_push(arr, type);
     return arr;
+}
+
+Type* rett_extract_eax(Build* b, Type* type) {
+    if(!type)
+        return NULL;
+    if(type->type == type_multi) {
+        type = array_get_index(type->multi_types, 0);
+    }
+    if(type_fits_pointer(type, b))
+        return type;
+    return NULL;
 }

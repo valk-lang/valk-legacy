@@ -42,7 +42,7 @@ void stage_5_ir_final(Build* b) {
         ctxhash(ir_code, ir_hash);
 
         char *old_hash = "";
-        if (file_exists(u->path_cache)) {
+        if (!b->is_clean && file_exists(u->path_cache)) {
             usize start = microtime();
             file_get_contents(hash_buf, u->path_cache);
             b->time_io += microtime() - start;

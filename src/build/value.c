@@ -441,6 +441,10 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
     // TRAILING CHARS
     ///////////////////////
 
+    if(v->rett && v->rett->type == type_multi) {
+        return v;
+    }
+
     t = tok(p, false, false, false);
     while(t == tok_dot || t == tok_bracket_open || t == tok_plusplus || t == tok_subsub) {
         tok(p, false, false, true);
@@ -1011,7 +1015,7 @@ Value* value_handle_ptrv(Allocator *alc, Parser* p) {
     // Type
     tok_expect(p, ",", true, true);
     Type *type = read_type(p, alc, true);
-    if (type->type == type_void) {
+    if (!type || type->type == type_void) {
         parse_err(p, -1, "You cannot use 'void' type in @ptrv");
     }
     // Index
