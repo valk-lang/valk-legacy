@@ -882,8 +882,9 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     }
 
     Value* buffer = vgen_gc_buffer(alc, p, p->scope, fcall, args, true);
-    if(buffer->type == v_gc_buffer && p->scope->ast) {
-        p->scope->gc_check = true;
+    if(buffer != fcall && p->scope->ast) {
+        // Lowers performance and increase mem usage...
+        // p->scope->gc_check = true;
     }
 
     if (!p->reading_coro_fcall) {
