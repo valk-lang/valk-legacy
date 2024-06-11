@@ -139,7 +139,6 @@ void stage_ast_func(Func *func) {
     }
     if(!func->can_create_objects) {
         if(func->t_run_gc) {
-            printf("d");
             disable_token(func->t_run_gc);
         }
     }
