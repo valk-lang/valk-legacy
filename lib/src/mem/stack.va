@@ -15,7 +15,7 @@ global mem_marked : uint;
 global mem_transfered : uint;
 global mem_usage : uint;
 
-value mem_marked_default (1024)
+value mem_marked_default (10240)
 
 value state_new (0)
 value state_used (1)
@@ -163,15 +163,9 @@ cstruct Stack {
     fn gc() {
         if disable_gc : return
         this.lock.lock()
-        // io:print_fake("GC.")
 
         disable_gc = true
         run_gc = false
-
-        // mem_new.print(10)
-        // io:print_fake("/")
-        // mem_marked.print(10)
-        // io:print_fake("\n")
 
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -180,13 +174,10 @@ cstruct Stack {
 
         let transfer_percent = mem_transfered * 100 / mem_marked
 
-        // transfer_percent.print(10)
-        // io:print_fake("\n")
-
         // Full clear
         if transfer_percent > 30 || this.force_full {
 
-            // io:print_fake("!")
+            // io:print_fake(".")
             if this.force_full : this.force_full = false
 
             mem_marked = mem_marked_default
