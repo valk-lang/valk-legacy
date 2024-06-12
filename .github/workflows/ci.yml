@@ -2,12 +2,13 @@ name: ci
 
 on:
   pull_request:
-    types: [ready_for_review]
+    types: [ready_for_review, synchronize]
     branches: [ main, nightly ]
 
 jobs:
   linux:
     name: "test on ubuntu-latest"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
@@ -43,6 +44,7 @@ jobs:
     
   macos:
     name: "test on macos-13 x64"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
     runs-on: macos-13
@@ -69,6 +71,7 @@ jobs:
 
   windows:
     name: "test on windows-latest(MSYS2)"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
     runs-on: windows-latest
