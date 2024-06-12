@@ -28,12 +28,9 @@ trait Number {
 
     fn to_base(base: SELF) String {
 
-        if this == 0 || base == 0 {
-            return "0";
-        }
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-        }
+        if this == 0 || base == 0 : return "0";
+
+        if str_buf == null : str_buf = mem:alloc(24)
         let buf = str_buf @as ptr
         let len = this.to_base_to_ptr(base, buf)
 
@@ -45,7 +42,7 @@ trait Number {
         let chars = "0123456789ABCDEF".data
 
         if str_rev == null {
-            str_rev = mem:alloc(64)
+            str_rev = mem:alloc(24)
         }
         let rev = str_rev
         let val = this
@@ -87,34 +84,9 @@ trait Number {
 
     fn print(base: SELF) {
 
-        let chars = "0123456789ABCDEF".data
-
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-            str_rev = mem:alloc(64)
-        }
+        if str_buf == null : str_buf = mem:alloc(24)
         let buf = str_buf @as ptr
-        let rev = str_rev
-
-        if this == 0 || base == 0 {
-            io:write_from_ptr(1, chars, 1) ? 0
-            return
-        }
-
-        let val = this
-        let i : uint = 0;
-        while val > 0 {
-            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
-            i++
-            val = val / base
-        }
-        // Set len
-        let len = i
-        // Reverse
-        let up = 0
-        while i-- > 0 {
-            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
-        }
+        let len = this.to_base_to_ptr(base, buf)
 
         io:write_from_ptr(1, buf, len) ? 0
     }

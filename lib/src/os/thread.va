@@ -17,10 +17,10 @@ cstruct Thread {
     - static fn entry(e: ThreadEntry) {
         // mem:Stack.init()
         if e.has_data {
-            let func = e.func @as fn(ptr)(void);
+            let func = e.func @as fn(ptr)();
             co func(e.data @as ptr);
         } else {
-            let func = e.func @as fn()(void);
+            let func = e.func @as fn()();
             co func();
         }
         core:Coro2.loop()

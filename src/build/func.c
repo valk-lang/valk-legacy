@@ -13,7 +13,6 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->fc = NULL;
     f->scope = scope_make(alc, sc_func, parent);
     f->scope->func = f;
-    f->scope_stack_reduce = NULL;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
@@ -22,24 +21,40 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
+    f->rett = NULL;
+    f->rett_eax = NULL;
     f->rett_types = array_make(alc, 1);
+    f->rett_arg_types = NULL;
+    f->rett_decls = NULL;
     f->used_functions = array_make(alc, 4);
+    f->called_functions = array_make(alc, 4);
     f->used_classes = array_make(alc, 4);
 
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
-    // Coro
+
+    f->ast_stack_init = NULL;
+    f->ast_start = NULL;
+    f->ast_end = NULL;
+    // Cached values
+    f->v_cache_stack_pos = NULL;
+    f->v_cache_alloca = NULL;
+    // Toggle tokens
+    f->t_stack_incr = NULL;
+    f->t_stack_decr = NULL;
+    f->t_run_gc = NULL;
+
     f->alloca_size = 0;
-    f->gc_decl_count = 0;
+    f->arg_nr = 0;
+    f->rett_count = 0;
 
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
     f->types_parsed = false;
     f->in_header = false;
-    f->has_rett = false;
-    f->multi_rett = false;
+    f->read_rett_type = false;
     f->is_test = false;
     f->is_used = false;
     f->use_if_class_is_used = false;
@@ -48,6 +63,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->calls_gc_check = false;
     f->parse_last = false;
     f->init_thread = false;
+    f->can_create_objects = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -83,13 +99,8 @@ void parse_handle_func_args(Parser* p, Func* func) {
 
     char t = tok(p, true, true, false);
     if (t != tok_curly_open && t != tok_not) {
-        func->has_rett = true;
-        if(t == tok_bracket_open) {
-            func->multi_rett = true;
-            skip_body(p);
-        } else {
-            skip_type(p);
-        }
+        func->read_rett_type = true;
+        skip_type(p);
     }
 
     t = tok(p, true, true, false);
@@ -130,7 +141,7 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bool on_await){
+char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
     IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
     IRBlock *block_else = errh->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
@@ -152,7 +163,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
 
     if (errh->err_decl) {
         if(errh->err_decl->is_mut) {
-            ir_store(ir, errh->err_decl->ir_store_var, load, "i32", type_i32->size);
+            ir_store(ir, errh->err_decl->ir_store, load, "i32", type_i32->size);
         } else {
             errh->err_decl->ir_var = load;
         }
@@ -190,7 +201,7 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
             ir_store_old(ir, type_i32, "@valk_err_code", "0");
         }
 
-        char* alt_val = ir_value(ir, scope, val);
+        char* alt_val = ir_value(ir, val);
         IRBlock* block_err_val = ir->block;
         ir_jump(ir, after);
 
@@ -218,23 +229,6 @@ char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bo
     }
 
     return NULL;
-}
-
-void func_generate_args(Allocator* alc, Func* func, Map* args) {
-    int count = args->values->length;
-    for(int i = 0; i < count; i++) {
-        char* name = array_get_index(args->keys, i);
-        Type* type = array_get_index(args->values, i);
-
-        FuncArg *arg = func_arg_make(alc, type);
-        map_set_force_new(func->args, name, arg);
-        array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(alc, name, arg->type, true);
-        Idf *idf = idf_make(alc, idf_decl, decl);
-        scope_set_idf(func->scope, name, idf, NULL);
-        arg->decl = decl;
-        array_push(func->arg_values, NULL);
-    }
 }
 
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max) {
@@ -308,14 +302,20 @@ void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_typ
     }
 }
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
+    Array *retts = func->rett_types;
+    Type *rett = array_get_index(retts, 0);
+    if(!rett)
+        rett = type_gen_void(p->b->alc);
+    //
     bool has_valid = false;
-    Type *rett = func->rett;
     int count = allowed_types->length;
-    for (int i = 0; i < count; i++) {
-        Type *valid = array_get_index(allowed_types, i);
-        if(rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
-            has_valid = true;
-            break;
+    if (rett) {
+        for (int i = 0; i < count; i++) {
+            Type *valid = array_get_index(allowed_types, i);
+            if (rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
+                has_valid = true;
+                break;
+            }
         }
     }
     if(!has_valid){
@@ -337,10 +337,11 @@ void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
 }
 
 void func_validate_rett_void(Parser *p, Func *func) {
-    if (!type_is_void(func->rett)) {
-        *p->chunk = *func->chunk_rett;
+    Array *retts = func->rett_types;
+    if(retts->length != 0) {
+        Type* type = array_get_index(retts, 0);
         char buf[512];
-        type_to_str(func->rett, buf);
+        type_to_str(type, buf);
         parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
     }
 }
@@ -359,19 +360,3 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
     }
 }
 
-
-void func_set_decl_offset(Func* func, Decl* decl) {
-    if (decl->is_gc) {
-        decl->offset = func->gc_decl_count++;
-    } else {
-        if (decl->is_mut) {
-            Type *type = decl->type;
-            int size = type->size;
-            int offset = func->alloca_size;
-            int skip = size > 0 ? (size - (offset % size)) % size : 0;
-            offset += skip;
-            decl->offset = offset;
-            func->alloca_size = offset + size;
-        }
-    }
-}

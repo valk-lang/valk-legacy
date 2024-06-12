@@ -7,7 +7,7 @@ fn coro_test() {
     coro_test_str += "_4"
 }
 
-test "coroutines" {
+test "Coroutines" {
     coro_test_str = "1"
     let coro = co coro_test()
     coro_test_str += "_3"

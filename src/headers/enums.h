@@ -110,6 +110,7 @@ enum TYPES {
     type_static_array,
     type_error, // 10
     type_promise,
+    type_multi,
 };
 
 enum CLASSTYPES {
@@ -155,12 +156,11 @@ enum VALUES {
     v_vscope, // 30
     v_null_alt_value,
     v_await,
-    v_cached_stack_adr,
-    v_cached_stack_instance,
     v_setjmp,
     v_longjmp,
     v_frameptr,
     v_stackptr,
+    v_memset,
 };
 
 enum TOKENS {
@@ -175,11 +175,13 @@ enum TOKENS {
     t_throw,
     t_set_var,
     t_ast_scope, // 10
-    t_set_decl_store_var,
     t_set_return_value,
     t_each,
     t_return_vscope,
     t_yield,
+    t_decl_set_store,
+    t_decl_set_arg,
+    t_disabled,
 };
 
 enum OPERATORS {

@@ -99,40 +99,6 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
             continue;
         }
 
-        // // Compile conditions
-        // if (ch == '#' && (o < 2 || tokens[o - 2] == tok_newline)) {
-        //     int x = i;
-        //     char ch = content[x];
-        //     while (ch >= 97 && ch <= 122) {
-        //         token[token_i++] = ch;
-        //         ch = content[++x];
-        //     }
-        //     token[token_i] = '\0';
-        //     token_i = 0;
-        //     if (str_is(token, "if")) {
-        //         tokens[o++] = tok_cc;
-        //         strcpy((char *)((intptr_t)tokens + o), token);
-        //         o += 3;
-        //         cc_depth++;
-        //         i = x;
-        //         continue;
-        //     }
-        //     if (str_is(token, "elif") || str_is(token, "else") || str_is(token, "end")) {
-        //         tokens[o++] = tok_cc;
-        //         strcpy((char *)((intptr_t)tokens + o), token);
-        //         o += (str_is(token, "end")) ? 4 : 5;
-        //         if (str_is(token, "end")) {
-        //             cc_depth--;
-        //             if (cc_depth < 0) {
-        //                 chunk->i = i;
-        //                 sprintf(b->char_buf, "Using #%s without an #if before it", token);
-        //                 parse_err(chunk, b->char_buf);
-        //             }
-        //         }
-        //         i = x;
-        //         continue;
-        //     }
-        // }
         // ID: a-zA-Z_
         if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == 95 || (ch == '@' && is_valid_varname_first_char(content[i]))) {
 
@@ -369,19 +335,4 @@ void chunk_lex(Build* b, Chunk *chunk, ChunkPos* err_pos) {
     str_buf->length = o;
     chunk->tokens = str_to_chars(b->alc, str_buf);
     b->LOC += line;
-
-    // int x = 0;
-    // while(x < o) {
-    //     char ch = chunk->tokens[x++];
-    //     printf("%u.", ch);
-    // }
-    // exit(1);
-
-    // Probably will never happen
-    // if (err_token_i > -1) {
-    //     *err_content_i = i;
-    //     *err_line = line;
-    //     *err_col = col;
-    //     return;
-    // }
 }

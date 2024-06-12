@@ -15,13 +15,13 @@ void ir_define_struct(IR *ir, Class* class);
 char *ir_type_align(IR *ir, Type *type, char* result);
 // Func
 void ir_gen_ir_for_func(IR *ir, Func *vfunc);
-void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern, Array* rett_refs);
+void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern);
 void ir_define_ext_func(IR* ir, Func* func);
 char *ir_alloca(IR *ir, IRFunc* func, Type *type);
 char *ir_alloca_by_size(IR *ir, IRFunc* func, char* type, char* size);
-void ir_func_return_nothing(IR* ir);
-void ir_func_return(IR* ir, char* type, char* value);
-char* ir_func_err_handler(IR* ir, Scope* scope, ErrorHandler* errh, char* on, bool on_await);
+void ir_func_return_nothing(IR* ir, Scope* scope);
+void ir_func_return(IR* ir, Scope* scope, char* type, char* value);
+char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await);
 // Block
 IRBlock *ir_block_make(IR *ir, IRFunc* func, char* prefix);
 // AST
@@ -31,15 +31,17 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable);
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
 // Value
-char* ir_value(IR* ir, Scope* scope, Value* v);
-char* ir_assign_value(IR* ir, Scope* scope, Value* v);
+char* ir_value(IR* ir, Value* v);
+char* ir_assign_value(IR* ir, Value* v);
 // Generate
 char *ir_var(IRFunc* func);
+char* ir_arg_nr(IR* ir, int nr);
+void ir_decl_store(IR* ir, Decl* decl, char* val);
 void ir_jump(IR* ir, IRBlock* block);
 void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else);
 char *ir_int(IR* ir, v_i64 value);
 char *ir_float(IR* ir, double value);
-Array *ir_fcall_args(IR *ir, Scope *scope, Array *values, Array* rett_refs);
+Array *ir_fcall_args(IR *ir, Array *values, Array* rett_refs);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
 char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
@@ -49,11 +51,11 @@ void ir_store(IR *ir, char *var, char *val, char* type, int type_size);
 void ir_store_old(IR *ir, Type *type, char *var, char *val);
 char *ir_cast(IR *ir, char *lval, Type *from_type, Type *to_type);
 char *ir_i1_cast(IR *ir, char *val);
-char* ir_op(IR* ir, Scope* scope, int op, char* left, char* right, Type* rett);
+char* ir_op(IR* ir, int op, char* left, char* right, Type* rett);
 char* ir_compare(IR* ir, int op, char* left, char* right, char* type, bool is_signed, bool is_float);
 char *ir_class_pa(IR *ir, Class *class, char *on, ClassProp *prop);
-void ir_if(IR *ir, Scope *scope, TIf *ift);
-void ir_while(IR *ir, Scope *scope, TWhile *item);
+void ir_if(IR *ir, TIf *ift);
+void ir_while(IR *ir, TWhile *item);
 char* ir_ptrv(IR* ir, char* on, char* type, int index);
 char* ir_ptr_offset(IR* ir, char* on, char* index, char* index_type, int size);
 char* ir_ptrv_dyn(IR* ir, char* on, char* type, char* index, char* index_type);
@@ -116,16 +118,6 @@ struct IRFunc {
     //
     char* stack_save_vn;
     char* di_scope;
-    char* gc_stack;
-    char* gc_stack_adr;
-    char* gc_stack_adr_val;
-    //
-    char* var_coro;
-    char* var_alloca_stack;
-    char* var_stack_adr;
-    char* var_g_stack;
-    char* var_g_stack_adr;
-    char* var_g_stack_adr_ref;
     //
     int var_count;
     int gc_count;

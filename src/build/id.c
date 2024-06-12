@@ -1,22 +1,45 @@
 
 #include "../all.h"
 
+// Decl logic
+
+// mut decls: give offset
+// imut gc !is_arg: give offset
+
+// Func start:
+// alloca
+// load stack adr
+// if has offset: set ir_store based on offset
+// if is_arg:
+// -- if has ir_store, store arg in ir_store
+// -- if imut, ir_var = arg
+// if !is_arg: 
+// -- if has offset && is_gc, store null in ir_store
+// increase + store stack adr
+
+// Func end
+// decrease stack adr
+
+// before continue/break or end of loop, set all gc decls to null
+
 Idf* idf_make(Allocator* alc, int type, void* item) {
     Idf* idf = al(alc, sizeof(Idf));
     idf->type = type;
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool never_gc) {
-    bool is_gc = !never_gc && type_is_gc(type);
+Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg) {
+    bool is_gc = type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->name = name;
     d->type = type;
-    d->ir_var = NULL;
-    d->ir_store_var = NULL;
     d->is_mut = false;
     d->is_gc = is_gc;
+    d->is_arg = is_arg;
+    d->arg_nr = is_arg ? func->arg_nr++ : -1;
     d->offset = -1;
+    d->ir_store = NULL;
+    d->ir_var = NULL;
     return d;
 }
 
@@ -36,7 +59,6 @@ Id *read_id(Parser *p, char *first_part, Id *buf) {
 
     char* ns = NULL;
     char* name = first_part;
-    Build* b = p->b;
 
     if(first_part == NULL) {
         char t = tok(p, true, true, true);

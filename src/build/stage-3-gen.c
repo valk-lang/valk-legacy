@@ -21,19 +21,20 @@ void stage_3_gen(Build* b) {
 void stage_generate_main(Build *b) {
     //
     Unit* u = array_get_index(b->units, 0);
+    Func* mainfunc = b->func_main;
 
     bool main_has_return = false;
     bool main_has_arg = false;
-    if(b->func_main) {
-        main_has_return = !type_is_void(b->func_main->rett);
-        main_has_arg = b->func_main->arg_types->length > 0;
+    if(mainfunc) {
+        main_has_return = mainfunc->rett_types->length > 0;
+        main_has_arg = mainfunc->arg_types->length > 0;
     }
 
     // Generate test main
     Func *test_main = b->is_test ? stage_generate_tests(b) : NULL;
 
     // Generate main function
-    Scope* scope = b->func_main ? b->func_main->scope->parent : scope_make(b->alc, sc_default, NULL);
+    Scope* scope = mainfunc ? mainfunc->scope->parent : scope_make(b->alc, sc_default, NULL);
     Func* func = func_make(b->alc, u, scope, "main", "main");
     b->func_main_gen = func;
     func->init_thread = true;

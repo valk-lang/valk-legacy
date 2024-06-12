@@ -11,7 +11,7 @@ fn malloc(size: uint) ptr;
 fn free(adr: ptr) i32;
 
 fn exit(code: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 fn __errno_location() ptr;
 

@@ -1,5 +1,5 @@
 
-test "null checking: ??" {
+test "Null checking: ??" {
     let s : ?String = <{ return null }
     let s2 = <{ return s } ?? <{ return "1" }
     assert(s2 == "1")

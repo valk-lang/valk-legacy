@@ -110,7 +110,7 @@ fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 fn gettid() i32;
 
 fn exit(status: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 
 fn _NSGetExecutablePath(buf: ptr, len_u32_ptr: ptr) i32;

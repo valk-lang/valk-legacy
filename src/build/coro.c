@@ -10,11 +10,11 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     TypeFuncInfo *fi = fcall->on->rett->func_info;
     Array *types = fi->args;
     Type *rett = fi->rett;
+    Array *rett_types = rett_types_of(alc, rett);
 
-    bool has_rett = !type_is_void(rett);
     bool has_arg = false;
     bool has_gc_arg = false;
-    bool rett_is_gc = has_rett && type_is_gc(rett);
+    int gc_rett_count = 0;
     for(int i = 0; i < types->length; i++) {
         Type* type = array_get_index(types, i); 
         if(type_is_gc(type)) {
@@ -36,8 +36,19 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
-    idf = idf_make(b->alc, idf_type, fi->rett);
-    scope_set_idf(func->scope, "RETT", idf, NULL);
+
+    if (rett_types) {
+        for (int i = 0; i < rett_types->length; i++) {
+            char buf[16];
+            sprintf(buf, "RETT%d", i);
+            Type *rett = array_get_index(rett_types, i);
+            if (type_is_gc(rett)) {
+                gc_rett_count++;
+            }
+            idf = idf_make(b->alc, idf_type, rett);
+            scope_set_idf(func->scope, buf, idf, NULL);
+        }
+    }
 
     // Handler type
     Type *ht = type_make(b->alc, type_func);
@@ -78,13 +89,21 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, ")\n");
     }
     // Call handler
-    if(has_rett) {
-        str_flat(code, "let res = ");
+    if(rett_types) {
+        str_flat(code, "let ");
+        for(int i = 0; i < rett_types->length; i++) {
+            if(i > 0)
+                str_flat(code, ", ");
+            str_flat(code, "res");
+            char nr[16];
+            itos(i, nr, 10);
+            str_add(code, nr);
+        }
+        str_flat(code, " = ");
     }
     str_flat(code, "(coro.handler @as HANDLER_TYPE)(");
     // Args
     for(int i = 0; i < types->length; i++) {
-        Type* type = array_get_index(types, i);
         char argname[36];
         sprintf(argname, "arg%d", i);
         if(i > 0)
@@ -97,14 +116,46 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     }
     str_flat(code, "\n");
     // Finish
-    if(!rett_is_gc && has_gc_arg) {
+    if(has_gc_arg && (gc_rett_count == 0 || !rett)) {
         // Clear gc args
         str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base\n");
     }
-    if(has_rett) {
-        str_flat(code, "@ptrv(coro.result, RETT) = res\n");
-        if(rett_is_gc) {
-            str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base + sizeof(ptr)\n");
+    if(rett_types) {
+        int s_pos = 0;
+        int s_pos_gc = 0;
+        for(int i = 0; i < rett_types->length; i++) {
+            char nr[16];
+            itos(i, nr, 10);
+            char offset[16];
+            Type *type = array_get_index(rett_types, i);
+            if (type_is_gc(type)) {
+                itos(s_pos_gc++, offset, 10);
+                str_flat(code, "@ptrv(coro.gc_stack, RETT");
+                str_add(code, nr);
+                str_flat(code, ", ");
+                str_add(code, offset);
+                str_flat(code, ") = res");
+                str_add(code, nr);
+                str_flat(code, "\n");
+            } else {
+                int size = type->size;
+                itos(s_pos, offset, 10);
+                s_pos += size;
+                str_flat(code, "@ptrv(coro.args + ");
+                str_add(code, offset);
+                str_flat(code, ", RETT");
+                str_add(code, nr);
+                str_flat(code, ") = res");
+                str_add(code, nr);
+                str_flat(code, "\n");
+            }
+        }
+        if(gc_rett_count > 0) {
+            char nr[16];
+            itos(gc_rett_count, nr, 10);
+            str_flat(code, "coro.gc_stack.adr = coro.gc_stack.base + sizeof(ptr) * ");
+            str_add(code, nr);
+            str_flat(code, "\n");
         }
     }
     str_flat(code, "coro.complete()\n");
@@ -145,7 +196,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     // Coro start function code
     str_flat(code, "<{\n");
-    str_flat(code, "let coro = CORO_CLASS.new(HANDLER, START_FUNC, true)\n");
+    str_flat(code, "let coro = CORO_CLASS.new(HANDLER, START_FUNC)\n");
     if(has_arg) {
         str_flat(code, "let args = coro.args\n");
     }
@@ -220,14 +271,26 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     str_clear(code);
 
     TypeFuncInfo* fi = on->rett->func_info;
+    Type* rett = fi->rett;
+    Array* rett_types = rett_types_of(alc, rett);
     Scope* sub = scope_sub_make(b->alc, sc_default, p->scope);
 
     Idf* idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
     scope_set_idf(sub, "CORO_CLASS", idf, NULL);
     idf = idf_make(alc, idf_value, on);
     scope_set_idf(sub, "CORO_VAL", idf, NULL);
-    idf = idf_make(alc, idf_type, fi->rett);
-    scope_set_idf(sub, "RETT", idf, NULL);
+
+    // Return type identifiers
+    if (rett_types) {
+        for (int i = 0; i < rett_types->length; i++) {
+            char buf[16];
+            sprintf(buf, "RETT%d", i);
+            Type *rett = array_get_index(rett_types, i);
+            idf = idf_make(b->alc, idf_type, rett);
+            scope_set_idf(sub, buf, idf, NULL);
+        }
+    }
+
     Global *g_cc = get_valk_global(b, "core", "current_coro");
     idf = idf_make(alc, idf_global, g_cc);
     scope_set_idf(sub, "CURRENT_CORO", idf, NULL);
@@ -236,11 +299,53 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     str_flat(code, "<{\n");
     str_flat(code, "let coro = CORO_VAL @as CORO_CLASS\n");
     str_flat(code, "while(!coro.done) { CURRENT_CORO.await_coro(coro) }\n");
-    if(type_is_void(fi->rett)) {
+    if(!rett_types || rett_types->length == 0) {
         str_flat(code, "return 0\n");
     } else {
-        str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
-        str_flat(code, "return retv\n");
+        // Return values
+        // str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
+        int s_pos = 0;
+        int s_pos_gc = 0;
+        for(int i = 0; i < rett_types->length; i++) {
+            Type* type = array_get_index(rett_types, i);
+            char offset[16];
+            char nr[16];
+            itos(i, nr, 10);
+            str_flat(code, "let retv");
+            str_add(code, nr);
+            str_flat(code, " = ");
+            if(type_is_gc(type)) {
+                itos(s_pos_gc++, offset, 10);
+                str_flat(code, "@ptrv(coro.gc_stack, RETT");
+                str_add(code, nr);
+                str_flat(code, ", ");
+                str_add(code, offset);
+                str_flat(code, ")\n");
+            } else {
+                int size = type->size;
+                itos(s_pos, offset, 10);
+                s_pos += size;
+                itos(s_pos_gc++, offset, 10);
+                str_flat(code, "@ptrv(coro.args + ");
+                str_add(code, offset);
+                str_flat(code, ", RETT");
+                str_add(code, nr);
+                str_flat(code, ")\n");
+            }
+        }
+
+        // Return statement
+        // str_flat(code, "return retv{nr}, retv{nr}, ...\n");
+        str_flat(code, "return ");
+        for(int i = 0; i < rett_types->length; i++) {
+            if(i > 0)
+                str_flat(code, ", ");
+            str_flat(code, "retv");
+            char nr[16];
+            itos(i, nr, 10);
+            str_add(code, nr);
+        }
+        str_flat(code, "\n");
     }
     str_flat(code, "}\n");
 

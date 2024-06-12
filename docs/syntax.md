@@ -54,7 +54,7 @@ fn alloc(size: uint (100)) ptr {
     def fn myfunc() { ... code ... }
     myfunc()
     // Inline function 2 (closure)
-    let myfunc = fn() { ... code ... }
+    let myfunc = fn () { ... code ... }
     myfunc()
     // Inline struct
     def struct myStruct { ... props & functions ... }

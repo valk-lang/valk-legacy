@@ -91,7 +91,7 @@ cstruct GcPool2[T] {
         // Check mem usage
         mem_usage = mem_new * 100 / mem_marked
         if mem_usage > 30 {
-            stack.run_gc = true
+            run_gc = true
         }
     }
 

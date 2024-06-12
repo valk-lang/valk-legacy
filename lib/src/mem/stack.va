@@ -8,13 +8,14 @@ use core
 
 global stack : @ignu(Stack);
 global disable_gc : bool;
+global run_gc : bool;
 
 global mem_new : uint;
 global mem_marked : uint;
 global mem_transfered : uint;
 global mem_usage : uint;
 
-value mem_marked_default (1024)
+value mem_marked_default (10240)
 
 value state_new (0)
 value state_used (1)
@@ -77,7 +78,7 @@ cstruct Stack {
     age: u8 (33)
     gc_age: u8 (0)
 
-    run_gc: bool (false)
+    run_gc_ref: ptr
     bumper_overflow: bool (false)
 
     force_full: bool (false)
@@ -96,10 +97,12 @@ cstruct Stack {
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
+            run_gc_ref: @ptr_of(run_gc)
         }
 
         stack = s;
         disable_gc = false
+        run_gc = false
         mem_marked = mem_marked_default
 
         pools_init()
@@ -160,15 +163,9 @@ cstruct Stack {
     fn gc() {
         if disable_gc : return
         this.lock.lock()
-        // io:print_fake("GC.")
 
         disable_gc = true
-        this.run_gc = false
-
-        // mem_new.print(10)
-        // io:print_fake("/")
-        // mem_marked.print(10)
-        // io:print_fake("\n")
+        run_gc = false
 
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -177,13 +174,10 @@ cstruct Stack {
 
         let transfer_percent = mem_transfered * 100 / mem_marked
 
-        // transfer_percent.print(10)
-        // io:print_fake("\n")
-
         // Full clear
         if transfer_percent > 30 || this.force_full {
 
-            // io:print_fake("!")
+            // io:print_fake(".")
             if this.force_full : this.force_full = false
 
             mem_marked = mem_marked_default
@@ -284,7 +278,7 @@ cstruct Stack {
                 }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
+                let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
                 func(item, state_solid);
             }
             if is_last {
@@ -320,7 +314,7 @@ cstruct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -339,7 +333,7 @@ cstruct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -358,7 +352,7 @@ cstruct Stack {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }
@@ -373,7 +367,7 @@ cstruct Stack {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }
