@@ -62,7 +62,8 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
                 v->mrett = mr;
         }
     }
-    return v;
+
+    return vgen_gc_buffer(alc, p, p->scope, v, args, true);
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {

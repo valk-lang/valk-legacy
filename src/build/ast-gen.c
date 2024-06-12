@@ -13,12 +13,14 @@ void ast_func_start(Allocator* alc, Parser* p) {
 
         if (func == b->func_main_gen) {
             Func *f1 = get_valk_class_func(b, "mem", "GcManager", "init");
-            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
+            Array* args = array_make(alc, 1);
+            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), args);
             array_push(init->ast, token_make(alc, t_statement, v));
         }
         if (func->init_thread) {
             Func *f1 = get_valk_class_func(b, "mem", "Stack", "init");
-            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), array_make(alc, 1));
+            Array* args = array_make(alc, 1);
+            Value *v = vgen_func_call(alc, p, vgen_func_ptr(alc, f1, NULL), args);
             array_push(init->ast, token_make(alc, t_statement, v));
         }
     }
