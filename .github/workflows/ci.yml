@@ -1,6 +1,8 @@
 name: ci
 
 on:
+  push:
+    branches: [ main, nightly ]
   pull_request:
     types: [ready_for_review, synchronize]
     branches: [ main, nightly ]
