@@ -4,6 +4,7 @@ use os;
 
 snippet run_gc_check() {
     // if run_gc && disable_gc == false {
-    //     gc()
-    // }
+    if mem_usage > 35 {
+        gc()
+    }
 }

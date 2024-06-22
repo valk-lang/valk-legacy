@@ -44,7 +44,7 @@ cstruct GcPool2[T] {
     }
 
     fn get() T {
-        if mem_usage > 50 {
+        if mem_usage > 70 {
             gc()
         }
 

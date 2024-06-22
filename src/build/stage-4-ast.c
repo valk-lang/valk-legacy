@@ -703,6 +703,10 @@ void read_ast(Parser *p, bool single_line) {
                 continue;
             array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
         }
+
+        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        Token* t = token_make(alc, t_ast_scope, gcscope);
+        array_push(defer->ast, t);
     }
 
     if(is_func_scope) {
