@@ -82,9 +82,6 @@ cstruct GcManager {
 
             if gcm_stack.gc_age != age {
                 force_gc()
-                // gcm_stack.force_full = true
-                // @ptrv(gcm_stack.run_gc_ref, bool) = true
-                // gcm_stack.gc()
             }
 
             // Loop stacks
@@ -126,16 +123,7 @@ cstruct GcManager {
                                 continue
                             }
                             s.force_full = true
-                            // s.run_gc = true
                             @ptrv(s.run_gc_ref, bool) = true
-                            // s.lock.lock()
-                            // if s.gc_age == age {
-                            //     s.lock.unlock()
-                            //     continue
-                            // }
-                            // s.mark_stack_gc_age(age)
-                            // s.gc_age = age
-                            // s.lock.unlock()
                         }
                     }
 
@@ -144,7 +132,7 @@ cstruct GcManager {
             }
 
             //
-            os:sleep_ms(50)
+            os:sleep_ms(100)
         }
     }
 

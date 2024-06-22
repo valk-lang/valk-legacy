@@ -246,7 +246,7 @@ struct Coro2 {
                     coro.resume()
                 }
             }
-            if mem:mem_usage > 20 {
+            if mem:mem_usage > 10 || mem:run_gc {
                 mem:gc()
             }
         }

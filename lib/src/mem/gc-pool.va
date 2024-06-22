@@ -94,9 +94,6 @@ cstruct GcPool2[T] {
 
         // Check mem usage
         mem_usage = mem_new * 100 / mem_marked
-        if mem_usage > 30 {
-            run_gc = true
-        }
     }
 
     fn set_block(block: ptr) {

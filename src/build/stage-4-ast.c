@@ -129,19 +129,19 @@ void stage_ast_func(Func *func) {
         stage_ast_class(class);
     }
     // Detect if function can create objects (for optimizations)
-    Array* called = func->called_functions;
-    for (int i = 0; i < called->length; i++) {
-        Func* f = array_get_index(called, i);
-        if(f->can_create_objects) {
-            func->can_create_objects = true;
-            break;
-        }
-    }
-    if(!func->can_create_objects) {
-        if(func->t_run_gc) {
-            disable_token(func->t_run_gc);
-        }
-    }
+    // Array* called = func->called_functions;
+    // for (int i = 0; i < called->length; i++) {
+    //     Func* f = array_get_index(called, i);
+    //     if(f->can_create_objects) {
+    //         func->can_create_objects = true;
+    //         break;
+    //     }
+    // }
+    // if(!func->can_create_objects) {
+    //     if(func->t_run_gc) {
+    //         disable_token(func->t_run_gc);
+    //     }
+    // }
 }
 void stage_ast_class(Class *class) {
     if (class->is_used)
