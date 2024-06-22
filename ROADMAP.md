@@ -31,7 +31,6 @@
 - language server
 - valk make command (like: npm run)
 - run command: valk run ...
-- dont disable_gc in gc_share, instead disable inside hooks 
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
 - declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers

@@ -35,13 +35,10 @@ fn gc_mark_shared_item(item: ptr) {
     func(item, gc_age);
 }
 fn gc_share(item: ptr) {
-    // let dis = disable_gc;
-    // disable_gc = true;
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr)(), vt_share)
     func(item);
-    // disable_gc = dis;
 }
 
 #parse_last

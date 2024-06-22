@@ -7,7 +7,6 @@ use io
 use core
 
 global stack : @ignu(Stack);
-global disable_gc : bool;
 global run_gc : bool;
 
 global mem_new : uint;
@@ -15,7 +14,7 @@ global mem_marked : uint;
 global mem_transfered : uint;
 global mem_usage : uint;
 
-value mem_marked_default (10240)
+value mem_marked_default (8192)
 
 value state_new (0)
 value state_used (1)
@@ -49,6 +48,7 @@ global main_stack_pos: @ignu(StackPos)
 cstruct StackPos {
     base: ptr
     adr: ptr
+    lowest: ptr
     size: uint
     fn free() {
         free(this.base)
@@ -60,6 +60,7 @@ fn create_stack() StackPos {
     return StackPos { 
         base: base
         adr: base
+        lowest: base
         size: stack_size
     }
 }
@@ -101,7 +102,6 @@ cstruct Stack {
         }
 
         stack = s;
-        disable_gc = false
         run_gc = false
         mem_marked = mem_marked_default
 
@@ -161,10 +161,10 @@ cstruct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        if disable_gc : return
         this.lock.lock()
 
-        disable_gc = true
+        mem_new = 0
+        mem_usage = 0
         run_gc = false
 
         this.mark_difference_down()
@@ -175,10 +175,9 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 30 || this.force_full {
+        if transfer_percent > 40 || this.force_full {
 
-            // io:print_fake(".")
-            if this.force_full : this.force_full = false
+            this.force_full = false
 
             mem_marked = mem_marked_default
             mem_transfered = 0
@@ -193,15 +192,10 @@ cstruct Stack {
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
             }
-        } else {
-            // io:print_fake("l")
         }
         pools_reset()
 
-        disable_gc = false
-        mem_new = 0
         this.lock.unlock()
-        // io:print_fake("D.")
     }
 
     #parse_last
@@ -413,7 +407,6 @@ cstruct Stack {
         pos.adr = pos.base
         this.gc()
         //
-        disable_gc = true
         this.transfer.delete()
 
         //GcPool.delete_all()

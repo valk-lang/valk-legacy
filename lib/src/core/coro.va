@@ -241,13 +241,13 @@ struct Coro2 {
                 let coros = poll.wait(1000) ! {
                     panic("Too many file descriptors")
                 }
-                if coros.length == 0 && mem:run_gc {
-                    mem:gc()
-                }
                 g_coro_poll_count -= coros.length
                 each coros as coro {
                     coro.resume()
                 }
+            }
+            if mem:mem_usage > 10 || mem:run_gc {
+                mem:gc()
             }
         }
     }

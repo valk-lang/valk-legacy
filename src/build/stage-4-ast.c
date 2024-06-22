@@ -129,19 +129,19 @@ void stage_ast_func(Func *func) {
         stage_ast_class(class);
     }
     // Detect if function can create objects (for optimizations)
-    Array* called = func->called_functions;
-    for (int i = 0; i < called->length; i++) {
-        Func* f = array_get_index(called, i);
-        if(f->can_create_objects) {
-            func->can_create_objects = true;
-            break;
-        }
-    }
-    if(!func->can_create_objects) {
-        if(func->t_run_gc) {
-            disable_token(func->t_run_gc);
-        }
-    }
+    // Array* called = func->called_functions;
+    // for (int i = 0; i < called->length; i++) {
+    //     Func* f = array_get_index(called, i);
+    //     if(f->can_create_objects) {
+    //         func->can_create_objects = true;
+    //         break;
+    //     }
+    // }
+    // if(!func->can_create_objects) {
+    //     if(func->t_run_gc) {
+    //         disable_token(func->t_run_gc);
+    //     }
+    // }
 }
 void stage_ast_class(Class *class) {
     if (class->is_used)
@@ -314,18 +314,7 @@ void read_ast(Parser *p, bool single_line) {
                     parse_err(p, -1, "Using 'return' outside a function scope");
                 }
 
-                // disable gc if multi rett & main rett doesnt fit eax
-                Global *g_disable = get_valk_global(b, "mem", "disable_gc");
-                Value *disable = NULL;
-                Value *var_disable = NULL;
-                bool disable_gc = func->rett_eax && func->rett_arg_types > 0;
-                if(disable_gc) {
-                    // Disable gc
-                    disable = value_make(alc, v_global, g_disable, g_disable->type);
-                    var_disable = vgen_var(alc, b, disable);
-                    array_push(scope->ast, token_make(alc, t_set_var, var_disable->item));
-                    array_push(scope->ast, tgen_assign(alc, disable, vgen_bool(alc, b, true)));
-                }
+                bool buffer_retv = func->rett_eax && type_is_gc(func->rett_eax) && func->rett_arg_types > 0;
 
                 Type* rett = func->rett;
                 Array* rett_decls = func->rett_decls;
@@ -344,19 +333,20 @@ void read_ast(Parser *p, bool single_line) {
                     type_check(p, type, val->rett);
 
                     if (i == 0 && func->rett_eax) {
-                        main_retv = vgen_var(alc, b, val);
-                        array_push(scope->ast, token_make(alc, t_set_var, main_retv->item));
+                        if(buffer_retv) {
+                            Decl *decl = decl_make(alc, p->func, NULL, func->rett_eax, false);
+                            main_retv = vgen_decl(alc, decl);
+                            array_push(scope->ast, tgen_declare(alc, scope, decl, val));
+                        } else {
+                            main_retv = vgen_var(alc, b, val);
+                            array_push(scope->ast, token_make(alc, t_set_var, main_retv->item));
+                        }
                     } else {
                         Decl *decl = array_get_index(func->rett_decls, rett_decl_i++);
                         Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), type, vgen_int(alc, 0, type_cache_i32(b)));
                         array_push(scope->ast, tgen_assign(alc, var, val));
                     }
                     i++;
-                }
-
-                if(disable_gc) {
-                    // Set disable_gc to previous value
-                    array_push(scope->ast, tgen_assign(alc, disable, var_disable));
                 }
 
                 array_push(scope->ast, tgen_return(alc, main_retv));
@@ -703,6 +693,10 @@ void read_ast(Parser *p, bool single_line) {
                 continue;
             array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
         }
+
+        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        Token* t = token_make(alc, t_ast_scope, gcscope);
+        array_push(defer->ast, t);
     }
 
     if(is_func_scope) {

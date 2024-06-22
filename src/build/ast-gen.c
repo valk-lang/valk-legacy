@@ -71,10 +71,10 @@ void ast_func_end(Allocator* alc, Parser* p) {
     }
 
     if (func->calls_gc_check) {
-        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-        Token* t = token_make(alc, t_ast_scope, gcscope);
-        func->t_run_gc = t;
-        array_push(start->ast, t);
+        // Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        // Token* t = token_make(alc, t_ast_scope, gcscope);
+        // func->t_run_gc = t;
+        // array_push(start->ast, t);
     }
 
     // Zero out gc stack
