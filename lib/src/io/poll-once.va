@@ -1,12 +1,13 @@
 
 header "sys" as sys
 
-use mem
-use io
 use os
 use type
 
-struct SimplePoll[T] {
+// You can listen for file descriptor events using `set` 
+// If an event happens for a certain fd
+// that fd will be removed from the list
+struct PollOnce[T] {
     poll_items: type:StructArray[sys:libc_pollfd]
     items1: Array[T]
     items2: Array[T]

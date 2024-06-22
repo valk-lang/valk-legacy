@@ -8,7 +8,7 @@ use io
 - global coro_run_last : ?Coro2 (null)
 ~ global current_coro : @ignu(Coro2)
 
-- global coro_poll : ?io:SimplePoll[Coro2] (null)
+- global coro_poll : ?io:PollOnce[Coro2] (null)
 - global g_coros : @ignu(Array[?Coro2])
 - global g_coro_indexes : @ignu(Pool[uint])
 - global g_coro_poll_count : uint
@@ -72,14 +72,14 @@ struct Coro2 {
         return coro
     }
 
-    static fn get_poll() io:SimplePoll[Coro2] {
+    static fn get_poll() io:PollOnce[Coro2] {
         let poll = coro_poll
         if poll == null {
-            let p = io:SimplePoll[Coro2].new()
+            let p = io:PollOnce[Coro2].new()
             coro_poll = p
             return p
         }
-        return poll @as io:SimplePoll[Coro2]
+        return poll @as io:PollOnce[Coro2]
     }
 
     static fn yield_current() {
