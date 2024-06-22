@@ -44,10 +44,14 @@ cstruct GcPool2[T] {
     }
 
     fn get() T {
+        if mem_usage > 50 {
+            gc()
+        }
+
         let isize = this.isize
         while true {
             let block = this.block
-            if @ptrv(block, uint, 3) > 80 {
+            if @ptrv(block, uint, 3) > 40 {
                 this.set_next_block(block)
                 continue
             }

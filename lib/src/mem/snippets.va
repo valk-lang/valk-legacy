@@ -3,7 +3,7 @@ use io;
 use os;
 
 snippet run_gc_check() {
-    if run_gc && disable_gc == false {
-        gc()
-    }
+    // if run_gc && disable_gc == false {
+    //     gc()
+    // }
 }
