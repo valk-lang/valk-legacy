@@ -1539,6 +1539,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
         //
         type_check(p, frett, errv->rett);
         errh->err_value = errv;
+        errv->rett = frett;
     }
 
     return errh;
