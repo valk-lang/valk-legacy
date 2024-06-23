@@ -61,7 +61,7 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     printf("# Line: %d | Col: %d\n", line, col);
     printf("# Error: %s\n", error);
 
-    for(int i = 0; i < b->pkcs->length; i++) {
+    loop(b->pkcs, i) {
         Pkc* pkc = array_get_index(b->pkcs, i);
         if(pkc->config) {
             cJSON_Delete(pkc->config->json);

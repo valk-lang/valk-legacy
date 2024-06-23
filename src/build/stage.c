@@ -53,7 +53,7 @@ void build_run_stages(Build* b) {
     array_push(stages, b->stage_3_gen);
     array_push(stages, b->stage_4_ast);
 
-    for (int i = 0; i < stages->length; i++) {
+    loop(stages, i) {
         // if (b->verbose > 2)
         //     printf("# Run build stage: %d\n", i);
         bool did_work = false;

@@ -147,7 +147,7 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
 bool scope_delete_idf_by_value(Scope* scope, void* item, bool recursive) {
     while(scope) {
         Array* idfs = scope->identifiers->values;
-        for(int i = 0; i < idfs->length; i++) {
+        loop(idfs, i) {
             Idf* idf = array_get_index(idfs, i);
             if(idf->item == item) {
                 array_set_index(scope->identifiers->values, i, NULL);

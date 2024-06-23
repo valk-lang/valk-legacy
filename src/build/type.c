@@ -228,7 +228,7 @@ TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi) {
 
 Array *clone_array_of_types(Allocator *alc, Array *types) {
     Array *list = array_make(alc, types->length + 1);
-    for(int i = 0; i < types->length; i++) {
+    loop(types, i) {
         Type* t = array_get_index(types, i);
         array_push(list, type_clone(alc, t));
     }
@@ -380,7 +380,7 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
     if (t1->type == type_multi) {
         if(t1->multi_types->length != t2->multi_types->length)
             return false;
-        for (int i = 0; i < t1->multi_types->length; i++) {
+        loop(t1->multi_types, i) {
             Type* tt1 = array_get_index(t1->multi_types, i);
             Type* tt2 = array_get_index(t2->multi_types, i);
             if(!type_compat(tt1, tt2, reason)) {
@@ -416,7 +416,7 @@ bool type_compat(Type* t1, Type* t2, char** reason) {
             *reason = "different amount of argument types";
             return false;
         }
-        for(int i = 0; i < t1s->length; i++) {
+        loop(t1s, i) {
             Type *ft1 = array_get_index(t1s, i);
             Type* ft2 = array_get_index(t2s, i);
             if (!type_compat(ft2, ft1, reason)) {
@@ -472,7 +472,7 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
     if (t->type == type_multi) {
         // strcat(res, use_export_name ? "_" : "(");
         Array * types = t->multi_types;
-        for(int i = 0; i < types->length; i++) {
+        loop(types, i) {
             if(i > 0)
                 strcat(res, use_export_name ? "_" : ", ");
             Type* sub = array_get_index(types, i);
@@ -483,7 +483,7 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
     if (t->type == type_func) {
         strcat(res, use_export_name ? "fn_" : "fn(");
         Array * types = t->func_info->args;
-        for(int i = 0; i < types->length; i++) {
+        loop(types, i) {
             if(i > 0) {
                 strcat(res, use_export_name ? "_" : ", ");
             }
@@ -564,7 +564,7 @@ Type* vscope_get_result_type(Array* values) {
         return NULL;
     Type *type = first->rett;
     bool contains_nullable = false;
-    for (int i = 0; i < values->length; i++) {
+    loop(values, i) {
         Value *v = array_get_index(values, i);
         if (v->rett->nullable) {
             contains_nullable = true;

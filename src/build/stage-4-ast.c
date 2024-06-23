@@ -8,7 +8,7 @@ void ir_vtable_define_extern(Unit* u);
 void stage_4_ast(Build *b) {
 
     Array* units = b->units;
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit* u = array_get_index(units, i);
         u->ir = ir_make(u);
     }
@@ -27,7 +27,7 @@ void stage_4_ast(Build *b) {
 
     b->parse_last = true;
 
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit* u = array_get_index(units, i);
         ir_gen_globals(u->ir);
     }
@@ -35,7 +35,7 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_func(b, "mem", "pools_init"));
 
     Array* funcs = b->parse_later;
-    for(int i = 0; i < funcs->length; i++) {
+    loop(funcs, i) {
         Func* func = array_get_index(funcs, i);
         func->parsed = false;
         stage_ast_func(func);
@@ -47,13 +47,13 @@ void stage_4_ast(Build *b) {
     Unit* um = b->nsc_main->unit;
     ir_vtable_define_extern(um);
 
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit* u = array_get_index(units, i);
 
         // Parse functions from main package, just for validation
         if(u->nsc->pkc == b->pkc_main) {
             Array* funcs = u->funcs;
-            for (int o = 0; o < funcs->length; o++) {
+            loop(funcs, o) {
                 Func* func = array_get_index(funcs, o);
                 stage_ast_func(func);
             }
@@ -119,18 +119,18 @@ void stage_ast_func(Func *func) {
         stage_ast_class(func->class);
     }
     Array* used = func->used_functions;
-    for (int i = 0; i < used->length; i++) {
+    loop(used, i) {
         Func* f = array_get_index(used, i);
         stage_ast_func(f);
     }
     Array *classes = func->used_classes;
-    for(int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class* class = array_get_index(classes, i);
         stage_ast_class(class);
     }
     // Detect if function can create objects (for optimizations)
     // Array* called = func->called_functions;
-    // for (int i = 0; i < called->length; i++) {
+    // loop(called, i) {
     //     Func* f = array_get_index(called, i);
     //     if(f->can_create_objects) {
     //         func->can_create_objects = true;
@@ -148,7 +148,7 @@ void stage_ast_class(Class *class) {
         return;
     class->is_used = true;
     Array *funcs = class->funcs->values;
-    for (int i = 0; i < funcs->length; i++) {
+    loop(funcs, i) {
         Func *cf = array_get_index(funcs, i);
         if (cf->use_if_class_is_used) {
             stage_ast_func(cf);
@@ -241,7 +241,7 @@ void read_ast(Parser *p, bool single_line) {
                 }
 
                 int mrett_decl_i = 0;
-                for(int i = 0; i < names->length; i++) {
+                loop(names, i) {
                     char *name = array_get_index(names, i);
                     Type *type = array_get_index(types, i);
 
@@ -647,7 +647,7 @@ void read_ast(Parser *p, bool single_line) {
         //     }
         //     fcall->rett_refs = array_make(alc, values->length);
 
-        //     for (int i = 0; i < values->length; i++) {
+        //     loop(values, i) {
         //         Value *v = array_get_index(values, i);
         //         Type *type = v->rett;
 
@@ -687,7 +687,7 @@ void read_ast(Parser *p, bool single_line) {
     if (scope_type == sc_loop && scope->has_gc_decls) {
         Array *decls = scope->decls;
         Scope *defer = scope_get_defer(alc, scope);
-        for (int i = 0; i < decls->length; i++) {
+        loop(decls, i) {
             Decl *decl = array_get_index(decls, i);
             if (!decl->is_gc)
                 continue;

@@ -29,7 +29,7 @@ Thread *thread_make(Allocator *alc, void* (fn)(void *), void *arg, Array *pool, 
 }
 
 void thread_wait_all(Array* pool) {
-    for (int i = 0; i < pool->length; i++) {
+    loop(pool, i) {
         Thread *t = array_get_index(pool, i);
 #ifdef WIN32
         WaitForSingleObject(t->thr, INFINITE);

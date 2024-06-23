@@ -48,7 +48,7 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
             MultiRett *mr = al(alc, sizeof(MultiRett));
             mr->types = types;
             mr->decls = array_make(alc, types->length);
-            for (int i = 0; i < types->length; i++) {
+            loop(types, i) {
                 Type *type = array_get_index(types, i);
                 if (i > 0 || !type_fits_pointer(type, b)) {
                     Decl *decl = decl_make(alc, p->func, NULL, type, false);
@@ -195,7 +195,7 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
 Value* vgen_gc_buffer(Allocator* alc, Parser* p, Scope* scope, Value* val, Array* args, bool store_on_stack) {
     Build* b = p->b;
     bool contains_gc_values = false;
-    for (int i = 0; i < args->length; i++) {
+    loop(args, i) {
         Value* arg = array_get_index(args, i);
         if(value_needs_gc_buffer(arg)) {
             contains_gc_values = true;
@@ -210,7 +210,7 @@ Value* vgen_gc_buffer(Allocator* alc, Parser* p, Scope* scope, Value* val, Array
     sub->ast = array_make(alc, 10);
 
     // Buffer arguments
-    for (int i = 0; i < args->length; i++) {
+    loop(args, i) {
         Value* arg = array_get_index(args, i);
         Decl *decl = decl_make(alc, p->func, NULL, arg->rett, false);
         array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
@@ -247,13 +247,13 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
         Array *issets = array_make(alc, 4);
         if (left->issets) {
             Array *prev = left->issets;
-            for (int i = 0; i < prev->length; i++) {
+            loop(prev, i) {
                 array_push(issets, array_get_index(prev, i));
             }
         }
         if (right->issets) {
             Array *prev = right->issets;
-            for (int i = 0; i < prev->length; i++) {
+            loop(prev, i) {
                 array_push(issets, array_get_index(prev, i));
             }
         }

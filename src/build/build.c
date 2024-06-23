@@ -264,7 +264,7 @@ int cmd_build(int argc, char *argv[]) {
     // Build
     usize start = microtime();
 
-    for (int i = 0; i < vo_files->length; i++) {
+    loop(vo_files, i) {
         char *path = array_get_index(vo_files, i);
         fc_make(nsc_main, path, false);
     }
@@ -338,7 +338,7 @@ int cmd_build(int argc, char *argv[]) {
         #endif
     }
 
-    for(int i = 0; i < b->pkcs->length; i++) {
+    loop(b->pkcs, i) {
         Pkc* pkc = array_get_index(b->pkcs, i);
         if(pkc->config) {
             cJSON_Delete(pkc->config->json);
@@ -445,7 +445,7 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
     bool first_run = true;
     watch_dirs = array_make(alc, 20);
     // Add directories from files args
-    for (int i = 0; i < vo_files->length; i++) {
+    loop(vo_files, i) {
         char *file = array_get_index(vo_files, i);
         char md[VALK_PATH_MAX];
         get_dir_from_path(file, md);
@@ -462,10 +462,10 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
     while (true) {
         alc_wipe(walc);
         bool build = false;
-        for (int i = 0; i < watch_dirs->length; i++) {
+        loop(watch_dirs, i) {
             char *dir = array_get_index(watch_dirs, i);
             Array *files = get_subfiles(walc, dir, false, true);
-            for (int o = 0; o < files->length; o++) {
+            loop(files, o) {
                 char *file = array_get_index(files, o);
                 if (!ends_with(file, ".va")) {
                     continue;

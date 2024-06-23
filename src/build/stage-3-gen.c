@@ -137,10 +137,10 @@ Func* stage_generate_tests(Build *b) {
     str_flat(code, "let result = VALK_TEST_INIT()\n");
     // Call tests
     Array* units = b->units;
-    for(int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit* u = array_get_index(units, i);
         Array* tests = u->tests;
-        for(int o = 0; o < tests->length; o++) {
+        loop(tests, o) {
             Test* t = array_get_index(tests, o);
             Func* tf = t->func;
             // Set name

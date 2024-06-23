@@ -43,7 +43,7 @@ void ir_gen_ir_for_func(IR *ir, Func *vfunc) {
     ir_func_definition(code, ir, func->func, false);
     // Blocks
     if (func->block_code->code->length > 0) {
-        for (int o = 0; o < func->blocks->length; o++) {
+        loop(func->blocks, o) {
             str_preserve(code, 1000);
             IRBlock *block = array_get_index(func->blocks, o);
             str_preserve(code, block->code->length + 100);
@@ -68,13 +68,6 @@ void ir_gen_func(IR *ir, IRFunc *func) {
 
     ir->func = func;
     ir->block = func->block_code;
-
-    // // Return value references
-    // Array *retts = vfunc->rett_types;
-    // for (int i = 1; i < retts->length; i++) {
-    //     char *var = ir_var(func);
-    //     array_push(func->rett_refs, var);
-    // }
 
     Scope* init = vfunc->ast_stack_init;
     if(init)
@@ -134,7 +127,7 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
     // Return value references
     Array *decls = vfunc->rett_decls;
     if (decls) {
-        for (int i = 0; i < decls->length; i++) {
+        loop(decls, i) {
             Decl *decl = array_get_index(decls, i);
             str_preserve(code, 1000);
             if (i > 0 || argc > 0)

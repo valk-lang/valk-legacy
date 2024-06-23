@@ -210,7 +210,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             parse_err(p, -1, "Value scope must have atleast 1 return statement");
         }
         // Type check
-        for(int i = 0; i < values->length; i++) {
+        loop(values, i) {
             Value* v = array_get_index(values, i);
             type_check(p, type, v->rett);
         }
@@ -1433,7 +1433,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
     if (index == -1) {
         Str *buf = p->b->str_buf;
         str_clear(buf);
-        for (int i = 0; i < err_names->length; i++) {
+        loop(err_names, i) {
             char *name = array_get_index(err_names, i);
             if (i > 0) {
                 str_append_chars(buf, ", ");

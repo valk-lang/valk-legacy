@@ -59,14 +59,14 @@ char *ir_float(IR* ir, double value) {
 Array *ir_fcall_args(IR *ir, Array *values, Array* rett_refs) {
     Array *ir_values = array_make(ir->alc, values->length + 1);
     Array *types = array_make(ir->alc, values->length + 1);
-    for (int i = 0; i < values->length; i++) {
+    loop(values, i) {
         Value *v = array_get_index(values, i);
         char *val = ir_value(ir, v);
         array_push(ir_values, val);
         array_push(types, v->rett);
     }
     if (rett_refs) {
-        for (int i = 0; i < rett_refs->length; i++) {
+        loop(rett_refs, i) {
             Value *v = array_get_index(rett_refs, i);
             char *val = v ? ir_assign_value(ir, v) : "null";
             array_push(ir_values, val);
@@ -78,7 +78,7 @@ Array *ir_fcall_args(IR *ir, Array *values, Array* rett_refs) {
 
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types) {
     Array *result = array_make(ir->alc, values->length + 1);
-    for (int i = 0; i < values->length; i++) {
+    loop(values, i) {
         char *val = array_get_index(values, i);
         Type *type = array_get_index(types, i);
 
@@ -696,7 +696,7 @@ char* ir_phi(IR* ir, Array* values, char* type) {
     str_flat(code, " = phi ");
     str_add(code, type);
 
-    for(int i = 0; i < values->length; i ++){
+    loop(values, i){
         str_preserve(code, 200);
 
         IRPhiValue* v = array_get_index(values, i);

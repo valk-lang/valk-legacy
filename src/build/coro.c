@@ -15,7 +15,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     bool has_arg = false;
     bool has_gc_arg = false;
     int gc_rett_count = 0;
-    for(int i = 0; i < types->length; i++) {
+    loop(types, i) {
         Type* type = array_get_index(types, i); 
         if(type_is_gc(type)) {
             has_gc_arg = true;
@@ -38,7 +38,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
     if (rett_types) {
-        for (int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             char buf[16];
             sprintf(buf, "RETT%d", i);
             Type *rett = array_get_index(rett_types, i);
@@ -67,7 +67,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
         str_flat(code, "let gc_args = coro.gc_stack.base\n");
     }
     // Load args
-    for(int i = 0; i < types->length; i++) {
+    loop(types, i) {
         Type* type = array_get_index(types, i);
         char nr[32];
         char tnr[33];
@@ -91,7 +91,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     // Call handler
     if(rett_types) {
         str_flat(code, "let ");
-        for(int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             if(i > 0)
                 str_flat(code, ", ");
             str_flat(code, "res");
@@ -103,7 +103,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     }
     str_flat(code, "(coro.handler @as HANDLER_TYPE)(");
     // Args
-    for(int i = 0; i < types->length; i++) {
+    loop(types, i) {
         char argname[36];
         sprintf(argname, "arg%d", i);
         if(i > 0)
@@ -123,7 +123,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     if(rett_types) {
         int s_pos = 0;
         int s_pos_gc = 0;
-        for(int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             char nr[16];
             itos(i, nr, 10);
             char offset[16];
@@ -205,7 +205,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     }
     // Load args
     Array* values = fcall->args;
-    for(int i = 0; i < values->length; i++) {
+    loop(values, i) {
         Value* val = array_get_index(values, i);
         Type* type = val->rett;
 
@@ -282,7 +282,7 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
 
     // Return type identifiers
     if (rett_types) {
-        for (int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             char buf[16];
             sprintf(buf, "RETT%d", i);
             Type *rett = array_get_index(rett_types, i);
@@ -306,7 +306,7 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
         // str_flat(code, "let retv = @ptrv(coro.result, RETT)\n");
         int s_pos = 0;
         int s_pos_gc = 0;
-        for(int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             Type* type = array_get_index(rett_types, i);
             char offset[16];
             char nr[16];
@@ -337,7 +337,7 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
         // Return statement
         // str_flat(code, "return retv{nr}, retv{nr}, ...\n");
         str_flat(code, "return ");
-        for(int i = 0; i < rett_types->length; i++) {
+        loop(rett_types, i) {
             if(i > 0)
                 str_flat(code, ", ");
             str_flat(code, "retv");

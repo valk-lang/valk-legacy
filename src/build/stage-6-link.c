@@ -82,7 +82,7 @@ void stage_6_link(Build* b, Array* o_files) {
 
     // Link dirs
     Array *link_dirs = get_link_dirs(b);
-    for (int i = 0; i < link_dirs->length; i++) {
+    loop(link_dirs, i) {
         char *path = array_get_index(link_dirs, i);
         str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
         str_append_chars(cmd, path);
@@ -145,7 +145,7 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     // Object files
-    for (int i = 0; i < o_files->length; i++) {
+    loop(o_files, i) {
         char *path = array_get_index(o_files, i);
         str_append_chars(cmd, path);
         str_append_chars(cmd, " ");
@@ -178,7 +178,7 @@ void stage_link_libs_all(Str *cmd, Build *b) {
     bool is_win = b->target_os == os_win;
     bool is_macos = b->target_os == os_macos;
 
-    for (int i = 0; i < b->links->length; i++) {
+    loop(b->links, i) {
         Link *link = array_get_index(b->links, i);
 
         char *prefix = "";
@@ -204,7 +204,7 @@ void stage_link_libs_all(Str *cmd, Build *b) {
 Array* get_link_dirs(Build* b) {
     Array* list = array_make(b->alc, 20);
     Array* pkcs = b->pkcs;
-    for(int i = 0; i < pkcs->length; i++) {
+    loop(pkcs, i) {
         Pkc* pkc = array_get_index(pkcs, i);
         PkgConfig* cfg = pkc->config;
         if(!cfg)

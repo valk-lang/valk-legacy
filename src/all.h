@@ -51,7 +51,11 @@
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
 #define str_flat(str, chars) str_append_chars(str, chars)
-#define loop(arr, i) int len = arr->length; for(int i = 0; i < len; i++)
+
+#define CONCAT(a, b) CONCAT_INNER(a, b)
+#define CONCAT_INNER(a, b) a ## b
+#define UNIQUE_NAME(base) CONCAT(base, __LINE__)
+#define loop(arr, i) int UNIQUE_NAME(loop_len) = arr->length; for(int i = 0; i < UNIQUE_NAME(loop_len); i++)
 
 #define v_i64 long long int
 #define v_u64 unsigned long long int

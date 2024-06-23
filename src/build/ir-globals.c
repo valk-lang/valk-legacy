@@ -18,7 +18,7 @@ void ir_gen_globals(IR* ir) {
         str_flat(code, "@valk_gc_vtable = external constant ptr, align 8\n");
     }
 
-    for (int i = 0; i < u->globals->length; i++) {
+    loop(u->globals, i) {
         Global *g = array_get_index(u->globals, i);
         if (g->fc && g->fc->is_header)
             continue;

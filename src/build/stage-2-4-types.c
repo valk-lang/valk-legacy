@@ -13,17 +13,17 @@ void stage_2_types(Unit* u) {
     usize start = microtime();
 
     Array* funcs = u->funcs;
-    for(int i = 0; i < funcs->length; i++) {
+    loop(funcs, i) {
         Func* func = array_get_index(funcs, i);
         stage_types_func(p, func);
     }
     Array* classes = u->classes;
-    for(int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class* class = array_get_index(classes, i);
         stage_types_class(p, class);
     }
     Array* globals = u->globals;
-    for(int i = 0; i < globals->length; i++) {
+    loop(globals, i) {
         Global* g = array_get_index(globals, i);
         if(g->chunk_type)
             stage_types_global(p, g);
@@ -174,7 +174,7 @@ void stage_types_class(Parser* p, Class* class) {
     p->scope = class->scope;
 
     Array* props = class->props->values;
-    for(int i = 0; i < props->length; i++) {
+    loop(props, i) {
         ClassProp *prop = array_get_index(props, i);
         if (prop->chunk_type) {
             *p->chunk = *prop->chunk_type;
