@@ -20,10 +20,10 @@ void stage_4_ast(Build *b) {
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
     // TODO: only include Coro.new if an async function was used
-    stage_ast_func(get_valk_class_func(b, "core", "Coro2", "new"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_fd"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "await_coro"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro2", "complete"));
+    stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
+    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "complete"));
 
     b->parse_last = true;
 
@@ -470,7 +470,7 @@ void read_ast(Parser *p, bool single_line) {
                 Global *g_coro = get_valk_global(b, "core", "current_coro");
                 Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
                 // Call Coro.await_fd
-                Class *coro_class = get_valk_class(b, "core", "Coro2");
+                Class *coro_class = get_valk_class(b, "core", "Coro");
                 Func* f = map_get(coro_class->funcs, "await_fd");
                 func_mark_used(p->func, f);
                 Value* fptr = vgen_func_ptr(alc, f, NULL);
@@ -488,7 +488,7 @@ void read_ast(Parser *p, bool single_line) {
                 Global *g_coro = get_valk_global(b, "core", "current_coro");
                 Value *coro = value_make(alc, v_global, g_coro, g_coro->type);
                 // Call Coro.await_last_coro
-                Class *coro_class = get_valk_class(b, "core", "Coro2");
+                Class *coro_class = get_valk_class(b, "core", "Coro");
                 Func* f = map_get(coro_class->funcs, "await_last_coro");
                 func_mark_used(p->func, f);
                 Value* fptr = vgen_func_ptr(alc, f, NULL);

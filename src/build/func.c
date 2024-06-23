@@ -152,7 +152,7 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
     char *coro_err_prop = NULL;
     char *load = NULL;
     if (on_await) {
-        Class *coro_class = get_valk_class(ir->b, "core", "Coro2");
+        Class *coro_class = get_valk_class(ir->b, "core", "Coro");
         coro_err_prop = ir_class_pa(ir, coro_class, on, map_get(coro_class->props, "error"));
         load = ir_load(ir, type_i32, coro_err_prop);
     } else {

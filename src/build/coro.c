@@ -34,7 +34,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
     Str* code = b->str_buf;
     str_clear(code);
 
-    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
     if (rett_types) {
@@ -187,7 +187,7 @@ Value* coro_generate(Allocator* alc, Parser* p, Value* vfcall) {
 
     Scope* sub = scope_sub_make(b->alc, sc_default, scope);
 
-    idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(sub, "CORO_CLASS", idf, NULL);
     idf = idf_make(alc, idf_value, fcall->on);
     scope_set_idf(sub, "HANDLER", idf, NULL);
@@ -275,7 +275,7 @@ Value* coro_await(Allocator* alc, Parser* p, Value* on) {
     Array* rett_types = rett_types_of(alc, rett);
     Scope* sub = scope_sub_make(b->alc, sc_default, p->scope);
 
-    Idf* idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    Idf* idf = idf_make(alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(sub, "CORO_CLASS", idf, NULL);
     idf = idf_make(alc, idf_value, on);
     scope_set_idf(sub, "CORO_VAL", idf, NULL);
