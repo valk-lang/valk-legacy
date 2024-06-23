@@ -13,9 +13,13 @@
 
 ```
 // Prio
-- improve syntax
-- fix math between numbers and pointers
-- http: parse post data / file uploads
+- http server features 
+-- post data
+-- query parsing
+-- file uploads
+- exec
+- http client
+- json encode/decode
 // Other
 - error messages
 - doc generator
