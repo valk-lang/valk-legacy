@@ -33,7 +33,7 @@ void stage_5_objects(Build* b) {
     Array *o_files = array_make(b->alc, 100);
     Array *threads = array_make(b->alc, 32);
     Array *units = b->units;
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
 
         Unit *u = array_get_index(units, i);
         array_push(o_files, u->path_o);
@@ -53,7 +53,7 @@ void stage_5_objects(Build* b) {
 
     // Update cache
     usize io_start = microtime();
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit *u = array_get_index(units, i);
         if (u->hash)
             write_file(u->path_cache, u->hash, false);

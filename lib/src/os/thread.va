@@ -23,7 +23,7 @@ cstruct Thread {
             let func = e.func @as fn()();
             co func();
         }
-        core:Coro2.loop()
+        core:Coro.loop()
         mem:stack.shutdown()
     }
 

@@ -31,7 +31,7 @@ void ir_gen_final(IR* ir) {
     str_append_chars(code, "\n");
 
     // Attrs
-    for (int i = 0; i < ir->attrs->length; i++) {
+    loop(ir->attrs, i) {
         str_append_chars(code, array_get_index(ir->attrs, i));
         str_append_chars(code, "\n");
     }

@@ -112,7 +112,7 @@ cstruct Stack {
         let gcm = gc_manager()
         gcm.add_stack(s);
 
-        core:g_coros = Array[?core:Coro2].new()
+        core:g_coros = Array[?core:Coro].new()
         core:g_coro_indexes = Pool[uint].new()
     }
 
@@ -243,7 +243,7 @@ cstruct Stack {
         }
 
         // Coroutines
-        core:Coro2.transfer_check()
+        core:Coro.transfer_check()
     }
 
     fn handle_transfer_list() {

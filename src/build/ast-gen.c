@@ -46,7 +46,7 @@ void ast_func_end(Allocator* alc, Parser* p) {
     int gc_decl_count = 0;
     int alloca_size = 0;
     Array *decls = scope->decls;
-    for (int i = 0; i < decls->length; i++) {
+    loop(decls, i) {
         Decl *decl = array_get_index(decls, i);
         if (!decl->is_gc) {
             if (decl->is_mut) {
@@ -106,7 +106,7 @@ void ast_func_end(Allocator* alc, Parser* p) {
         func->v_cache_alloca = alloca;
     }
 
-    for (int i = 0; i < decls->length; i++) {
+    loop(decls, i) {
         Decl *decl = array_get_index(decls, i);
         // Set stack offset for variables
         if (decl->offset > -1) {

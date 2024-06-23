@@ -39,7 +39,7 @@ void stage_generate_main(Build *b) {
     b->func_main_gen = func;
     func->init_thread = true;
 
-    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro2"));
+    Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
 
     idf = idf_make(b->alc, idf_scope, get_valk_nsc(b, "mem")->scope);
@@ -137,10 +137,10 @@ Func* stage_generate_tests(Build *b) {
     str_flat(code, "let result = VALK_TEST_INIT()\n");
     // Call tests
     Array* units = b->units;
-    for(int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit* u = array_get_index(units, i);
         Array* tests = u->tests;
-        for(int o = 0; o < tests->length; o++) {
+        loop(tests, o) {
             Test* t = array_get_index(tests, o);
             Func* tf = t->func;
             // Set name

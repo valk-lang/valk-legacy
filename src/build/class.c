@@ -253,7 +253,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(data, uint, -2)++\n");
 
     // Props
-    for(int i = 0; i < props->values->length; i++) {
+    loop(props->values, i) {
         ClassProp* p = array_get_index(props->values, i);
         char* pn = array_get_index(props->keys, i);
         if(!type_is_gc(p->type))
@@ -306,7 +306,7 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  GC_MARK_SIZE += SIZE\n");
 
     // Props
-    for(int i = 0; i < props->values->length; i++) {
+    loop(props->values, i) {
         ClassProp* p = array_get_index(props->values, i);
         char* pn = array_get_index(props->keys, i);
         if(!type_is_gc(p->type))
@@ -355,7 +355,7 @@ void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -5) = age\n");
 
     // Props
-    for(int i = 0; i < props->values->length; i++) {
+    loop(props->values, i) {
         ClassProp* p = array_get_index(props->values, i);
         char* pn = array_get_index(props->keys, i);
         if(!type_is_gc(p->type))
@@ -415,7 +415,7 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  STACK.add_shared(this)\n");
 
     // Props
-    for(int i = 0; i < props->values->length; i++) {
+    loop(props->values, i) {
         ClassProp* p = array_get_index(props->values, i);
         char* pn = array_get_index(props->keys, i);
         if(!type_is_gc(p->type))
@@ -461,7 +461,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     }
     //
     Str* hash = build_get_str_buf(b);
-    for (int i = 0; i < generic_types->length; i++) {
+    loop(generic_types, i) {
         Type* type = array_get_index(generic_types, i);
         type_to_str_buf_append(type, hash);
         str_flat(hash, "|");
@@ -482,7 +482,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_clear(hash);
     str_add(hash, class->name);
     str_flat(hash, "[");
-    for (int i = 0; i < generic_types->length; i++) {
+    loop(generic_types, i) {
         if(i > 0)
             str_flat(hash, ", ");
         char buf[256];
@@ -497,7 +497,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_clear(hash);
     str_add(hash, class->ir_name);
     str_flat(hash, "__");
-    for (int i = 0; i < generic_types->length; i++) {
+    loop(generic_types, i) {
         if(i > 0)
             str_flat(hash, ", ");
         char buf[256];
@@ -533,7 +533,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     map_set(class->generics, h, gclass);
 
     // Set type identifiers
-    for (int i = 0; i < generic_types->length; i++) {
+    loop(generic_types, i) {
         char* name = array_get_index(class->generic_names, i);
         Type* type_ = array_get_index(generic_types, i);
         Type* type = type_clone(b->alc, type_);
@@ -563,7 +563,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     // Types
     stage_types_class(p, gclass);
     Array* funcs = gclass->funcs->values;
-    for (int i = 0; i < funcs->length; i++) {
+    loop(funcs, i) {
         Func* func = array_get_index(funcs, i);
         stage_types_func(p, func);
     }

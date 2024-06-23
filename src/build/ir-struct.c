@@ -15,7 +15,7 @@ void ir_define_struct(IR *ir, Class* class) {
         str_flat(code, " = type ");
         str_add(code, class->packed ? "<{ " : "{ ");
 
-        for (int i = 0; i < class->props->keys->length; i++) {
+        loop(class->props->keys, i) {
             str_preserve(code, 400);
             ClassProp *prop = array_get_index(class->props->values, i);
             if (i > 0) {

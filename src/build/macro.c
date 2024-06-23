@@ -130,7 +130,7 @@ Value* macro_read_value(Allocator* alc, Macro* m, Parser* p) {
     Scope* scope = p->scope;
     Scope* sub = scope_sub_make(alc, sc_default, p->scope);
 
-    for(int i = 0; i < patterns->length; i++) {
+    loop(patterns, i) {
         MacroPattern* pat = array_get_index(patterns, i);
         macro_read_pattern(alc, p, pat, sub->identifiers);
     }
@@ -153,7 +153,7 @@ void macro_read_ast(Allocator* alc, Macro* m, Parser* p) {
     Scope* scope = p->scope;
     Scope* sub = scope_sub_make(alc, sc_default, p->scope);
 
-    for(int i = 0; i < patterns->length; i++) {
+    loop(patterns, i) {
         MacroPattern* pat = array_get_index(patterns, i);
         macro_read_pattern(alc, p, pat, sub->identifiers);
     }
@@ -179,7 +179,7 @@ void macro_read_pattern(Allocator *alc, Parser *p, MacroPattern *pat, Map* ident
     }
 
     Array *items = pat->items;
-    for (int o = 0; o < items->length; o++) {
+    loop(items, o) {
         MacroPatternItem *item = array_get_index(items, o);
         if (item->type == pat_type) {
             Type *type = read_type(p, alc, true);

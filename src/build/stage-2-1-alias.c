@@ -10,7 +10,7 @@ void stage_2_alias(Unit* u) {
     Parser* p = u->parser;
 
     Array* als = u->aliasses;
-    for(int i = 0; i < als->length; i++) {
+    loop(als, i) {
         Alias* a = array_get_index(als, i);
         *p->chunk = *a->chunk;
 

@@ -13,7 +13,7 @@ void stage_5_ir_final(Build* b) {
     Str *hash_buf = str_make(b->alc, 100);
 
     Array *units = b->units;
-    for (int i = 0; i < units->length; i++) {
+    loop(units, i) {
         Unit *u = array_get_index(units, i);
         Array* func_irs = u->func_irs;
 
@@ -27,7 +27,7 @@ void stage_5_ir_final(Build* b) {
         if(u->is_main)
             stage_5_vtable_ir(code, b);
         // Func IR
-        for (int i = 0; i < func_irs->length; i++) {
+        loop(func_irs, i) {
             IRFuncIR* irf = array_get_index(func_irs, i);
             if(irf->func->is_used) {
                 str_append_chars(code, irf->ir);
@@ -75,7 +75,7 @@ void stage_5_vtable_ir(Str* code, Build* b) {
     str_add(code, gc_vt_count);
     str_flat(code, " x ptr] [\n");
     str_flat(code, "ptr null, ptr null, ptr null, ptr null, ptr null"); // vtable start from index 1
-    for (int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class *class = array_get_index(classes, i);
         if (class->type != ct_class)
             continue;
@@ -116,7 +116,7 @@ void ir_vtable_define_extern(Unit* u) {
     Array* classes = b->classes;
     IR* ir = u->ir;
 
-    for (int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class *class = array_get_index(classes, i);
         if (class->type != ct_class)
             continue;

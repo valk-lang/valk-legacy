@@ -216,7 +216,7 @@ char* ir_value(IR* ir, Value* v) {
 
         // Write prop values
         Array* ir_props = array_make(ir->alc, values->keys->length);
-        for (int i = 0; i < values->keys->length; i++) {
+        loop(values->keys, i) {
             Value *val = array_get_index(values->values, i);
             char *lval = ir_value(ir, val);
             array_push(ir_props, lval);
@@ -226,7 +226,7 @@ char* ir_value(IR* ir, Value* v) {
         char* obj = ir_value(ir, ob);
 
         // Set props
-        for (int i = 0; i < ir_props->length; i++) {
+        loop(ir_props, i) {
             char* lval = array_get_index(ir_props, i);
             char *prop_name = array_get_index(values->keys, i);
             ClassProp *prop = map_get(class->props, prop_name);

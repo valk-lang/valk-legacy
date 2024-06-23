@@ -10,7 +10,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
         return;
 
     Array *ast = scope->ast;
-    for (int i = 0; i < ast->length; i++) {
+    loop(ast, i) {
         Token *t = array_get_index(ast, i);
         int tt = t->type;
 

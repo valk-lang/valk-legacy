@@ -20,7 +20,7 @@ void stage_props(Unit *u) {
     Parser* p = u->parser;
     //
     Array* classes = u->classes;
-    for(int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class* class = array_get_index(classes, i);
         p->scope = class->scope;
         *p->chunk = *class->body;

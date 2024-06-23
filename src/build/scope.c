@@ -77,7 +77,7 @@ void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
     if (!issets)
         return;
 
-    for (int i = 0; i < issets->length; i++) {
+    loop(issets, i) {
         Value *on = array_get_index(issets, i);
         if (on->type == v_decl) {
             Decl *decl = on->item;

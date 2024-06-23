@@ -19,7 +19,7 @@ void stage_values(Parser* p, Unit* u) {
     Build *b = p->b;
 
     Array* globals = u->globals;
-    for(int i = 0; i < globals->length; i++) {
+    loop(globals, i) {
         Global* g = array_get_index(globals, i);
 
         if(!g->chunk_value) {
