@@ -9,7 +9,7 @@ struct Request {
     body: String ("")
 
     -ns header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
-    -ns params_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
+    -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
     -ns params_map: ?Map[String] (null)
     -ns data_map: ?Map[String] (null)
@@ -23,7 +23,7 @@ struct Request {
         this.body = ""
 
         this.header_data.clear()
-        this.params_data.clear()
+        this.params_data = ""
         this.header_map = null
         this.params_map = null
         this.data_map = null
@@ -40,8 +40,21 @@ struct Request {
         return new
     }
 
-    // fn params() Map[String] {
-    // }
+    fn params() Map[String] {
+        let params = this.params_map
+        if isset(params) : return params
+        let new = map[String]{}
+        let data = this.params_data
+        if data.bytes > 0 {
+            let parts = data.split("&")
+            each parts as part {
+                let k, v = part.split_on_first_occurance_of_byte('=') ! continue
+                new.set(k, v)
+            }
+        }
+        this.params_map = new
+        return new
+    }
 
     // fn data() Map[String] {
     //     let headers = this.headers()
