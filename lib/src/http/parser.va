@@ -72,6 +72,12 @@ struct RequestParser {
             // Request "GET / HTTP/1.1"
             let method = input.sub_str(pos, space1 - pos)
             let path = input.sub_str(space1 + 1, space2 - space1 - 1)
+            let qmark = path.index_of_byte('?') ? 0
+            if qmark > 0 {
+                let len = path.bytes
+                request.params_data.append_from_ptr(@ptr_offset(path.data, qmark + 1), len - qmark - 1)
+                path = path.sub_str_bytes(0, qmark)
+            }
             // let version = input.sub_str(space2 + 1, index - space2 - 1)
 
             request.method = method;

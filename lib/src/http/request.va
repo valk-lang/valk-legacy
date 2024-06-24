@@ -4,21 +4,31 @@
 use utils
 
 struct Request {
-    header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
-    header_map: ?Map[String] (null)
     method: String ("GET")
     path: String ("/")
     body: String ("")
+
+    -ns header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
+    -ns params_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
+    -ns header_map: ?Map[String] (null)
+    -ns params_map: ?Map[String] (null)
+    -ns data_map: ?Map[String] (null)
+    -ns files_map: ?Map[String] (null)
+
     response: Response (Response.text(""))
-    uploads: Map[String] (Map[String]{})
 
     fn reset() {
-        this.header_data.clear()
-        this.header_map = null
         this.method = "GET"
         this.path = ""
         this.body = ""
-        this.uploads.clear()
+
+        this.header_data.clear()
+        this.params_data.clear()
+        this.header_map = null
+        this.params_map = null
+        this.data_map = null
+        this.files_map = null
+
         this.response.reset()
     }
 
@@ -30,6 +40,12 @@ struct Request {
         return new
     }
 
+    // fn params() Map[String] {
+    // }
+
+    // fn data() Map[String] {
+    //     let headers = this.headers()
+    // }
 
     - fn parse_headers() Map[String] {
         let headers = map[String]{}

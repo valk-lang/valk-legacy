@@ -51,6 +51,24 @@ struct String {
     // }
 
     /////////////////////
+    // Index of
+    /////////////////////
+
+    fn index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
+        let index = start_index;
+        let len = this.bytes;
+        let data = this.data;
+        while index < len {
+            let ch = @ptrv(data, u8, index);
+            if ch == byte {
+                return index;
+            }
+            index++;
+        }
+        throw not_found;
+    }
+
+    /////////////////////
     // Clean
     /////////////////////
 
