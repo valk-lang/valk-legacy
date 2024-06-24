@@ -28,14 +28,14 @@ fn url_encode(str: String) String {
         }
         // ch -> %{HEX}
         buffer.append_byte('%')
-        buffer.minimum_free_space(2)
-        let blen = buffer.length
-        let bytes_used = ch.to_base_to_ptr(16, @ptr_offset(buffer.data, blen))
+        let x : u16 = 0
+        let ref = @ptr_of(x)
+        let bytes_used = ch.to_base_to_ptr(16, ref)
         if bytes_used == 1 {
-            @ptrv(buffer.data, u8, blen + 1) = @ptrv(buffer.data, u8, blen)
-            @ptrv(buffer.data, u8, blen) = 0
+            @ptrv(ref, u8, 1) = @ptrv(ref, u8, 0)
+            @ptrv(ref, u8, 0) = 0
         }
-        buffer.length = blen + 2
+        buffer.append_from_ptr(ref, 2)
     }
     return buffer.to_string()
 }
