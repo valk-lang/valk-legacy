@@ -5,22 +5,61 @@ use utils
 
 struct Request {
     header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
-    - headers: Map[String] (map[String]{})
+    header_map: ?Map[String] (null)
     method: String ("GET")
     path: String ("/")
     body: String ("")
     response: Response (Response.text(""))
     uploads: Map[String] (Map[String]{})
-    - headers_parsed: bool (false)
 
     fn reset() {
         this.header_data.clear()
-        this.headers.clear()
-        this.headers_parsed = false
+        this.header_map = null
         this.method = "GET"
         this.path = ""
         this.body = ""
         this.uploads.clear()
         this.response.reset()
+    }
+
+    fn headers() Map[String] {
+        let headers = this.header_map
+        if isset(headers) : return headers
+        let new = this.parse_headers()
+        this.header_map = new
+        return new
+    }
+
+
+    - fn parse_headers() Map[String] {
+        let headers = map[String]{}
+
+        let pos : uint = 0
+        let data = this.header_data
+        let bytes = data.data
+        let length = data.length
+
+        while true {
+            let index = data.index_of_byte('\r', pos) ! break
+            if index + 1 == length : break
+            if @ptrv(bytes, u8, index + 1) != '\n' : break
+
+            // End of headers
+            if index == pos : break
+
+            let split = data.index_of_byte(':', pos) ! break
+            if split > index : break
+            while @ptrv(bytes, u8, split + 1) == ' ' {
+                split++;
+            }
+
+            let key = data.sub_str(pos, split - pos);
+            let value = data.sub_str(split + 1, index - split - 1);
+            headers.set(key.to_lower(), value);
+
+            pos = index + 2
+        }
+
+        return headers
     }
 }
