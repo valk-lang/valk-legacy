@@ -57,6 +57,10 @@ struct String {
         if part.bytes > this.bytes : return false
         return mem:equal(this.data, part.data, part.bytes)
     }
+    fn ends_with(part: String) bool {
+        if part.bytes > this.bytes : return false
+        return mem:equal(@ptr_offset(this.data, this.bytes - part.bytes), part.data, part.bytes)
+    }
 
     /////////////////////
     // Index of
