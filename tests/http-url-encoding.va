@@ -1,0 +1,9 @@
+
+use valk:http
+
+test "http: url encoding" {
+    let dec = "Hello Günter. .  .€.‚.â"
+    let enc = "Hello%20G%C3%BCnter.%20.%20%20.%E2%82%AC.%E2%80%9A.%C3%A2"
+    assert(http:url_decode(enc) == dec)
+    assert(http:url_encode(dec) == enc)
+}
