@@ -51,6 +51,14 @@ struct String {
     // }
 
     /////////////////////
+    // Start / Ends
+    /////////////////////
+    fn starts_with(part: String) bool {
+        if part.bytes > this.bytes : return false
+        return mem:equal(this.data, part.data, part.bytes)
+    }
+
+    /////////////////////
     // Index of
     /////////////////////
 
