@@ -12,6 +12,7 @@ struct Request {
     -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
     -ns params_map: ?Map[String] (null)
+    -ns params_grp: ?Map[Array[String]] (null)
     -ns data_map: ?Map[String] (null)
     -ns files_map: ?Map[String] (null)
 
@@ -26,6 +27,7 @@ struct Request {
         this.params_data = ""
         this.header_map = null
         this.params_map = null
+        this.params_grp = null
         this.data_map = null
         this.files_map = null
 
@@ -53,6 +55,26 @@ struct Request {
             }
         }
         this.params_map = new
+        return new
+    }
+
+    fn params_grouped() Map[Array[String]] {
+        let params = this.params_grp
+        if isset(params) : return params
+        let new = map[Array[String]]{}
+        let data = this.params_data
+        if data.bytes > 0 {
+            let parts = data.split("&")
+            each parts as part {
+                let k, v = part.split_on_first_occurance_of_byte('=') ! continue
+                let arr = new.get(k) ! {
+                    new.set(k, array[String]{ v })
+                    continue
+                }
+                arr.push(v)
+            }
+        }
+        this.params_grp = new
         return new
     }
 

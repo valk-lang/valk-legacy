@@ -59,6 +59,8 @@ struct RequestParser {
                 }
                 throw need_more_data
             }
+            // let line = input.sub_str(pos, index - pos)
+            // println(line)
 
             if index + 1 == length : throw need_more_data
             if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
@@ -72,6 +74,7 @@ struct RequestParser {
             // Request "GET / HTTP/1.1"
             let method = input.sub_str(pos, space1 - pos)
             let path = input.sub_str(space1 + 1, space2 - space1 - 1)
+
             let qmark = path.index_of_byte('?') ? 0
             if qmark > 0 {
                 let len = path.bytes
