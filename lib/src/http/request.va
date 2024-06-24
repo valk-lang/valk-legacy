@@ -51,7 +51,7 @@ struct Request {
             let parts = data.split("&")
             each parts as part {
                 let k, v = part.split_on_first_occurance_of_byte('=') ! continue
-                new.set(k, v)
+                new.set(k, url_decode(v))
             }
         }
         this.params_map = new
@@ -68,10 +68,10 @@ struct Request {
             each parts as part {
                 let k, v = part.split_on_first_occurance_of_byte('=') ! continue
                 let arr = new.get(k) ! {
-                    new.set(k, array[String]{ v })
+                    new.set(k, array[String]{ url_decode(v) })
                     continue
                 }
-                arr.push(v)
+                arr.push(url_decode(v))
             }
         }
         this.params_grp = new
