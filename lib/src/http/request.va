@@ -157,6 +157,7 @@ struct Request {
                 let file = fs:InMemoryFile.create_from_ptr(part.data + body_offset, body_bytes)
                 file.filename = fn
                 files.set(name, file)
+                file.mime_type = headers.get("content-type") ! continue
             } else {
                 let v = part.sub_str_bytes(body_offset, body_bytes)
                 result.set(name, v)
