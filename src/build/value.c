@@ -1456,14 +1456,14 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
     char t = tok(p, true, false, true);
     char *name = NULL;
 
-    if(type_is_void(frett) && str_is(p->tkn, "_")) {
-        return NULL;
-    }
-
     ErrorHandler* errh = al(alc, sizeof(ErrorHandler));
     errh->err_scope = NULL;
     errh->err_value = NULL;
     errh->err_decl = NULL;
+
+    if(type_is_void(frett) && str_is(p->tkn, "_")) {
+        return errh;
+    }
 
     if (t == tok_id) {
         name = p->tkn;
