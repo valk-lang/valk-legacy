@@ -132,8 +132,7 @@ struct ByteBuffer {
             length = len - start_index;
         }
         let str = String.make_empty(length);
-        // TODO: use @ptr_offset
-        mem:copy(this.data + start_index, str.data, length);
+        mem:copy(@ptr_offset(this.data, start_index), str.data, length);
         return str;
     }
 

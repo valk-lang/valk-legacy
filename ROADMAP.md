@@ -13,10 +13,6 @@
 
 ```
 // Prio
-- http server features 
--- post data
--- query parsing
--- file uploads
 - exec
 - http client
 - json encode/decode

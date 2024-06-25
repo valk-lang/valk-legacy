@@ -51,15 +51,45 @@ struct String {
     // }
 
     /////////////////////
+    // Start / Ends
+    /////////////////////
+    fn starts_with(part: String) bool {
+        if part.bytes > this.bytes : return false
+        return mem:equal(this.data, part.data, part.bytes)
+    }
+    fn ends_with(part: String) bool {
+        if part.bytes > this.bytes : return false
+        return mem:equal(@ptr_offset(this.data, this.bytes - part.bytes), part.data, part.bytes)
+    }
+
+    /////////////////////
+    // Index of
+    /////////////////////
+
+    fn index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
+        let index = start_index;
+        let len = this.bytes;
+        let data = this.data;
+        while index < len {
+            let ch = @ptrv(data, u8, index);
+            if ch == byte {
+                return index;
+            }
+            index++;
+        }
+        throw not_found;
+    }
+
+    /////////////////////
     // Clean
     /////////////////////
 
-    fn trim(part: String) String {
-        let res = this.ltrim(part)
-        return res.rtrim(part)
+    fn trim(part: String, limit: uint (0)) String {
+        let res = this.ltrim(part, limit)
+        return res.rtrim(part, limit)
     }
 
-    fn rtrim(part: String) String {
+    fn rtrim(part: String, limit: uint (0)) String {
 
         let part_bytes = part.bytes
         let part_data = part.data
@@ -68,23 +98,29 @@ struct String {
         let len = this.bytes
         let data_end = data + len
         let offset : uint = 0
+        let count : uint = 0
         while (offset + part_bytes <= len) && mem:equal(data_end - offset - part_bytes, part_data, part_bytes) {
             offset += part_bytes
+            count++
+            if count == limit : break
         }
         if offset == 0 : return this
 
         return String.make_from_ptr(data, len - offset)
     }
 
-    fn ltrim(part: String) String {
+    fn ltrim(part: String, limit: uint (0)) String {
         let part_bytes = part.bytes
         let part_data = part.data
 
         let data = this.data
         let len = this.bytes
         let offset : uint = 0
+        let count : uint = 0
         while (offset + part_bytes <= len) && mem:equal(data + offset, part_data, part_bytes) {
             offset += part_bytes
+            count++
+            if count == limit : break
         }
         if offset == 0 : return this
 
@@ -130,6 +166,10 @@ struct String {
     fn byte(index: uint) u8 {
         if index >= this.bytes : return 0
         return @ptrv(this.data, u8, index)
+    }
+    fn last_byte() u8 {
+        if this.bytes == 0 : return 0
+        return @ptrv(this.data, u8, this.bytes - 1)
     }
 
     fn sub_str_bytes(byte_start_index: uint, byte_length: uint) String {
@@ -222,6 +262,38 @@ struct String {
         result.push(part.to_string())
 
         return result
+    }
+
+    fn split_on_first_occurance_of_byte(byte: u8) (String, String) !not_found {
+        let pos = this.index_of_byte(byte) ! throw not_found
+        let p2 = this.sub_str_bytes(pos + 1, this.bytes - pos - 1)
+        let p1 = this.sub_str_bytes(0, pos)
+        return p1, p2
+    }
+
+    /////////////////////
+    // Misc
+    /////////////////////
+
+    // Convert escaped characters
+    fn unescape() String {
+        let bytes = this.bytes
+        if bytes == 0 : return ""
+        let data = this.data
+        let buf = utils:ByteBuffer.new(bytes)
+        //
+        let i : uint = 0
+        while i < bytes {
+            let ch = @ptrv(data, u8, i++)
+            if (ch == '\\') {
+                let ch = @ptrv(data, u8, i++)
+                ch = ch.unescape()
+                buf.append_byte(ch)
+                continue
+            }
+            buf.append_byte(ch)
+        }
+        return buf.to_string()
     }
 
     /////////////////////

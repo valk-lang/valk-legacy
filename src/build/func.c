@@ -226,6 +226,20 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
         str_flat(code, " ]\n");
 
         return var;
+
+    } else {
+        // Ignore error
+        ir->block = block_err;
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
+        ir_jump(ir, after);
+        ir->block = after;
+
+        return on;
     }
 
     return NULL;

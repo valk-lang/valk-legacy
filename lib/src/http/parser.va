@@ -3,6 +3,7 @@
 
 use utils
 use mem
+use io
 
 struct RequestParser {
     stage: uint (0)
@@ -58,6 +59,8 @@ struct RequestParser {
                 }
                 throw need_more_data
             }
+            // let line = input.sub_str(pos, index - pos)
+            // println(line)
 
             if index + 1 == length : throw need_more_data
             if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
@@ -71,6 +74,13 @@ struct RequestParser {
             // Request "GET / HTTP/1.1"
             let method = input.sub_str(pos, space1 - pos)
             let path = input.sub_str(space1 + 1, space2 - space1 - 1)
+
+            let qmark = path.index_of_byte('?') ? 0
+            if qmark > 0 {
+                let len = path.bytes
+                request.params_data = path.sub_str_bytes(qmark + 1, len - qmark - 1)
+                path = path.sub_str_bytes(0, qmark)
+            }
             // let version = input.sub_str(space2 + 1, index - space2 - 1)
 
             request.method = method;
@@ -83,7 +93,6 @@ struct RequestParser {
         }
 
         // Headers
-        let headers = request.headers;
         while stage == 1 {
             let index = input.index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {
@@ -113,6 +122,7 @@ struct RequestParser {
             // let key = input.sub_str(pos, split - pos - 1);
             // let value = input.sub_str(split + 1, index - split - 1);
             // headers.set(key.to_lower(), value);
+            // println(key)
 
             let key_len = split - pos - 1
             let value_len = index - split - 1
@@ -130,6 +140,7 @@ struct RequestParser {
             header_data.append_from_ptr(key_adr, key_len)
             header_data.append_byte(':')
             header_data.append_from_ptr(value_adr, value_len)
+            header_data.append_str("\r\n")
 
             // io:print_from_ptr(key_adr, key_len)
             // print(":")

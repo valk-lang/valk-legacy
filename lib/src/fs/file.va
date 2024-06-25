@@ -65,18 +65,25 @@ fn read(path: String) String !open_err !read !close {
 }
 
 // TODO: !open instead of !open_err (err identifiers need to be split)
-fn write(path: String, content: String, append: bool (true)) !open_err {
+fn write(path: String, content: String, append: bool (false)) !open_err {
 
     let flags = sys:O_TRUNC
     if append : flags = sys:O_APPEND
 
     let fd = open_extend(path, true, append, true) ! throw open_err
 
-    // TODO: ignore error handler
-    io:write(fd, content) ! {
-        io:close(fd)
-        return
-    }
+    io:write(fd, content) _
+    io:close(fd)
+}
+
+fn write_from_ptr(path: String, data: ptr, size: uint, append: bool (false)) !open_err {
+
+    let flags = sys:O_TRUNC
+    if append : flags = sys:O_APPEND
+
+    let fd = open_extend(path, true, append, true) ! throw open_err
+
+    io:write_from_ptr(fd, data, size) ? 0
     io:close(fd)
 }
 
