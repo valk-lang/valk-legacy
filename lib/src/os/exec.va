@@ -1,0 +1,32 @@
+
+header "sys" as sys
+
+use utils
+
+// execute command and return exit-code
+fn exec(cmd: String) (i32, String) !failed !pipe {
+    let buf = utils:ByteBuffer.new(1024)
+    let cstr = @stack_bytes(1024) @as cstring
+    let pipe = sys:popen(cmd.data, "r".data);
+    if pipe == null : throw pipe
+
+    while sys:fgets(cstr, 1024, pipe) != null {
+        let len = cstr.length()
+        buf.append_from_ptr(cstr, len)
+    }
+
+    let exit_code : i32 = 0
+    let status = sys:pclose(pipe)
+    if status != -1 {
+        exit_code = WEXITSTATUS(status)
+    }
+    return exit_code, buf.to_string()
+}
+
+fn WEXITSTATUS(status: i32) i32 {
+    #if OS == win
+    return status
+    #else
+    return (status & 0xff00) >> 8
+    #end
+}
