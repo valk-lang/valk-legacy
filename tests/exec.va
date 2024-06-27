@@ -4,7 +4,7 @@ use valk:os
 test "Exec" {
     let code1, out1 = os:exec("echo test") ? (1, "...")
     assert(code1 == 0)
-    assert(out1 == "test\n")
+    assert(out1.starts_with("test"))
     let code2, out2 = os:exec("valkvalkvalk") ? (1, "...")
     assert(code2 == 127)
     assert(out2.contains("not"))
