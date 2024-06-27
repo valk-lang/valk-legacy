@@ -89,6 +89,7 @@ typedef struct VError VError;
 typedef struct VAwait VAwait;
 typedef struct VMemset VMemset;
 typedef struct VThisButThat VThisButThat;
+typedef struct VBufferd VBufferd;
 // Snippet
 typedef struct Snippet Snippet;
 typedef struct SnipArg SnipArg;

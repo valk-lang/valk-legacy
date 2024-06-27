@@ -144,7 +144,7 @@ enum VALUES {
     v_ptr_of,
     v_ir_cached,
     v_gc_link, // 20
-    v_gc_buffer,
+    v_bufferd,
     v_ir_value, 
     v_gc_get_table,
     v_value_scope,

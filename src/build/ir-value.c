@@ -39,15 +39,6 @@ char* ir_value(IR* ir, Value* v) {
         char* call = ir_value(ir, errh->on);
         r = ir_func_err_handler(ir, errh, call, false);
     }
-    else if (vt == v_gc_buffer) {
-        VGcBuffer* buf = v->item;
-        ir_write_ast(ir, buf->scope);
-        VVar* var = buf->result;
-        if (!var->var) {
-            build_err(ir->b, "Missing buffer v_var in IR (compiler bug)");
-        }
-        r = var->var;
-    }
     else if (vt == v_func_ptr) {
         VFuncPtr *fptr = v->item;
         r = ir_func_ptr(ir, fptr->func);
@@ -355,17 +346,10 @@ char* ir_value(IR* ir, Value* v) {
         }
         r = "";
     }
-    else if (vt == v_phi) {
-        VPair* pair = v->item;
-        Value* v1 = pair->left;
-        Value* v2 = pair->right;
-        // if(!v1->ir_v) {
-        //     char* v = ir_value(ir, v1);
-        // }
-        // if(!v2->ir_v) {
-        //     char* v = ir_value(ir, v2);
-        // }
-        r = ir_phi_simple(ir, v1->ir_v, v1->ir_block, v2->ir_v, v2->ir_block, ir_type(ir, v->rett));
+    else if (vt == v_bufferd) {
+        VBufferd* vb = v->item;
+        r = ir_value(ir, vb->value);
+        ir_store(ir, vb->decl->ir_store, r, ir_type(ir, v->rett), v->rett->size);
     }
     else if (vt == v_frameptr) {
         Str *code = ir->block->code;
@@ -457,7 +441,6 @@ char* ir_value(IR* ir, Value* v) {
 
     if(r) {
         v->ir_v = r;
-        v->ir_block = ir->block->name;
         return r;
     }
 

@@ -195,6 +195,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             if(t == tok_bracket_close)
                 break;
         }
+        buffer_values_except_last(alc, p, values);
         v = vgen_multi(alc, values);
     } else if (t == tok_ltcurly_open) {
         int scope_end_i = p->scope_end_i;
@@ -998,12 +999,13 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
-    Value* buffer = vgen_gc_buffer(alc, p, p->scope, init, values->values, false);
+    buffer_values_except_last(alc, p, values->values);
+
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }
 
-    return buffer;
+    return init;
 }
 
 Value* value_handle_ptrv(Allocator *alc, Parser* p) {
@@ -1381,17 +1383,6 @@ bool value_needs_gc_buffer(Value* val) {
     return false;
 }
 
-VFuncCall* value_extract_func_call(Value* from) {
-    if(from->type == v_gc_buffer) {
-        VGcBuffer* buf = from->item;
-        from = buf->on;
-    }
-    if(from->type == v_func_call) {
-        return from->item;
-    }
-    return NULL;
-}
-
 void value_check_act(int act, Fc* fc, Parser* p, char* name) {
     if (act == act_public)
         return;
@@ -1538,22 +1529,10 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
 
         p->scope = scope;
 
-        // Mix nullable
-        // if (frett->is_pointer && errv->rett->nullable) {
-        //     Type *t = type_clone(alc, frett);
-        //     t->nullable = true;
-        //     frett = t;
-        // }
-        // //
-        // errv->rett = frett;
         errh->err_value = errv;
 
         Array* left = all_values(alc, on);
         Array* right = all_values(alc, errv);
-
-        // if(left->length != right->length) {
-        //     parse_err(p, -1, "Left and right value do not return the same amount of values");
-        // }
 
         Array* phi_s = array_make(alc, 1);
         loop(left, i) {
@@ -1562,6 +1541,7 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
             Value* l = array_get_index(left, i);
             Value* r = array_get_index(right, i);
 
+            // Mix nullable
             if(r->rett->nullable) {
                 Type *t = type_clone(alc, l->rett);
                 t->nullable = true;

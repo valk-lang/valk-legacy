@@ -9,7 +9,6 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->issets = NULL;
     v->extra_values = NULL;
     v->ir_v = NULL;
-    v->ir_block = NULL;
     return v;
 }
 
@@ -48,8 +47,8 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
         rett = array_get_index(rett_types, 0);
     }
 
-    Value* fcall = value_make(alc, v_func_call, item, rett);
-    Value* retv = vgen_gc_buffer(alc, p, p->scope, fcall, args, true);
+    Value* retv = value_make(alc, v_func_call, item, rett);
+    buffer_values_except_last(alc, p, args);
 
     // Return value buffers
     if (rett_types) {
@@ -212,43 +211,6 @@ Value* vgen_value_scope(Allocator* alc, Build* b, Scope* scope, Array* phi_value
     return value_make(alc, v_gc_link, item, rett);
 }
 
-Value* vgen_gc_buffer(Allocator* alc, Parser* p, Scope* scope, Value* val, Array* args, bool store_on_stack) {
-    Build* b = p->b;
-    bool contains_gc_values = false;
-    loop(args, i) {
-        Value* arg = array_get_index(args, i);
-        if(value_needs_gc_buffer(arg)) {
-            contains_gc_values = true;
-            break;
-        }
-    }
-    if(!contains_gc_values) {
-        return val;
-    }
-
-    Scope *sub = scope_sub_make(alc, sc_default, scope);
-    sub->ast = array_make(alc, 10);
-
-    // Buffer arguments
-    loop(args, i) {
-        Value* arg = array_get_index(args, i);
-        Decl *decl = decl_make(alc, p->func, NULL, arg->rett, false);
-        array_push(sub->ast, tgen_declare(alc, sub, decl, arg));
-        arg = value_make(alc, v_decl, decl, decl->type);
-        array_set_index(args, i, arg);
-    }
-
-    Value *var_result = vgen_var(alc, b, val);
-    array_push(sub->ast, token_make(alc, t_set_var, var_result->item));
-
-    VGcBuffer *buf = al(alc, sizeof(VGcBuffer));
-    buf->result = var_result->item;
-    buf->scope = sub;
-    buf->on = val;
-
-    return value_make(alc, v_gc_buffer, buf, val->rett);
-}
-
 Value *vgen_isset(Allocator *alc, Build *b, Value *on) {
     return value_make(alc, v_isset, on, type_gen_valk(alc, b, "bool"));
 }
@@ -351,6 +313,27 @@ Value* vgen_this_but_return_that(Allocator* alc, Value* this, Value* that) {
     tbt->this = this;
     tbt->that = that;
     return value_make(alc, v_this_but_that, tbt, that->rett);
+}
+
+Value* vgen_bufferd_value(Allocator* alc, Parser* p, Value* val) {
+    Decl *decl = decl_make(alc, p->func, NULL, val->rett, false);
+    scope_add_decl(alc, p->scope, decl);
+
+    VBufferd *vb = al(alc, sizeof(VBufferd));
+    vb->decl = decl;
+    vb->value = val;
+    return value_make(alc, v_bufferd, vb, val->rett);
+}
+void buffer_values_except_last(Allocator* alc, Parser* p, Array* args) {
+    int last = args->length - 1;
+    loop(args, i) {
+        if(i == last)
+            break;
+        Value* v = array_get_index(args, i);
+        if(value_needs_gc_buffer(v)) {
+            array_set_index(args, i, vgen_bufferd_value(alc, p, v));
+        }
+    }
 }
 
 Value* vgen_multi(Allocator* alc, Array* values) {

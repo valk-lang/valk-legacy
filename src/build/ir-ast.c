@@ -89,10 +89,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
         if (tt == t_break) {
-            Scope* loop_scope = t->item;
-            if (loop_scope->defer) {
-                ir_write_ast(ir, loop_scope->defer);
-            }
             IRBlock* after = ir->block_after;
             if(!after) {
                 die("Missing IR after block for 'break' (compiler bug)");
@@ -101,10 +97,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
             continue;
         }
         if (tt == t_continue) {
-            Scope* loop_scope = t->item;
-            if (loop_scope->defer) {
-                ir_write_ast(ir, loop_scope->defer);
-            }
             IRBlock* cond = ir->block_cond;
             if(!cond) {
                 die("Missing IR condition block for 'break' (compiler bug)");
@@ -236,11 +228,6 @@ void ir_write_ast(IR* ir, Scope* scope) {
         }
 
         die("Unhandled IR token (compiler bug)");
-    }
-
-    // Defer
-    if(scope->defer && !scope->did_return) {
-        ir_write_ast(ir, scope->defer);
     }
 }
 

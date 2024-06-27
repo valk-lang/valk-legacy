@@ -216,7 +216,6 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
         // IF NO ERR
         ir->block = block_else;
-        errh->on->ir_block = block_else->name;
 
         loop(phi_s, i) {
             Value* phi = array_get_index(phi_s, i);
@@ -237,22 +236,6 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
             char* r = ir_phi_simple(ir, v1->ir_v, block_else->name, v2->ir_v, block_err_val->name, ir_type(ir, phi->rett));
             phi->ir_v = r;
         }
-
-        // Str* code = after->code;
-        // char* var = ir_var(ir->func);
-        // str_flat(code, "  ");
-        // str_add(code, var);
-        // str_flat(code, " = phi ");
-        // str_add(code, ltype);
-        // str_flat(code, " [ ");
-        // str_add(code, on);
-        // str_flat(code, ", %");
-        // str_add(code, block_else->name);
-        // str_flat(code, " ], [ ");
-        // str_add(code, alt_val);
-        // str_flat(code, ", %");
-        // str_add(code, block_err_val->name);
-        // str_flat(code, " ]\n");
 
         return on;
 

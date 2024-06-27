@@ -672,19 +672,6 @@ void read_ast(Parser *p, bool single_line) {
 
     if (scope_type == sc_loop && !scope->did_return) {
         loop_defer(alc, p);
-
-        // Array *decls = scope->decls;
-        // Scope *defer = scope_get_defer(alc, scope);
-        // loop(decls, i) {
-        //     Decl *decl = array_get_index(decls, i);
-        //     if (!decl->is_gc)
-        //         continue;
-        //     array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
-        // }
-
-        // Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-        // Token* t = token_make(alc, t_ast_scope, gcscope);
-        // array_push(defer->ast, t);
     }
 
     if(is_func_scope) {
