@@ -13,17 +13,15 @@
 
 ```
 // Prio
-- exec
 - http client
 - json encode/decode
+- fix stack list in GcManager
 // Other
 - error messages
 - doc generator
 - more string functions
 - format string
-- borrow & gc_check stack if thread paused for too long in order to free shared memory 
 - unions
-- async / await
 - closures
 - generics for functions & traits
 - package management
@@ -33,7 +31,6 @@
 - run command: valk run ...
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
-- declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
 - success handling: myfunc() -> res { ... code ... }
 ```
 
