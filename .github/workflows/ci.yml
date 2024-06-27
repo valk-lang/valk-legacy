@@ -3,6 +3,8 @@ name: ci
 on:
   push:
     branches: [ main, nightly ]
+    paths-ignore:
+      - '**/*.md'
   pull_request:
     types: [ready_for_review, synchronize]
     branches: [ main, nightly ]
