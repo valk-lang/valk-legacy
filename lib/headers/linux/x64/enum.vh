@@ -1,4 +1,5 @@
 
+value EINTR (4)
 value EAGAIN (11)
 value EWOULDBLOCK (11)
 value EINVAL (22)

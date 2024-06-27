@@ -144,7 +144,7 @@ enum VALUES {
     v_ptr_of,
     v_ir_cached,
     v_gc_link, // 20
-    v_gc_buffer,
+    v_bufferd,
     v_ir_value, 
     v_gc_get_table,
     v_value_scope,
@@ -158,9 +158,13 @@ enum VALUES {
     v_await,
     v_setjmp,
     v_longjmp,
-    v_frameptr,
+    v_frameptr, // 35
     v_stackptr,
     v_memset,
+    v_this_but_that,
+    v_multi,
+    v_errh, // 40
+    v_phi,
 };
 
 enum TOKENS {

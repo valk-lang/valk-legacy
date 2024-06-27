@@ -80,6 +80,44 @@ struct String {
         throw not_found;
     }
 
+    fn index_of(part: String) uint !not_found {
+        let pos : uint = 0
+        let adr = this.data
+        let adr_part = part.data
+        let bytes = this.bytes
+        let bytes_left = bytes
+        let bytes_part = part.bytes
+
+        let count : uint = 0
+
+        while bytes_left >= bytes_part {
+
+            if mem:equal(adr, adr_part, bytes_part) : return count
+
+            let bytec : u8 = 1
+            let byte : u8 = @ptrv(adr, u8, 0)
+            if(byte > 127){
+                byte = byte << 1
+                while(byte > 127){
+                    bytec++
+                    byte = byte << 1
+                }
+            }
+            // Invalid utf8 char
+            if(bytec > 4) : bytec = 1
+            if(bytec > bytes_left) : break
+            adr += bytec
+            bytes_left -= bytec
+            count++
+        }
+        throw not_found
+    }
+
+    fn contains(part: String) bool {
+        this.index_of(part) ! return false
+        return true
+    }
+
     /////////////////////
     // Clean
     /////////////////////

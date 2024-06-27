@@ -4,8 +4,8 @@ shared stderr : ?ptr;
 shared stdin : ?ptr;
 shared stdout : ?ptr;
 
-// alias ptr as FILE;
-// alias ptr as DIR;
+alias FILE as ptr;
+alias DIR as ptr
 
 // pid_t = i32
 // socklen_t = u32

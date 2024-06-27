@@ -715,6 +715,34 @@ char* ir_phi(IR* ir, Array* values, char* type) {
     return var;
 }
 
+char* ir_phi_simple(IR* ir, char* v1, char* b1, char* v2, char* b2, char* type) {
+    Str *code = ir->block->code;
+    char *var = ir_var(ir->func);
+
+    str_flat(code, "  ");
+    str_add(code, var);
+    str_flat(code, " = phi ");
+    str_add(code, type);
+
+    str_flat(code, " [ ");
+    str_add(code, v1);
+    str_flat(code, ", %");
+    str_add(code, b1);
+    str_flat(code, " ]");
+
+    str_flat(code, ",");
+
+    str_flat(code, " [ ");
+    str_add(code, v2);
+    str_flat(code, ", %");
+    str_add(code, b2);
+    str_flat(code, " ]");
+
+    str_flat(code, "\n");
+
+    return var;
+}
+
 char *ir_notnull_i1(IR *ir, char *val) {
     char *var = ir_var(ir->func);
     Str *code = ir->block->code;

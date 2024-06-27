@@ -231,6 +231,12 @@ int cmd_build(int argc, char *argv[]) {
         b->path_out = path_out;
     }
 
+    // Add .exe to path out for windows target
+    if(target_os == os_win && !ends_with(b->path_out, ".exe")) {
+        sprintf(char_buf, "%s.exe", b->path_out);
+        b->path_out = dups(alc, char_buf);
+    }
+
     // Watch files
     if ((array_contains(args, "--watch", arr_find_str) || array_contains(args, "-w", arr_find_str)) && !is_watching) {
         watch_files(alc, autorun, vo_files, b->path_out, argc, argv);

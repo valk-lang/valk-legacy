@@ -180,15 +180,32 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
     } else if (t == tok_not) {
 
-        v = read_value(alc, p, true, 1);
-        if (!type_is_bool(v->rett)) {
+        Value* on = read_value(alc, p, true, 1);
+        if (!type_is_bool(on->rett)) {
             parse_err(p, -1, "Value after '!' must be of type 'bool'");
         }
-        v = value_make(alc, v_not, v, v->rett);
+        v = value_make(alc, v_not, on, on->rett);
+        // Flip issets if only 1 else clear
+        Array* is = on->issets;
+        Array* nis = on->not_issets;
+        int count = is ? is->length : 0;
+        count += nis ? nis->length : 0;
+        if (count == 1) {
+            v->not_issets = is;
+            v->issets = nis;
+        }
 
     } else if (t == tok_bracket_open) {
-        v = read_value(alc, p, true, 0);
-        tok_expect(p, ")", true, true);
+        Array* values = array_make(alc, 1);
+        while(true) {
+            v = read_value(alc, p, true, 0);
+            array_push(values, v);
+            t = tok_expect_two(p, ",", ")", true, true);
+            if(t == tok_bracket_close)
+                break;
+        }
+        buffer_values_except_last(alc, p, values);
+        v = vgen_multi(alc, values);
     } else if (t == tok_ltcurly_open) {
         int scope_end_i = p->scope_end_i;
         Array *_prev_values = p->vscope_values;
@@ -649,15 +666,24 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Left side of '?' must be of type bool");
             }
 
+            // True
             Scope* scope = p->scope;
             Scope* sv1 = scope_sub_make(alc, sc_default, scope);
             scope_apply_issets(alc, sv1, v->issets);
 
             p->scope = sv1;
             Value *v1 = read_value(alc, p, true, 0);
-            p->scope = scope;
+
+            // False
             tok_expect(p, ":", true, true);
+
+            Scope* sv2 = scope_sub_make(alc, sc_default, scope);
+            scope_apply_issets(alc, sv2, v->not_issets);
+            p->scope = sv2;
             Value *v2 = read_value(alc, p, true, 51);
+
+            //
+            p->scope = scope;
 
             Type *type = type_merge(alc, v1->rett, v2->rett);
             if (!type) {
@@ -769,7 +795,10 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         return idf->item;
     }
     if (type == idf_value) {
-        return idf->item;
+        Value* v = al(alc, sizeof(Value));
+        Value* ori = idf->item;
+        *v = *ori;
+        return v;
     }
 
     parse_err(p, -1, "Identifier cannot be used as a value: %d", idf->type);
@@ -880,27 +909,16 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         p->scope->did_return = true;
     }
 
-    Value* buffer = vgen_func_call(alc, p, on, args);
-    Value* fcall = buffer;
-    if(buffer->type == v_gc_buffer) {
-        VGcBuffer* buf = buffer->item;
-        fcall = buf->on;
-        //
-        // p->scope->gc_check = true;
-    }
+    Value* retv = vgen_func_call(alc, p, on, args);
 
     if (!p->reading_coro_fcall) {
         TypeFuncInfo *fi = ont->func_info;
         if (fi->err_names && fi->err_names->length > 0) {
-            VFuncCall *c = fcall->item;
-            c->errh = read_err_handler(alc, p, buffer, fi);
-            if (c->errh && c->errh->err_value) {
-                buffer->rett = c->errh->err_value->rett;
-            }
+            retv = read_err_handler(alc, p, retv, fi);
         }
     }
 
-    return buffer;
+    return retv;
 }
 
 Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
@@ -999,12 +1017,13 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
-    Value* buffer = vgen_gc_buffer(alc, p, p->scope, init, values->values, false);
+    buffer_values_except_last(alc, p, values->values);
+
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }
 
-    return buffer;
+    return init;
 }
 
 Value* value_handle_ptrv(Allocator *alc, Parser* p) {
@@ -1382,17 +1401,6 @@ bool value_needs_gc_buffer(Value* val) {
     return false;
 }
 
-VFuncCall* value_extract_func_call(Value* from) {
-    if(from->type == v_gc_buffer) {
-        VGcBuffer* buf = from->item;
-        from = buf->on;
-    }
-    if(from->type == v_func_call) {
-        return from->item;
-    }
-    return NULL;
-}
-
 void value_check_act(int act, Fc* fc, Parser* p, char* name) {
     if (act == act_public)
         return;
@@ -1448,7 +1456,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
     return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
 }
 
-ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
+Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
 
     Type* frett = fi->rett;
     bool void_rett = type_is_void(frett);
@@ -1456,13 +1464,21 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
     char t = tok(p, true, false, true);
     char *name = NULL;
 
+    // on = vgen_ir_cached(alc, on);
+
     ErrorHandler* errh = al(alc, sizeof(ErrorHandler));
+    errh->type = 0;
+    errh->on = on;
     errh->err_scope = NULL;
     errh->err_value = NULL;
     errh->err_decl = NULL;
+    errh->phi_s = NULL;
+
+    Value *retv = value_make(alc, v_errh, errh, on->rett);
+    retv->extra_values = on->extra_values;
 
     if(type_is_void(frett) && str_is(p->tkn, "_")) {
-        return errh;
+        return retv;
     }
 
     if (t == tok_id) {
@@ -1512,6 +1528,7 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
         if (void_rett) {
             parse_err(p, -1, "You cannot provide an alternative value for a function that doesnt return a value");
         }
+
         Scope *scope = p->scope;
         Scope *sub_scope = scope_sub_make(alc, sc_default, p->scope);
         p->scope = sub_scope;
@@ -1526,25 +1543,62 @@ ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInf
         }
 
         Value *errv = read_value(alc, p, false, 0);
-        errv = try_convert(alc, p, sub_scope, errv, frett);
+        // errv = try_convert(alc, p, sub_scope, errv, frett);
 
         p->scope = scope;
 
-        // Mix nullable
-        if (frett->is_pointer && errv->rett->nullable) {
-            Type *t = type_clone(alc, frett);
-            t->nullable = true;
-            frett = t;
-        }
-        //
-        type_check(p, frett, errv->rett);
         errh->err_value = errv;
-        errv->rett = frett;
+
+        Array* left = all_values(alc, on);
+        Array* right = all_values(alc, errv);
+
+        Array* phi_s = array_make(alc, 1);
+        loop(left, i) {
+            if(i == left->length || i == right->length)
+                break;
+            Value* l = array_get_index(left, i);
+            Value* r = array_get_index(right, i);
+
+            // Mix nullable
+            if(r->rett->nullable) {
+                Type *t = type_clone(alc, l->rett);
+                t->nullable = true;
+                l->rett = t;
+            }
+            r = try_convert(alc, p, scope, r, l->rett);
+
+            type_check(p, l->rett, r->rett);
+            array_push(phi_s, vgen_phi(alc, l, r));
+        }
+
+        errh->phi_s = phi_s;
+
+        retv = vgen_this_but_return_that(alc, retv, array_get_index(phi_s, 0));
+        if(phi_s->length > 1) {
+            retv->extra_values = array_make(alc, phi_s->length - 1);
+            loop(phi_s, i) {
+                if(i == 0)
+                    continue;
+                array_push(retv->extra_values, array_get_index(phi_s, i));
+            }
+        }
     }
 
-    return errh;
+    return retv;
 }
 
 void value_enable_cached(VIRCached* v) {
     v->used = true;
+}
+
+Array* all_values(Allocator*alc, Value* v) {
+    Array* res = array_make(alc, 2);
+    array_push(res, v);
+    if(v->extra_values) {
+        loop(v->extra_values, i) {
+            Value* ex = array_get_index(v->extra_values, i);
+            array_push(res, ex);
+        }
+    }
+    return res;
 }
