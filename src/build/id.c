@@ -1,22 +1,45 @@
 
 #include "../all.h"
 
+// Decl logic
+
+// mut decls: give offset
+// imut gc !is_arg: give offset
+
+// Func start:
+// alloca
+// load stack adr
+// if has offset: set ir_store based on offset
+// if is_arg:
+// -- if has ir_store, store arg in ir_store
+// -- if imut, ir_var = arg
+// if !is_arg: 
+// -- if has offset && is_gc, store null in ir_store
+// increase + store stack adr
+
+// Func end
+// decrease stack adr
+
+// before continue/break or end of loop, set all gc decls to null
+
 Idf* idf_make(Allocator* alc, int type, void* item) {
     Idf* idf = al(alc, sizeof(Idf));
     idf->type = type;
     idf->item = item;
     return idf;
 }
-Decl* decl_make(Allocator* alc, char* name, Type* type, bool is_arg) {
-    bool is_gc = !is_arg && type_is_gc(type);
+Decl* decl_make(Allocator* alc, Func* func, char* name, Type* type, bool is_arg) {
+    bool is_gc = type_is_gc(type);
     Decl* d = al(alc, sizeof(Decl));
     d->name = name;
     d->type = type;
-    d->ir_var = NULL;
-    d->ir_store_var = NULL;
     d->is_mut = false;
     d->is_gc = is_gc;
     d->is_arg = is_arg;
+    d->arg_nr = is_arg ? func->arg_nr++ : -1;
+    d->offset = -1;
+    d->ir_store = NULL;
+    d->ir_var = NULL;
     return d;
 }
 
@@ -27,7 +50,7 @@ char* gen_export_name(Nsc* nsc, char* suffix) {
     if(nsc == b->nsc_main) {
         sprintf(name, "%s", suffix);
     } else {
-        sprintf(name, "%s__%s__%s_%d", pkc->name, nsc->name, suffix, nsc->unit->export_count++);
+        sprintf(name, "%s__%s__%s", pkc->name, nsc->name, suffix);
     }
     return dups(b->alc, name);
 }
@@ -36,7 +59,6 @@ Id *read_id(Parser *p, char *first_part, Id *buf) {
 
     char* ns = NULL;
     char* name = first_part;
-    Build* b = p->b;
 
     if(first_part == NULL) {
         char t = tok(p, true, true, true);
@@ -91,7 +113,7 @@ Idf* idf_by_id(Parser* p, Scope* scope, Id* id, bool must_exist) {
             char* name = get_number_type_name(b, b->ptr_size, true, false);
             Nsc* ns = get_valk_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
-        } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map") || str_is(name, "array") || str_is(name, "map")) {
+        } else if(str_is(name, "String") || str_is(name, "cstring") || str_is(name, "ptr") || str_is(name, "bool") || str_is(name, "f32") || str_is(name, "f64") || str_is(name, "i64") || str_is(name, "u64") || str_is(name, "i32") || str_is(name, "u32") || str_is(name, "u16") || str_is(name, "i16") || str_is(name, "u8") || str_is(name, "i8") || str_is(name, "Array") || str_is(name, "Map") || str_is(name, "array") || str_is(name, "map") || str_is(name, "Pool")) {
             Nsc* ns = get_valk_nsc(p->b, "type");
             idf = scope_find_idf(ns->scope, name, true);
         } else if(str_is(name, "print") || str_is(name, "println") || str_is(name, "FD")) {
@@ -125,7 +147,7 @@ Idf* scope_find_idf(Scope* scope, char* name, bool recursive) {
 bool scope_delete_idf_by_value(Scope* scope, void* item, bool recursive) {
     while(scope) {
         Array* idfs = scope->identifiers->values;
-        for(int i = 0; i < idfs->length; i++) {
+        loop(idfs, i) {
             Idf* idf = array_get_index(idfs, i);
             if(idf->item == item) {
                 array_set_index(scope->identifiers->values, i, NULL);

@@ -18,9 +18,11 @@ void ir_gen_globals(IR* ir) {
         str_flat(code, "@valk_gc_vtable = external constant ptr, align 8\n");
     }
 
-    for (int i = 0; i < u->globals->length; i++) {
+    loop(u->globals, i) {
         Global *g = array_get_index(u->globals, i);
-        if (g->fc->is_header)
+        if (g->fc && g->fc->is_header)
+            continue;
+        if (g->fc && g->fc->is_header)
             continue;
 
         char *name = g->export_name;
@@ -57,7 +59,7 @@ void ir_gen_globals(IR* ir) {
 void *ir_global(IR *ir, Global *g) {
     //
     char *name = g->export_name;
-    if (!array_contains(ir->declared_globals, g, arr_find_adr)) {
+    if (g->unit != ir->unit && !array_contains(ir->declared_globals, g, arr_find_adr)) {
         Type* type = g->type;
         char *ltype = ir_type(ir, type);
 

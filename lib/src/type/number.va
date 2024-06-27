@@ -19,31 +19,35 @@ trait Number {
         return this.to_base(16)
     }
 
-    fn to_base(base: CLASS) String {
+    fn round_up(modulo: SELF) SELF {
+        return this + ((modulo - (this % modulo)) % modulo)
+    }
+    fn round_down(modulo: SELF) SELF {
+        return this - (this % modulo)
+    }
 
-        if this == 0 || base == 0 {
-            return "0";
-        }
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-        }
+    fn to_base(base: SELF) String {
+
+        if this == 0 || base == 0 : return "0";
+
+        if str_buf == null : str_buf = mem:alloc(24)
         let buf = str_buf @as ptr
         let len = this.to_base_to_ptr(base, buf)
 
         return String.make_from_ptr(buf, len)
     }
 
-    fn to_base_to_ptr(base: CLASS, result: ptr) uint {
+    fn to_base_to_ptr(base: SELF, result: ptr) uint {
 
         let chars = "0123456789ABCDEF".data
 
         if str_rev == null {
-            str_rev = mem:alloc(64)
+            str_rev = mem:alloc(24)
         }
         let rev = str_rev
         let val = this
         let negative = false
-        #if @type_is_signed(CLASS)
+        #if @type_is_signed(SELF)
         if val < 0 {
             negative = true
             val = val * -1
@@ -62,7 +66,7 @@ trait Number {
             return 1
         }
         let len = i
-        #if @type_is_signed(CLASS)
+        #if @type_is_signed(SELF)
         if negative {
             len++
             @ptrv(result, u8, 0) = '-'
@@ -78,36 +82,11 @@ trait Number {
         return len
     }
 
-    fn print(base: CLASS) {
+    fn print(base: SELF) {
 
-        let chars = "0123456789ABCDEF".data
-
-        if str_buf == null {
-            str_buf = mem:alloc(64)
-            str_rev = mem:alloc(64)
-        }
+        if str_buf == null : str_buf = mem:alloc(24)
         let buf = str_buf @as ptr
-        let rev = str_rev
-
-        if this == 0 || base == 0 {
-            io:write_from_ptr(1, chars, 1) ? 0
-            return
-        }
-
-        let val = this
-        let i : uint = 0;
-        while val > 0 {
-            @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
-            i++
-            val = val / base
-        }
-        // Set len
-        let len = i
-        // Reverse
-        let up = 0
-        while i-- > 0 {
-            @ptrv(buf, u8, i) = @ptrv(rev, u8, up++)
-        }
+        let len = this.to_base_to_ptr(base, buf)
 
         io:write_from_ptr(1, buf, len) ? 0
     }

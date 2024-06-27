@@ -2,40 +2,77 @@
 use io
 use os
 
-fn gc_alloc_class(pool: GcPool, vtable: u32) ptr {
-    return pool.get(vtable)
-}
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
+}
+fn gc() {
+    stack.gc();
+}
+fn force_gc() {
+    stack.force_full = true
+    stack.gc();
 }
 
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
     func(item, state_solid);
 }
 fn gc_mark_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
     func(item, stack.age);
 }
 fn gc_mark_shared_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
     func(item, gc_age);
 }
 fn gc_share(item: ptr) {
-    // let dis = disable_gc;
-    // disable_gc = true;
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr)(void), vt_share)
+    let func = @ptrv(table, fn(ptr)(), vt_share)
     func(item);
-    // disable_gc = dis;
+}
+
+#parse_last
+fn pools_init() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G = @class_of(T).init()
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_swap_transfers() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.swap_transfers()
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_clean_unmarked(age: u8) {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.clean_unmarked(age)
+    #end
+    #endloop
+}
+
+#parse_last
+fn pools_reset() {
+    #loop_globals as G, T 
+    #if @type_is_generic_of(T, GcPool2)
+    G.reset()
+    #end
+    #endloop
 }

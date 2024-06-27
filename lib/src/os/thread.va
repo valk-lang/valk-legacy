@@ -2,33 +2,37 @@
 header "sys" as sys;
 
 use valk:mem;
+use valk:core;
+use io;
 
-struct ThreadEntry {
+cstruct ThreadEntry {
     func: ptr
     data: ?ptr
     has_data: bool
 }
 
-struct Thread {
+cstruct Thread {
 
+    #init_thread
     - static fn entry(e: ThreadEntry) {
-        mem:Stack.init()
+        // mem:Stack.init()
         if e.has_data {
-            let func = e.func @as fn(ptr)(void);
-            func(e.data @as ptr);
+            let func = e.func @as fn(ptr)();
+            co func(e.data @as ptr);
         } else {
-            let func = e.func @as fn()(void);
-            func();
+            let func = e.func @as fn()();
+            co func();
         }
+        core:Coro.loop()
         mem:stack.shutdown()
     }
 
     static fn start(start_func: ptr) {
-        CLASS.init(start_func, null, false);
+        SELF.init(start_func, null, false);
     }
     static fn start_with_data(start_func: ptr, data: ?ptr) {
         @gc_share(data)
-        CLASS.init(start_func, data, true);
+        SELF.init(start_func, data, true);
     }
 
     static fn init(start_func: ptr, data: ?ptr, has_data: bool) {

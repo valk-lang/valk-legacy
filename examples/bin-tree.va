@@ -1,5 +1,5 @@
 
-class Node {
+struct Node {
     left : ?Node (null)
     right : ?Node (null)
 
@@ -8,11 +8,9 @@ class Node {
             let res = Node {}
             return res
         }
-        let l = Node.tree(x - 1)
-        let r = Node.tree(x - 1)
         let res = Node {
-            left: l
-            right: r
+            left: Node.tree(x - 1)
+            right: Node.tree(x - 1)
         }
         return res
     }

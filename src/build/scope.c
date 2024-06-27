@@ -12,9 +12,8 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->ast = NULL;
     sc->decls = type == sc_func ? array_make(alc, 20) : NULL;
 
-    sc->gc_decl_count = 0;
+    sc->func = NULL;
 
-    sc->rett = NULL;
     sc->must_return = false;
     sc->did_return = false;
     sc->gc_check = false;
@@ -24,7 +23,6 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
 }
 Scope* scope_sub_make(Allocator* alc, int type, Scope* parent) {
     Scope* sub = scope_make(alc, type, parent);
-    sub->rett = parent->rett;
     return sub;
 }
 
@@ -56,14 +54,11 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
             closest->decls = array_make(alc, 4);
         array_push(closest->decls, decl);
         closest->has_gc_decls = true;
-        closest->gc_decl_count++;
     }
     // Func scope
-    array_push(scope->decls, decl);
-    if(decl->is_gc) {
+    if(decl->is_gc)
         scope->has_gc_decls = true;
-        scope->gc_decl_count++;
-    }
+    array_push(scope->decls, decl);
 }
 
 void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
@@ -71,7 +66,7 @@ void scope_apply_issets(Allocator *alc, Scope *scope, Array *issets) {
     if (!issets)
         return;
 
-    for (int i = 0; i < issets->length; i++) {
+    loop(issets, i) {
         Value *on = array_get_index(issets, i);
         if (on->type == v_decl) {
             Decl *decl = on->item;

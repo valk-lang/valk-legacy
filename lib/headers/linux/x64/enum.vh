@@ -1,5 +1,9 @@
 
+value EINTR (4)
 value EAGAIN (11)
+value EWOULDBLOCK (11)
+value EINVAL (22)
+
 value SOCK_STREAM (1)
 value SOCK_NONBLOCK (2048)
 
@@ -14,6 +18,12 @@ value AF_UNIX (1)
 value AI_PASSIVE (1)
 value AI_CANONNAME (2)
 value AI_NUMERICHOST (4)
+
+value POLLIN (1)
+value POLLOUT (4)
+value POLLERR (8)
+value POLLHUP (16)
+value POLLRDHUP (8192)
 
 value EPOLLERR (8)
 value EPOLLET (-2147483648)
@@ -38,11 +48,12 @@ value O_RDONLY (0)
 value O_RDWR (2)
 value O_WRONLY (1)
 //
-value O_APPEND (1024)
 value O_CREATE (64)
 value O_EXCL (128)
-value O_SYNC (1052672)
 value O_TRUNC (512)
+value O_APPEND (1024)
+value O_NONBLOCK (2048)
+value O_SYNC (1052672)
 
 value S_IFDIR (16384)
 value S_IFREG (32768)

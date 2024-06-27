@@ -1,5 +1,8 @@
 
+value EINTR (4)
+value EINVAL (22)
 value EAGAIN (35)
+
 value SOCK_STREAM (1)
 value F_GETFL (3)
 value F_SETFL (4)

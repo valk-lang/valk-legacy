@@ -158,12 +158,13 @@ int cmd_build(int argc, char *argv[]) {
 
     b->globals = array_make(alc, 40);
 
-    b->units = array_make(alc, 40);
-    b->classes = array_make(alc, 40);
+    b->units = array_make(alc, 100);
+    b->classes = array_make(alc, 1000);
     b->pool_str = array_make(alc, 20);
     b->strings = array_make(alc, 100);
-    b->links = array_make(alc, 10);
+    b->links = array_make(alc, 20);
     b->link_settings = map_make(alc);
+    b->parse_later = array_make(alc, 20);
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
@@ -180,11 +181,14 @@ int cmd_build(int argc, char *argv[]) {
     b->ptr_size = 8;
     b->export_count = 0;
     b->string_count = 0;
+    b->coro_count = 0;
     b->gc_vtables = 0;
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
     b->building_ast = true;
+    b->parse_last = false;
+    b->stage_1_done = false;
 
     b->is_test = is_test;
     b->is_clean = is_clean;
@@ -227,6 +231,12 @@ int cmd_build(int argc, char *argv[]) {
         b->path_out = path_out;
     }
 
+    // Add .exe to path out for windows target
+    if(target_os == os_win && !ends_with(b->path_out, ".exe")) {
+        sprintf(char_buf, "%s.exe", b->path_out);
+        b->path_out = dups(alc, char_buf);
+    }
+
     // Watch files
     if ((array_contains(args, "--watch", arr_find_str) || array_contains(args, "-w", arr_find_str)) && !is_watching) {
         watch_files(alc, autorun, vo_files, b->path_out, argc, argv);
@@ -260,7 +270,7 @@ int cmd_build(int argc, char *argv[]) {
     // Build
     usize start = microtime();
 
-    for (int i = 0; i < vo_files->length; i++) {
+    loop(vo_files, i) {
         char *path = array_get_index(vo_files, i);
         fc_make(nsc_main, path, false);
     }
@@ -333,6 +343,15 @@ int cmd_build(int argc, char *argv[]) {
         printf("✅ Compiled in: %.3fs\n", (double)(microtime() - start) / 1000000);
         #endif
     }
+
+    loop(b->pkcs, i) {
+        Pkc* pkc = array_get_index(b->pkcs, i);
+        if(pkc->config) {
+            cJSON_Delete(pkc->config->json);
+        }
+    }
+
+    alc_delete(b->alc);
 
     return 0;
 }
@@ -432,7 +451,7 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
     bool first_run = true;
     watch_dirs = array_make(alc, 20);
     // Add directories from files args
-    for (int i = 0; i < vo_files->length; i++) {
+    loop(vo_files, i) {
         char *file = array_get_index(vo_files, i);
         char md[VALK_PATH_MAX];
         get_dir_from_path(file, md);
@@ -449,10 +468,10 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
     while (true) {
         alc_wipe(walc);
         bool build = false;
-        for (int i = 0; i < watch_dirs->length; i++) {
+        loop(watch_dirs, i) {
             char *dir = array_get_index(watch_dirs, i);
             Array *files = get_subfiles(walc, dir, false, true);
-            for (int o = 0; o < files->length; o++) {
+            loop(files, o) {
                 char *file = array_get_index(files, o);
                 if (!ends_with(file, ".va")) {
                     continue;

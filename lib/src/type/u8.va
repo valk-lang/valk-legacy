@@ -6,7 +6,7 @@ integer u8 1 unsigned {
         return this < 128;
     }
     fn is_hex() bool {
-        return ( this >= '0' && this <= '9') || ( this >= 'a' && this <= 'f') || ( this >= 'A' && this <= 'F')
+        return (this >= '0' && this <= '9') || (this >= 'a' && this <= 'f') || (this >= 'A' && this <= 'F')
     }
     fn is_number() bool {
         return this >= '0' && this <= '9';
@@ -28,5 +28,37 @@ integer u8 1 unsigned {
     }
     fn is_newline() bool {
         return this == '\n' || this == '\r';
+    }
+
+    fn hex_byte_to_hex_value() u8 {
+        if this >= '0' && this <= '9' {
+            return this - '0'
+        }
+        if this >= 'a' && this <= 'f' {
+            return this - 'a' + 10
+        }
+        return this - 'A' + 10
+    }
+
+    fn unescape() u8 {
+        let ch = this
+        if (ch == 'n') {
+            ch = '\n'
+        } else if (ch == 'r') {
+            ch = '\r'
+        } else if (ch == 't') {
+            ch = '\t'
+        } else if (ch == 'f') {
+            ch = '\f'
+        } else if (ch == 'b') {
+            ch = '\b'
+        } else if (ch == 'v') {
+            ch = '\v'
+        } else if (ch == 'f') {
+            ch = '\f'
+        } else if (ch == 'a') {
+            ch = '\a'
+        }
+        return ch
     }
 }

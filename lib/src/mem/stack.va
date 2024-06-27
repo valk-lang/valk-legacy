@@ -1,23 +1,28 @@
 
 @ignore_access_types
 
-use valk:mem
-use valk:os
-use valk:io
+use mem
+use os
+use io
+use core
 
 global stack : @ignu(Stack);
-global disable_gc : bool;
-global gc_transfer_size : uint;
-global gc_mark_size : uint;
-global gctick : uint
+global run_gc : bool;
 
-value state_unused (0)
+global mem_new : uint;
+global mem_marked : uint;
+global mem_transfered : uint;
+global mem_usage : uint;
+
+value mem_marked_default (8192)
+
+value state_new (0)
 value state_used (1)
 value state_transfer (2)
 value state_solid (4)
 value state_const (8)
 value state_shared (10)
-value stack_size (1000000)
+value stack_size (10000)
 
 value vt_transfer (0)
 value vt_mark (1)
@@ -26,29 +31,42 @@ value vt_share (3)
 value vt_gc_free (4)
 
 value byte_state (0)
-value byte_pool_index (1)
+value byte_bools (1)
 value byte_age (2)
 value byte_gc_age (3)
 
 value byte_state_rel (-8)
-value byte_pool_index_rel (-7)
+value byte_bools_rel (-7)
 value byte_age_rel (-6)
 value byte_gc_age_rel (-5)
 
-value trigger_lowest (0)
-value trigger_buffer_size (1)
-value trigger_gc_count (2)
-
 shared stack_count: uint
 
-struct Stack {
-    id: uint
-    stack_base : ptr
-    stack_adr : ptr
-    stack_adr_last : ptr
+global stack_pos: @ignu(StackPos)
+global main_stack_pos: @ignu(StackPos)
 
+cstruct StackPos {
+    base: ptr
+    adr: ptr
     lowest: ptr
-    lowest_next : ptr
+    size: uint
+    fn free() {
+        free(this.base)
+        free(this)
+    }
+}
+fn create_stack() StackPos {
+    let base = alloc(stack_size)
+    return StackPos { 
+        base: base
+        adr: base
+        lowest: base
+        size: stack_size
+    }
+}
+
+cstruct Stack {
+    // id: uint
 
     transfer : ObjectChain
     shared : GcRing
@@ -57,57 +75,48 @@ struct Stack {
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
-    disable_gc_ref: ptr
 
     age: u8 (33)
     gc_age: u8 (0)
 
-    run_gc: bool (false)
+    run_gc_ref: ptr
     bumper_overflow: bool (false)
-    clear_unknown: bool (false)
 
     force_full: bool (false)
     stopped: bool (false)
 
     static fn init() {
 
-        let id = atomic(stack_count + 1)
+        // let id = atomic(stack_count + 1)
 
-        let data = alloc(stack_size)
-        // NOTE: Probably not needed
-        let stackc = stack_size / sizeof(ptr)
-        while stackc > 0 {
-            stackc--
-            @ptrv(data, ?ptr, stackc) = null
-        }
+        let pos = create_stack()
+        stack_pos = pos
+        main_stack_pos = pos
 
         let s = Stack {
-            id: id
-            stack_base: data
-            stack_adr: data
-            stack_adr_last: data
-
-            lowest: data
-            lowest_next: data + (100 * sizeof(ptr))
-
+            // id: id
             transfer: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
-
-            disable_gc_ref: @ptr_of(disable_gc)
+            run_gc_ref: @ptr_of(run_gc)
         }
 
         stack = s;
-        disable_gc = false
+        run_gc = false
+        mem_marked = mem_marked_default
 
-        GcPool.init()
+        pools_init()
 
         s.scan_globals()
 
         let gcm = gc_manager()
         gcm.add_stack(s);
+
+        core:g_coros = Array[?core:Coro].new()
+        core:g_coro_indexes = Pool[uint].new()
     }
 
+    #parse_last
     fn scan_globals() {
         let count : uint = 0
         #loop_globals as G, T
@@ -152,42 +161,31 @@ struct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        if disable_gc : return
         this.lock.lock()
 
-        disable_gc = true
-        this.run_gc = false
-        gctick++
+        mem_new = 0
+        mem_usage = 0
+        run_gc = false
 
-        let trigger_type : u8 = trigger_lowest
-        if this.bumper_overflow {
-            this.bumper_overflow = false
-            trigger_type = trigger_buffer_size
-        }
         this.mark_difference_down()
         this.handle_transfer_list()
-        GcPool.free_unused_all()
+        pools_swap_transfers()
         this.bump.wipe()
 
+        let transfer_percent = mem_transfered * 100 / mem_marked
+
         // Full clear
-        if this.force_full {
-            this.clear_unknown = true
+        if transfer_percent > 40 || this.force_full {
+
             this.force_full = false
-        }
-        if gc_transfer_size > gc_mark_size {
-            this.clear_unknown = true
-        }
-        if this.clear_unknown {
-            //
-            // io:print_fake("f")
-            gc_mark_size = 0
-            gc_transfer_size = 0
+
+            mem_marked = mem_marked_default
+            mem_transfered = 0
             // Mark
             this.update_age()
             this.mark_stack_age()
             // Clean
-            GcPool.clean_old_all(this.age)
-            this.clear_unknown = false
+            pools_clean_unmarked(this.age)
             // Mark shared
             if gc_age != this.gc_age {
                 let age = gc_age
@@ -195,28 +193,12 @@ struct Stack {
                 this.gc_age = age
             }
         }
-        GcPool.reset_all()
+        pools_reset()
 
-        // Adjust lowest stack point
-        if this.lowest_next < this.lowest {
-            // Lowest stack point
-            this.lowest = this.lowest_next
-        }
-        if trigger_type == trigger_buffer_size {
-            // io:print_fake("b")
-            // Increase lowest point
-            this.lowest = this.lowest_next
-        // } else {
-        //     io:print_fake("l")
-        }
-
-
-        this.stack_adr_last = this.stack_adr
-        this.lowest_next = this.stack_adr + (1000 * sizeof(ptr))
-        disable_gc = false
         this.lock.unlock()
     }
 
+    #parse_last
     fn mark_difference_down() {
         //
         let transfer = this.transfer
@@ -228,10 +210,10 @@ struct Stack {
             let g = G @as ptr
             if g != null {
                 let state = @ptrv(g, u8, -8)
-                if state <= state_used {
+                if state < state_transfer {
                     // Transfer new items
                     transfer.add_item(g)
-                    @ptrv(g, u8, -8) = state_transfer @as u8
+                    @ptrv(g, u8, -8) = state_transfer
                 } 
             }
         }
@@ -239,9 +221,9 @@ struct Stack {
         #endloop
 
         // Stack
-        let stack_base = this.stack_base
-        let stack_adr = this.stack_adr
-        let adr_last = this.stack_adr_last
+        let pos = main_stack_pos
+        let stack_base = pos.base
+        let stack_adr = pos.adr
 
         // Mark new items as transfer
         let adr = stack_adr;
@@ -252,13 +234,16 @@ struct Stack {
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
-                if state <= state_used {
+                if state < state_transfer {
                     // Transfer new items
                     transfer.add_item(item)
-                    @ptrv(item, u8, -8) = state_transfer @as u8
+                    @ptrv(item, u8, -8) = state_transfer
                 } 
             }
         }
+
+        // Coroutines
+        core:Coro.transfer_check()
     }
 
     fn handle_transfer_list() {
@@ -287,7 +272,7 @@ struct Stack {
                 }
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(void), vt_transfer)
+                let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
                 func(item, state_solid);
             }
             if is_last {
@@ -310,6 +295,7 @@ struct Stack {
         this.age = age
     }
 
+    #parse_last
     fn mark_stack_age() {
         let age = this.age
         // Globals
@@ -322,7 +308,7 @@ struct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -331,8 +317,9 @@ struct Stack {
         #end
         #endloop
         // Stack
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
@@ -340,7 +327,7 @@ struct Stack {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
                         func(item, age);
                     }
                 }
@@ -359,21 +346,22 @@ struct Stack {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }
         }
         // Stack
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             if item != null {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
                     func(item, age);
                 }
             }
@@ -390,8 +378,8 @@ struct Stack {
     fn clean_shared() {
         let ring = this.shared
         ring.lock.lock()
-        let tail = ring.last_index()
-        let head = ring.index
+        let tail = ring.tail
+        let head = ring.head
         let size = ring.size
         let data = ring.data
         let age = gc_age
@@ -415,23 +403,25 @@ struct Stack {
     fn shutdown() {
         //
         this.force_full = true
-        this.stack_adr = this.stack_base
+        let pos = main_stack_pos
+        pos.adr = pos.base
         this.gc()
         //
-        disable_gc = true
         this.transfer.delete()
 
-        GcPool.delete_all()
+        //GcPool.delete_all()
+        // TODO: delete pools
 
         // Stack is deleted by the Gc
         this.stopped = true
     }
 
 
-    fn print_stack() {
+    fn print() {
         print("---------\n")
-        let item_adr = this.stack_base
-        let stack_adr = this.stack_adr
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr);
             item.print()

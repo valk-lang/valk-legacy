@@ -3,6 +3,11 @@
 #define _H_ALL
 
 #ifdef _WIN32
+#pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#pragma clang diagnostic ignored "-Wignored-pragma-intrinsic"
+#pragma clang diagnostic ignored "-Wmicrosoft-anon-tag"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <windows.h>
 #else
 // #include <sys/resource.h>
@@ -45,7 +50,12 @@
 
 #define max_num(x, y) (((x) >= (y)) ? (x) : (y))
 #define min_num(x, y) (((x) <= (y)) ? (x) : (y))
-#define str_flat(str, chars) str_add_x(str, chars, sizeof(chars) - 1)
+#define str_flat(str, chars) str_append_chars(str, chars)
+
+#define CONCAT(a, b) CONCAT_INNER(a, b)
+#define CONCAT_INNER(a, b) a ## b
+#define UNIQUE_NAME(base) CONCAT(base, __LINE__)
+#define loop(arr, i) int UNIQUE_NAME(loop_len) = arr->length; for(int i = 0; i < UNIQUE_NAME(loop_len); i++)
 
 #define v_i64 long long int
 #define v_u64 unsigned long long int
@@ -75,6 +85,7 @@ extern bool is_watching;
 #include "headers/parse.h"
 #include "headers/token.h"
 #include "headers/value.h"
+#include "headers/ast.h"
 #include "headers/id.h"
 #include "headers/type.h"
 #include "headers/skip.h"
@@ -92,5 +103,6 @@ extern bool is_watching;
 #include "headers/test.h"
 #include "headers/thread.h"
 #include "headers/macro.h"
+#include "headers/coro.h"
 
 #endif

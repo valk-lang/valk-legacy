@@ -12,7 +12,7 @@ void stage_2_update_classes(Build* b) {
 
     stage_determine_class_sizes(b, b->classes);
 
-    for (int i = 0; i < b->classes->length; i++) {
+    loop(b->classes, i) {
         Class *class = array_get_index(b->classes, i);
         Unit* u = class->unit;
         Parser* p = u->parser;
@@ -27,7 +27,7 @@ void stage_determine_class_sizes(Build* b, Array* classes) {
     int count = classes->length;
     int found = 0;
 
-    for (int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class *class = array_get_index(classes, i);
         if(class->size > -1) {
             found++;
@@ -37,7 +37,7 @@ void stage_determine_class_sizes(Build* b, Array* classes) {
     while (found < count) {
         int changed = 0;
 
-        for (int i = 0; i < classes->length; i++) {
+        loop(classes, i) {
             Class *class = array_get_index(classes, i);
             if(class->size > -1)
                 continue;

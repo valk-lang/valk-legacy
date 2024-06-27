@@ -8,7 +8,7 @@ Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scop
     sub->ast = array_make(alc, 20);
 
     Map *pidfs = scope_parent->identifiers;
-    for (int i = 0; i < pidfs->values->length; i++) {
+    loop(pidfs->values, i) {
         char *key = array_get_index(pidfs->keys, i);
         if (!map_contains(idfs, key)) {
             map_set(idfs, key, array_get_index(pidfs->values, i));
@@ -25,7 +25,7 @@ Scope* gen_snippet_ast(Allocator* alc, Parser* p, Snippet* snip, Map* idfs, Scop
 
     Array* exports = snip->exports;
     if(exports && scope_parent) {
-        for(int i = 0; i < exports->length; i++) {
+        loop(exports, i) {
             char *name = array_get_index(exports, i);
             Idf* idf = map_get(sub->identifiers, name);
             if(!idf) {

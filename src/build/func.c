@@ -12,34 +12,58 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->act = act_public;
     f->fc = NULL;
     f->scope = scope_make(alc, sc_func, parent);
-    f->scope_stack_reduce = NULL;
+    f->scope->func = f;
     f->chunk_args = NULL;
     f->chunk_rett = NULL;
     f->chunk_body = NULL;
+    f->reference_type = NULL;
 
     f->args = map_make(alc);
     f->arg_types = array_make(alc, 4);
     f->arg_values = array_make(alc, 4);
+    f->rett = NULL;
+    f->rett_eax = NULL;
     f->rett_types = array_make(alc, 1);
+    f->rett_arg_types = NULL;
+    f->rett_decls = NULL;
     f->used_functions = array_make(alc, 4);
+    f->called_functions = array_make(alc, 4);
     f->used_classes = array_make(alc, 4);
 
     f->class = NULL;
     f->cached_values = NULL;
     f->errors = NULL;
 
+    f->ast_stack_init = NULL;
+    f->ast_start = NULL;
+    f->ast_end = NULL;
+    // Cached values
+    f->v_cache_stack_pos = NULL;
+    f->v_cache_alloca = NULL;
+    // Toggle tokens
+    f->t_stack_incr = NULL;
+    f->t_stack_decr = NULL;
+    f->t_run_gc = NULL;
+
+    f->alloca_size = 0;
+    f->arg_nr = 0;
+    f->rett_count = 0;
+
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
     f->types_parsed = false;
     f->in_header = false;
-    f->has_rett = false;
-    f->multi_rett = false;
+    f->read_rett_type = false;
     f->is_test = false;
     f->is_used = false;
     f->use_if_class_is_used = false;
     f->exits = false;
     f->parsed = false;
+    f->calls_gc_check = false;
+    f->parse_last = false;
+    f->init_thread = false;
+    f->can_create_objects = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -75,13 +99,8 @@ void parse_handle_func_args(Parser* p, Func* func) {
 
     char t = tok(p, true, true, false);
     if (t != tok_curly_open && t != tok_not) {
-        func->has_rett = true;
-        if(t == tok_bracket_open) {
-            func->multi_rett = true;
-            skip_body(p);
-        } else {
-            skip_type(p);
-        }
+        func->read_rett_type = true;
+        skip_type(p);
     }
 
     t = tok(p, true, true, false);
@@ -122,90 +141,120 @@ void parse_handle_func_args(Parser* p, Func* func) {
     }
 }
 
-char* ir_func_err_handler(IR* ir, Scope* scope, char* res, VFuncCall* fcall) {
-    if(!fcall->err_scope && !fcall->err_value) {
-        return res;
-    }
+char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
     IRBlock *block_err = ir_block_make(ir, ir->func, "if_err_");
-    IRBlock *block_else = fcall->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
+    IRBlock *block_else = errh->err_value ? ir_block_make(ir, ir->func, "if_not_err_") : NULL;
     IRBlock *after = ir_block_make(ir, ir->func, "if_err_after_");
 
-    Type* type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
-    char *load = ir_load(ir, type_i32, "@valk_err_code");
+    Type *type_i32 = type_gen_valk(ir->alc, ir->b, "i32");
+
+    char *coro_err_prop = NULL;
+    char *load = NULL;
+    if (on_await) {
+        Class *coro_class = get_valk_class(ir->b, "core", "Coro");
+        coro_err_prop = ir_class_pa(ir, coro_class, on, map_get(coro_class->props, "error"));
+        load = ir_load(ir, type_i32, coro_err_prop);
+    } else {
+        load = ir_load(ir, type_i32, "@valk_err_code");
+    }
+
     char *lcond = ir_compare(ir, op_ne, load, "0", "i32", false, false);
 
-    if (fcall->err_decl)
-        fcall->err_decl->ir_var = load;
+    if (errh->err_decl) {
+        if(errh->err_decl->is_mut) {
+            ir_store(ir, errh->err_decl->ir_store, load, "i32", type_i32->size);
+        } else {
+            errh->err_decl->ir_var = load;
+        }
+    }
 
-    ir_cond_jump(ir, lcond, block_err, fcall->err_value ? block_else : after);
+    ir_cond_jump(ir, lcond, block_err, errh->err_value ? block_else : after);
 
-    if(fcall->err_scope) {
+    if(errh->err_scope) {
 
-        Scope* err_scope = fcall->err_scope;
+        Scope* err_scope = errh->err_scope;
         ir->block = block_err;
-        ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
         ir_write_ast(ir, err_scope);
         if(!err_scope->did_return) {
             ir_jump(ir, after);
         }
         ir->block = after;
 
-        return res;
+        return on;
 
-    } else if(fcall->err_value) {
+    } else if(errh->err_value) {
 
-        Value* val = fcall->err_value;
+        Array *phi_s = errh->phi_s;
+        Value* val = errh->err_value;
         char* ltype = ir_type(ir, val->rett);
 
         ir->block = block_err;
-        ir_store_old(ir, type_i32, "@valk_err_code", "0");
-        char* alt_val = ir_value(ir, scope, val);
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
+        // IF ERR
+        char* alt_val = ir_value(ir, val);
         IRBlock* block_err_val = ir->block;
+
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            char *v = ir_value(ir, pair->right);
+        }
+
         ir_jump(ir, after);
 
+        // IF NO ERR
         ir->block = block_else;
+
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            char *v = ir_value(ir, pair->left);
+        }
+
         ir_jump(ir, after);
 
+        // AFTER
         ir->block = after;
-        Str* code = after->code;
-        char* var = ir_var(ir->func);
-        str_flat(code, "  ");
-        str_add(code, var);
-        str_flat(code, " = phi ");
-        str_add(code, ltype);
-        str_flat(code, " [ ");
-        str_add(code, res);
-        str_flat(code, ", %");
-        str_add(code, block_else->name);
-        str_flat(code, " ], [ ");
-        str_add(code, alt_val);
-        str_flat(code, ", %");
-        str_add(code, block_err_val->name);
-        str_flat(code, " ]\n");
 
-        return var;
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            Value *v1 = pair->left;
+            Value *v2 = pair->right;
+            char* r = ir_phi_simple(ir, v1->ir_v, block_else->name, v2->ir_v, block_err_val->name, ir_type(ir, phi->rett));
+            phi->ir_v = r;
+        }
+
+        return on;
+
+    } else {
+        // Ignore error
+        ir->block = block_err;
+        if(on_await) {
+            ir_store_old(ir, type_i32, coro_err_prop, "0");
+        } else {
+            ir_store_old(ir, type_i32, "@valk_err_code", "0");
+        }
+
+        ir_jump(ir, after);
+        ir->block = after;
+
+        return on;
     }
 
     return NULL;
-}
-
-
-void func_generate_args(Allocator* alc, Func* func, Map* args) {
-    int count = args->values->length;
-    for(int i = 0; i < count; i++) {
-        char* name = array_get_index(args->keys, i);
-        Type* type = array_get_index(args->values, i);
-
-        FuncArg *arg = func_arg_make(alc, type);
-        map_set_force_new(func->args, name, arg);
-        array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(alc, name, arg->type, true);
-        Idf *idf = idf_make(alc, idf_decl, decl);
-        scope_set_idf(func->scope, name, idf, NULL);
-        arg->decl = decl;
-        array_push(func->arg_values, NULL);
-    }
 }
 
 void func_validate_arg_count(Parser* p, Func* func, bool is_static, int arg_count_min, int arg_count_max) {
@@ -279,14 +328,20 @@ void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_typ
     }
 }
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
+    Array *retts = func->rett_types;
+    Type *rett = array_get_index(retts, 0);
+    if(!rett)
+        rett = type_gen_void(p->b->alc);
+    //
     bool has_valid = false;
-    Type *rett = func->rett;
     int count = allowed_types->length;
-    for (int i = 0; i < count; i++) {
-        Type *valid = array_get_index(allowed_types, i);
-        if(rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
-            has_valid = true;
-            break;
+    if (rett) {
+        for (int i = 0; i < count; i++) {
+            Type *valid = array_get_index(allowed_types, i);
+            if (rett->class == valid->class && rett->nullable == valid->nullable && rett->is_pointer == valid->is_pointer) {
+                has_valid = true;
+                break;
+            }
         }
     }
     if(!has_valid){
@@ -308,10 +363,11 @@ void func_validate_rett(Parser* p, Func* func, Array* allowed_types) {
 }
 
 void func_validate_rett_void(Parser *p, Func *func) {
-    if (!type_is_void(func->rett)) {
-        *p->chunk = *func->chunk_rett;
+    Array *retts = func->rett_types;
+    if(retts->length != 0) {
+        Type* type = array_get_index(retts, 0);
         char buf[512];
-        type_to_str(func->rett, buf);
+        type_to_str(type, buf);
         parse_err(p, -1, "Expected function return type to be 'void' instead of '%s'", buf);
     }
 }
@@ -329,3 +385,4 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
         }
     }
 }
+

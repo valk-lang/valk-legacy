@@ -1,0 +1,17 @@
+
+use valk:os
+
+test "Exec" {
+    //
+    let code1, out1 = os:exec("echo test") ? (1, "...")
+    assert(code1 == 0)
+    assert(out1.starts_with("test"))
+    // Unknown cmd
+    let code2, out2 = os:exec("valkvalkvalk") ? (1, "...")
+    #if OS == win
+    assert(code2 == 1)
+    #else
+    assert(code2 == 127)
+    #end
+    assert(out2.contains("not"))
+}

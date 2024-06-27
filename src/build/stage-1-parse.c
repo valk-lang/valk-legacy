@@ -45,28 +45,34 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
         if (t == tok_semi) {
             continue;
         }
+
+        p->parse_last = false;
+        p->init_thread = false;
         if (t == tok_hashtag && p->on_newline) {
-            cc_parse(p);
-            continue;
+            t = tok(p, false, false, false);
+            if(str_is(p->tkn, "parse_last")) {
+                t = tok(p, false, false, true);
+                p->parse_last = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else if(str_is(p->tkn, "init_thread")) {
+                t = tok(p, false, false, true);
+                p->init_thread = true;
+                tok_expect_newline(p);
+                t = tok(p, true, true, true);
+            } else {
+                cc_parse(p);
+                continue;
+            }
         }
 
-        int act = act_public;
-        if (t == tok_sub) {
-            act = act_private_fc;
-        } else if (t == tok_subsub) {
-            act = act_private_nsc;
-        } else if (t == tok_triple_sub) {
-            act = act_private_pkc;
-        }
+        char* act_tkn = p->tkn;
+        char res[2];
+        read_access_type(p, t, res);
+        int act = res[0];
+        t = res[1];
 
         char* tkn = p->tkn;
-        char* act_tkn;
-
-        if(act != act_public) {
-            t = tok(p, true, false, true);
-            act_tkn = tkn;
-            tkn = p->tkn;
-        }
 
         if (t == tok_id) {
             if (str_is(tkn, "fn")) {
@@ -77,11 +83,11 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_func(p, u, act, fc, true);
                 continue;
             }
-            if (str_is(tkn, "struct")) {
+            if (str_is(tkn, "cstruct")) {
                 stage_1_class(p, u, ct_struct, act, fc);
                 continue;
             }
-            if (str_is(tkn, "class")) {
+            if (str_is(tkn, "struct")) {
                 stage_1_class(p, u, ct_class, act, fc);
                 continue;
             }
@@ -150,6 +156,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
                 stage_1_link(p, u, link_dynamic);
                 continue;
             }
+            if (str_is(tkn, "link_static")) {
+                stage_1_link(p, u, link_static);
+                continue;
+            }
         }
         if (t == tok_at_word) {
             if (str_is(tkn, "@ignore_access_types")) {
@@ -176,6 +186,8 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits) {
     func->fc = fc;
     func->in_header = p->in_header;
     func->exits = exits;
+    func->parse_last = p->parse_last;
+    func->init_thread = p->init_thread;
 
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);
@@ -233,10 +245,9 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
         parse_err(p, -1, "Invalid type name: '%s'", name);
     }
 
-    Class* class = class_make(b->alc, b, type);
+    Class* class = class_make(b->alc, b, u, type);
     class->act = act;
     class->fc = fc;
-    class->unit = u;
     class->name = name;
     class->ir_name = gen_export_name(u->nsc, name);
     class->scope = scope_sub_make(b->alc, sc_default, p->scope);
@@ -267,7 +278,7 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
     if(!class->is_generic_base) {
-        scope_set_idf(class->scope, "CLASS", idf, p);
+        scope_set_idf(class->scope, "SELF", idf, p);
         array_push(b->classes, class);
         array_push(u->classes, class);
         if(class->type == ct_class) {
@@ -391,6 +402,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
     Global* g = al(b->alc, sizeof(Global));
     g->act = act;
     g->fc = fc;
+    g->unit = u;
     g->name = name;
     g->export_name = gen_export_name(u->nsc, name);
     g->type = NULL;

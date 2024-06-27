@@ -99,7 +99,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
     nsc = nsc_make(b->alc, pkc, name, dir);
 
     Array* files = get_subfiles(b->alc, dir, false, true);
-    for(int i = 0; i < files->length; i++) {
+    loop(files, i) {
         char* path = array_get_index(files, i);
         if(ends_with(path, ".va"))
             fc_make(nsc, path, false);

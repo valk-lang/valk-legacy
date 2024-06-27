@@ -13,19 +13,20 @@ void stage_2_types(Unit* u) {
     usize start = microtime();
 
     Array* funcs = u->funcs;
-    for(int i = 0; i < funcs->length; i++) {
+    loop(funcs, i) {
         Func* func = array_get_index(funcs, i);
         stage_types_func(p, func);
     }
     Array* classes = u->classes;
-    for(int i = 0; i < classes->length; i++) {
+    loop(classes, i) {
         Class* class = array_get_index(classes, i);
         stage_types_class(p, class);
     }
     Array* globals = u->globals;
-    for(int i = 0; i < globals->length; i++) {
+    loop(globals, i) {
         Global* g = array_get_index(globals, i);
-        stage_types_global(p, g);
+        if(g->chunk_type)
+            stage_types_global(p, g);
     }
 
     unit_validate(u, p);
@@ -50,12 +51,11 @@ void stage_types_func(Parser* p, Func* func) {
         map_set_force_new(func->args, "VALK_TEST_RESULT", arg);
         array_push(func->arg_types, type);
 
-        Decl* decl = decl_make(alc, "VALK_TEST_RESULT", type, true);
+        Decl* decl = decl_make(alc, func, NULL, type, true);
+        scope_add_decl(alc, func->scope, decl);
         Idf* idf = idf_make(alc, idf_decl, decl);
         scope_set_idf(func->scope, "VALK_TEST_RESULT", idf, p);
         arg->decl = decl;
-
-        func->rett = type_gen_void(alc);
         return;
     }
 
@@ -65,7 +65,8 @@ void stage_types_func(Parser* p, Func* func) {
         FuncArg *arg = func_arg_make(b->alc, type_gen_class(b->alc, func->class));
         map_set_force_new(func->args, "this", arg);
         array_push(func->arg_types, arg->type);
-        Decl *decl = decl_make(b->alc, "this", arg->type, true);
+        Decl *decl = decl_make(b->alc, func, NULL, arg->type, true);
+        scope_add_decl(alc, func->scope, decl);
         Idf *idf = idf_make(b->alc, idf_decl, decl);
         scope_set_idf(func->scope, "this", idf, p);
         arg->decl = decl;
@@ -98,7 +99,8 @@ void stage_types_func(Parser* p, Func* func) {
             map_set_force_new(func->args, name, arg);
             array_push(func->arg_types, type);
 
-            Decl* decl = decl_make(b->alc, name, type, true);
+            Decl* decl = decl_make(b->alc, func, name, type, true);
+            scope_add_decl(alc, func->scope, decl);
             Idf* idf = idf_make(b->alc, idf_decl, decl);
             scope_set_idf(func->scope, name, idf, p);
             arg->decl = decl;
@@ -122,35 +124,48 @@ void stage_types_func(Parser* p, Func* func) {
             }
         }
     }
-    if(func->has_rett) {
+    if(func->read_rett_type) {
         *p->chunk = *func->chunk_rett;
-        if(func->multi_rett) {
-            tok_expect(p, "(", true, true);
-            // Return types
-            Array* types = array_make(b->alc, 2);
-            while(true) {
-                Type *type = read_type(p, b->alc, false);
-                if(type_is_void(type)) {
-                    parse_err(p, -1, "You cannot use 'void' here");
-                }
-                array_push(types, type);
-                // next
-                char t = tok_expect_two(p, ",", ")", true, true);
-                if(t == tok_bracket_close)
-                    break;
-            }
-            func->rett_types = types;
-            func->rett = array_get_index(types, 0);
-        } else {
-            Type *type = read_type(p, b->alc, false);
-            func->rett = type;
-            array_push(func->rett_types, type);
+        p->allow_multi_type = true;
+        Type *rett = read_type(p, b->alc, false);
+        if(type_is_void(rett)) {
+            rett = NULL;
         }
-        func->scope->must_return = !type_is_void(func->rett);
-        func->scope->rett = func->rett;
-    } else {
-        func->rett = type_gen_void(b->alc);
+        func->rett = rett;
+        func->rett_eax = rett;
+        func->scope->must_return = rett != NULL;
+
+        // Argument based returns
+        if(rett && rett->type == type_multi) {
+            func->rett_eax = NULL;
+            Array* types = rett->multi_types;
+            Array * rett_decls = array_make(alc, 2);
+            Array * rett_arg_types = array_make(alc, 2);
+            loop(types, i) {
+                Type* type = array_get_index(types, i);
+                array_push(func->rett_types, type);
+                if(i == 0 && type_fits_pointer(type, b)) {
+                    func->rett_eax = type;
+                    continue;
+                }
+                Type* ptr = type_cache_ptr(b); // TOBE: type_ptr_of(type)
+                Decl *decl = decl_make(alc, func, NULL, ptr, true);
+                array_push(rett_decls, decl);
+                array_push(rett_arg_types, ptr);
+                scope_add_decl(alc, func->scope, decl);
+            }
+            func->rett_decls = rett_decls;
+            func->rett_arg_types = rett_arg_types;
+        } else {
+            if(rett)
+                array_push(func->rett_types, rett);
+        }
+
+        // Count return types
+        func->rett_count = rett ? (rett->type == type_multi ? rett->multi_types->length : 1) : 0;
     }
+
+    type_gen_func(alc, func);
 }
 
 void stage_types_class(Parser* p, Class* class) {
@@ -159,7 +174,7 @@ void stage_types_class(Parser* p, Class* class) {
     p->scope = class->scope;
 
     Array* props = class->props->values;
-    for(int i = 0; i < props->length; i++) {
+    loop(props, i) {
         ClassProp *prop = array_get_index(props, i);
         if (prop->chunk_type) {
             *p->chunk = *prop->chunk_type;

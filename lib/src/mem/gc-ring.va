@@ -1,16 +1,17 @@
 
 use mem
 
-struct GcRing {
-    -- data: ptr
-    -- size: uint
+cstruct GcRing {
+    -pkg data: ptr
+    -pkg size: uint
     ~ length: uint (0)
-    -- index: uint (0)
-    -- lock: GcLock
+    -pkg head: uint (0)
+    -pkg tail: uint (0)
+    -pkg lock: GcLock
 
-    static fn new() CLASS {
+    static fn new() SELF {
         let size : uint = 4;
-        return CLASS {
+        return SELF {
             data: mem:alloc(size * sizeof(ptr))
             size: size
             lock: GcLock.new()
@@ -21,54 +22,57 @@ struct GcRing {
         let length = this.length
         let data = this.data
 
-        let index = this.index
-        @ptrv(data, ptr, index) = item
+        let head = this.head
+        @ptrv(data, ptr, head) = item
+
         let new_len = length + 1
         this.length = new_len
 
         if new_len == this.size {
             data = this.increase_size()
+        } else {
+            let new_head = head + 1
+            if new_head == this.size {
+                new_head = 0
+            } 
+            this.head = new_head
         }
-
-        let new_index = index + 1
-        if new_index == this.size {
-            new_index = 0
-        } 
-        this.index = new_index
     }
 
     fn remove(index: uint) {
-        let len = this.length
-        if len == 0 : return
-        let ci = this.index
-        let last = ci - len
-        if len > ci {
-            last = this.size - len + ci
-        }
-        if last != index {
+        let tail = this.tail
+        if tail != index {
             let data = this.data
-            @ptrv(data, ptr, index) = @ptrv(data, ptr, last)
+            @ptrv(data, ptr, index) = @ptrv(data, ptr, tail)
         }
-        this.length = len - 1
-    }
-
-    fn last_index() uint {
-        let len = this.length
-        let ci = this.index
-        let last = ci - len
-        if len > ci {
-            last = this.size - len + ci
-        }
-        return last
+        this.length--
+        let new_tail = tail + 1
+        if new_tail == this.size {
+            new_tail = 0
+        } 
+        this.tail = new_tail
     }
 
     fn increase_size() ptr {
+        let tail = this.tail
+        let head = this.head
+
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data : ptr = null @as ptr
-        new_data = mem:alloc(new_size * sizeof(ptr));
-        mem:copy(data, new_data, size * sizeof(ptr));
+        let new_data = mem:alloc(new_size * sizeof(ptr));
+
+        // Copy data
+        // Before tail
+        let before_len = tail
+        if before_len > 0 : mem:copy(data, @ptr_offset(new_data, size, sizeof(ptr)), before_len * sizeof(ptr));
+        // After tail
+        let after_len = size - tail
+        if after_len > 0 : mem:copy(@ptr_offset(data, tail, sizeof(ptr)), @ptr_offset(new_data, tail, sizeof(ptr)), after_len * sizeof(ptr));
+        // Set new head
+        this.head = size + before_len
+
+        //
         mem:free(data)
         this.data = new_data
         this.size = new_size

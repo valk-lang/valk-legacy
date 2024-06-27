@@ -108,7 +108,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header) {
     }
 
     char path[VALK_PATH_MAX];
-    for (int i = 0; i < dirs->length; i++) {
+    loop(dirs, i) {
         char* dir = array_get_index(dirs, i);
         sprintf(path, "%s%s.vh", dir, fn);
         if(file_exists(path)) {

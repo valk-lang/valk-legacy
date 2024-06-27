@@ -62,7 +62,7 @@ fn closesocket(fd: uint) i32;
 fn ioctlsocket(fd: uint, cmd: int, arg: ptr) i32;
 
 //fn pipe(pipefd: i32[2]) i32;
-//int select(int nfds, fd_set restrict readfds, fd_set restrict writefds, fd_set restrict exceptfds, struct timeval restrict timeout);
+//int select(int nfds, fd_set restrict readfds, fd_set restrict writefds, fd_set restrict exceptfds, cstruct timeval restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
 
@@ -85,11 +85,11 @@ fn vfork() i32;
 
 fn execve(pathname: cstring, argv: ptr, envp: ptr) i32;
 
-//fn wait3(wstatus: i32[1], options: i32, struct rusage rusage) i32;
-//fn wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage rusage) i32;
+//fn wait3(wstatus: i32[1], options: i32, cstruct rusage rusage) i32;
+//fn wait4(pid: i32, wstatus: i32[1], options: i32, cstruct rusage rusage) i32;
 
 fn kill(pid: i32, sig: i32) i32;
-//fn uname(struct utsname buf) i32;
+//fn uname(cstruct utsname buf) i32;
 
 //int fcntl(int fd, int cmd, ... /* arg */ );
 
@@ -120,14 +120,14 @@ fn gettimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 //time_t time(time_t tloc);
 
-//int sysinfo(struct sysinfo info);
+//int sysinfo(cstruct sysinfo info);
 
 fn _flushall() void;
 
 fn gettid() i32;
 
 fn exit(status: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 fn _get_errno(int_ref: ptr) ptr;
 

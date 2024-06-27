@@ -8,6 +8,7 @@ Parser* parser_make(Allocator* alc, Unit* u);
 void parser_new_context(Parser** ref);
 void parser_pop_context(Parser** ref);
 Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scope *idf_scope, Type* type_check);
+void read_access_type(Parser *p, char t, char* res);
 
 struct Parser {
     Build* b;
@@ -35,6 +36,10 @@ struct Parser {
     //
     bool in_header;
     bool on_newline;
+    bool parse_last;
+    bool reading_coro_fcall;
+    bool init_thread;
+    bool allow_multi_type;
 };
 
 #endif

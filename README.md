@@ -11,9 +11,10 @@
 
 Valk is a programming language aimed to be fast & simple at the same time. It can be used for high & mid level programming. Valk is unique because of its new way of doing garbage collection. Its runtime is much faster than go and in some cases rust, while also using less memory. On top of that, a GC allows us to keep the language very simple like python. You get the best of both worlds.
 
-**Features**: Super fast non-pausing GC ⚡, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
+**Features**: Fastest GC ⚡ (no stop-the-world), Coroutines, No undefined behaviour, Great package management, Generics, Fast compile times, Cross compiling, linking c-libraries.
 
-**Valk is still in alpha, alot of features are not ready yet and the stdlib only contains core functions**
+**Coroutines** are purely for concurrency. Threads can be used for parallelism.
+
 
 ## Install
 
@@ -49,14 +50,25 @@ make
 
 ## How can it have faster/similar performance as Rust?
 
-Valk is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and uses less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Valk being faster than Rust sometimes. Note that our way of doing GC is very different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. 9 out of 10 times we simply clean up the pools instead.
+Valk is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and use less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Valk being faster than Rust sometimes. Note that our way of doing GC is very different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. The other 9 out of 10 times we simply reset the pools with 1 line of code. This is something that's only possible (in a simple way) if your compiler was built based around this idea. And that is what Valk does. 👏
+
+Note: we dont have many tests yet to compare valk vs rust or other languages. These are just conclusions from the small amount of tests we have right now. Feel free to make your own and share them.
 
 ## Benchmarks
 
 <div align="center"><p>
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-bintree.png">
+</p>
+The binary object tree test revolves around creating large amount of objects in a tree structure and iterating over them.
+</div>
+
+---
+
+<div align="center"><p>
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-http.png">
 </p></div>
+
+For the http server test we used single header over local network requests because that resembles a more natural way of http servers. Some other benchmarks like Techempower use bundled piped requests, in that case the results are: Valk 10m req/s, Rust 10m req/s, Go 12m req/s.
 
 ## Language design facts
 
@@ -70,8 +82,9 @@ Valk is only faster in the way it creates and manages objects, which most progra
 
 ## Contributions
 
-Once we hit version 0.1.0, we want to look for people who can help with: the standard library, packages and supporting SIMD. If you want to contribute, just hop into the discord and post in general chat or send a private message to the discord owner.
+Once we hit version 0.1.0, we want to look for people who can help with the standard library & 3rd party packages. If you want to contribute, just hop into the discord and post in general chat or send a private message to the discord owner.
 
 ## References
 
 Binary tree benchmark code: [https://programming-language-benchmarks.vercel.app/problem/binarytrees](https://programming-language-benchmarks.vercel.app/problem/binarytrees)
+

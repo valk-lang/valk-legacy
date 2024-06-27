@@ -2,23 +2,17 @@ name: ci
 
 on:
   push:
-    branches: [ main ]
-    paths-ignore:
-      - "**.md"
-      - "README.md"
-      - "LICENSE"
-      - ".gitignore"
-  pull_request:
     branches: [ main, nightly ]
     paths-ignore:
-      - "**.md"
-      - "README.md"
-      - "LICENSE"
-      - ".gitignore"
+      - '**/*.md'
+  pull_request:
+    types: [ready_for_review, synchronize]
+    branches: [ main, nightly ]
 
 jobs:
   linux:
     name: "test on ubuntu-latest"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
@@ -53,10 +47,11 @@ jobs:
       run: ./valk build ./tests/*.va -o _test.exe --target win-x64
     
   macos:
-    name: "test on macos-latest"
+    name: "test on macos-13 x64"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -80,6 +75,7 @@ jobs:
 
   windows:
     name: "test on windows-latest(MSYS2)"
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
     runs-on: windows-latest

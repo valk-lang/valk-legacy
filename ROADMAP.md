@@ -13,16 +13,15 @@
 
 ```
 // Prio
-- coroutines
-- http: parse post data / file uploads
+- http client
+- json encode/decode
+- fix stack list in GcManager
 // Other
 - error messages
 - doc generator
 - more string functions
 - format string
-- borrow & gc_check stack if thread paused for too long in order to free shared memory 
 - unions
-- async / await
 - closures
 - generics for functions & traits
 - package management
@@ -30,10 +29,8 @@
 - language server
 - valk make command (like: npm run)
 - run command: valk run ...
-- dont disable_gc in gc_share, instead disable inside hooks 
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
-- declare functions as unsafe ( unsafe fn {name} ), determines access to these functies for unsafe developers
 - success handling: myfunc() -> res { ... code ... }
 ```
 

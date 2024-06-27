@@ -1,21 +1,21 @@
 
-class RouteBlock[T] {
+struct RouteBlock[T] {
 	route: ?Route[T] (null)
 	blocks: Map[RouteBlock[T]]
 }
 
-class RouteArg {
+struct RouteArg {
 	name: String
 	i: uint
 }
 
-class Router[T] {
+struct Router[T] {
 
 	- block: RouteBlock[T]
 	inited: bool (false)
 
-	static fn new() CLASS {
-		return CLASS {
+	static fn new() SELF {
+		return SELF {
 			block: RouteBlock[T] {
 				blocks: Map[RouteBlock[T]]{}
 			}
@@ -108,7 +108,7 @@ class Router[T] {
 		if part != "*" {
 			let sub_block = block.blocks.get(part) ? null
 			if isset(sub_block) {
-				let route = CLASS.find_route(sub_block, index + 1, arg_c, parts)
+				let route = SELF.find_route(sub_block, index + 1, arg_c, parts)
 				if isset(route) : return route
 			}
 		}
@@ -116,7 +116,7 @@ class Router[T] {
 		part = "@"
 		let sub_block = block.blocks.get(part) ? null
 		if isset(sub_block) {
-			let route = CLASS.find_route(sub_block, index + 1, arg_c, parts)
+			let route = SELF.find_route(sub_block, index + 1, arg_c, parts)
 			if isset(route) : return route
 		}
 

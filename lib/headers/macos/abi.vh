@@ -4,8 +4,8 @@ shared stderr : ?ptr;
 shared stdin : ?ptr;
 shared stdout : ?ptr;
 
-// alias ptr as FILE;
-// alias ptr as DIR;
+alias FILE as ptr;
+alias DIR as ptr
 
 // pid_t = i32
 // socklen_t = u32
@@ -48,7 +48,7 @@ fn nanosleep(req: libc_timespec, rem: libc_timespec) i32;
 fn poll(fds: ptr, nfds: u32, timeout: i32) i32;
 
 //fn pipe(pipefd: i32[2]) i32;
-//int select(int nfds, fd_set restrict readfds, fd_set restrict writefds, fd_set restrict exceptfds, struct timeval restrict timeout);
+//int select(int nfds, fd_set restrict readfds, fd_set restrict writefds, fd_set restrict exceptfds, cstruct timeval restrict timeout);
 fn dup(old_fd: i32) i32;
 fn dup2(old_fd: i32, new_fd: i32) i32;
 
@@ -71,11 +71,11 @@ fn vfork() i32;
 
 fn execve(pathname: cstring, argv: ptr, envp: ptr) i32;
 
-//fn wait3(wstatus: i32[1], options: i32, struct rusage rusage) i32;
-//fn wait4(pid: i32, wstatus: i32[1], options: i32, struct rusage rusage) i32;
+//fn wait3(wstatus: i32[1], options: i32, cstruct rusage rusage) i32;
+//fn wait4(pid: i32, wstatus: i32[1], options: i32, cstruct rusage rusage) i32;
 
 fn kill(pid: i32, sig: i32) i32;
-//fn uname(struct utsname buf) i32;
+//fn uname(cstruct utsname buf) i32;
 
 //int fcntl(int fd, int cmd, ... /* arg */ );
 
@@ -105,12 +105,12 @@ fn gettimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
 //time_t time(time_t tloc);
 
-//int sysinfo(struct sysinfo info);
+//int sysinfo(cstruct sysinfo info);
 
 fn gettid() i32;
 
 fn exit(status: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 
 fn _NSGetExecutablePath(buf: ptr, len_u32_ptr: ptr) i32;

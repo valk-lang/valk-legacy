@@ -4,6 +4,7 @@
 
 #include "typedefs.h"
 
+void disable_token(Token* t);
 Token *token_make(Allocator *alc, int type, void *item);
 void token_if(Allocator* alc, Parser* p);
 void token_while(Allocator* alc, Parser* p);
@@ -14,7 +15,10 @@ Token *tgen_declare(Allocator *alc, Scope* scope, Decl *decl, Value* value);
 Token *tgen_if(Allocator *alc, Value* cond, Scope* scope_if, Scope* scope_else);
 Token *tgen_while(Allocator *alc, Value* cond, Scope* scope_while);
 Token *tgen_throw(Allocator *alc, Build* b, Unit* u, unsigned int value, char* msg);
-Token *tgen_each(Allocator *alc, Value *on, Func *func, Decl *kd, Decl *vd, Scope *scope, Decl* index, Value* vindex);
+Token *tgen_each(Allocator *alc, Parser* p, Value *on, Func *func, Decl *kd, Decl *vd, Scope *scope, Decl* index, Value* vindex);
+
+Token *tgen_decl_set_store(Allocator *alc, Decl *decl, Value *val);
+Token *tgen_decl_set_arg(Allocator *alc, Decl *decl);
 
 struct Token {
     int type;

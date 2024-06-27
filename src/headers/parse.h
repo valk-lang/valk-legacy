@@ -22,8 +22,10 @@ struct Idf {
 struct Decl {
     Type* type;
     char *name;
+    char *ir_store;
     char *ir_var;
-    char *ir_store_var;
+    int offset;
+    int arg_nr;
     bool is_mut;
     bool is_gc;
     bool is_arg;
@@ -41,6 +43,7 @@ struct Global {
     Chunk *chunk_value;
     Scope *declared_scope;
     Fc* fc;
+    Unit* unit;
     int act;
     bool is_shared;
     bool is_mut;

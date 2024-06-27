@@ -40,6 +40,11 @@ void token_if(Allocator* alc, Parser* p) {
     if(!single)
         p->chunk->i = scope_end_i;
 
+    if(scope_if->did_return) {
+        scope_apply_issets(alc, scope, cond->not_issets);
+    }
+    scope_apply_issets(alc, scope_else, cond->not_issets);
+
     t = tok(p, true, true, false);
     if(str_is(p->tkn, "else")) {
         tok(p, true, true, true);

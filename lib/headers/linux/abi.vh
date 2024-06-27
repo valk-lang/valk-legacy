@@ -11,7 +11,7 @@ fn malloc(size: uint) ptr;
 fn free(adr: ptr) i32;
 
 fn exit(code: i32) void;
-fn signal(signum: i32, handler: ?fn(i32)(void)) void;
+fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 fn __errno_location() ptr;
 
@@ -37,6 +37,8 @@ fn setsockopt(sockfd: i32, level: i32, optname: i32, optval: ptr, optlen: u32) i
 fn getaddrinfo(host: ptr, port: ptr, hints: libc_addrinfo, res: ptr) i32;
 fn freeaddrinfo(info: libc_addrinfo) i32;
 
+fn poll(fds: ptr, nfds: u32, timeout: i32) i32;
+
 fn epoll_create(size: i32) i32;
 fn epoll_wait(epfd: i32, events: ptr, maxevents: i32, timeout: i32) i32;
 fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: libc_epoll_event) i32;
@@ -59,3 +61,8 @@ fn link(oldpath: cstring, newpath: cstring) i32;
 fn unlink(pathname: cstring) i32;
 fn symlink(target: cstring, linkpath: cstring) i32;
 fn readlink(pathname: cstring, buf: cstring, bufsiz: uint) int;
+
+// Process
+fn popen(cmd: cstring, type: cstring) ?FILE;
+fn pclose(stream: FILE) i32;
+fn fgets(buffer: cstring, size: i32, stream: FILE) ?cstring;
