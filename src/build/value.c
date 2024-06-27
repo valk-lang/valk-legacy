@@ -180,11 +180,20 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
     } else if (t == tok_not) {
 
-        v = read_value(alc, p, true, 1);
-        if (!type_is_bool(v->rett)) {
+        Value* on = read_value(alc, p, true, 1);
+        if (!type_is_bool(on->rett)) {
             parse_err(p, -1, "Value after '!' must be of type 'bool'");
         }
-        v = value_make(alc, v_not, v, v->rett);
+        v = value_make(alc, v_not, on, on->rett);
+        // Flip issets if only 1 else clear
+        Array* is = on->issets;
+        Array* nis = on->not_issets;
+        int count = is ? is->length : 0;
+        count += nis ? nis->length : 0;
+        if (count == 1) {
+            v->not_issets = is;
+            v->issets = nis;
+        }
 
     } else if (t == tok_bracket_open) {
         Array* values = array_make(alc, 1);
@@ -657,15 +666,24 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Left side of '?' must be of type bool");
             }
 
+            // True
             Scope* scope = p->scope;
             Scope* sv1 = scope_sub_make(alc, sc_default, scope);
             scope_apply_issets(alc, sv1, v->issets);
 
             p->scope = sv1;
             Value *v1 = read_value(alc, p, true, 0);
-            p->scope = scope;
+
+            // False
             tok_expect(p, ":", true, true);
+
+            Scope* sv2 = scope_sub_make(alc, sc_default, scope);
+            scope_apply_issets(alc, sv2, v->not_issets);
+            p->scope = sv2;
             Value *v2 = read_value(alc, p, true, 51);
+
+            //
+            p->scope = scope;
 
             Type *type = type_merge(alc, v1->rett, v2->rett);
             if (!type) {

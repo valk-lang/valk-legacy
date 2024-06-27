@@ -7,6 +7,7 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->item = item;
     v->rett = rett;
     v->issets = NULL;
+    v->not_issets = NULL;
     v->extra_values = NULL;
     v->ir_v = NULL;
     return v;
@@ -225,21 +226,19 @@ Value *vgen_and_or(Allocator *alc, Build *b, Value *left, Value *right, int op) 
     Value *result = value_make(alc, v_and_or, item, rett);
 
     // merge issets when using '&&'
-    if (op == op_and && (left->issets || right->issets)) {
-        Array *issets = array_make(alc, 4);
-        if (left->issets) {
-            Array *prev = left->issets;
-            loop(prev, i) {
-                array_push(issets, array_get_index(prev, i));
-            }
+    if (op == op_and) {
+        if (left->issets || right->issets) {
+            result->issets = array_merge(alc, left->issets, right->issets);
         }
-        if (right->issets) {
-            Array *prev = right->issets;
-            loop(prev, i) {
-                array_push(issets, array_get_index(prev, i));
-            }
+        left->not_issets = NULL;
+        right->not_issets = NULL;
+
+    } else if (op == op_or) {
+        if (left->not_issets || right->not_issets) {
+            result->not_issets = array_merge(alc, left->not_issets, right->not_issets);
         }
-        result->issets = issets;
+        left->issets = NULL;
+        right->issets = NULL;
     }
 
     return result;

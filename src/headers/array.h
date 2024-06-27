@@ -29,6 +29,7 @@ int array_find_x(Array *arr, void *item, int type, int start, int end);
 void array_shift(Array *arr, void *item);
 void *array_get_index(Array *, int);
 void array_set_index(Array *, int, void *);
+Array *array_merge(Allocator *alc, Array *arr1, Array *arr2);
 
 // Integer values
 void array_push_u32(Array *arr, unsigned int value);

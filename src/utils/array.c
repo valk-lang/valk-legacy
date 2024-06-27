@@ -166,3 +166,17 @@ int array_find_x(Array *arr, void *item, int type, int start, int end) {
     return -1;
 }
 
+Array *array_merge(Allocator *alc, Array *arr1, Array *arr2) {
+    Array* result = array_make(alc, 2);
+    if (arr1) {
+        loop(arr1, i) {
+            array_push(result, array_get_index(arr1, i));
+        }
+    }
+    if (arr2) {
+        loop(arr2, i) {
+            array_push(result, array_get_index(arr2, i));
+        }
+    }
+    return result;
+}

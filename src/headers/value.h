@@ -61,6 +61,7 @@ struct Value {
     void* item;
     Type* rett;
     Array *issets;
+    Array *not_issets;
     Array *extra_values;
     char* ir_v;
 };

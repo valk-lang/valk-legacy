@@ -63,6 +63,6 @@ fn symlink(target: cstring, linkpath: cstring) i32;
 fn readlink(pathname: cstring, buf: cstring, bufsiz: uint) int;
 
 // Process
-fn popen(cmd: cstring, type: cstring) FILE;
+fn popen(cmd: cstring, type: cstring) ?FILE;
 fn pclose(stream: FILE) i32;
-fn fgets(buffer: cstring, size: i32, stream: FILE) cstring;
+fn fgets(buffer: cstring, size: i32, stream: FILE) ?cstring;
