@@ -296,6 +296,13 @@ Type* type_gen_promise(Allocator* alc, Build* b, TypeFuncInfo* fi) {
     // t->class = type_gen_class(alc, get_valk_class(, "core", "Coro"));
     return t;
 }
+Type* type_gen_multi(Allocator* alc, Array* types) {
+    if (types->length == 1)
+        return array_get_index(types, 0);
+    Type *t = type_make(alc, type_multi);
+    t->multi_types = types;
+    return t;
+}
 
 
 Type* type_gen_valk(Allocator* alc, Build* b, char* name) {

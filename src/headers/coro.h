@@ -12,7 +12,6 @@ struct VAwait {
     Value* on;
     void* block;
     Type* rett;
-    ErrorHandler* errh;
     bool on_decl;
 };
 

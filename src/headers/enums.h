@@ -158,9 +158,13 @@ enum VALUES {
     v_await,
     v_setjmp,
     v_longjmp,
-    v_frameptr,
+    v_frameptr, // 35
     v_stackptr,
     v_memset,
+    v_this_but_that,
+    v_multi,
+    v_errh, // 40
+    v_phi,
 };
 
 enum TOKENS {

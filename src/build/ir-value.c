@@ -5,109 +5,114 @@ char* ir_value(IR* ir, Value* v) {
 
     str_preserve(ir->block->code, 512);
 
+    if(v->ir_v)
+        return v->ir_v;
+
+    char *r = NULL; // Result
+
     int vt = v->type;
     if (vt == v_string) {
         VString* str = v->item;
-        return ir_string(ir, str);
+        r = ir_string(ir, str);
     }
-    if (vt == v_number) {
+    else if (vt == v_number) {
         VNumber* item = v->item;
         Type* rett = v->rett;
         int rt = rett->type;
         if(rt == type_int || rt == type_bool || rett->is_pointer)
-            return ir_int(ir, item->value_int);
-        return ir_float(ir, item->value_float);
+            r = ir_int(ir, item->value_int);
+        else
+            r = ir_float(ir, item->value_float);
     }
-    if (vt == v_null) {
-        return "null";
+    else if (vt == v_null) {
+        r = "null";
     }
-    if (vt == v_func_call) {
+    else if (vt == v_func_call) {
         VFuncCall *fcall = v->item;
         char *on = ir_value(ir, fcall->on);
         Array *values = ir_fcall_args(ir, fcall->args, fcall->rett_refs);
         Type* rett = rett_extract_eax(ir->b, v->rett);
-        char *call = ir_func_call(ir, on, values, ir_type(ir, rett), fcall->line, fcall->col);
-
-        ErrorHandler* errh = fcall->errh;
-        if (errh) {
-            return ir_func_err_handler(ir, errh, call, false);
-        }
-        return call;
+        r = ir_func_call(ir, on, values, ir_type(ir, rett), fcall->line, fcall->col);
     }
-    if (vt == v_gc_buffer) {
+    else if (vt == v_errh) {
+        ErrorHandler* errh = v->item;
+        char* call = ir_value(ir, errh->on);
+        r = ir_func_err_handler(ir, errh, call, false);
+    }
+    else if (vt == v_gc_buffer) {
         VGcBuffer* buf = v->item;
         ir_write_ast(ir, buf->scope);
         VVar* var = buf->result;
         if (!var->var) {
             build_err(ir->b, "Missing buffer v_var in IR (compiler bug)");
         }
-        return var->var;
+        r = var->var;
     }
-    if (vt == v_func_ptr) {
+    else if (vt == v_func_ptr) {
         VFuncPtr *fptr = v->item;
-        return ir_func_ptr(ir, fptr->func);
+        r = ir_func_ptr(ir, fptr->func);
     }
-    if (vt == v_ptrv) {
+    else if (vt == v_ptrv) {
         char *val = ir_assign_value(ir, v);
-        return ir_load(ir, v->rett, val);
+        r = ir_load(ir, v->rett, val);
     }
-    if (vt == v_ptr_offset) {
+    else if (vt == v_ptr_offset) {
         VPtrOffset* of = v->item;
         char* on = ir_value(ir, of->on);
         char* index = ir_value(ir, of->index);
         char* index_type = ir_type(ir, of->index->rett);
-        return ir_ptr_offset(ir, on, index, index_type, of->size);
+        r = ir_ptr_offset(ir, on, index, index_type, of->size);
     }
-    if (vt == v_ptr_of) {
-        return ir_assign_value(ir, v->item);
+    else if (vt == v_ptr_of) {
+        r = ir_assign_value(ir, v->item);
     }
-    if (vt == v_stack) {
+    else if (vt == v_stack) {
         Value* val = v->item;
         char* size = ir_value(ir, val);
         char* type = ir_type(ir, val->rett);
-        return ir_alloca_by_size(ir, ir->func, type, size);
+        r = ir_alloca_by_size(ir, ir->func, type, size);
     }
-    if (vt == v_gc_get_table) {
+    else if (vt == v_gc_get_table) {
         Value* index = v->item;
         char* i = ir_value(ir, index);
         char* mul = ir_op(ir, op_mul, i, "5", index->rett);
-        char* result = ir_ptrv_dyn(ir, "@valk_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
-        return result;
+        r = ir_ptrv_dyn(ir, "@valk_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
     }
-    if (vt == v_gc_link) {
+    else if (vt == v_gc_link) {
         VPair* pair = v->item;
         Value* on = pair->left;
         Value* to = pair->right;
         //
         char *ir_on = ir_value(ir, on);
         char *ir_to = ir_value(ir, to);
-        char *res = ir_gc_link(ir, ir_on, ir_to, to->rett->nullable);
-        return res;
+        r = ir_gc_link(ir, ir_on, ir_to, to->rett->nullable);
     }
-    if (vt == v_decl) {
+    else if (vt == v_decl) {
         Decl *decl = v->item;
         if(decl->ir_var)
-            return decl->ir_var;
-        return ir_load(ir, decl->type, decl->ir_store);
+            r = decl->ir_var;
+        else
+            r = ir_load(ir, decl->type, decl->ir_store);
     }
-    if (vt == v_decl_overwrite) {
+    else if (vt == v_decl_overwrite) {
         DeclOverwrite *dov = v->item;
         Decl *decl = dov->decl;
         if(decl->ir_var)
-            return decl->ir_var;
-        return ir_load(ir, decl->type, decl->ir_store);
+            r = decl->ir_var;
+        else
+            r = ir_load(ir, decl->type, decl->ir_store);
     }
-    if (vt == v_global) {
+    else if (vt == v_global) {
         Global* g = v->item;
         char* var = ir_global(ir, g);
-        return ir_load(ir, g->type, var);
+        r = ir_load(ir, g->type, var);
     }
-    if (vt == v_isset) {
+    else if (vt == v_isset) {
         Value *on = v->item;
         char *lval = ir_value(ir, on);
-        return ir_notnull_i1(ir, lval);
+        r = ir_notnull_i1(ir, lval);
     }
-    if (vt == v_not) {
+    else if (vt == v_not) {
         Value *on = v->item;
         char *lval = ir_value(ir, on);
         Str* code = ir->block->code;
@@ -117,9 +122,9 @@ char* ir_value(IR* ir, Value* v) {
         str_add(code, " = xor i1 ");
         str_add(code, lval);
         str_add(code, ", true\n");
-        return var;
+        r = var;
     }
-    if (vt == v_this_or_that) {
+    else if (vt == v_this_or_that) {
         VThisOrThat* item = v->item;
         char* cond = ir_value(ir, item->cond);
         IRBlock *block_v1 = ir_block_make(ir, ir->func, "tot_v1_");
@@ -139,9 +144,9 @@ char* ir_value(IR* ir, Value* v) {
         // After
         ir->block = block_after;
         char* type = ir_type(ir, v->rett);
-        return ir_this_or_that(ir, v1, block_v1, v2, block_v2, type);
+        r = ir_this_or_that(ir, v1, block_v1, v2, block_v2, type);
     }
-    if (vt == v_null_alt_value) {
+    else if (vt == v_null_alt_value) {
         VPair* item = v->item;
         char* left = ir_value(ir, item->left);
         char* cmp = ir_compare(ir, op_eq, left, "null", "ptr", false, false);
@@ -157,58 +162,60 @@ char* ir_value(IR* ir, Value* v) {
 
         ir->block = block_after;
         char* type = ir_type(ir, v->rett);
-        return ir_this_or_that(ir, left, current, alt, block_alt, type);
+        r = ir_this_or_that(ir, left, current, alt, block_alt, type);
 
         Value* right = item->right;
     }
-    if (vt == v_ir_cached) {
+    else if (vt == v_ir_cached) {
         VIRCached* item = v->item;
         if(item->ir_value)
-            return item->ir_value;
-        if(item->ir_var) {
+            r = item->ir_value;
+        else if(item->ir_var) {
             char* val = ir_load(ir, item->value->rett, item->ir_var);
             item->ir_value = val;
-            return val;
+            r = val;
+        } else {
+            Value* vi = item->value;
+            if(value_is_assignable(vi)) {
+                char* var = ir_assign_value(ir, vi);
+                char* val = ir_load(ir, item->value->rett, var);
+                item->ir_var = var;
+                item->ir_value = val;
+                r = val;
+            } else {
+                char* val = ir_value(ir, item->value);
+                item->ir_value = val;
+                r = val;
+            }
         }
-        Value* vi = item->value;
-        if(value_is_assignable(vi)) {
-            char* var = ir_assign_value(ir, vi);
-            char* val = ir_load(ir, item->value->rett, var);
-            item->ir_var = var;
-            item->ir_value = val;
-            return val;
-        }
-        char* val = ir_value(ir, item->value);
-        item->ir_value = val;
-        return val;
     }
-    if (vt == v_ir_value) {
-        return v->item;
+    else if (vt == v_ir_value) {
+        r = v->item;
     }
-    if (vt == v_op) {
+    else if (vt == v_op) {
         VOp *vop = v->item;
         int op = vop->op;
         char *left = ir_value(ir, vop->left);
         char *right = ir_value(ir, vop->right);
-        return ir_op(ir, op, left, right, v->rett);
+        r = ir_op(ir, op, left, right, v->rett);
     }
-    if (vt == v_compare) {
+    else if (vt == v_compare) {
         VOp *vop = v->item;
         int op = vop->op;
-        char *l = ir_value(ir, vop->left);
-        char *r = ir_value(ir, vop->right);
+        char *lv = ir_value(ir, vop->left);
+        char *rv = ir_value(ir, vop->right);
         Type* type = vop->left->rett;
         char *ltype = ir_type(ir, vop->left->rett);
-        return ir_compare(ir, op, l, r, ltype, type->is_signed, type->type == type_float);
+        r = ir_compare(ir, op, lv, rv, ltype, type->is_signed, type->type == type_float);
     }
-    if (vt == v_cast) {
+    else if (vt == v_cast) {
         Value *val = v->item;
         Type *from_type = val->rett;
         Type *to_type = v->rett;
         char *lval = ir_value(ir, val);
-        return ir_cast(ir, lval, from_type, to_type);
+        r = ir_cast(ir, lval, from_type, to_type);
     }
-    if (vt == v_class_init) {
+    else if (vt == v_class_init) {
         VClassInit* ci = v->item;
         Value* ob = ci->item;
         Map* values = ci->prop_values;
@@ -234,16 +241,16 @@ char* ir_value(IR* ir, Value* v) {
             ir_store_old(ir, prop->type, pvar, lval);
         }
 
-        return obj;
+        r = obj;
     }
-    if (vt == v_class_pa) {
+    else if (vt == v_class_pa) {
         VClassPA* pa = v->item;
         Value* on = pa->on;
         char* ob = ir_value(ir, on);
         char* ref = ir_class_pa(ir, on->rett->class, ob, pa->prop);
-        return ir_load(ir, pa->prop->type, ref);
+        r = ir_load(ir, pa->prop->type, ref);
     }
-    if (vt == v_incr) {
+    else if (vt == v_incr) {
         VIncr* item = v->item;
         Value* on = item->on;
         char *var = ir_assign_value(ir, on);
@@ -252,9 +259,9 @@ char* ir_value(IR* ir, Value* v) {
         char *right = ir_int(ir, 1);
         char* op = ir_op(ir, item->increment ? op_add : op_sub, left, right, v->rett);
         ir_store_old(ir, v->rett, var, op);
-        return item->before ? op : left;
+        r = item->before ? op : left;
     }
-    if (vt == v_atomic) {
+    else if (vt == v_atomic) {
         VOp *vop = v->item;
 
         int op = vop->op;
@@ -293,17 +300,17 @@ char* ir_value(IR* ir, Value* v) {
         str_add(code, ir_type_align(ir, v->rett, bytes));
         str_flat(code, "\n");
 
-        return var;
+        r = var;
     }
-    if (vt == v_var) {
+    else if (vt == v_var) {
         VVar* vv = v->item;
         char* result = vv->var;
         if(result == NULL) {
             build_err(ir->b, "Missing value for v_var (compiler bug)");
         }
-        return result;
+        r = result;
     }
-    if (vt == v_and_or) {
+    else if (vt == v_and_or) {
         VOp* vop = v->item;
 
         char* left = ir_value(ir, vop->left);
@@ -315,9 +322,9 @@ char* ir_value(IR* ir, Value* v) {
         IRBlock *block_last = ir->block;
 
         ir->block = block_current;
-        return ir_and_or(ir, block_current, left, block_right, right, block_last, vop->op);
+        r = ir_and_or(ir, block_current, left, block_right, right, block_last, vop->op);
     }
-    if (vt == v_vscope) {
+    else if (vt == v_vscope) {
         Scope* vscope = v->item;
         IRBlock* _prev_after = ir->vscope_after;
         Array* _prev_values = ir->vscope_values;
@@ -330,29 +337,53 @@ char* ir_value(IR* ir, Value* v) {
         ir->vscope_after = _prev_after;
         // After
         ir->block = block_after;
-        return ir_phi(ir, values, ir_type(ir, v->rett));
+        r = ir_phi(ir, values, ir_type(ir, v->rett));
     }
-    if (vt == v_await) {
+    else if (vt == v_await) {
         VAwait* aw = v->item;
     //     return ir_await(ir, scope, aw);
     }
-    if (vt == v_frameptr) {
+    else if (vt == v_this_but_that) {
+        VThisButThat* tbt = v->item;
+        char* v1 = ir_value(ir, tbt->this);
+        r = ir_value(ir, tbt->that);
+    }
+    else if (vt == v_multi) {
+        Array* values = v->item;
+        loop(values, i) {
+            ir_value(ir, array_get_index(values, i));
+        }
+        r = "";
+    }
+    else if (vt == v_phi) {
+        VPair* pair = v->item;
+        Value* v1 = pair->left;
+        Value* v2 = pair->right;
+        // if(!v1->ir_v) {
+        //     char* v = ir_value(ir, v1);
+        // }
+        // if(!v2->ir_v) {
+        //     char* v = ir_value(ir, v2);
+        // }
+        r = ir_phi_simple(ir, v1->ir_v, v1->ir_block, v2->ir_v, v2->ir_block, ir_type(ir, v->rett));
+    }
+    else if (vt == v_frameptr) {
         Str *code = ir->block->code;
         char* framep = ir_var(ir->func);
         str_flat(code, "  ");
         str_add(code, framep);
         str_flat(code, " = tail call ptr @llvm.frameaddress(i32 0)\n");
-        return framep;
+        r = framep;
     }
-    if (vt == v_stackptr) {
+    else if (vt == v_stackptr) {
         Str *code = ir->block->code;
         char* ptr = ir_var(ir->func);
         str_flat(code, "  ");
         str_add(code, ptr);
         str_flat(code, " = tail call ptr @llvm.stacksave()\n");
-        return ptr;
+        r = ptr;
     }
-    if (vt == v_setjmp) {
+    else if (vt == v_setjmp) {
         Value* val = v->item;
         char* buf = ir_value(ir, val);
         char* framep = ir_var(ir->func);
@@ -388,9 +419,9 @@ char* ir_value(IR* ir, Value* v) {
             str_add(code, buf);
             str_flat(code, ")\n");
         }
-        return result;
+        r = result;
     }
-    if (vt == v_longjmp) {
+    else if (vt == v_longjmp) {
         Value* val = v->item;
         char* buf = ir_value(ir, val);
         Str *code = ir->block->code;
@@ -406,9 +437,9 @@ char* ir_value(IR* ir, Value* v) {
             str_flat(code, ", i32 1)\n");
             str_flat(code, "unreachable\n");
         }
-        return "";
+        r = "";
     }
-    if (vt == v_memset) {
+    else if (vt == v_memset) {
         VMemset* ms = v->item;
         char* on = ir_value(ir, ms->on);
         char* len = ir_value(ir, ms->length);
@@ -421,10 +452,16 @@ char* ir_value(IR* ir, Value* v) {
         str_flat(code, ", i64 ");
         str_add(code, len);
         str_flat(code, ", i1 0)\n");
-        return "";
+        r = "";
     }
 
-    printf("unhandled ir-value: '%d' (compiler bug)\n", vt);
+    if(r) {
+        v->ir_v = r;
+        v->ir_block = ir->block->name;
+        return r;
+    }
+
+    printf("Unhandled ir-value: '%d' (compiler bug)\n", vt);
     exit(1);
 }
 
@@ -434,16 +471,16 @@ char* ir_assign_value(IR* ir, Value* v) {
         Decl *decl = v->item;
         return decl->ir_store;
     }
-    if (vt == v_decl_overwrite) {
+    else if (vt == v_decl_overwrite) {
         DeclOverwrite *dov = v->item;
         Decl *decl = dov->decl;
         return decl->ir_store;
     }
-    if (vt == v_global) {
+    else if (vt == v_global) {
         Global* g = v->item;
         return ir_global(ir, g);
     }
-    if (vt == v_ptrv) {
+    else if (vt == v_ptrv) {
         VPtrv *ptrv = v->item;
         Value *on = ptrv->on;
         Value *index = ptrv->index;
@@ -470,13 +507,13 @@ char* ir_assign_value(IR* ir, Value* v) {
 
         return result;
     }
-    if (vt == v_class_pa) {
+    else if (vt == v_class_pa) {
         VClassPA* pa = v->item;
         Value* on = pa->on;
         char* ob = ir_value(ir, on);
         return ir_class_pa(ir, on->rett->class, ob, pa->prop);
     }
-    if (vt == v_ir_cached) {
+    else if (vt == v_ir_cached) {
         VIRCached *item = v->item;
         if(item->ir_var)
             return item->ir_var;
@@ -484,5 +521,8 @@ char* ir_assign_value(IR* ir, Value* v) {
         item->ir_var = var;
         return var;
     }
-    return "?-?";
+
+    // return "?-?";
+    printf("Unhandled ir-assign-value: '%d' (compiler bug)\n", vt);
+    exit(1);
 }

@@ -7,7 +7,9 @@ Value *value_make(Allocator *alc, int type, void *item, Type* rett) {
     v->item = item;
     v->rett = rett;
     v->issets = NULL;
-    v->mrett = NULL;
+    v->extra_values = NULL;
+    v->ir_v = NULL;
+    v->ir_block = NULL;
     return v;
 }
 
@@ -38,32 +40,48 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     item->on = on;
     item->args = args;
     item->rett_refs = NULL;
-    item->errh = NULL;
     TypeFuncInfo* fi = on->rett->func_info;
-    Value* v = value_make(alc, v_func_call, item, fi->rett);
-    Type* rett = fi->rett;
-    if(rett) {
-        Array* types = rett_types_of(alc, rett);
-        if(types) {
-            MultiRett *mr = al(alc, sizeof(MultiRett));
-            mr->types = types;
-            mr->decls = array_make(alc, types->length);
-            loop(types, i) {
-                Type *type = array_get_index(types, i);
-                if (i > 0 || !type_fits_pointer(type, b)) {
+
+    Type* rett = NULL;
+    Array *rett_types = rett_types_of(alc, fi->rett);
+    if(rett_types) {
+        rett = array_get_index(rett_types, 0);
+    }
+
+    Value* fcall = value_make(alc, v_func_call, item, rett);
+    Value* retv = vgen_gc_buffer(alc, p, p->scope, fcall, args, true);
+
+    // Return value buffers
+    if (rett_types) {
+        loop(rett_types, i) {
+
+            Type *type = array_get_index(rett_types, i);
+
+            if (i == 0) {
+                if (!type_fits_pointer(type, b)) {
                     Decl *decl = decl_make(alc, p->func, NULL, type, false);
                     decl->is_mut = true;
                     scope_add_decl(alc, p->scope, decl);
-                    array_push(mr->decls, decl);
-                    array_push(args, vgen_ptr_of(alc, b, vgen_decl(alc, decl)));
+                    Value *vd = vgen_decl(alc, decl);
+                    retv = vgen_this_but_return_that(alc, retv, vd);
+                    array_push(args, vgen_ptr_of(alc, b, vd));
                 }
+                continue;
             }
-            if(mr->decls->length > 0)
-                v->mrett = mr;
+            if (i == 1) {
+                retv->extra_values = array_make(alc, rett_types->length - 1);
+            }
+
+            Decl *decl = decl_make(alc, p->func, NULL, type, false);
+            decl->is_mut = true;
+            scope_add_decl(alc, p->scope, decl);
+            Value *vd = vgen_decl(alc, decl);
+            array_push(args, vgen_ptr_of(alc, b, vd));
+            array_push(retv->extra_values, vd);
         }
     }
 
-    return vgen_gc_buffer(alc, p, p->scope, v, args, true);
+    return retv;
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
@@ -164,7 +182,9 @@ Value* vgen_ir_cached(Allocator* alc, Value* value) {
     item->ir_value = NULL;
     item->ir_var = NULL;
     item->used = false;
-    return value_make(alc, v_ir_cached, item, value->rett);
+    Value* res = value_make(alc, v_ir_cached, item, value->rett);
+    res->extra_values = value->extra_values;
+    return res;
 }
 
 Value* vgen_null(Allocator* alc, Build* b) {
@@ -324,4 +344,32 @@ Value* vgen_memset(Allocator* alc, Value* on, Value* len, Value* with) {
     ms->length = len;
     ms->with = with;
     return value_make(alc, v_memset, ms, type_gen_void(alc));
+}
+
+Value* vgen_this_but_return_that(Allocator* alc, Value* this, Value* that) {
+    VThisButThat *tbt = al(alc, sizeof(VThisButThat));
+    tbt->this = this;
+    tbt->that = that;
+    return value_make(alc, v_this_but_that, tbt, that->rett);
+}
+
+Value* vgen_multi(Allocator* alc, Array* values) {
+    Value *res = array_get_index(values, 0);
+    if(values->length == 1)
+        return res;
+
+    res->extra_values = array_make(alc, values->length);
+    loop(values, i) {
+        if(i == 0) continue;
+        Value* v = array_get_index(values, i);
+        array_push(res->extra_values, v);
+    }
+    return res;
+}
+
+Value* vgen_phi(Allocator* alc, Value* left, Value* right) {
+    VPair* item = al(alc, sizeof(VPair));
+    item->left = left;
+    item->right = right;
+    return value_make(alc, v_phi, item, right->rett);
 }

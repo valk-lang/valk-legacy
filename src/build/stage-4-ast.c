@@ -4,6 +4,7 @@
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
 void ir_vtable_define_extern(Unit* u);
+void loop_defer(Allocator* alc, Parser* p);
 
 void stage_4_ast(Build *b) {
 
@@ -227,49 +228,33 @@ void read_ast(Parser *p, bool single_line) {
                 }
 
                 Value* val = read_value(alc, p, true, 0);
-                if((val->rett == NULL && val->mrett == NULL) || type_is_void(val->rett) || (val->mrett && types_contain_void(val->mrett->types))) {
+                if (type_is_void(val->rett)) {
                     parse_err(p, -1, "Right side returns a 'void' value");
                 }
 
-                int retc = val->mrett ? val->mrett->types->length : 1;
-                if (names->length != retc) {
-                    if (names->length > retc) {
-                        parse_err(p, -1, "Right side does not return enough values to fit all your variables");
-                    } else {
-                        parse_err(p, -1, "Right side returns more values than your amount of declared variables");
-                    }
-                }
+                Array* values = all_values(alc, val);
 
-                int mrett_decl_i = 0;
                 loop(names, i) {
+                    if(i == values->length) {
+                        parse_err(p, -1, "Right side does not return enough values to fit all your variables");
+                    }
+
                     char *name = array_get_index(names, i);
                     Type *type = array_get_index(types, i);
 
-                    Type *vtype = val->mrett ? array_get_index(val->mrett->types, i) : val->rett;
-
-                    if (!type)
-                        type = vtype;
-
-                    if (retc == 1) {
-                        val = try_convert(alc, p, scope, val, type);
-                        vtype = val->rett;
+                    Value* right = array_get_index(values, i);
+                    if(type) {
+                        right = try_convert(alc, p, scope, right, type);
+                        type_check(p, type, right->rett);
+                    } else {
+                        type = right->rett;
                     }
-                    type_check(p, type, vtype);
 
                     Decl *decl = decl_make(alc, p->func, name, type, false);
                     Idf *idf = idf_make(b->alc, idf_decl, decl);
                     scope_set_idf(scope, name, idf, p);
 
-                    if(i == 0) {
-                        if(type_fits_pointer(type, b)) {
-                            array_push(scope->ast, tgen_declare(alc, scope, decl, val));
-                        } else {
-                            array_push(scope->ast, token_make(alc, t_statement, val));
-                            array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, mrett_decl_i++))));
-                        }
-                    } else {
-                        array_push(scope->ast, tgen_declare(alc, scope, decl, vgen_decl(alc, array_get_index(val->mrett->decls, mrett_decl_i++))));
-                    }
+                    array_push(scope->ast, tgen_declare(alc, scope, decl, right));
                 }
                 continue;
             }
@@ -285,6 +270,7 @@ void read_ast(Parser *p, bool single_line) {
                 if(!p->loop_scope) {
                     parse_err(p, -1, "Using 'break' without being inside a loop");
                 }
+                loop_defer(alc, p);
                 array_push(scope->ast, token_make(alc, str_is(tkn, "break") ? t_break : t_continue, p->loop_scope));
                 scope->did_return = true;
                 continue;
@@ -684,22 +670,44 @@ void read_ast(Parser *p, bool single_line) {
         p->func->calls_gc_check = true;
     }
 
-    if (scope_type == sc_loop && scope->has_gc_decls) {
-        Array *decls = scope->decls;
-        Scope *defer = scope_get_defer(alc, scope);
-        loop(decls, i) {
-            Decl *decl = array_get_index(decls, i);
-            if (!decl->is_gc)
-                continue;
-            array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
-        }
+    if (scope_type == sc_loop && !scope->did_return) {
+        loop_defer(alc, p);
 
-        Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
-        Token* t = token_make(alc, t_ast_scope, gcscope);
-        array_push(defer->ast, t);
+        // Array *decls = scope->decls;
+        // Scope *defer = scope_get_defer(alc, scope);
+        // loop(decls, i) {
+        //     Decl *decl = array_get_index(decls, i);
+        //     if (!decl->is_gc)
+        //         continue;
+        //     array_push(defer->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
+        // }
+
+        // Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), scope);
+        // Token* t = token_make(alc, t_ast_scope, gcscope);
+        // array_push(defer->ast, t);
     }
 
     if(is_func_scope) {
         ast_func_end(alc, p);
     }
+}
+
+void loop_defer(Allocator* alc, Parser* p) {
+    Scope *ast_scope = p->scope;
+    Scope *loop_scope = p->loop_scope;
+    if(!loop_scope || !loop_scope->has_gc_decls) {
+        return;
+    }
+    Build* b = p->b;
+    Array *decls = loop_scope->decls;
+    loop(decls, i) {
+        Decl *decl = array_get_index(decls, i);
+        if (!decl->is_gc)
+            continue;
+        array_push(ast_scope->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
+    }
+
+    Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), ast_scope);
+    Token* t = token_make(alc, t_ast_scope, gcscope);
+    array_push(ast_scope->ast, t);
 }

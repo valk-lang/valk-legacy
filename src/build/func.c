@@ -191,6 +191,7 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
 
     } else if(errh->err_value) {
 
+        Array *phi_s = errh->phi_s;
         Value* val = errh->err_value;
         char* ltype = ir_type(ir, val->rett);
 
@@ -201,31 +202,59 @@ char* ir_func_err_handler(IR* ir, ErrorHandler* errh, char* on, bool on_await){
             ir_store_old(ir, type_i32, "@valk_err_code", "0");
         }
 
+        // IF ERR
         char* alt_val = ir_value(ir, val);
         IRBlock* block_err_val = ir->block;
+
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            char *v = ir_value(ir, pair->right);
+        }
+
         ir_jump(ir, after);
 
+        // IF NO ERR
         ir->block = block_else;
+        errh->on->ir_block = block_else->name;
+
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            char *v = ir_value(ir, pair->left);
+        }
+
         ir_jump(ir, after);
 
+        // AFTER
         ir->block = after;
-        Str* code = after->code;
-        char* var = ir_var(ir->func);
-        str_flat(code, "  ");
-        str_add(code, var);
-        str_flat(code, " = phi ");
-        str_add(code, ltype);
-        str_flat(code, " [ ");
-        str_add(code, on);
-        str_flat(code, ", %");
-        str_add(code, block_else->name);
-        str_flat(code, " ], [ ");
-        str_add(code, alt_val);
-        str_flat(code, ", %");
-        str_add(code, block_err_val->name);
-        str_flat(code, " ]\n");
 
-        return var;
+        loop(phi_s, i) {
+            Value* phi = array_get_index(phi_s, i);
+            VPair *pair = phi->item;
+            Value *v1 = pair->left;
+            Value *v2 = pair->right;
+            char* r = ir_phi_simple(ir, v1->ir_v, block_else->name, v2->ir_v, block_err_val->name, ir_type(ir, phi->rett));
+            phi->ir_v = r;
+        }
+
+        // Str* code = after->code;
+        // char* var = ir_var(ir->func);
+        // str_flat(code, "  ");
+        // str_add(code, var);
+        // str_flat(code, " = phi ");
+        // str_add(code, ltype);
+        // str_flat(code, " [ ");
+        // str_add(code, on);
+        // str_flat(code, ", %");
+        // str_add(code, block_else->name);
+        // str_flat(code, " ], [ ");
+        // str_add(code, alt_val);
+        // str_flat(code, ", %");
+        // str_add(code, block_err_val->name);
+        // str_flat(code, " ]\n");
+
+        return on;
 
     } else {
         // Ignore error

@@ -13,8 +13,9 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
 bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 VFuncCall* value_extract_func_call(Value* from);
-ErrorHandler *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
+Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
 void value_enable_cached(VIRCached* v);
+Array* all_values(Allocator*alc, Value* v);
 
 // Gen
 Value *value_make(Allocator *alc, int type, void *item, Type* rett);
@@ -50,14 +51,18 @@ Value *vgen_stack_size(Allocator *alc, Build* b, int size);
 Value *vgen_string(Allocator *alc, Unit *u, char *body);
 Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
 Value* vgen_memset(Allocator* alc, Value* on, Value* len, Value* with);
+Value* vgen_this_but_return_that(Allocator* alc, Value* this, Value* that);
+Value* vgen_multi(Allocator* alc, Array* values);
+Value* vgen_phi(Allocator* alc, Value* left, Value* right);
 
 struct Value {
     int type;
     void* item;
     Type* rett;
     Array *issets;
-    MultiRett *mrett;
-    Array *decls;
+    Array *extra_values;
+    char* ir_v;
+    char* ir_block;
 };
 struct MultiRett {
     Array* types;
@@ -79,14 +84,16 @@ struct VFuncCall {
     Value *on;
     Array *args;
     Array *rett_refs;
-    ErrorHandler* errh;
     int line;
     int col;
 };
 struct ErrorHandler {
+    int type;
+    Value *on;
     Scope *err_scope;
     Value *err_value;
     Decl* err_decl;
+    Array *phi_s;
 };
 struct VNumber {
     v_i64 value_int;
@@ -164,6 +171,10 @@ struct VMemset {
     Value* on;
     Value* length;
     Value* with;
+};
+struct VThisButThat {
+    Value* this;
+    Value* that;
 };
 
 #endif
