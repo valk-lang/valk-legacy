@@ -8,7 +8,7 @@ struct RingBuffer[T] {
     - index: uint (0)
 
     static fn new() {
-        let size : uint = 4;
+        let size : uint = 4
         return SELF {
             data: mem:alloc(size * sizeof(T))
             size: size

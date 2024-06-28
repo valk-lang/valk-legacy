@@ -73,7 +73,7 @@ struct CoroPoll {
                 }
                 items2.push(item)
                 new_index++
-                continue;
+                continue
             }
 
             result.push(item)

@@ -3,14 +3,16 @@ header "openssl" as ssl
 
 use net
 use type
+use url
+use utils
 
-class ClientResponse {
-    status: uxx (0)
+struct ClientResponse {
+    status: uint (0)
     headers: Map[String] (map[String]{})
     body: String ("")
 }
 
-class ClientRequest {
+struct ClientRequest {
     method: String
     url: String
     body: String ("")
@@ -18,80 +20,74 @@ class ClientRequest {
 
     fn exec() ClientResponse !invalid_url !connection_failed !invalid_response {
 
-        let parts = this.url.parse_uri()
+        let parts = url:parse(this.url)
 
-        let is_https = parts.protocol == "https"
+        let is_https = parts.scheme == "https"
 
-        let split = parts.domain.split(":")
-        let domain = parts.domain
-        let port = is_https ? 443 @as u16 : 80 @as u16;
+        let split = parts.host.split(":")
+        let host = parts.host
+        let port = is_https ? 443 @as u16 : 80 @as u16
         if split.length > 2 : throw invalid_url
         if split.length == 2 {
-            domain = split.get(0) ? ""
+            host = split.get(0) ? ""
             let p = split.get(1) ! throw invalid_url
-            port = (p.to_uint() ! throw invalid_url) @as u16;
+            port = (p.to_uint() ! throw invalid_url) @as u16
         }
 
-        let sock = net:Socket.new_tcp(domain, port) ! {
+        let sock = net:Socket.new_tcp(host, port) ! {
             throw invalid_url, "Invalid request url"
-        };
+        }
 
         let con = sock.connect() ! {
             throw connection_failed, "Connection failed"
-        };
+        }
 
         if is_https {
             con.ssl_connect() ! {
                 con.close()
                 throw connection_failed, "SSL connection failed"
-            };
+            }
         }
 
         // Send request
         let buf = this.get_send_data(parts)
-        while true {
-            let bytes = con.send(buf) ! {
-                // if err == err#connection_error {
-                //     throw connection_failed, "Failed reading from connection"
-                // }
-                throw connection_failed, "Unexpected non-blocking connection"
-            }
-            if bytes == 0 {
-                break
-            }
+        con.send_byte_buffer(buf) ! {
+            con.close()
+            throw connection_failed, "Unexpected non-blocking connection"
         }
 
-        // Receive & parse response
-        let res = ParseResult{}
+        //
+        let parser = RequestParser{}
+        let request = Request{}
+        let buffer = utils:ByteBuffer.new(8192)
+        let rbytes : uint = 8192
         while true {
-            buf.clear()
-            let bytes = con.recv(buf) ! {
-                throw connection_failed, "Failed reading from connection"
-            }
-            if bytes == 0 {
-                throw connection_failed, "Empty packet"
-            }
-            Parser.parse_response(buf, res) ! {
-                throw invalid_response, "Invalid response"
-            }
-            if res.fully_parsed {
-                break
+            parser.parse(request) err ! {
+                // Check if we need more data
+                if error_is(err, !need_more_data) {
+                    let bytes = con.recv(buffer, rbytes) err ! {
+                        con.close()
+                        throw invalid_response
+                    }
+                    if bytes == 0 : throw invalid_response
+                    continue
+                }
+                con.close()
+                throw invalid_response
             }
         }
-
-        let headers = swap(res.headers, map[String]{})
 
         return ClientResponse {
-            status: res.status
-            headers: swap(res.headers, map[String]{})
-            body: swap(res.body, "")
+            status: request.status
+            headers: request.headers()
+            body: request.body
         }
     }
 
-    - fn get_send_data(parts: type:Uri) ByteBuffer {
+    - fn get_send_data(parts: url:Url) utils:ByteBuffer {
 
-        let len = this.body.bytes()
-        let buf = ByteBuffer.new(len + 256)
+        let len = this.body.bytes
+        let buf = utils:ByteBuffer.new(len + 256)
 
         let method = this.method
 
@@ -105,11 +101,11 @@ class ClientRequest {
         buf.append_str(" HTTP/1.1\r\n")
 
         buf.append_str("Host: ")
-        buf.append_str(parts.domain)
+        buf.append_str(parts.host)
         buf.append_str("\r\n")
 
         buf.append_str("Content-Length: ")
-        buf.append_str(this.body.bytes().str())
+        buf.append_str(this.body.bytes)
         buf.append_str("\r\n")
 
         let headers = this.headers
@@ -124,6 +120,6 @@ class ClientRequest {
         buf.append_str("\r\n")
         buf.append_str(this.body)
 
-        return buf;
+        return buf
     }
 }

@@ -10,7 +10,7 @@ cstruct GcRing {
     -pkg lock: GcLock
 
     static fn new() SELF {
-        let size : uint = 4;
+        let size : uint = 4
         return SELF {
             data: mem:alloc(size * sizeof(ptr))
             size: size
@@ -60,15 +60,15 @@ cstruct GcRing {
         let data = this.data
         let size = this.size
         let new_size = size * 2
-        let new_data = mem:alloc(new_size * sizeof(ptr));
+        let new_data = mem:alloc(new_size * sizeof(ptr))
 
         // Copy data
         // Before tail
         let before_len = tail
-        if before_len > 0 : mem:copy(data, @ptr_offset(new_data, size, sizeof(ptr)), before_len * sizeof(ptr));
+        if before_len > 0 : mem:copy(data, @ptr_offset(new_data, size, sizeof(ptr)), before_len * sizeof(ptr))
         // After tail
         let after_len = size - tail
-        if after_len > 0 : mem:copy(@ptr_offset(data, tail, sizeof(ptr)), @ptr_offset(new_data, tail, sizeof(ptr)), after_len * sizeof(ptr));
+        if after_len > 0 : mem:copy(@ptr_offset(data, tail, sizeof(ptr)), @ptr_offset(new_data, tail, sizeof(ptr)), after_len * sizeof(ptr))
         // Set new head
         this.head = size + before_len
 

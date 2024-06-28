@@ -9,37 +9,37 @@ struct ByteBuffer {
 
     static fn new(start_size: uint) SELF {
         if start_size < 10 {
-            start_size = 10;
+            start_size = 10
         }
         let res = SELF {
             data: mem:alloc(start_size),
             size: start_size,
-        };
+        }
         return res
     }
 
     fn _gc_free() {
-        mem:free(this.data);
+        mem:free(this.data)
     }
 
     fn clear() {
-        this.length = 0;
+        this.length = 0
     }
 
     // Appending
     fn append(buffer: SELF) {
-        this.append_from_ptr(buffer.data, buffer.length);
+        this.append_from_ptr(buffer.data, buffer.length)
     }
 
     fn append_from_ptr(data: ptr, length: uint) {
         if length == 0 : return
-        let bytes : uint = this.length;
-        let new_bytes : uint = bytes + length;
-        this.minimum_size(new_bytes);
-        let to : ptr = this.data + bytes;
+        let bytes : uint = this.length
+        let new_bytes : uint = bytes + length
+        this.minimum_size(new_bytes)
+        let to : ptr = this.data + bytes
         // TODO: use @ptr_offset
-        mem:copy(data, to, length);
-        this.length = new_bytes;
+        mem:copy(data, to, length)
+        this.length = new_bytes
     }
 
     fn append_byte(byte: u8) {
@@ -53,7 +53,7 @@ struct ByteBuffer {
     }
 
     fn append_str(str: String) {
-        this.append_from_ptr(str.data, str.bytes);
+        this.append_from_ptr(str.data, str.bytes)
     }
     fn append_uint(value: uint) {
         this.minimum_free_space(64)
@@ -69,42 +69,42 @@ struct ByteBuffer {
     // Compare
 
     // fn eq_str(str: String) bool {
-    // 	let str_len = str.bytes;
-    // 	let len = this.length;
+    // 	let str_len = str.bytes
+    // 	let len = this.length
     // 	if str_len != len {
-    // 		return false;
+    // 		return false
     // 	}
-    // 	return mem:equal(this.data, str.data, len);
+    // 	return mem:equal(this.data, str.data, len)
     // }
 
     // Find
 
-    fn index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
-        let index = start_index;
-        let len = this.length;
-        let data = this.data;
+    fn byte_index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
+        let index = start_index
+        let len = this.length
+        let data = this.data
         while index < len {
-            let ch = @ptrv(data, u8, index);
+            let ch = @ptrv(data, u8, index)
             if ch == byte {
-                return index;
+                return index
             }
-            index++;
+            index++
         }
-        throw not_found;
+        throw not_found
     }
 
     fn index_where_byte_is_not(byte: u8, start_index: uint (0)) uint !not_found {
-        let index = start_index;
-        let len = this.length;
-        let data = this.data;
+        let index = start_index
+        let len = this.length
+        let data = this.data
         while index < len {
-            let ch = @ptrv(data, u8, index);
+            let ch = @ptrv(data, u8, index)
             if ch != byte {
-                return index;
+                return index
             }
-            index++;
+            index++
         }
-        throw not_found;
+        throw not_found
     }
 
     /////////////////////////
@@ -113,46 +113,46 @@ struct ByteBuffer {
 
     fn to_string() String {
         if(this.length == 0){
-            return "";
+            return ""
         }
-        let str = String.make_empty(this.length);
-        mem:copy(this.data, str.data, this.length);
-        return str;
+        let str = String.make_empty(this.length)
+        mem:copy(this.data, str.data, this.length)
+        return str
     }
 
     fn sub_str(start_index: uint, length: uint) String {
-        let len = this.length;
+        let len = this.length
         if length == 0 {
-            return "";
+            return ""
         }
         if start_index >= len {
-            return "";
+            return ""
         }
         if start_index + length > len {
-            length = len - start_index;
+            length = len - start_index
         }
-        let str = String.make_empty(length);
-        mem:copy(@ptr_offset(this.data, start_index), str.data, length);
-        return str;
+        let str = String.make_empty(length)
+        mem:copy(@ptr_offset(this.data, start_index), str.data, length)
+        return str
     }
 
     // 
     fn minimum_free_space(length: uint) {
-        this.minimum_size(this.length + length);
+        this.minimum_size(this.length + length)
     }
     fn minimum_size(minimum_size: uint) {
-        let size : uint = this.size;
-        let new_size : uint = size;
+        let size : uint = this.size
+        let new_size : uint = size
         while new_size < minimum_size {
-            new_size *= 2;
+            new_size *= 2
         }
         if(new_size != size){
             let data = this.data
-            let adr : ptr = mem:alloc(new_size);
-            mem:copy(data, adr, this.length);
-            mem:free(data);
-            this.size = new_size;
-            this.data = adr;
+            let adr : ptr = mem:alloc(new_size)
+            mem:copy(data, adr, this.length)
+            mem:free(data)
+            this.size = new_size
+            this.data = adr
         }
     }
 }

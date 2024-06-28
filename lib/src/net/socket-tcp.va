@@ -9,8 +9,8 @@ struct SocketTCP {
     ~ host: String
     ~ fd: FD
     ~ port: u16
+    // ~ connection: ?Connection (null)
     - addrinfo: sys:libc_addrinfo
-    - connection: ?Connection (null)
 
     static fn new(host: String, port: u16) SocketTCP !os_socket_create !invalid_host {
 
@@ -71,30 +71,25 @@ struct SocketTCP {
         }
     }
 
-    // fn connect() Connection !connection_failed {
+    fn connect() Connection !connection_failed {
 
-    // 	let c = this.connection ?? <{
-    // 		let c = Connection {
-    // 			fd: this.fd
-    // 			open: false,
-    // 		}
-    // 		let res = share(c)
-    // 		this.connection = c
-    // 		return res
-    // 	}
+        let c = Connection {
+            fd: this.fd
+            open: false,
+        }
 
-    // 	if !c.open {
-    //     	#if OS == win
-    // 		let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32)
-    // 		#else
-    // 		let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen)
-    // 		#end
-    // 		if err != 0 : throw connection_failed
-    // 		c.open = true
-    // 	}
+        if !c.open {
+            #if OS == win
+            let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32)
+            #else
+            let err = sys:connect(this.fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
+            #end
+            if err != 0 : throw connection_failed
+            c.open = true
+        }
 
-    // 	return c
-    // }
+        return c
+    }
 
     fn bind() !get_addr_info !bind !listen {
         let yes : i32 = 1
@@ -160,7 +155,7 @@ struct SocketTCP {
                 if err == sys:WSAEWOULDBLOCK {
                     // if !this.blocking : throw again
                     await_fd(this.fd, true, false)
-                    continue;
+                    continue
                 }
                 #else
                 // Linux / macos error
@@ -168,7 +163,7 @@ struct SocketTCP {
                 if err == sys:EAGAIN {
                     // if !this.blocking : throw again
                     await_fd(this.fd, true, false)
-                    continue;
+                    continue
                 }
                 #end
                 // On error
@@ -201,6 +196,6 @@ struct SocketTCP {
     }
 
     fn _gc_free() {
-    	sys:freeaddrinfo(this.addrinfo)
+        sys:freeaddrinfo(this.addrinfo)
     }
 }

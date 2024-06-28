@@ -13,6 +13,41 @@ use io
     bytes: uint
 }
 
+- cstruct CharStep {
+    data: ptr
+    bytes: uint
+    pos: uint
+
+    fn set(str: String) {
+        this.data = str.data
+        this.bytes = str.bytes
+        this.pos = 0
+    }
+    fn skip_bytes(len: uint) {
+        this.pos += len
+    }
+
+    fn next() u8 !end {
+        let pos = this.pos
+        let bytes = this.bytes
+        let data = this.data
+        if pos == bytes : throw end
+        let byte : u8 = @ptrv(data, u8, pos)
+        let bytec : u8 = 1
+        if((byte & 128) > 0){
+            byte = byte << 1
+            while (byte & 128) > 0 {
+                bytec++
+                byte = byte << 1
+            }
+            if bytec > 4 : bytec = 1
+            if pos + bytec > bytes : bytec -= (pos + bytec - bytes) @as u8
+        }
+        this.pos = pos + bytec
+        return bytec
+    }
+}
+
 struct String {
     data: ptr
     bytes: uint
@@ -21,38 +56,21 @@ struct String {
     // UTF8
     /////////////////////
 
-    fn utf8_count() uint {
+    fn chars() uint {
+        let step = @stack(CharStep)
+        step.set(this)
         let count : uint = 0
-        let pos : uint = 0
-        let adr = this.data
-        let bytes = this.bytes
-        while pos < bytes {
-            let bytec : u8 = 1
-            let byte : u8 = @ptrv(adr, u8, pos)
-            if((byte & 128) > 0){
-                byte = byte << 1
-                while (byte & 128) > 0 {
-                    bytec++
-                    byte = byte << 1
-                }
-            }
-            if(bytec > 4) : bytec = 4
+        while true {
+            step.next() ! return count
             count++
-            pos += bytec
         }
-        return count
+        return 0
     }
-
-    // fn utf8_string() StringUtf8 {
-    //     return 0
-    // }
-
-    // fn utf8_clean_corrupt_characters() {
-    // }
 
     /////////////////////
     // Start / Ends
     /////////////////////
+
     fn starts_with(part: String) bool {
         if part.bytes > this.bytes : return false
         return mem:equal(this.data, part.data, part.bytes)
@@ -66,55 +84,62 @@ struct String {
     // Index of
     /////////////////////
 
-    fn index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
-        let index = start_index;
-        let len = this.bytes;
-        let data = this.data;
+    fn byte_index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
+        let index = start_index
+        let len = this.bytes
+        let data = this.data
         while index < len {
-            let ch = @ptrv(data, u8, index);
-            if ch == byte {
-                return index;
-            }
-            index++;
-        }
-        throw not_found;
-    }
-
-    fn index_of(part: String) uint !not_found {
-        let pos : uint = 0
-        let adr = this.data
-        let adr_part = part.data
-        let bytes = this.bytes
-        let bytes_left = bytes
-        let bytes_part = part.bytes
-
-        let count : uint = 0
-
-        while bytes_left >= bytes_part {
-
-            if mem:equal(adr, adr_part, bytes_part) : return count
-
-            let bytec : u8 = 1
-            let byte : u8 = @ptrv(adr, u8, 0)
-            if(byte > 127){
-                byte = byte << 1
-                while(byte > 127){
-                    bytec++
-                    byte = byte << 1
-                }
-            }
-            // Invalid utf8 char
-            if(bytec > 4) : bytec = 1
-            if(bytec > bytes_left) : break
-            adr += bytec
-            bytes_left -= bytec
-            count++
+            let ch = @ptrv(data, u8, index)
+            if ch == byte : return index
+            index++
         }
         throw not_found
     }
 
+    fn byte_index_of(part: String, start_index: uint (0)) uint !not_found {
+        let part_bytes = part.bytes
+        if part_bytes > this.bytes : throw not_found
+        let index = start_index
+        let len = this.bytes - part_bytes + 1
+        let data = this.data
+        let part_data = part.data
+        while index < len {
+            if mem:equal(@ptr_offset(data, index), part_data, part_bytes) : return index
+            index++
+        }
+        throw not_found
+    }
+
+    fn index_of(part: String, start_index: uint (0)) uint !not_found {
+        if part.bytes > this.bytes : throw not_found
+        let step = @stack(CharStep)
+        step.set(this)
+        let count : uint = 0
+        let offset : uint = 0
+        let adr = this.data
+        let part_adr = part.data
+        let part_bytes = part.bytes
+        let last_offset = this.bytes - part_bytes
+        while count < start_index {
+            offset += step.next() ! throw not_found
+            if offset > last_offset : throw not_found
+            count++
+        }
+        while true {
+            if mem:equal(@ptr_offset(adr, offset), part_adr, part_bytes) : return count
+            offset += step.next() ! throw not_found
+            if offset > last_offset : throw not_found
+            count++
+        }
+        return 0
+    }
+
     fn contains(part: String) bool {
         this.index_of(part) ! return false
+        return true
+    }
+    fn contains_byte(byte: u8) bool {
+        this.byte_index_of_byte(byte) ! return false
         return true
     }
 
@@ -170,25 +195,25 @@ struct String {
     /////////////////////
 
     fn to_uint() uint !not_a_number {
-        let i = this.bytes;
-        let result : uint = 0;
-        let mult : uint = 1;
+        let i = this.bytes
+        let result : uint = 0
+        let mult : uint = 1
         while i > 0 {
-            i--;
-            let ch = this.byte(i);
+            i--
+            let ch = this.byte(i)
             if(ch < 48 || ch > 57){
-                throw not_a_number;
+                throw not_a_number
             }
-            result += ((ch @as uint) - 48) * mult;
-            mult *= 10;
+            result += ((ch @as uint) - 48) * mult
+            mult *= 10
         }
-        return result;
+        return result
     }
     fn to_lower() String {
         let len = this.bytes
-        let data = this.data;
-        let new_str = String.make_empty(len);
-        let new_data = new_str.data;
+        let data = this.data
+        let new_str = String.make_empty(len)
+        let new_data = new_str.data
         while len-- > 0 {
             let ch = @ptrv(data, u8, len)
             if ch > 64 && ch < 91 : ch += 32
@@ -205,109 +230,125 @@ struct String {
         if index >= this.bytes : return 0
         return @ptrv(this.data, u8, index)
     }
-    fn last_byte() u8 {
-        if this.bytes == 0 : return 0
-        return @ptrv(this.data, u8, this.bytes - 1)
+    fn byte_end(index: uint) u8 {
+        if index >= this.bytes : return 0
+        return @ptrv(this.data, u8, this.bytes - index - 1)
+    }
+    fn char(index: uint) String {
+        return this.sub_str(index, 1)
+    }
+    fn char_end(index: uint) String {
+        let len = this.chars()
+        if index >= len : return ""
+        return this.sub_str(len - index - 1, 1)
     }
 
-    fn sub_str_bytes(byte_start_index: uint, byte_length: uint) String {
-
+    fn byte_sub_str(start_index: uint, length: uint) String {
         let this_bytes = this.bytes
-        if(byte_start_index > this_bytes){
-            return ""
+        if start_index > this_bytes : return ""
+        if (start_index + length) > this_bytes {
+            length = this_bytes - start_index
         }
-        if((byte_start_index + byte_length) > this_bytes){
-            byte_length = this_bytes - byte_start_index
-        }
-        if(byte_length == 0){
-            return ""
-        }
-        let from = this.data + byte_start_index
-        let res = String.make_empty(byte_length)
-        mem:copy(from, res.data, byte_length)
+        if length == 0 : return ""
+        let from = this.data + start_index
+        let res = String.make_empty(length)
+        mem:copy(from, res.data, length)
         return res
+    }
+
+    fn sub_str(start_index: uint, length: uint) String {
+
+        if length == 0 : return ""
+        let this_bytes = this.bytes
+        if start_index > this_bytes : return ""
+
+        let step = @stack(CharStep)
+        step.set(this)
+
+        let count : uint = 0
+        let offset : uint = 0
+        let data = this.data
+        while count < start_index {
+            offset += step.next() ! return ""
+            count++
+        }
+        let start = offset
+        count = 0
+        while count++ < length {
+            offset += step.next() ! break
+            if offset >= this_bytes : break
+        }
+        if offset > this_bytes : offset = this_bytes
+        return String.make_from_ptr(@ptr_offset(data, start), offset - start)
     }
 
     fn split(on: String) Array[String] {
         let result = Array[String].new()
+        let on_bytes = on.bytes
+        let this_bytes = this.bytes
+        if on_bytes > this_bytes || on_bytes == 0 {
+            result.push(this)
+            return result
+        }
 
-        let pos : uint = 0
-        let adr = this.data
-        let adr_on = on.data
-        let bytes = this.bytes
-        let bytes_left = bytes
-        let bytes_on = on.bytes
+        let step = @stack(CharStep)
+        step.set(this)
 
-        let part = utils:ByteBuffer.new(100)
-        while pos < bytes {
-            if(bytes_on > bytes_left){
-                break
-            }
-            let i : uint = 0
-            let tmp_adr1 = adr
-            let tmp_adr2 = adr_on
-            while(i < bytes_on){
-                let byte1 : u8 = @ptrv(tmp_adr1, u8, 0)
-                let byte2 : u8 = @ptrv(tmp_adr2, u8, 0)
-                if(byte1 != byte2) {
-                    break
-                }
-                i++
-                tmp_adr1+=1
-                tmp_adr2+=1
-            }
-            if(i == bytes_on){
-                result.push(part.to_string())
-                part.clear()
-                pos += bytes_on
-                adr += bytes_on
-                bytes_left -= bytes_on
+        let offset : uint = 0
+        let start : uint = 0
+
+        let data = this.data
+        let on_data = on.data
+        let last_offset = this_bytes - on_bytes
+        while offset <= last_offset {
+            if mem:equal(@ptr_offset(data, offset), on_data, on_bytes) {
+                result.push(String.make_from_ptr(@ptr_offset(data, start), offset - start))
+                offset += on_bytes
+                start = offset
+                step.skip_bytes(on_bytes)
                 continue
             }
-
-            let bytec : u8 = 1
-            let byte : u8 = @ptrv(adr, u8, 0)
-            if(byte > 127){
-                byte = byte << 1
-                while(byte > 127){
-                    bytec++
-                    byte = byte << 1
-                }
-            }
-            if(bytec > 4){
-                // Invalid utf8 char
-                bytec = 1
-            }
-            if(bytec > bytes_left){
-                break
-            }
-            pos += bytec
-            bytes_left -= bytec
-            while(bytec > 0){
-                let byte : u8 = @ptrv(adr, u8, 0)
-                part.append_byte(byte)
-                bytec--
-                adr+=1
-            }
+            offset += step.next() ! break
         }
-        while bytes_left > 0 {
-            let byte : u8 = @ptrv(adr, u8, 0)
-            part.append_byte(byte)
-            bytes_left--
-            adr+=1
-        }
-
-        result.push(part.to_string())
-
+        if offset > this_bytes : offset = this_bytes
+        result.push(String.make_from_ptr(@ptr_offset(data, start), offset - start))
         return result
     }
 
     fn split_on_first_occurance_of_byte(byte: u8) (String, String) !not_found {
-        let pos = this.index_of_byte(byte) ! throw not_found
-        let p2 = this.sub_str_bytes(pos + 1, this.bytes - pos - 1)
-        let p1 = this.sub_str_bytes(0, pos)
+        let pos = this.byte_index_of_byte(byte) ! throw not_found
+        let p2 = this.byte_sub_str(pos + 1, this.bytes - pos - 1)
+        let p1 = this.byte_sub_str(0, pos)
         return p1, p2
     }
+
+	/////////////////////
+	// Syntax
+	/////////////////////
+    fn is_alpha(allow_extra_bytes: String ("")) bool {
+		let i : uint = 0
+		let len = this.bytes
+		let data = this.data
+		while i < len {
+			let ch = @ptrv(data, u8, i++)
+			if (ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') {
+				if !allow_extra_bytes.contains_byte(ch) : return false
+			}
+		}
+		return true
+	}
+    fn is_alpha_numeric(allow_extra_bytes: String ("")) bool {
+		let i : uint = 0
+		let len = this.bytes
+		let data = this.data
+		while i < len {
+			let ch = @ptrv(data, u8, i++)
+			if (ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
+				if !allow_extra_bytes.contains_byte(ch) : return false
+			}
+		}
+		return true
+	}
 
     /////////////////////
     // Misc

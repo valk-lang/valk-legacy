@@ -14,7 +14,7 @@ struct Array[T] {
         return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
-        };
+        }
     }
 
     fn push(item: T) uint {
@@ -58,7 +58,7 @@ struct Array[T] {
         if size >= new_size : return data
 
         let new_data = mem:alloc(new_size * sizeof(T))
-        mem:copy(data, new_data, size * sizeof(T));
+        mem:copy(data, new_data, size * sizeof(T))
         mem:free(data)
 
         this.data = new_data
@@ -68,16 +68,16 @@ struct Array[T] {
 
     fn get(index: uint) T !not_found {
         if index >= this.length {
-            throw not_found;
+            throw not_found
         }
-        return @ptrv(this.data, T, index);
+        return @ptrv(this.data, T, index)
     }
 
     fn set(index: uint, value: T) !out_of_range {
         if index >= this.length {
-            throw out_of_range;
+            throw out_of_range
         }
-        let data = this.data;
+        let data = this.data
         @ptrv(data, T, index) = @gc_link(this, value)
     }
     fn set_expand(index: uint, value: T, filler_value: T) {
@@ -94,7 +94,7 @@ struct Array[T] {
             this.length = index + 1
         }
 
-        let data = this.data;
+        let data = this.data
         // fill
         let i = len
         while i < index {
@@ -112,27 +112,27 @@ struct Array[T] {
     }
 
     fn remove_index(index: uint) {
-        let len = this.length;
+        let len = this.length
         if index >= len { return }
-        let data = this.data;
-        let after_count = len - (index + 1);
+        let data = this.data
+        let after_count = len - (index + 1)
 
         if after_count > 0 {
-            mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T));
+            mem:copy(data + (index + 1) * sizeof(T), data + index * sizeof(T), after_count * sizeof(T))
         }
 
-        this.length--;
+        this.length--
     }
     fn remove_value(value: T) {
         let index = this.index_of(value) ! {
             return
         }
-        this.remove_index(index);
+        this.remove_index(index)
     }
 
     fn pop() T !empty {
         if this.length > 0 {
-            return @ptrv(this.data, T, this.length - 1);
+            return @ptrv(this.data, T, this.length - 1)
         }
         throw empty
     }

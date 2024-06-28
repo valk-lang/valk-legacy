@@ -1,12 +1,12 @@
 
-header "openssl" as ssl;
+header "openssl" as ssl
 
-enum METHOD {
-    GET,
-    POST,
-    PUT,
-    PATCH,
-}
+// enum METHOD {
+//     GET,
+//     POST,
+//     PUT,
+//     PATCH,
+// }
 
 struct Client {
 
@@ -15,6 +15,6 @@ struct Client {
         return ClientRequest {
             method: method,
             url: url
-        };
+        }
     }
 }

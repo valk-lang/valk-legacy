@@ -32,7 +32,7 @@ trait FloatNumber {
         }
 
         //
-        let ipart = value @as int; 
+        let ipart = value @as int 
         let ilen = ipart.to_base_to_ptr(10, buf + offset)
         offset += ilen
         @ptrv(buf, u8, offset) = '.'
@@ -44,8 +44,8 @@ trait FloatNumber {
         while d-- > 0 {
             x *= 10
         }
-        let fpart = value - ipart @as SELF; 
-        fpart = fpart * x; 
+        let fpart = value - ipart @as SELF 
+        fpart = fpart * x 
 
         let tail = fpart @as int
         let tails = tail.to_str()
