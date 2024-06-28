@@ -76,7 +76,6 @@ struct Server {
         let sock = this.socket
 
         while true {
-            // print("Accepting...\n")
             let netcon = sock.accept() ! {
                 println("[x] Failed to accept")
                 continue

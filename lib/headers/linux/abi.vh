@@ -24,6 +24,8 @@ fn close(fd: i32) i32;
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
 fn send(fd: i32, buf: ptr, len: uint, flags: i32) int;
 
+fn fcntl(fd: i32, action: i32, value: i32) i32;
+
 fn socket(domain: i32, type: i32, protocol: i32) i32;
 fn connect(sockfd: i32, addr: libc_sockaddr, addrlen: u32) i32;
 fn accept(sockfd: i32, addr: ?libc_sockaddr, addrlen: ?ptr) i32;

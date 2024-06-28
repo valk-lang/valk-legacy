@@ -47,7 +47,10 @@ value EPOLL_NONBLOCK (2048)
 value O_RDONLY (0)
 value O_RDWR (2)
 value O_WRONLY (1)
-//
+
+value F_GETFL (3)
+value F_SETFL (4)
+
 value O_CREATE (64)
 value O_EXCL (128)
 value O_TRUNC (512)
