@@ -101,7 +101,7 @@ struct Connection {
         let file = this.output_file
 
         while true {
-            parser.parse(request) err ! {
+            parser.parse(request, false) err ! {
                 // Check if we need more data
                 if error_is(err, !need_more_data) {
                     let bytes = this.read_more() ! {

@@ -8,13 +8,10 @@ header "openssl" as ssl
 //     PATCH,
 // }
 
-struct Client {
+fn request(method: String, url: String) ClientRequest {
 
-    static fn request(method: String, url: String) ClientRequest {
-
-        return ClientRequest {
-            method: method,
-            url: url
-        }
+    return ClientRequest {
+        method: method,
+        url: url
     }
 }

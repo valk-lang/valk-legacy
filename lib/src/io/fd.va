@@ -69,6 +69,17 @@ fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
     throw failed
 }
 
+fn fd_set_non_block(fd: FD, value: bool) {
+    #if OS == macos
+    let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
+    let max : i32 = 0xffffffff
+    sys:fcntl(ufd, sys:F_SETFL, flags | (value ? sys:O_NONBLOCK : (max - sys:O_NONBLOCK)))
+    #elif OS == win
+    let nonblock : uint = value ? 1 : 0
+    sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
+    #end
+}
+
 fn close(fd: FD) i32 {
     let c = sys:close(fd @as i32)
     return c

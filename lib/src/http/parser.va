@@ -35,7 +35,7 @@ struct RequestParser {
         this.parsed_body = false
     }
 
-    fn parse(request: Request) !invalid !http413 !need_more_data {
+    fn parse(request: Request, is_response: bool) !invalid !http413 !need_more_data {
 
         if this.parsed_body {
             throw invalid
@@ -59,32 +59,43 @@ struct RequestParser {
                 }
                 throw need_more_data
             }
-            // let line = input.sub_str(pos, index - pos)
-            // println(line)
 
-            if index + 1 == length : throw need_more_data
-            if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
+            let version = ""
 
-            let space1 = input.byte_index_of_byte(' ', pos) ! { throw invalid }
-            let space2 = input.byte_index_of_byte(' ', space1 + 1) ! { throw invalid }
+            if is_response {
+                let line = input.sub_str(pos, index - pos)
+                let split = line.split(" ")
+                if split.length < 2 : throw invalid
+                version = split.get(0) ? ""
+                let status = split.get(1) ? ""
+                request.status = status.to_uint() ! throw invalid
 
-            if space1 > index { throw invalid }
-            if space2 > index { throw invalid }
+            } else {
+                if index + 1 == length : throw need_more_data
+                if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-            // Request "GET / HTTP/1.1"
-            let method = input.sub_str(pos, space1 - pos)
-            let path = input.sub_str(space1 + 1, space2 - space1 - 1)
+                let space1 = input.byte_index_of_byte(' ', pos) ! { throw invalid }
+                let space2 = input.byte_index_of_byte(' ', space1 + 1) ! { throw invalid }
 
-            let qmark = path.byte_index_of_byte('?') ? 0
-            if qmark > 0 {
-                let len = path.bytes
-                request.params_data = path.byte_sub_str(qmark + 1, len - qmark - 1)
-                path = path.byte_sub_str(0, qmark)
+                if space1 > index { throw invalid }
+                if space2 > index { throw invalid }
+
+                // Request "GET / HTTP/1.1"
+
+                let method = input.sub_str(pos, space1 - pos)
+                let path = input.sub_str(space1 + 1, space2 - space1 - 1)
+
+                let qmark = path.byte_index_of_byte('?') ? 0
+                if qmark > 0 {
+                    let len = path.bytes
+                    request.params_data = path.byte_sub_str(qmark + 1, len - qmark - 1)
+                    path = path.byte_sub_str(0, qmark)
+                }
+                version = input.sub_str(space2 + 1, index - space2 - 1)
+
+                request.method = method
+                request.path = path
             }
-            // let version = input.sub_str(space2 + 1, index - space2 - 1)
-
-            request.method = method
-            request.path = path
 
             pos = index + 2
             this.input_pos = pos
@@ -119,8 +130,8 @@ struct RequestParser {
                 split++
             }
 
-            // let key = input.sub_str(pos, split - pos - 1)
-            // let value = input.sub_str(split + 1, index - split - 1)
+            // let key = input.byte_sub_str(pos, split - pos - 1)
+            // let value = input.byte_sub_str(split + 1, index - split - 1)
             // headers.set(key.to_lower(), value)
             // println(key)
 

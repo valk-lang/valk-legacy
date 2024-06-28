@@ -30,3 +30,13 @@ fn libc_errno() i32 {
     return sys:errno
     #end
 }
+
+fn socket_errno() i32 {
+    #if OS == win
+    // Windows error
+    return WSA_error()
+    #else
+    // Linux / macos error
+    return libc_errno()
+    #end
+}

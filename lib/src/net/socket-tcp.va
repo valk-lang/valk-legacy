@@ -18,32 +18,15 @@ struct SocketTCP {
         os:WSA_init()
         #end
 
-        #if OS == linux
-        let flags : i32 = sys:SOCK_STREAM @as i32 | sys:SOCK_NONBLOCK
-        let ufd = sys:socket(sys:AF_INET, flags, 0)
-        let fd = ufd @as FD
-        #else
-
-        // Win & macos
-        #if OS == macos
-        let ufd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
-        let fd = ufd @as FD
-        let flags = sys:fcntl(ufd, sys:F_GETFL, 0)
-        sys:fcntl(ufd, sys:F_SETFL, flags | sys:O_NONBLOCK)
-
-        #elif OS == win
+        #if OS == win
         let sock_fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
         let fd = io:valk_fd(sock_fd)
-        let nonblock = 1
-        sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
-        #end
-
+        #else
+        let ufd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
+        let fd = ufd @as FD
         #end
 
         if fd == -1 {
-            //#if OS == win
-            //println("WSA socket error: " + sys:WSAGetLastError())
-            //#end
             throw os_socket_create
         }
 
@@ -73,22 +56,16 @@ struct SocketTCP {
 
     fn connect() Connection !connection_failed {
 
-        let c = Connection {
-            fd: this.fd
-            open: false,
-        }
+        // if this.open : return
 
-        if !c.open {
-            #if OS == win
-            let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32)
-            #else
-            let err = sys:connect(this.fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
-            #end
-            if err != 0 : throw connection_failed
-            c.open = true
-        }
+        #if OS == win
+        let err = sys:connect(this.fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32)
+        #else
+        let err = sys:connect(this.fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
+        #end
+        if err != 0 : throw connection_failed
 
-        return c
+        return Connection.new(this.fd)
     }
 
     fn bind() !get_addr_info !bind !listen {
@@ -170,18 +147,16 @@ struct SocketTCP {
                 throw error
             }
 
-            #if OS == macos
-            let flags = sys:fcntl(fd, sys:F_GETFL, 0)
-            sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK)
-            #end
-            #if OS == win
-            let nonblock = 1
-            sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
-            #end
+            // #if OS == macos
+            // let flags = sys:fcntl(fd, sys:F_GETFL, 0)
+            // sys:fcntl(fd, sys:F_SETFL, flags | sys:O_NONBLOCK)
+            // #end
+            // #if OS == win
+            // let nonblock = 1
+            // sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
+            // #end
 
-            return Connection {
-                fd: fd,
-            }
+            return Connection.new(fd)
         }
         throw error
     }
