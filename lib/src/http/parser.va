@@ -53,7 +53,7 @@ struct RequestParser {
 
         // Header
         if stage == 0 {
-            let index = input.index_of_byte('\r', pos) ! {
+            let index = input.byte_index_of_byte('\r', pos) ! {
                 if length - pos > 4096 {
                     throw http413
                 }
@@ -65,8 +65,8 @@ struct RequestParser {
             if index + 1 == length : throw need_more_data
             if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-            let space1 = input.index_of_byte(' ', pos) ! { throw invalid }
-            let space2 = input.index_of_byte(' ', space1 + 1) ! { throw invalid }
+            let space1 = input.byte_index_of_byte(' ', pos) ! { throw invalid }
+            let space2 = input.byte_index_of_byte(' ', space1 + 1) ! { throw invalid }
 
             if space1 > index { throw invalid }
             if space2 > index { throw invalid }
@@ -75,11 +75,11 @@ struct RequestParser {
             let method = input.sub_str(pos, space1 - pos)
             let path = input.sub_str(space1 + 1, space2 - space1 - 1)
 
-            let qmark = path.index_of_byte('?') ? 0
+            let qmark = path.byte_index_of_byte('?') ? 0
             if qmark > 0 {
                 let len = path.bytes
-                request.params_data = path.sub_str_bytes(qmark + 1, len - qmark - 1)
-                path = path.sub_str_bytes(0, qmark)
+                request.params_data = path.byte_sub_str(qmark + 1, len - qmark - 1)
+                path = path.byte_sub_str(0, qmark)
             }
             // let version = input.sub_str(space2 + 1, index - space2 - 1)
 
@@ -94,7 +94,7 @@ struct RequestParser {
 
         // Headers
         while stage == 1 {
-            let index = input.index_of_byte('\r', pos) ! {
+            let index = input.byte_index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {
                     throw http413
                 }
@@ -113,7 +113,7 @@ struct RequestParser {
                 break;
             }
 
-            let split = input.index_of_byte(':', pos) ! { throw invalid }
+            let split = input.byte_index_of_byte(':', pos) ! { throw invalid }
             if split > index { throw invalid }
             while @ptrv(data, u8, split + 1) == ' ' {
                 split++;

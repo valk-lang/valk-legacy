@@ -159,7 +159,7 @@ struct Request {
                 files.set(name, file)
                 file.mime_type = headers.get("content-type") ! continue
             } else {
-                let v = part.sub_str_bytes(body_offset, body_bytes)
+                let v = part.byte_sub_str(body_offset, body_bytes)
                 result.set(name, v)
             }
         }
@@ -186,7 +186,7 @@ struct Request {
         let length = data.length
 
         while true {
-            let index = data.index_of_byte('\r', pos) ! throw invalid
+            let index = data.byte_index_of_byte('\r', pos) ! throw invalid
             if index + 1 == length : throw invalid
             if @ptrv(bytes, u8, index + 1) != '\n' : throw invalid
 
@@ -196,7 +196,7 @@ struct Request {
                 break
             }
 
-            let split = data.index_of_byte(':', pos) ! throw invalid
+            let split = data.byte_index_of_byte(':', pos) ! throw invalid
             if split > index : throw invalid
 
             let value_pos = split + 1

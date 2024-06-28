@@ -79,7 +79,7 @@ struct ByteBuffer {
 
     // Find
 
-    fn index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
+    fn byte_index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
         let index = start_index;
         let len = this.length;
         let data = this.data;

@@ -57,7 +57,7 @@ fn test_result(result: TestResult) {
     let failed = result.as_failed > 0
 
     if name.bytes > 50 {
-        name = name.sub_str_bytes(0, 50)
+        name = name.byte_sub_str(0, 50)
     }
     if name.bytes % 2 != 0 {
         name += " "

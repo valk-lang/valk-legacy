@@ -105,7 +105,7 @@ fn ext(path: String, with_dot: bool (false)) String {
         if ch == '/' || ch == '\\' : break
     }
     if found == false : return ""
-    return path.sub_str_bytes(start, len - start)
+    return path.byte_sub_str(start, len - start)
 }
 
 // e.g. /etc/nginx/nginx.conf -> /etc/nginx
@@ -121,7 +121,7 @@ fn dir_of(path: String) String {
         let ch = path.byte(end)
         if ch == '/' || ch == '\\' {
             if end == 0 : end++
-            return path.sub_str_bytes(0, end)
+            return path.byte_sub_str(0, end)
         }
     }
     return path
@@ -151,5 +151,5 @@ fn basename(path: String) String {
             break
         }
     }
-    return path.sub_str_bytes(start, len - start - rtrim)
+    return path.byte_sub_str(start, len - start - rtrim)
 }
