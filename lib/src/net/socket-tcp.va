@@ -9,11 +9,10 @@ struct SocketTCP {
     ~ host: String
     ~ fd: FD
     ~ port: u16
-    ~ blocking: bool (true)
     - addrinfo: sys:libc_addrinfo
     - connection: ?Connection (null)
 
-    static fn new(host: String, port: u16, blocking: bool (true)) SocketTCP !os_socket_create !invalid_host {
+    static fn new(host: String, port: u16) SocketTCP !os_socket_create !invalid_host {
 
         #if OS == win
         os:WSA_init()
@@ -68,7 +67,6 @@ struct SocketTCP {
             host: host,
             port: port,
             fd: fd,
-            blocking: blocking,
             addrinfo: addrinfo,
         }
     }
@@ -198,7 +196,6 @@ struct SocketTCP {
             host: this.host,
             fd: this.fd,
             port: this.port,
-            blocking: this.blocking,
             addrinfo: SELF.get_addrinfo(this.host, this.port) ? this.addrinfo @as sys:libc_addrinfo,
         }
     }
