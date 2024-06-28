@@ -30,14 +30,18 @@ test "String: starts/ends with" {
     assert("abc".ends_with("abc"))
     assert("abc".ends_with("bc"))
     assert("abc".ends_with(""))
+    assert("".ends_with(""))
     // Invalid
     assert(!"abc".starts_with("c"))
     assert(!"abc".starts_with("b"))
     assert(!"abc".ends_with("a"))
     assert(!"abc".ends_with("b"))
+    assert(!"".ends_with("e"))
 }
 
 test "String: length" {
+    assert("".bytes == 0)
+    assert("".chars() == 0)
     assert("abc".bytes == 3)
     assert("abc".chars() == 3)
     assert("a🐔c".bytes == 6)
@@ -45,6 +49,7 @@ test "String: length" {
 }
 
 test "String: index of" {
+    assert(("a🐔c".index_of("") ? 999) == 0)
     assert(("a🐔c".index_of("c") ? 0) == 2)
     assert(("a🐔c".byte_index_of("c") ? 0) == 5)
     assert(("a🐔c".byte_index_of_byte('c') ? 0) == 5)
@@ -54,6 +59,29 @@ test "String: split" {
     let str = "a=🐔=b"
     let s = str.split("=")
     assert(s.length == 3)
+    assert((s.get(0) ? "_") == "a")
+    assert((s.get(1) ? "_") == "🐔")
+    assert((s.get(2) ? "_") == "b")
+    // too long
+    s = str.split("valkvalkvalk")
+    assert(s.length == 1)
+    assert((s.get(0) ? "_") == str)
+    // not found
+    s = str.split("~")
+    assert(s.length == 1)
+    assert((s.get(0) ? "_") == str)
+    // empty
+    s = str.split("")
+    assert(s.length == 1)
+    assert((s.get(0) ? "_") == str)
+    // next to eachother
+    s = "==a==".split("=")
+    assert(s.length == 5)
+    assert((s.get(0) ? "_") == "")
+    assert((s.get(1) ? "_") == "")
+    assert((s.get(2) ? "_") == "a")
+    assert((s.get(3) ? "_") == "")
+    assert((s.get(4) ? "_") == "")
 }
 
 test "String: sub strings" {
