@@ -76,8 +76,8 @@ fn listen(sockfd: uint, backlog: i32) i32;
 
 fn getsockopt(sockfd: uint, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
 fn setsockopt(sockfd: uint, level: i32, optname: i32, optval: ptr, optlen: u32) i32;
-fn getaddrinfo(host: cstring, port: cstring, hints: libc_addrinfo, res: ptr) i32;
-fn freeaddrinfo(info: libc_addrinfo) i32;
+fn getaddrinfo(host: cstring, port: cstring, hints: libc_addrinfo_fix, res: ptr) i32;
+fn freeaddrinfo(info: libc_addrinfo_fix) i32;
 
 //int clone(int (fn)(void *), void stack, int flags, void arg, .../* pid_t parent_tid, void tls, pid_t child_tid */ );
 fn fork() i32;
