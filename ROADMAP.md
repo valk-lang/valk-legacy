@@ -13,7 +13,6 @@
 
 ```
 // Prio
-- http client
 - json encode/decode
 - fix stack list in GcManager
 // Other
