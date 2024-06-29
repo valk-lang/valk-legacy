@@ -15,8 +15,9 @@
 // Prio
 - json encode/decode
 - fix stack list in GcManager
-// Other
 - error messages
+// Other
+- assert in any function
 - doc generator
 - more string functions
 - format string
