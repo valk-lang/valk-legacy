@@ -26,14 +26,20 @@ struct Connection {
     }
 
     fn ssl_connect() !ssl_error {
+
+        let fd = this.fd
+        io:fd_set_non_block(fd, false)
+
         if this.ssl_enabled : return
-        let ssl = SSL.new(this.fd)
+        let ssl = SSL.new(fd)
         let err = ossl:SSL_connect(ssl.ssl)
         if err != 1 {
             throw ssl_error
         }
         this.ssl = ssl
         this.ssl_enabled = true
+
+        io:fd_set_non_block(fd, true)
     }
 
     fn send_string(data: String) !connection {

@@ -50,22 +50,18 @@ struct ClientRequest {
         }
 
         // Send request
-        print("1")
         let buf = this.get_send_data(parts)
         con.send_byte_buffer(buf) ! {
             con.close()
             throw connection_failed, "Unexpected non-blocking connection"
         }
-        print("2")
 
         //
         let parser = RequestParser{}
         let request = Request{}
         let rbytes : uint = 8192
         let buffer = parser.input
-        print("3")
         while true {
-            print(buffer.to_string())
             parser.parse(request, true) err ! {
                 // Check if we need more data
                 if error_is(err, !need_more_data) {

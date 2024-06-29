@@ -194,7 +194,7 @@ struct String {
     // Convert
     /////////////////////
 
-    fn to_uint() uint !not_a_number {
+    fn to_uint() uint !invalid {
         let i = this.bytes
         let result : uint = 0
         let mult : uint = 1
@@ -202,10 +202,30 @@ struct String {
             i--
             let ch = this.byte(i)
             if(ch < 48 || ch > 57){
-                throw not_a_number
+                throw invalid
             }
             result += ((ch @as uint) - 48) * mult
             mult *= 10
+        }
+        return result
+    }
+    fn hex_to_uint() uint !invalid {
+        let i = this.bytes
+        let result : uint = 0
+        let mult : uint = 1
+        while i > 0 {
+            i--
+            let ch = this.byte(i)
+            if(ch >= '0' && ch <= '9'){
+                result += ((ch @as uint) - '0') * mult
+            } else if(ch >= 'A' && ch <= 'Z'){
+                result += ((ch @as uint) - 'A' + 10) * mult
+            } else if(ch >= 'a' && ch <= 'z'){
+                result += ((ch @as uint) - 'a' + 10) * mult
+            } else {
+                throw invalid
+            }
+            mult *= 16
         }
         return result
     }
