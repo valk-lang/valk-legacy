@@ -63,7 +63,8 @@ struct SocketTCP {
         io:fd_set_non_block(fd, false)
 
         #if OS == win
-        let err = sys:connect(fd, this.addrinfo.ai_addr, this.addrinfo.ai_addrlen @as i32)
+        let ofd = io:os_fd(this.fd)
+        let err = sys:connect(ofd, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @as i32)
         #else
         let err = sys:connect(fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
         #end

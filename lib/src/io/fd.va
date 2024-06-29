@@ -5,10 +5,13 @@ use os
 
 alias FD as int
 
+
 #if OS == win
-fn valk_fd(fd: uint) FD {
-    return (fd == (0^-1) @as uint) ? -1 : fd @as int
-}
+macro valk_fd (V:fd) : <{ return ((fd == (0^-1) @as uint) ? -1 : fd @as int) }
+macro os_fd (V:fd) : <{ return fd @as uint }
+#else
+macro valk_fd (V:fd) : <{ return fd }
+macro os_fd (V:fd) : <{ return fd }
 #end
 
 fn write(fd: FD, str: String) !failed !again {
@@ -45,7 +48,8 @@ fn write_from_ptr(fd: FD, data: ptr, length: uint) uint !failed !again {
 
 fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
     while true {
-        let rcvd = sys:read(fd @as i32, buffer, buffer_size)
+        let ofd = os_fd(fd)
+        let rcvd = sys:read(ofd @as i32, buffer, buffer_size)
         if rcvd < 0 {
             #if OS == win
             let err = os:WSA_error()
@@ -71,8 +75,9 @@ fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
 
 fn fd_set_non_block(fd: FD, value: bool) {
     #if OS == win
-    let nonblock : uint = value ? 1 : 0
-    sys:ioctlsocket(fd @as uint, sys:FIONBIO, @ptr_of(nonblock))
+    let ofd = os_fd(fd)
+    let nonblock : uint = value ? 1 @as uint : 0 @as uint
+    sys:ioctlsocket(ofd, sys:FIONBIO, @ptr_of(nonblock))
     #else
     let flags = sys:fcntl(fd @autocast, sys:F_GETFL, 0)
     let max : i32 = 0xffffffff @as i32
