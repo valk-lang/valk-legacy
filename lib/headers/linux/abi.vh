@@ -6,6 +6,7 @@ shared stdout : ?FILE;
 
 alias FILE as ptr;
 alias DIR as ptr
+alias libc_addrinfo_fix as libc_addrinfo
 
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) i32;

@@ -10,8 +10,8 @@ alias FD as int
 macro valk_fd (V:fd) : <{ return ((fd == (0^-1) @as uint) ? -1 : fd @as int) }
 macro os_fd (V:fd) : <{ return fd @as uint }
 #else
-macro valk_fd (V:fd) : <{ return fd }
-macro os_fd (V:fd) : <{ return fd }
+macro valk_fd (V:fd) : <{ return fd @as i32 }
+macro os_fd (V:fd) : <{ return fd @as i32 }
 #end
 
 fn write(fd: FD, str: String) !failed !again {

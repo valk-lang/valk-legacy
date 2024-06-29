@@ -10,7 +10,7 @@ struct SocketTCP {
     ~ fd: FD
     ~ port: u16
     // ~ connection: ?Connection (null)
-    - addrinfo: sys:libc_addrinfo
+    - addrinfo: sys:libc_addrinfo_fix
 
     static fn new(host: String, port: u16) SocketTCP !os_socket_create !invalid_host {
 
@@ -94,11 +94,11 @@ struct SocketTCP {
         }
     }
 
-    - static fn get_addrinfo(host: String, port: u16) sys:libc_addrinfo !failed {
+    - static fn get_addrinfo(host: String, port: u16) sys:libc_addrinfo_fix !failed {
 
-        let addrinfo : ?sys:libc_addrinfo = null
-        let hints = @stack(sys:libc_addrinfo)
-        mem:clear(hints, sizeof(inline sys:libc_addrinfo))
+        let addrinfo : ?sys:libc_addrinfo_fix = null
+        let hints = @stack(sys:libc_addrinfo_fix)
+        mem:clear(hints, sizeof(inline sys:libc_addrinfo_fix))
 
         hints.ai_family = sys:AF_INET
         hints.ai_socktype = sys:SOCK_STREAM
@@ -114,18 +114,14 @@ struct SocketTCP {
             throw failed
         }
 
-        return addrinfo @as sys:libc_addrinfo
+        return addrinfo @as sys:libc_addrinfo_fix
     }
 
     fn accept() Connection !error {
 
         while true {
-            #if OS == win
-            let fd_ = sys:accept(this.fd @autocast, null, null)
-            let fd = io:valk_fd(fd_)
-            #else
-            let fd = sys:accept(this.fd @autocast, null, null)
-            #end
+            let ofd = sys:accept(io:os_fd(this.fd), null, null)
+            let fd = io:valk_fd(ofd)
 
             // Error
             if fd == -1 {
@@ -158,7 +154,7 @@ struct SocketTCP {
             host: this.host,
             fd: this.fd,
             port: this.port,
-            addrinfo: SELF.get_addrinfo(this.host, this.port) ? this.addrinfo @as sys:libc_addrinfo,
+            addrinfo: SELF.get_addrinfo(this.host, this.port) ? this.addrinfo @as sys:libc_addrinfo_fix,
         }
     }
 
