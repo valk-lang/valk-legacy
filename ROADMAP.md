@@ -31,6 +31,7 @@
 - 'clone' functions for classes in valk pkg
 - more compile condition functions
 - success handling: myfunc() -> res { ... code ... }
+- http max connections / max input memory (cross thread)
 ```
 
 ## Maybe

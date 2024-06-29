@@ -11,18 +11,14 @@ struct Connection {
     netcon: net:Connection
     fd: FD
 
-    // uploads: ?Array[String] (null)
+    // Request
     request: Request (Request{})
     parser: RequestParser (RequestParser{})
-    added_active_body_size: bool (false)
 
     // Response
     output_file: ?fs:FileStream (null)
     output: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     output_pos: uint (0)
-
-    // Cache
-    // request: ?Request (null)
 
     fn full_reset() {
         this.request.reset()
@@ -60,16 +56,6 @@ struct Connection {
         out.append_str("\r\n")
     }
 
-    fn has_data_to_send() bool {
-        if this.output_pos < this.output.length {
-            return true
-        }
-        let file = this.output_file
-        if isset(file) {
-            if file.reading : return true
-        }
-        return false
-    }
     fn count_bytes_to_send() uint {
         return this.output.length - this.output_pos
     }
@@ -106,13 +92,11 @@ struct Connection {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
                     let bytes = this.read_more() ! {
-                        this.close()
+                        this.send_error(400)
                         return
                     }
-                    if bytes == 0 : return
-                    continue
-                }
-                if error_is(err, !http413) {
+                    if bytes > 0 : continue
+                } else if error_is(err, !http413) {
                     this.send_error(413)
                     return
                 }
@@ -215,11 +199,6 @@ struct Connection {
     }
 
     fn close() {
-        // println("[+] Close connection: " + this.fd)
-        // if this.added_active_body_size {
-        //     atomic(this.server.active_body_size - this.parser.content_length)
-        //     this.added_active_body_size = false
-        // }
         this.full_reset()
         this.netcon.close()
     }
