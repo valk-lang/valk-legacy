@@ -3,9 +3,9 @@
 
 - v0.1.0 : Have all the core compiler features ready
 
-- v0.2.0 : Stable standard library
+- v0.2.0 : Stablelize standard library
 
-- v0.3.0 : Implement low priority compiler features
+- v0.3.0 : Community feedback & implement low priority compiler features
 
 - v1.0.0 : Compiler is field tested by multiple projects
 
