@@ -324,10 +324,7 @@ Value* vgen_bufferd_value(Allocator* alc, Parser* p, Value* val) {
     return value_make(alc, v_bufferd, vb, val->rett);
 }
 void buffer_values_except_last(Allocator* alc, Parser* p, Array* args) {
-    int last = args->length - 1;
     loop(args, i) {
-        if(i == last)
-            break;
         Value* v = array_get_index(args, i);
         if(value_needs_gc_buffer(v)) {
             array_set_index(args, i, vgen_bufferd_value(alc, p, v));
