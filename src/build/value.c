@@ -204,7 +204,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             if(t == tok_bracket_close)
                 break;
         }
-        buffer_values_except_last(alc, p, values);
+        buffer_values(alc, p, values, false);
         v = vgen_multi(alc, values);
     } else if (t == tok_ltcurly_open) {
         int scope_end_i = p->scope_end_i;
@@ -1017,7 +1017,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
-    buffer_values_except_last(alc, p, values->values);
+    buffer_values(alc, p, values->values, false);
 
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;

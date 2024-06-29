@@ -49,7 +49,7 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     }
 
     Value* retv = value_make(alc, v_func_call, item, rett);
-    buffer_values_except_last(alc, p, args);
+    buffer_values(alc, p, args, false);
 
     // Return value buffers
     if (rett_types) {
@@ -323,8 +323,11 @@ Value* vgen_bufferd_value(Allocator* alc, Parser* p, Value* val) {
     vb->value = val;
     return value_make(alc, v_bufferd, vb, val->rett);
 }
-void buffer_values_except_last(Allocator* alc, Parser* p, Array* args) {
+void buffer_values(Allocator* alc, Parser* p, Array* args, bool skip_last) {
+    int last = args->length - 1;
     loop(args, i) {
+        if(skip_last && i == last)
+            break;
         Value* v = array_get_index(args, i);
         if(value_needs_gc_buffer(v)) {
             array_set_index(args, i, vgen_bufferd_value(alc, p, v));

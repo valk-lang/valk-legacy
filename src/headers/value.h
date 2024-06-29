@@ -51,7 +51,7 @@ Value* vgen_null_alt_value(Allocator* alc, Value* left, Value* right);
 Value* vgen_memset(Allocator* alc, Value* on, Value* len, Value* with);
 Value* vgen_this_but_return_that(Allocator* alc, Value* this, Value* that);
 Value* vgen_bufferd_value(Allocator* alc, Parser* p, Value* val);
-void buffer_values_except_last(Allocator* alc, Parser* p, Array* args);
+void buffer_values(Allocator* alc, Parser* p, Array* args, bool skip_last);
 
 Value* vgen_multi(Allocator* alc, Array* values);
 Value* vgen_phi(Allocator* alc, Value* left, Value* right);
