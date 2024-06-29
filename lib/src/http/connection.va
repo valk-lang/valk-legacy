@@ -101,6 +101,7 @@ struct Connection {
         let file = this.output_file
 
         while true {
+
             parser.parse(request, false) err ! {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
@@ -145,7 +146,6 @@ struct Connection {
 
             // Clear request
             request.reset()
-            // TODO: Delete uploads
 
             // Flush output
             if this.should_flush_output() {

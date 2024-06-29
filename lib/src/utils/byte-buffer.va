@@ -34,6 +34,7 @@ struct ByteBuffer {
         let data = this.data
         let bytes = len - index
         mem:copy(@ptr_offset(data, index), data, bytes)
+        this.length = bytes
     }
 
     // Appending
