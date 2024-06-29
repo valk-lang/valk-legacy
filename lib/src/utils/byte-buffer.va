@@ -25,6 +25,16 @@ struct ByteBuffer {
     fn clear() {
         this.length = 0
     }
+    fn clear_until(index: uint) {
+        let len = this.length
+        if index >= len {
+            this.length = 0
+            return
+        }
+        let data = this.data
+        let bytes = len - index
+        mem:copy(@ptr_offset(data, index), data, bytes)
+    }
 
     // Appending
     fn append(buffer: SELF) {
