@@ -10,15 +10,15 @@ exit_fn panic(msg: String) {
 }
 
 fn signal(sig: int, handler: fn(i32)()) void {
-    sys:signal(sig @as i32, handler);
+    sys:signal(sig @as i32, handler)
 }
 
 fn signal_ignore(sig: int) void {
-    sys:signal(sig @as i32, null);
+    sys:signal(sig @as i32, null)
 }
 
 fn raise(sig: int) void {
-    sys:raise(sig @as i32);
+    sys:raise(sig @as i32)
 }
 
 fn libc_errno() i32 {
@@ -28,5 +28,15 @@ fn libc_errno() i32 {
     return i
     #else
     return sys:errno
+    #end
+}
+
+fn socket_errno() i32 {
+    #if OS == win
+    // Windows error
+    return WSA_error()
+    #else
+    // Linux / macos error
+    return libc_errno()
     #end
 }

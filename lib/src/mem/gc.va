@@ -6,11 +6,11 @@ fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
 fn gc() {
-    stack.gc();
+    stack.gc()
 }
 fn force_gc() {
     stack.force_full = true
-    stack.gc();
+    stack.gc()
 }
 
 fn gc_transfer_item(item: ptr) {
@@ -18,27 +18,27 @@ fn gc_transfer_item(item: ptr) {
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
-    func(item, state_solid);
+    func(item, state_solid)
 }
 fn gc_mark_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
-    func(item, stack.age);
+    func(item, stack.age)
 }
 fn gc_mark_shared_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
-    func(item, gc_age);
+    func(item, gc_age)
 }
 fn gc_share(item: ptr) {
     let vtable = @ptrv(item, u32, -1)
     let table = @gc_get_vtable(vtable)
     let func = @ptrv(table, fn(ptr)(), vt_share)
-    func(item);
+    func(item)
 }
 
 #parse_last

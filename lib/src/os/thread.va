@@ -1,9 +1,9 @@
 
-header "sys" as sys;
+header "sys" as sys
 
-use valk:mem;
-use valk:core;
-use io;
+use valk:mem
+use valk:core
+use io
 
 cstruct ThreadEntry {
     func: ptr
@@ -17,22 +17,22 @@ cstruct Thread {
     - static fn entry(e: ThreadEntry) {
         // mem:Stack.init()
         if e.has_data {
-            let func = e.func @as fn(ptr)();
-            co func(e.data @as ptr);
+            let func = e.func @as fn(ptr)()
+            co func(e.data @as ptr)
         } else {
-            let func = e.func @as fn()();
-            co func();
+            let func = e.func @as fn()()
+            co func()
         }
         core:Coro.loop()
         mem:stack.shutdown()
     }
 
     static fn start(start_func: ptr) {
-        SELF.init(start_func, null, false);
+        SELF.init(start_func, null, false)
     }
     static fn start_with_data(start_func: ptr, data: ?ptr) {
         @gc_share(data)
-        SELF.init(start_func, data, true);
+        SELF.init(start_func, data, true)
     }
 
     static fn init(start_func: ptr, data: ?ptr, has_data: bool) {
@@ -44,23 +44,23 @@ cstruct Thread {
         }
 
         #if OS == win
-		let thr = sys:CreateThread(null, 0, Thread.entry, e, 0, null);
+		let thr = sys:CreateThread(null, 0, Thread.entry, e, 0, null)
 		#else
-        let thr = sys:pthread_t{ data: 0 @as uint };
-        let err = sys:pthread_create(thr, null, Thread.entry, e);
+        let thr = sys:pthread_t{ data: 0 @as uint }
+        let err = sys:pthread_create(thr, null, Thread.entry, e)
         #end
         // if err != 0 {
-        // 	throw fail;
+        // 	throw fail
         // }
-        // let t = Thread{ os_thread: thr };
+        // let t = Thread{ os_thread: thr }
     }
 
     static fn start_without_gc(start_func: ptr) void {
         #if OS == win
-		let thr = sys:CreateThread(null, 0, start_func, null, 0, null);
+		let thr = sys:CreateThread(null, 0, start_func, null, 0, null)
 		#else
-        let thr = sys:pthread_t{ data: 0 @as uint };
-        let err = sys:pthread_create(thr, null, start_func, null);
+        let thr = sys:pthread_t{ data: 0 @as uint }
+        let err = sys:pthread_create(thr, null, start_func, null)
         #end
     }
 }

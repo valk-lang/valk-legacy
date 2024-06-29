@@ -13,7 +13,7 @@ struct Pool[T] {
         return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
-        };
+        }
     }
 
     fn add(item: T) {
@@ -31,7 +31,7 @@ struct Pool[T] {
         let count = this.count
         if count == 0 : throw empty
         let new_count = count - 1
-        let item = @ptrv(this.data, T, new_count);
+        let item = @ptrv(this.data, T, new_count)
         this.count = new_count
         return item
     }
@@ -41,7 +41,7 @@ struct Pool[T] {
         let size = this.size
 
         let new_data = mem:alloc(new_size * sizeof(T))
-        mem:copy(data, new_data, size * sizeof(T));
+        mem:copy(data, new_data, size * sizeof(T))
         mem:free(data)
 
         this.data = new_data
@@ -66,7 +66,7 @@ cstruct StructPool[T] {
         return SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
-        };
+        }
     }
 
     fn add(item: T) {
@@ -84,7 +84,7 @@ cstruct StructPool[T] {
         let count = this.count
         if count == 0 : throw empty
         let new_count = count - 1
-        let item = @ptrv(this.data, T, new_count);
+        let item = @ptrv(this.data, T, new_count)
         this.count = new_count
         return item
     }
@@ -94,7 +94,7 @@ cstruct StructPool[T] {
         let size = this.size
 
         let new_data = mem:alloc(new_size * sizeof(T))
-        mem:copy(data, new_data, size * sizeof(T));
+        mem:copy(data, new_data, size * sizeof(T))
         mem:free(data)
 
         this.data = new_data

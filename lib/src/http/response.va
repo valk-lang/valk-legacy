@@ -10,21 +10,21 @@ struct Response {
     headers: ?Map[String] (null)
 
     static fn html(body: String, code: u32 (200), headers: ?Map[String] (null)) Response {
-    	return Response{ body: body, status: code, content_type: "text/html", headers: headers };
+    	return Response{ body: body, status: code, content_type: "text/html", headers: headers }
     }
     static fn json(body: String, code: u32 (200), headers: ?Map[String] (null)) Response {
-    	return Response{ body: body, status: code, content_type: "application/json", headers: headers };
+    	return Response{ body: body, status: code, content_type: "application/json", headers: headers }
     }
     static fn text(body: String, code: u32 (200), content_type: String ("text/plain"), headers: ?Map[String] (null)) Response {
-    	return Response{ body: body, status: code, content_type: content_type, headers: headers };
+    	return Response{ body: body, status: code, content_type: content_type, headers: headers }
     }
     static fn redirect(location: String, code: u32 (301), headers: ?Map[String] (null)) Response {
-    	let h = headers ?? map[String]{};
-    	h.set("Location", location);
-    	return Response{ status: code, headers: h };
+    	let h = headers ?? map[String]{}
+    	h.set("Location", location)
+    	return Response{ status: code, headers: h }
     }
     static fn error(code: u32, headers: ?Map[String] (null)) Response {
-    	return Response{ status: code, headers: headers };
+    	return Response{ status: code, headers: headers }
     }
     static fn file(path: String, filename: String (null)) Response {
     	return Response{ filepath: path, filename: filename }
@@ -42,31 +42,31 @@ struct Response {
 
     fn compile(buf: utils:ByteBuffer) void {
 
-        let len = this.body.bytes;
+        let len = this.body.bytes
 
-        buf.append_str("HTTP/1.1 ");
-        buf.append_uint(this.status);
-        buf.append_str(" OK\r\n");
+        buf.append_str("HTTP/1.1 ")
+        buf.append_uint(this.status)
+        buf.append_str(" OK\r\n")
 
-        buf.append_str("Content-Type: ");
-        buf.append_str(this.content_type);
-        buf.append_str("\r\n");
+        buf.append_str("Content-Type: ")
+        buf.append_str(this.content_type)
+        buf.append_str("\r\n")
 
-        buf.append_str("Content-Length: ");
-        buf.append_uint(this.body.bytes);
-        buf.append_str("\r\n");
+        buf.append_str("Content-Length: ")
+        buf.append_uint(this.body.bytes)
+        buf.append_str("\r\n")
 
-        let headers = this.headers;
+        let headers = this.headers
         if isset(headers) {
             each headers as k, v {
-                buf.append_str(k);
-                buf.append_str(": ");
-                buf.append_str(v);
-                buf.append_str("\r\n");
+                buf.append_str(k)
+                buf.append_str(": ")
+                buf.append_str(v)
+                buf.append_str("\r\n")
             }
         }
 
-        buf.append_str("\r\n");
-        buf.append_str(this.body);
+        buf.append_str("\r\n")
+        buf.append_str(this.body)
     }
 }

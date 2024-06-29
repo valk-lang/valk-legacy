@@ -6,14 +6,14 @@ struct Map[T] {
     ~ _values : Array[T] (Array[T].new())
 
     static fn new() SELF {
-        return SELF{};
+        return SELF{}
     }
 
     fn set(key: String, value: T) void {
         let index = this._keys.index_of(key) ! {
             // Set new key / value
-            this._keys.push(key);
-            this._values.push(value);
+            this._keys.push(key)
+            this._values.push(value)
             return
         }
         // Update existing key / value
@@ -41,4 +41,12 @@ struct Map[T] {
         let v = this._values.get(index) ! throw end
         return v, k
     }
+
+    #if @type_is(T, String)
+    fn print() {
+        each this as k, v {
+            println(k + ": " + v)
+        }
+    }
+    #end
 }

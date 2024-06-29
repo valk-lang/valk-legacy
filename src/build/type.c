@@ -371,9 +371,9 @@ Type* type_merge(Allocator* alc, Type* t1, Type* t2) {
 }
 
 bool type_compat(Type* t1, Type* t2, char** reason) {
-    if (!t1 || type_is_void(t2))
+    if (!t1 && type_is_void(t2))
         return true;
-    if (!t2 || type_is_void(t1))
+    if (!t2 && type_is_void(t1))
         return true;
     if (!t1 || !t2)
         return false;

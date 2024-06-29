@@ -6,13 +6,13 @@ use os
 use io
 use core
 
-global stack : @ignu(Stack);
-global run_gc : bool;
+global stack : @ignu(Stack)
+global run_gc : bool
 
-global mem_new : uint;
-global mem_marked : uint;
-global mem_transfered : uint;
-global mem_usage : uint;
+global mem_new : uint
+global mem_marked : uint
+global mem_transfered : uint
+global mem_usage : uint
 
 value mem_marked_default (8192)
 
@@ -101,7 +101,7 @@ cstruct Stack {
             run_gc_ref: @ptr_of(run_gc)
         }
 
-        stack = s;
+        stack = s
         run_gc = false
         mem_marked = mem_marked_default
 
@@ -110,7 +110,7 @@ cstruct Stack {
         s.scan_globals()
 
         let gcm = gc_manager()
-        gcm.add_stack(s);
+        gcm.add_stack(s)
 
         core:g_coros = Array[?core:Coro].new()
         core:g_coro_indexes = Pool[uint].new()
@@ -226,11 +226,11 @@ cstruct Stack {
         let stack_adr = pos.adr
 
         // Mark new items as transfer
-        let adr = stack_adr;
+        let adr = stack_adr
         while adr > stack_base {
             let item_adr = adr - sizeof(ptr)
             adr = item_adr
-            let item = @ptrv(item_adr, ptr, 0);
+            let item = @ptrv(item_adr, ptr, 0)
             if item != null {
                 //
                 let state = @ptrv(item, u8, -8)
@@ -273,7 +273,7 @@ cstruct Stack {
                 let vtable = @ptrv(item, u32, -1)
                 let table = @gc_get_vtable(vtable)
                 let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
-                func(item, state_solid);
+                func(item, state_solid)
             }
             if is_last {
                 break
@@ -309,7 +309,7 @@ cstruct Stack {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
-                        func(item, age);
+                        func(item, age)
                     }
                 }
             }
@@ -321,14 +321,14 @@ cstruct Stack {
         let item_adr = pos.base
         let stack_adr = pos.adr
         while item_adr < stack_adr {
-            let item = @ptrv(item_adr, ptr);
+            let item = @ptrv(item_adr, ptr)
             if item != null {
                 if @ptrv(item, u8, -8) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         let vtable = @ptrv(item, u32, -1)
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
-                        func(item, age);
+                        func(item, age)
                     }
                 }
             }
@@ -347,7 +347,7 @@ cstruct Stack {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
-                    func(item, age);
+                    func(item, age)
                 }
             }
         }
@@ -356,13 +356,13 @@ cstruct Stack {
         let item_adr = pos.base
         let stack_adr = pos.adr
         while item_adr < stack_adr {
-            let item = @ptrv(item_adr, ptr);
+            let item = @ptrv(item_adr, ptr)
             if item != null {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1)
                     let table = @gc_get_vtable(vtable)
                     let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
-                    func(item, age);
+                    func(item, age)
                 }
             }
             item_adr = item_adr + sizeof(ptr)
@@ -423,7 +423,7 @@ cstruct Stack {
         let item_adr = pos.base
         let stack_adr = pos.adr
         while item_adr < stack_adr {
-            let item = @ptrv(item_adr, ptr);
+            let item = @ptrv(item_adr, ptr)
             item.print()
             print("\n")
             item_adr = item_adr + sizeof(ptr)

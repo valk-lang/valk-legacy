@@ -1,5 +1,5 @@
 
-header "sys" as sys;
+header "sys" as sys
 
 use mem
 use io
@@ -172,7 +172,7 @@ struct Coro {
     fn continue() {
         let size = (this.s_bottom - this.s_top) @as uint
         let stack = this.s_stack @as ptr
-        mem:copy(stack, this.s_top, size);
+        mem:copy(stack, this.s_top, size)
         @longjmp(this.s_cont)
     }
 

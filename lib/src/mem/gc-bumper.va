@@ -40,7 +40,7 @@
             first_block: block
             last_block: block
         }
-        return b;
+        return b
     }
     
 

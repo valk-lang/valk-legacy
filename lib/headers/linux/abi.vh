@@ -6,6 +6,7 @@ shared stdout : ?FILE;
 
 alias FILE as ptr;
 alias DIR as ptr
+alias libc_addrinfo_fix as libc_addrinfo
 
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) i32;
@@ -23,6 +24,8 @@ fn close(fd: i32) i32;
 
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
 fn send(fd: i32, buf: ptr, len: uint, flags: i32) int;
+
+fn fcntl(fd: i32, action: i32, value: i32) i32;
 
 fn socket(domain: i32, type: i32, protocol: i32) i32;
 fn connect(sockfd: i32, addr: libc_sockaddr, addrlen: u32) i32;

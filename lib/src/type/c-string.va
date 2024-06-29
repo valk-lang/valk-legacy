@@ -2,11 +2,11 @@
 pointer cstring {
 
     fn length() uint {
-        let i : uint = 0;
+        let i : uint = 0
         while @ptrv(this, u8, i) != 0 {
-            i++;
+            i++
         }
-        return i;
+        return i
     }
     fn to_string() String {
         return String.make_from_ptr(this, this.length())

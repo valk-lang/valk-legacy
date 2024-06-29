@@ -1294,6 +1294,9 @@ void value_is_mutable(Value* v) {
 Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* type) {
     Build* b = p->b;
 
+    if(!val->rett || !type)
+        return val;
+
     Class* str_class = get_valk_class(b, "type", "String");
     Class* from_class = val->rett->class;
     if(type->class == str_class && from_class != str_class && from_class != NULL && !val->rett->nullable) {
@@ -1565,9 +1568,11 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
                 t->nullable = true;
                 l->rett = t;
             }
-            r = try_convert(alc, p, scope, r, l->rett);
 
+            r = try_convert(alc, p, scope, r, l->rett);
             type_check(p, l->rett, r->rett);
+
+            r->rett = l->rett;
             array_push(phi_s, vgen_phi(alc, l, r));
         }
 

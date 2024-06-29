@@ -85,29 +85,29 @@ struct String {
     /////////////////////
 
     fn byte_index_of_byte(byte: u8, start_index: uint (0)) uint !not_found {
-        let index = start_index;
-        let len = this.bytes;
-        let data = this.data;
+        let index = start_index
+        let len = this.bytes
+        let data = this.data
         while index < len {
-            let ch = @ptrv(data, u8, index);
-            if ch == byte : return index;
-            index++;
+            let ch = @ptrv(data, u8, index)
+            if ch == byte : return index
+            index++
         }
-        throw not_found;
+        throw not_found
     }
 
     fn byte_index_of(part: String, start_index: uint (0)) uint !not_found {
         let part_bytes = part.bytes
         if part_bytes > this.bytes : throw not_found
-        let index = start_index;
-        let len = this.bytes - part_bytes + 1;
-        let data = this.data;
-        let part_data = part.data;
+        let index = start_index
+        let len = this.bytes - part_bytes + 1
+        let data = this.data
+        let part_data = part.data
         while index < len {
             if mem:equal(@ptr_offset(data, index), part_data, part_bytes) : return index
-            index++;
+            index++
         }
-        throw not_found;
+        throw not_found
     }
 
     fn index_of(part: String, start_index: uint (0)) uint !not_found {
@@ -136,6 +136,10 @@ struct String {
 
     fn contains(part: String) bool {
         this.index_of(part) ! return false
+        return true
+    }
+    fn contains_byte(byte: u8) bool {
+        this.byte_index_of_byte(byte) ! return false
         return true
     }
 
@@ -190,26 +194,46 @@ struct String {
     // Convert
     /////////////////////
 
-    fn to_uint() uint !not_a_number {
-        let i = this.bytes;
-        let result : uint = 0;
-        let mult : uint = 1;
+    fn to_uint() uint !invalid {
+        let i = this.bytes
+        let result : uint = 0
+        let mult : uint = 1
         while i > 0 {
-            i--;
-            let ch = this.byte(i);
+            i--
+            let ch = this.byte(i)
             if(ch < 48 || ch > 57){
-                throw not_a_number;
+                throw invalid
             }
-            result += ((ch @as uint) - 48) * mult;
-            mult *= 10;
+            result += ((ch @as uint) - 48) * mult
+            mult *= 10
         }
-        return result;
+        return result
+    }
+    fn hex_to_uint() uint !invalid {
+        let i = this.bytes
+        let result : uint = 0
+        let mult : uint = 1
+        while i > 0 {
+            i--
+            let ch = this.byte(i)
+            if(ch >= '0' && ch <= '9'){
+                result += ((ch @as uint) - '0') * mult
+            } else if(ch >= 'A' && ch <= 'Z'){
+                result += ((ch @as uint) - 'A' + 10) * mult
+            } else if(ch >= 'a' && ch <= 'z'){
+                result += ((ch @as uint) - 'a' + 10) * mult
+            } else {
+                throw invalid
+            }
+            mult *= 16
+        }
+        return result
     }
     fn to_lower() String {
         let len = this.bytes
-        let data = this.data;
-        let new_str = String.make_empty(len);
-        let new_data = new_str.data;
+        let data = this.data
+        let new_str = String.make_empty(len)
+        let new_data = new_str.data
         while len-- > 0 {
             let ch = @ptrv(data, u8, len)
             if ch > 64 && ch < 91 : ch += 32
@@ -317,6 +341,34 @@ struct String {
         let p1 = this.byte_sub_str(0, pos)
         return p1, p2
     }
+
+	/////////////////////
+	// Syntax
+	/////////////////////
+    fn is_alpha(allow_extra_bytes: String ("")) bool {
+		let i : uint = 0
+		let len = this.bytes
+		let data = this.data
+		while i < len {
+			let ch = @ptrv(data, u8, i++)
+			if (ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') {
+				if !allow_extra_bytes.contains_byte(ch) : return false
+			}
+		}
+		return true
+	}
+    fn is_alpha_numeric(allow_extra_bytes: String ("")) bool {
+		let i : uint = 0
+		let len = this.bytes
+		let data = this.data
+		while i < len {
+			let ch = @ptrv(data, u8, i++)
+			if (ch < 'A' || ch > 'Z') && (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
+				if !allow_extra_bytes.contains_byte(ch) : return false
+			}
+		}
+		return true
+	}
 
     /////////////////////
     // Misc

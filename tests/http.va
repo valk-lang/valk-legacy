@@ -1,0 +1,32 @@
+
+use valk:http
+
+fn http_handler(req: http:Request) http:Response {
+    let result = req.method + "|" + req.path
+    result += "|" + req.params().get("p1") ? ""
+    result += "|" + req.data().get("p2") ? ""
+    return http:Response.html(result)
+}
+
+fn http_server() {
+    let ip = "127.0.0.1"
+    let port : u16 = 9000
+    let s = http:Server.new(ip, port, http_handler) ! {
+        return
+    }
+    s.start(1)
+    return
+}
+
+test "Http: server/client" {
+    co http_server()
+
+    let req = http:request("POST", "http://127.0.0.1:9000/test-path?p1=v1")
+    let res = req.exec() ? <{
+        assert(false)
+        return null
+    }
+    if isset(res) {
+        assert(res.body == "POST|/test-path|v1|")
+    }
+}

@@ -1,9 +1,9 @@
 
-header "sys" as sys;
+header "sys" as sys
 
 fn sleep_ms(ms: uint) void {
     #if OS == win
-    sys:Sleep(ms @as u32);
+    sys:Sleep(ms @as u32)
     #else
     let msec = ms @as int
     let ts = @stack(sys:libc_timespec)
@@ -15,7 +15,7 @@ fn sleep_ms(ms: uint) void {
 
 fn sleep_ns(ns: uint) void {
 	#if OS == win
-	sys:Sleep(1);
+	sys:Sleep(1)
 	#else
     let nsec = ns @as int
     let ts = @stack(sys:libc_timespec)

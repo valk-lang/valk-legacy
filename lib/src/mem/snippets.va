@@ -1,6 +1,6 @@
 
-use io;
-use os;
+use io
+use os
 
 snippet run_gc_check() {
     if mem_usage > 35 {

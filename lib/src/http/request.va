@@ -3,12 +3,15 @@
 
 use utils
 use fs
+use url
 
 struct Request {
     method: String ("GET")
     path: String ("/")
     body: String ("")
+    status: uint (0)
 
+    -ns headerz: Map[String] (map[String]{})
     -ns header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
     -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
@@ -23,6 +26,7 @@ struct Request {
         this.method = "GET"
         this.path = ""
         this.body = ""
+        this.status = 0
 
         this.header_data.clear()
         this.params_data = ""
@@ -53,7 +57,7 @@ struct Request {
             let parts = data.split("&")
             each parts as part {
                 let k, v = part.split_on_first_occurance_of_byte('=') ! continue
-                new.set(k, url_decode(v))
+                new.set(k, url:decode(v))
             }
         }
         this.params_map = new
@@ -70,10 +74,10 @@ struct Request {
             each parts as part {
                 let k, v = part.split_on_first_occurance_of_byte('=') ! continue
                 let arr = new.get(k) ! {
-                    new.set(k, array[String]{ url_decode(v) })
+                    new.set(k, array[String]{ url:decode(v) })
                     continue
                 }
-                arr.push(url_decode(v))
+                arr.push(url:decode(v))
             }
         }
         this.params_grp = new
@@ -90,7 +94,7 @@ struct Request {
         if type == "application/x-www-form-urlencoded" {
             this.data_urlencoded(new)
         } else if type.starts_with("multipart/form-data") {
-            this.data_multipart(new, files, type.ltrim("multipart/form-data; boundary="))
+            this.data_multipart(new, files, type.ltrim("multipart/form-data boundary="))
         } else if type == "application/json" {
             this.data_json(new)
         }
@@ -110,18 +114,18 @@ struct Request {
         let parts = this.body.split("&")
         each parts as part {
             let k, v = part.split_on_first_occurance_of_byte('=') ! continue
-            result.set(k, url_decode(v))
+            result.set(k, url:decode(v))
         }
     }
     - fn data_multipart(result: Map[String], files: Map[fs:InMemoryFile], boundary: String) {
-        // Content-Type: multipart/form-data; boundary=boundary
+        // Content-Type: multipart/form-data boundary=boundary
         // Body example:
         // --boundary
-        // Content-Disposition: form-data; name="name"
+        // Content-Disposition: form-data name="name"
             
         // John
         // --boundary
-        // Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+        // Content-Disposition: form-data name="avatar" filename="avatar.jpg"
         // Content-Type: image/jpeg
             
         // <some binary data>
@@ -166,8 +170,8 @@ struct Request {
     }
 
     - fn parse_content_disposition(value: String, result: Map[String]) {
-        // form-data; name="avatar"; filename="avatar.jpg"
-        let parts = value.split(";")
+        // form-data name="avatar" filename="avatar.jpg"
+        let parts = value.split("")
         each parts as part {
             let k, v = part.split_on_first_occurance_of_byte('=') ! continue
             v = v.trim(" ").trim("\"").unescape()
@@ -201,12 +205,12 @@ struct Request {
 
             let value_pos = split + 1
             while @ptrv(bytes, u8, value_pos) == ' ' {
-                value_pos++;
+                value_pos++
             }
 
-            let key = data.sub_str(pos, split - pos);
-            let value = data.sub_str(value_pos, index - value_pos);
-            result.set(key.to_lower(), value);
+            let key = data.sub_str(pos, split - pos)
+            let value = data.sub_str(value_pos, index - value_pos)
+            result.set(key.to_lower(), value)
 
             pos = index + 2
         }

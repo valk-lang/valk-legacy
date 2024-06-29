@@ -28,7 +28,7 @@ trait Number {
 
     fn to_base(base: SELF) String {
 
-        if this == 0 || base == 0 : return "0";
+        if this == 0 || base == 0 : return "0"
 
         if str_buf == null : str_buf = mem:alloc(24)
         let buf = str_buf @as ptr
@@ -54,7 +54,7 @@ trait Number {
         }
         #end
 
-        let i : uint = 0;
+        let i : uint = 0
         while val > 0 {
             @ptrv(rev, u8, i) = @ptrv(chars, u8, (val % base))
             i++

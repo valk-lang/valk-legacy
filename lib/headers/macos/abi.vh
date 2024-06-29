@@ -6,6 +6,7 @@ shared stdout : ?ptr;
 
 alias FILE as ptr;
 alias DIR as ptr
+alias libc_addrinfo_fix as libc_addrinfo
 
 // pid_t = i32
 // socklen_t = u32

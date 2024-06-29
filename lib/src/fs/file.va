@@ -18,10 +18,10 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
     if create_file_if_doesnt_exist : flags = flags | sys:O_CREATE
     if append_on_write : flags = flags | sys:O_APPEND
 
-    let fd = sys:open(path.data, flags, create_file_permissions);
+    let fd = sys:open(path.data, flags, create_file_permissions)
     if fd < 0 {
         // let err = os:libc_errno()
-        throw open;
+        throw open
     }
 
     return fd @as FD
@@ -89,7 +89,7 @@ fn write_from_ptr(path: String, data: ptr, size: uint, append: bool (false)) !op
 
 fn exists(path: String) bool {
 	#if OS == win
-	let dwAttrib = sys:GetFileAttributesA(path.data);
+	let dwAttrib = sys:GetFileAttributesA(path.data)
     return dwAttrib != sys:INVALID_FILE_ATTRIBUTES
 	#else
     let buf = @stack(sys:libc_stat)
