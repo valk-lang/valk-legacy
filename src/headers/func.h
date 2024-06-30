@@ -74,6 +74,7 @@ struct Func {
     bool parse_last;
     bool init_thread;
     bool can_create_objects;
+    bool inf_args;
 };
 struct FuncArg {
     Type* type;

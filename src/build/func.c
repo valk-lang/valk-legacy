@@ -64,6 +64,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->parse_last = false;
     f->init_thread = false;
     f->can_create_objects = false;
+    f->inf_args = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);

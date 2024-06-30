@@ -37,22 +37,7 @@ bool is_valid_varname_char(char c) {
     return false;
 }
 bool is_valid_varname_first_char(char c) {
-
-    // Lowercase
-    if (c >= 97 && c <= 122) {
-        return true;
-    }
-
-    // Numbers
-    if (c >= 48 && c <= 57) {
-        return true;
-    }
-
-    // Underscore
-    if (c == 95) {
-        return true;
-    }
-    return true;
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
 }
 
 bool is_number(char c) {

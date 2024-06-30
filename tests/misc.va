@@ -1,0 +1,9 @@
+
+fn inf_arg(a: int, b: int, @infinite) int {
+    return a * b
+}
+
+test "Misc" {
+    assert(inf_arg(5, 5) == 25)
+}
+
