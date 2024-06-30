@@ -4,6 +4,6 @@ fn inf_arg(a: int, b: int, @infinite) int {
 }
 
 test "Misc" {
-    assert(inf_arg(5, 5) == 25)
+    assert(inf_arg(5, 5, 5) == 25)
 }
 

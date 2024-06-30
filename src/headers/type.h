@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 Type* type_make(Allocator* alc, int type);
-TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Type* rett);
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, bool inf_args, Array* default_values, Array* err_names, Array* err_values, Type* rett);
 Type *read_type(Parser *p, Allocator *alc, bool allow_newline);
 // Clone
 Type* type_clone(Allocator* alc, Type* type);
@@ -70,6 +70,7 @@ struct TypeFuncInfo {
     bool has_unknown_errors;
     bool can_error;
     bool will_exit;
+    bool inf_args;
 };
 
 #endif

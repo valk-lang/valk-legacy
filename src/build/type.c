@@ -16,7 +16,7 @@ Type* type_make(Allocator* alc, int type) {
     t->ignore_null = false;
     return t;
 }
-TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_values, Array* err_names, Array* err_values, Type* rett) {
+TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, bool inf_args, Array* default_values, Array* err_names, Array* err_values, Type* rett) {
     TypeFuncInfo* t = al(alc, sizeof(TypeFuncInfo));
     t->args = args;
     t->default_values = default_values;
@@ -26,6 +26,7 @@ TypeFuncInfo* type_func_info_make(Allocator* alc, Array* args, Array* default_va
     t->has_unknown_errors = false;
     t->can_error = false;
     t->will_exit = false;
+    t->inf_args = inf_args;
     return t;
 }
 
@@ -117,7 +118,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
 
             // Generate type
             Type *t = type_make(alc, type_func);
-            t->func_info = type_func_info_make(alc, args, NULL, NULL, NULL, rett);
+            t->func_info = type_func_info_make(alc, args, false, NULL, NULL, NULL, rett);
             t->size = b->ptr_size;
             t->is_pointer = true;
             t->nullable = nullable;
@@ -273,7 +274,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
         Type *t = type_make(alc, type_func);
         t->size = func->b->ptr_size;
         t->is_pointer = true;
-        t->func_info = type_func_info_make(alc, func->arg_types, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett);
+        t->func_info = type_func_info_make(alc, func->arg_types, func->inf_args, func->arg_values, func->errors ? func->errors->keys : NULL, func->errors ? func->errors->values : NULL, func->rett);
         t->func_info->can_error = func->errors ? true : false;
         t->func_info->will_exit = func->exits;
         func->reference_type = t;
@@ -283,7 +284,7 @@ Type* type_gen_func(Allocator* alc, Func* func) {
 
 Type* type_gen_error(Allocator* alc, Array* err_names, Array* err_values) {
     Type* t = type_make(alc, type_error);
-    t->func_info = type_func_info_make(alc, NULL, NULL, err_names, err_values, NULL);
+    t->func_info = type_func_info_make(alc, NULL, false, NULL, err_names, err_values, NULL);
     t->size = sizeof(int);
     return t;
 }
