@@ -3,6 +3,8 @@ value EINTR (4)
 value EAGAIN (11)
 value EWOULDBLOCK (11)
 value EINVAL (22)
+value EISCONN (106)
+value EINPROGRESS (115)
 
 value SOCK_STREAM (1)
 value SOCK_NONBLOCK (2048)
