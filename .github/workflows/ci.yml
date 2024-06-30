@@ -77,7 +77,7 @@ jobs:
       run: ./valk build ./tests/*.va -o _test.exe --target win-x64
 
   macos_arm:
-    name: "test on macos-13 arm64"
+    name: "test on macos-latest arm64"
     if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
