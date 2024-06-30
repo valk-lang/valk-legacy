@@ -1,9 +1,9 @@
 
 # Roadmap
 
-- v0.1.0 : Have all the core features ready
+- v0.1.0 : Have all core features ready
 
-- v0.2.0 : Stablelize standard library
+- v0.2.0 : Stablelize the standard library
 
 - v0.3.0 : Community feedback & implement low priority features
 
