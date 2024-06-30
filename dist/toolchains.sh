@@ -4,7 +4,7 @@ DIST_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 TC_DIR="$DIST_DIR/toolchains"
 LIB_DIR="$DIST_DIR/libraries"
 
-LIN_X64="$TC_DIR/linux-x64"
+LIN_X64="$TC_DIR/linux-amd64"
 LIN_ARM64="$TC_DIR/linux-arm64"
 MAC_ANY="$TC_DIR/macos-11-3"
 WIN_X64="$TC_DIR/win-sdk-x64"
@@ -27,13 +27,13 @@ mkdir -p $TC_DIR
 if [ ! -d "$LIN_X64" ]; then
 	echo "Download linux-x64 toolchain"
 	cd $TC_DIR
-	wget "https://cdn.valk-lang.dev/toolchains/linux-x64.tar.gz"
-	tar -xf "linux-x64.tar.gz" --checkpoint=.100
-	rm "linux-x64.tar.gz"
+	wget "https://cdn.valk-lang.dev/toolchains/linux-amd64.tar.gz"
+	tar -xf "linux-amd64.tar.gz" --checkpoint=.100
+	rm "linux-amd64.tar.gz"
 fi
 
 if [ ! -d "$LIN_ARM64" ]; then
-	echo "Download linux-aarch64 toolchain"
+	echo "Download linux-arm64 toolchain"
 	cd $TC_DIR
 	wget "https://cdn.valk-lang.dev/toolchains/linux-arm64.tar.bz2"
 	tar -xf "linux-arm64.tar.bz2" --checkpoint=.100
