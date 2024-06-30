@@ -9,7 +9,6 @@ struct SocketTCP {
     ~ host: String
     ~ fd: FD
     ~ port: u16
-    // ~ connection: ?Connection (null)
     - addrinfo: sys:libc_addrinfo_fix
 
     static fn new(host: String, port: u16) SocketTCP !os_socket_create !invalid_host {
@@ -58,19 +57,27 @@ struct SocketTCP {
 
     fn connect() Connection !connection_failed {
 
-        // if this.open : return
         let fd = this.fd
-        io:fd_set_non_block(fd, false)
-
-        #if OS == win
         let ofd = io:os_fd(this.fd)
-        let err = sys:connect(ofd, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @as i32)
-        #else
-        let err = sys:connect(fd @autocast, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
-        #end
-        if err != 0 : throw connection_failed
 
-        io:fd_set_non_block(fd, true)
+        while true {
+            let err = sys:connect(ofd, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
+            if err != 0 {
+                let e = os:socket_errno()
+                #if OS == win
+                if e == sys:WSAEISCONN : break
+                let a = e == sys:WSAEWOULDBLOCK || e == sys:WSAEINPROGRESS || e == sys:WSAEALREADY
+                #else
+                if e == sys:EISCONN : break
+                let a = e == sys:EINPROGRESS
+                #end
+                if a {
+                    await_fd(fd, true, true)
+                    continue
+                }
+                throw connection_failed
+            }
+        }
 
         return Connection.new(this.fd)
     }

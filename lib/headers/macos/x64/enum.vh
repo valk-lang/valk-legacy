@@ -2,6 +2,8 @@
 value EINTR (4)
 value EINVAL (22)
 value EAGAIN (35)
+value EINPROGRESS (36)
+value EISCONN (56)
 
 value SOCK_STREAM (1)
 value F_GETFL (3)
