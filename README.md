@@ -53,9 +53,9 @@ make
 | OS | Linux | Macos | Windows |
 |--|--|--|--|
 | x64 | ✅ | ✅ | ✅ |
-| arm64 | ❌ | ✅ | ❌ |
+| arm64 | ✔️ | ✅ | ❌ |
 
-We plan to support x64 & arm64 on linux, macos and windows first. More will be added later.
+✅️ = Available & passes tests | ✔️ = Available, untested | ❌️ = Not available right now
 
 ## Benchmarks
 

@@ -69,7 +69,7 @@ win: $(OBJECTS_WIN_X64)
 dist_setup:
 	dist/toolchains.sh
 
-dist_all: dist_win_x64 dist_linux_x64 dist_macos_x64 dist_macos_arm64
+dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
 
 ##############
 # WINDOWS
@@ -121,9 +121,9 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 $(OBJECTS_LINUX_X64): debug/build-linux-x64/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -g -O2 --target=x86_64-unknown-linux-gnu \
-	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
-	-I$(CURDIR)/dist/libraries/linux-llvm-15-x64/include \
-	-I$(CURDIR)/dist/libraries/linux-curl-x64/include \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-amd64 \
+	-I$(CURDIR)/dist/toolchains/linux-amd64/usr/include/llvm-15/ \
+	-I$(CURDIR)/dist/toolchains/linux-amd64/usr/include/llvm-c-15/ \
 	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
@@ -135,10 +135,8 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-x64/install.sh
 
 	$(LCC) --target=x86_64-unknown-linux-gnu -fuse-ld=lld -static \
-	--sysroot=$(CURDIR)/dist/toolchains/linux-x64/x86_64-buildroot-linux-gnu/sysroot \
-	-L$(CURDIR)/dist/toolchains/linux-x64/lib \
-	-L$(CURDIR)/dist/libraries/linux-llvm-15-x64/lib \
-	-L$(CURDIR)/dist/libraries/linux-curl-x64/lib \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-amd64 \
+	-L$(CURDIR)/dist/toolchains/linux-amd64/usr/lib/llvm-15/lib \
 	-o dist/dists/linux-x64/valk \
 	$(OBJECTS_LINUX_X64) \
 	$(LLVM_LIBS_LINUX) -lcurl -lcrypto -lssl -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
@@ -149,8 +147,9 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 $(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -g -O2 --target=aarch64-unknown-linux-gnu \
-	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
-	-I$(CURDIR)/dist/libraries/linux-llvm-15-arm64/include \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64 \
+	-I$(CURDIR)/dist/toolchains/linux-arm64/usr/include/llvm-15 \
+	-I$(CURDIR)/dist/toolchains/linux-arm64/usr/include/llvm-c-15 \
 	-DVALK_VERSION=\"$(VERSION)\" \
 	-o $@ -c $<
 
@@ -162,8 +161,8 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 	sed -i 's/__VERSION__/$(VERSION)/' dist/dists/linux-arm64/install.sh
 
 	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld -static \
-	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64/aarch64-buildroot-linux-gnu/sysroot \
-	-L$(CURDIR)/dist/libraries/linux-llvm-15-arm64/lib \
+	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64 \
+	-L$(CURDIR)/dist/toolchains/linux-arm64/usr/lib/llvm-15/lib \
 	-o dist/dists/linux-arm64/valk \
 	$(OBJECTS_LINUX_ARM64) \
 	$(LLVM_LIBS_LINUX) -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2

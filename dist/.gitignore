@@ -3,3 +3,4 @@
 !.gitignore
 !README.md
 !toolchains.sh
+!gen-linux-toolchains.sh
