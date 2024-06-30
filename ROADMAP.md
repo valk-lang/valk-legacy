@@ -1,13 +1,13 @@
 
 # Roadmap
 
-- v0.1.0 : Have all the core compiler features ready
+- v0.1.0 : Have all the core features ready
 
 - v0.2.0 : Stablelize standard library
 
-- v0.3.0 : Community feedback & implement low priority compiler features
+- v0.3.0 : Community feedback & implement low priority features
 
-- v1.0.0 : Compiler is field tested by multiple projects
+- v1.0.0 : The language is field tested by multiple projects
 
 ## TODO
 
