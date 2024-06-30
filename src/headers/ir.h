@@ -43,7 +43,7 @@ char *ir_int(IR* ir, v_i64 value);
 char *ir_float(IR* ir, double value);
 Array *ir_fcall_args(IR *ir, Array *values, Array* rett_refs);
 Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types);
-char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col);
+char *ir_func_call(IR *ir, char *on, Type* on_type, Array *values, char *lrett, int line, int col);
 char *ir_func_ptr(IR *ir, Func *func);
 char *ir_string(IR *ir, VString *str);
 char* ir_load(IR* ir, Type* type, char* var);

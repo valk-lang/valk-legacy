@@ -32,7 +32,7 @@ char* ir_value(IR* ir, Value* v) {
         char *on = ir_value(ir, fcall->on);
         Array *values = ir_fcall_args(ir, fcall->args, fcall->rett_refs);
         Type* rett = rett_extract_eax(ir->b, v->rett);
-        r = ir_func_call(ir, on, values, ir_type(ir, rett), fcall->line, fcall->col);
+        r = ir_func_call(ir, on, fcall->on->rett, values, ir_type(ir, rett), fcall->line, fcall->col);
     }
     else if (vt == v_errh) {
         ErrorHandler* errh = v->item;

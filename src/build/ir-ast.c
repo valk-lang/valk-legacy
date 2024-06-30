@@ -182,7 +182,7 @@ void ir_write_ast(IR* ir, Scope* scope) {
             Array *args = ir_fcall_ir_args(ir, values, types);
             //
             char* fptr = ir_func_ptr(ir, item->func);
-            char* fcall = ir_func_call(ir, fptr, args, ir_type(ir, item->func->rett_eax), 0, 0);
+            char* fcall = ir_func_call(ir, fptr, type_gen_func(alc, item->func), args, ir_type(ir, item->func->rett_eax), 0, 0);
 
             if(kd && !kd->is_mut) {
                 ir_decl_store(ir, kd, ir_value(ir, vgen_decl(alc, kd_buf)));
@@ -268,7 +268,7 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     Array* args = ir_fcall_ir_args(ir, values, types);
     //
     char* link = ir_value(ir, fptr);
-    char* link_rett = ir_func_call(ir, link, args, "ptr", 0, 0);
+    char* link_rett = ir_func_call(ir, link, fptr->rett, args, "ptr", 0, 0);
     ir_jump(ir, after);
 
     ir->block = after;

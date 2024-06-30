@@ -101,9 +101,11 @@ Array *ir_fcall_ir_args(IR *ir, Array *values, Array* types) {
     return result;
 }
 
-char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int col) {
+char *ir_func_call(IR *ir, char *on, Type* on_type, Array *values, char *lrett, int line, int col) {
     Str *code = ir->block->code;
     str_preserve(ir->block->code, 200);
+
+    TypeFuncInfo* fi = on_type->func_info;
 
     char *var_result = "";
     str_flat(code, "  ");
@@ -115,6 +117,19 @@ char *ir_func_call(IR *ir, char *on, Array *values, char *lrett, int line, int c
     str_flat(code, "call ");
     str_add(code, lrett);
     str_flat(code, " ");
+    if(fi->inf_args) {
+        Array* args = fi->args;
+        int argc = args->length;
+        str_flat(code, "(");
+        for (int i = 0; i < argc; i++) {
+            Type *type = array_get_index(args, i);
+            if (i > 0)
+                str_flat(code, ", ");
+            str_add(code, ir_type(ir, type));
+        }
+        str_flat(code, ", ...) ");
+    }
+
     str_add(code, on);
     str_flat(code, "(");
     if(values) {
