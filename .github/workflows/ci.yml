@@ -40,6 +40,9 @@ jobs:
     - name: Build test(cross compiling) for macos-x64
       run: ./valk build ./tests/*.va -o _test --target macos-x64
     
+    - name: Build test(cross compiling) for macos-x64
+      run: ./valk build ./tests/*.va -o _test --target macos-x64
+
     - name: Build test(cross compiling) for macos-arm64
       run: ./valk build ./tests/*.va -o _test --target macos-arm64
     
@@ -52,6 +55,33 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: macos-13
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - run: brew install llvm@15 && brew link llvm@15
+    
+    - name: Build valk
+      run: make
+
+    - name: Test(macos-x64)
+      run: ./valk build ./tests/*.va --test -r
+
+    - name: Build test(cross compiling) for linux-x64
+      run: ./valk build ./tests/*.va -o _test --target linux-x64
+    
+    - name: Build test(cross compiling) for macos-x64
+      run: ./valk build ./tests/*.va -o _test --target macos-x64
+    
+    - name: Build test(cross compiling) for win-x64
+      run: ./valk build ./tests/*.va -o _test.exe --target win-x64
+
+  macos_arm:
+    name: "test on macos-latest arm64"
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+    runs-on: macos-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
