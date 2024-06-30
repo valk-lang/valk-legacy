@@ -77,7 +77,7 @@ No, it should run at the same speed. The only advantage Valk has is with creatin
 
 Doesnt the GC slow Valk down? Yes, it does. But the blocks optimization gives us much more performance gain than loss. The GC is also super fast and has to do much less tracing compared to other GCs.
 
-TL;DR; Valk will sometimes be faster, sometimes be slower. Each language has it's own strength.
+TL;DR; Valk will sometimes be faster, sometimes be slower. Each language has its own strength.
 
 ## Language design facts
 
