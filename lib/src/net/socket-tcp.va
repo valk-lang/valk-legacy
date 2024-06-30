@@ -64,8 +64,14 @@ struct SocketTCP {
             let err = sys:connect(ofd, this.addrinfo.ai_addr @as sys:libc_sockaddr, this.addrinfo.ai_addrlen @autocast)
             if err != 0 {
                 let e = os:socket_errno()
+                #if OS == win
+                if e == sys:WSAEISCONN : break
+                let a = e == sys:WSAEWOULDBLOCK || e == sys:WSAEINPROGRESS || e == sys:WSAEALREADY
+                #else
                 if e == sys:EISCONN : break
-                if e == sys:EINPROGRESS {
+                let a = e == sys:EINPROGRESS
+                #end
+                if a {
                     await_fd(fd, true, true)
                     continue
                 }
