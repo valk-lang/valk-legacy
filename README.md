@@ -57,18 +57,12 @@ make
 
 We plan to support x64 & arm64 on linux, macos and windows first. More will be added later.
 
-## How can it have faster/similar performance as Rust?
-
-Valk is only faster in the way it creates and manages objects, which most programs revolve around. Objects are created using pools. These pools are much faster than using malloc and free all the time (and use less memory). A GC always has some overhead, but the overall performance gain is much higher than the loss. Which results in Valk being faster than Rust sometimes. Note that our way of doing GC is very different than other languages. Each thread manages its own memory and we only trace when we absolutely have to. The other 9 out of 10 times we simply reset the pools with 1 line of code. This is something that's only possible (in a simple way) if your compiler was built based around this idea. And that is what Valk does. 👏
-
-Note: we dont have many tests yet to compare valk vs rust or other languages. These are just conclusions from the small amount of tests we have right now. Feel free to make your own and share them.
-
 ## Benchmarks
 
 <div align="center"><p>
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-bintree.png">
 </p>
-The binary object tree test revolves around creating large amount of objects in a tree structure and iterating over them.
+The binary object tree test revolves around creating large amount of objects in a tree structure, iterating over them and doing some calculations.
 </div>
 
 ---
@@ -77,14 +71,19 @@ The binary object tree test revolves around creating large amount of objects in 
     <img src="https://raw.githubusercontent.com/valk-lang/valk/master/misc/valk-http.png">
 </p></div>
 
-For the http server test we used single header over local network requests because that resembles a more natural way of http servers. Some other benchmarks like Techempower use bundled piped requests, in that case the results are: Valk 10m req/s, Rust 10m req/s, Go 12m req/s.
+## Is Valk faster than Rust?
+
+No, it should run at the same speed. The only advantage Valk has is with creating and free-ing objects, which is important for many applications. Valk creates objects in tiny incremental blocks and keeps these blocks around for a few milliseconds when they are empty. This reduces the amount of `malloc` and `free` calls we have to make.
+
+Doesnt the GC slow Valk down? Yes, it does. But the blocks optimization gives us much more performance gain than loss. The GC is also super fast and has to do much less tracing compared to other GCs.
+
+TL;DR; Valk will sometimes be faster, sometimes be slower. Each language has it's own strength.
 
 ## Language design facts
 
 - Each thread handles it's own memory, but you can still share your variables with other threads. Even when your thread has ended, the memory will still be valid and automatically freed once other threads no longer use it.
 
 - Valk does not force the user to use mutexes/locks for shared memory. Therefore the program can crash when you use multiple threads to modify the same data at the same time. Reading the same data with multiple threads is fine.
-
 - Unlike other languages, our GC has no randomness. Every run is exactly the same as the run before to the last byte. So there are no fluctuations in cpu usage and memory usage. (Except when using shared memory over multiple threads)
 
 - The GC does not guess which value on the stack is a GC'able pointer. Instead we create a custom stack and the compiler knows where to store which pointer at compile time.
