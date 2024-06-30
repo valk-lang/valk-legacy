@@ -91,8 +91,6 @@ fn execve(pathname: cstring, argv: ptr, envp: ptr) i32;
 fn kill(pid: i32, sig: i32) i32;
 //fn uname(cstruct utsname buf) i32;
 
-//int fcntl(int fd, int cmd, ... /* arg */ );
-
 fn getcwd(buf: cstring, size: uint) cstring;
 //char getwd(char buf);
 //char get_current_dir_name();

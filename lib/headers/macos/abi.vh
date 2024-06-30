@@ -27,7 +27,7 @@ fn close(fd: i32) i32;
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
 fn send(fd: i32, buf: ptr, len: uint, flags: i32) int;
 
-fn fcntl(fd: i32, action: i32, value: i32) i32;
+fn fcntl(fd: i32, action: i32, @infinite) i32;
 
 // Files
 fn stat(path: cstring, stat_buf: libc_stat) i32;
@@ -77,8 +77,6 @@ fn execve(pathname: cstring, argv: ptr, envp: ptr) i32;
 
 fn kill(pid: i32, sig: i32) i32;
 //fn uname(cstruct utsname buf) i32;
-
-//int fcntl(int fd, int cmd, ... /* arg */ );
 
 fn getcwd(buf: cstring, size: uint) cstring;
 //char getwd(char buf);
