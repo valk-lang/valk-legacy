@@ -74,14 +74,15 @@ fn read(fd: FD, buffer: ptr, buffer_size: uint) uint !failed !again {
 }
 
 fn fd_set_non_block(fd: FD, value: bool) {
-    #if OS == win
     let ofd = os_fd(fd)
+    #if OS == win
     let nonblock : uint = value ? 1 @as uint : 0 @as uint
     sys:ioctlsocket(ofd, sys:FIONBIO, @ptr_of(nonblock))
     #else
-    let flags = sys:fcntl(fd @autocast, sys:F_GETFL, 0)
-    let max : i32 = 0xffffffff @as i32
-    sys:fcntl(fd @autocast, sys:F_SETFL, value ? (flags | sys:O_NONBLOCK) : flags & (max - sys:O_NONBLOCK))
+    let flags = sys:fcntl(ofd, sys:F_GETFL, 0)
+    let max : i32 = -1
+    let v : i32 = value ? (flags | sys:O_NONBLOCK) : flags & (max - sys:O_NONBLOCK)
+    let err = sys:fcntl(ofd, sys:F_SETFL, v)
     #end
 }
 
