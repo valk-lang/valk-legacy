@@ -112,10 +112,11 @@ struct Server {
 global interrupted : bool
 fn interrupt(sig: i32) void {
     if(interrupted){
+        println("Interrupt - Stopping http servers...")
         os:exit(1)
     }
     interrupted = true
-    // println("Interrupt - Stopping http servers...")
+    println("Interrupt - Stopping http servers...")
     os:exit(1)
 }
 

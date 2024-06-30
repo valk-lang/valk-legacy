@@ -76,6 +76,8 @@ cstruct GcPool2[T] {
 
             return (item + 8) @as T
         }
+        print("Failed to allocate memory")
+        print("\n")
         exit(1)
     }
 

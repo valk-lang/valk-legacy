@@ -142,6 +142,14 @@ int cmd_build(int argc, char *argv[]) {
     map_set(cc_defs, "OS", os_name);
     map_set(cc_defs, "ARCH", arch_name);
 
+    if(verbose > 0) {
+        #ifdef WIN32
+        printf("> Target: %s-%s\n", os_name, arch_name);
+        #else
+        printf("🎯 Target: %s-%s\n", os_name, arch_name);
+        #endif
+    }
+
     // Build
     Build *b = al(alc, sizeof(Build));
     b->alc = alc;

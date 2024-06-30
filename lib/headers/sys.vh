@@ -23,8 +23,8 @@ link_dynamic "System"
 header "macos/abi"
 #if ARCH == arm64
 header "macos/arm64/enum"
-header "macos/x64/libc-gen"
-#else
+header "macos/arm64/libc-gen"
+#elif ARCH == x64
 header "macos/x64/enum"
 header "macos/x64/libc-gen"
 #end
