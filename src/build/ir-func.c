@@ -139,6 +139,12 @@ void ir_func_definition(Str* code, IR* ir, Func *vfunc, bool is_extern) {
             }
         }
     }
+    if(vfunc->inf_args) {
+        if(argc > 0 || decls->length > 0) {
+            str_flat(code, ", ");
+        }
+        str_flat(code, "...");
+    }
     //
     if (is_extern) {
         str_flat(code, ")\n");

@@ -81,6 +81,14 @@ void stage_types_func(Parser* p, Func* func) {
             Chunk* arg_chunk = chunk_clone(b->alc, p->chunk);
 
             char* name = p->tkn;
+            if(t == tok_at_word) {
+                if(str_is(name, "@infinite")) {
+                    func->inf_args = true;
+                    tok_expect(p, ")", true, true);
+                    break;
+                }
+            }
+
             if(!is_valid_varname(name)) {
                 parse_err(p, -1, "Invalid function argument name: '%s'", name);
             }

@@ -835,6 +835,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         }
     }
     int offset = arg_i;
+    bool inf_args = fi->inf_args;
     bool contains_gc_args = false;
 
     // Read argument values
@@ -843,15 +844,16 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
     } else {
         while (true) {
             Type *arg_type = array_get_index(func_args, arg_i++);
-            if (!arg_type) {
+            if (!arg_type && !inf_args) {
                 parse_err(p, -1, "Too many arguments");
             }
 
             Value *arg = read_value(alc, p, true, 0);
-            arg = try_convert(alc, p, p->scope, arg, arg_type);
+            if(arg_type)
+                arg = try_convert(alc, p, p->scope, arg, arg_type);
 
             char t = tok(p, true, true, true);
-            if (t == tok_at_word && str_is(p->tkn, "@autocast")) {
+            if (t == tok_at_word && str_is(p->tkn, "@autocast") && arg_type) {
                 char* reason;
                 if(!type_compat(arg_type, arg->rett, &reason)) {
                     arg = vgen_cast(alc, arg, arg_type);
@@ -859,7 +861,8 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
                 t = tok(p, true, true, true);
             }
 
-            type_check(p, arg_type, arg->rett);
+            if (arg_type)
+                type_check(p, arg_type, arg->rett);
 
             array_push(args, arg);
 
@@ -871,7 +874,7 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
         }
     }
 
-    if(args->length > func_args->length) {
+    if(args->length > func_args->length && !inf_args) {
         parse_err(p, -1, "Too many arguments. Expected: %d, Found: %d\n", func_args->length - offset, args->length - offset);
     }
 
