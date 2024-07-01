@@ -30,6 +30,18 @@ void ir_gen_final(IR* ir) {
     str_append_chars(code, "declare void @llvm.memset.inline.p0.p0.i64(ptr, i8, i64, i1)\n");
     str_append_chars(code, "\n");
 
+    for(int i = 8; i <= 64; i *= 2) {
+        char type[8];
+        sprintf(type, "i%d", i);
+        str_flat(code, "declare ");
+        str_add(code, type);
+        str_flat(code, " @llvm.ctlz.");
+        str_add(code, type);
+        str_flat(code, " (");
+        str_add(code, type);
+        str_flat(code, ", i1)\n");
+    }
+
     // Attrs
     loop(ir->attrs, i) {
         str_append_chars(code, array_get_index(ir->attrs, i));

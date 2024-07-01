@@ -346,6 +346,17 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
             v = coro_await(alc, p, on);
 
+        } else if (str_is(tkn, "bit_lz")) {
+
+            tok_expect(p, "(", false, false);
+            Value* val = read_value(alc, p, true, 0);
+            if(val->rett->type != type_int) {
+                parse_err(p, -1, "The first argument for 'bit_lz' should be a integer value");
+            }
+            tok_expect(p, ")", true, true);
+
+            v = value_make(alc, v_bit_lz, val, val->rett);
+
         } else if (p->func && p->func->is_test && str_is(tkn, "assert")) {
 
             tok_expect(p, "(", false, false);

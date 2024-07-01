@@ -49,7 +49,7 @@ use io
 }
 
 struct String {
-    data: ptr
+    data: mem:GcPtr
     bytes: uint
 
     /////////////////////
@@ -157,7 +157,7 @@ struct String {
         let part_bytes = part.bytes
         let part_data = part.data
 
-        let data = this.data
+        let data = this.data_ptr()
         let len = this.bytes
         let data_end = data + len
         let offset : uint = 0
@@ -176,7 +176,7 @@ struct String {
         let part_bytes = part.bytes
         let part_data = part.data
 
-        let data = this.data
+        let data = this.data_ptr()
         let len = this.bytes
         let offset : uint = 0
         let count : uint = 0
@@ -241,6 +241,12 @@ struct String {
         }
         return new_str
     }
+    fn data_cstring() cstring {
+        return this.data @as cstring
+    }
+    fn data_ptr() ptr {
+        return this.data @as ptr
+    }
 
     /////////////////////
     // Partials
@@ -270,7 +276,7 @@ struct String {
             length = this_bytes - start_index
         }
         if length == 0 : return ""
-        let from = this.data + start_index
+        let from = @ptr_offset(this.data, start_index)
         let res = String.make_empty(length)
         mem:copy(from, res.data, length)
         return res
@@ -403,10 +409,10 @@ struct String {
         return String.make_from_ptr(this.data, this.bytes)
     }
 
-    // TODO: mark unsafe
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
-        let d = mem:alloc(length + 1)
+        // let d = mem:alloc(length + 1)
+        let d = mem:gc_alloc(length + 1, @type_vtable_index(mem:GcPtr))
         @ptrv(d, u8, length) = 0 // trailing 0 byte
         let str = String {
             data: d
@@ -415,7 +421,6 @@ struct String {
         return str
     }
 
-    // TODO: mark unsafe
     static fn make_from_ptr(data: ptr, length: uint) String {
         if length == 0 : return ""
         let s = String.make_empty(length)
@@ -444,7 +449,7 @@ struct String {
         return mem:equal(this.data, cmp.data, this.bytes)
     }
 
-    fn _gc_free() {
-        mem:free(this.data)
-    }
+    // fn _gc_free() {
+    //     mem:free(this.data)
+    // }
 }

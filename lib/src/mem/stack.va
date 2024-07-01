@@ -87,6 +87,7 @@ cstruct Stack {
 
     static fn init() {
 
+        gc_alloc_init()
         // let id = atomic(stack_count + 1)
 
         let pos = create_stack()
@@ -271,9 +272,11 @@ cstruct Stack {
                     continue
                 }
                 let vtable = @ptrv(item, u32, -1)
-                let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
-                func(item, state_solid)
+                // if vtable > 0 {
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
+                    func(item, state_solid)
+                // }
             }
             if is_last {
                 break

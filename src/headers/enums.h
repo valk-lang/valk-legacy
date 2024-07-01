@@ -165,6 +165,7 @@ enum VALUES {
     v_multi,
     v_errh, // 40
     v_phi,
+    v_bit_lz
 };
 
 enum TOKENS {

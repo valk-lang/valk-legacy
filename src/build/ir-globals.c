@@ -108,15 +108,38 @@ char *ir_string(IR *ir, VString *str) {
     char len_str[32];
     itos(len, len_str, 10);
 
+    Type* stype = type_gen_valk(ir->alc, ir->b, "String");
+    Type* ctype = type_gen_valk(ir->alc, ir->b, "StringConst");
+    ctype->is_pointer = false;
+    char *ltype = ir_type(ir, ctype);
+
+    char vt[32];
+    itos(stype->class->gc_vtable_index, vt, 10);
+
+    char gcpt[32];
+    itos(get_valk_class(ir->b, "mem", "GcPtr")->gc_vtable_index, gcpt, 10);
+
+    char body_type[512];
+    strcpy(body_type, body_name);
+    body_type[0] = '%';
+
     bool external = false;
 
     if (!external) {
 
         str_preserve(code, 200 + blen * 3);
 
+        str_add(code, body_type);
+        str_flat(code, " = type <{ i8, i8, i8, i8, i32, [");
+        str_add(code, blen_str);
+        str_flat(code, " x i8] }>\n");
+
         str_add(code, body_name);
-        str_flat(code, " = ");
-        str_flat(code, "private unnamed_addr constant [");
+        str_flat(code, " = private unnamed_addr constant ");
+        str_add(code, body_type);
+        str_flat(code, " <{ i8 8, i8 0, i8 0, i8 0, i32 ");
+        str_add(code, gcpt);
+        str_flat(code, ", [");
         str_add(code, blen_str);
         str_flat(code, " x i8] c\"");
 
@@ -143,15 +166,11 @@ char *ir_string(IR *ir, VString *str) {
         }
         //
         str_flat(code, "\\00"); // 0 byte to end string
-        str_flat(code, "\", align 1\n");
+        str_flat(code, "\"}>, align 8\n");
     }
 
     // Define object global
     str_preserve(code, 512);
-    Type* stype = type_gen_valk(ir->alc, ir->b, "String");
-    Type* ctype = type_gen_valk(ir->alc, ir->b, "StringConst");
-    ctype->is_pointer = false;
-    char *ltype = ir_type(ir, ctype);
     str_add(code, object_name);
     str_flat(code, " = ");
     str_add(code, external ? "external" : "dso_local");
@@ -159,13 +178,14 @@ char *ir_string(IR *ir, VString *str) {
     str_add(code, ltype);
     if (!external) {
         str_flat(code, " { i8 8, i8 0, i8 0, i8 0, i32 ");
-
-        char vt[32];
-        itos(stype->class->gc_vtable_index, vt, 10);
         str_add(code, vt);
-
+        str_flat(code, ", ptr getelementptr inbounds (");
+        str_add(code, body_type);
         str_flat(code, ", ptr ");
         str_add(code, str->ir_body_name);
+        str_flat(code, ", i32 0, i32 5)");
+        // str_flat(code, ", ptr ");
+        // str_add(code, str->ir_body_name);
         str_flat(code, ", ");
         str_add(code, ir_type_int(ir, ir->b->ptr_size));
         str_flat(code, " ");

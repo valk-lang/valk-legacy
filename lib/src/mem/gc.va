@@ -16,9 +16,15 @@ fn force_gc() {
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1)
-    let table = @gc_get_vtable(vtable)
-    let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
-    func(item, state_solid)
+    if vtable > 0 {
+        let table = @gc_get_vtable(vtable)
+        let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
+        func(item, state_solid)
+    } else {
+        if @ptrv(item, u8, byte_state_rel) > state_transfer { return }
+        @ptrv(item, u8, byte_state_rel) = state_solid
+        // mem_transfered += ...
+    }
 }
 fn gc_mark_item(item: ptr) {
     if item == null {return}
@@ -66,6 +72,7 @@ fn pools_clean_unmarked(age: u8) {
     G.clean_unmarked(age)
     #end
     #endloop
+    gc_alloc_clean_unmarked(age)
 }
 
 #parse_last
@@ -75,4 +82,5 @@ fn pools_reset() {
     G.reset()
     #end
     #endloop
+    gc_alloc_reset()
 }

@@ -18,7 +18,7 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
     if create_file_if_doesnt_exist : flags = flags | sys:O_CREATE
     if append_on_write : flags = flags | sys:O_APPEND
 
-    let fd = sys:open(path.data, flags, create_file_permissions)
+    let fd = sys:open(path.data_cstring(), flags, create_file_permissions)
     if fd < 0 {
         // let err = os:libc_errno()
         throw open
@@ -28,7 +28,7 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
 }
 
 - fn stat(path: String, buf: sys:libc_stat) !failed {
-    let res = sys:stat(path.data, buf)
+    let res = sys:stat(path.data_cstring(), buf)
     if res == -1 : throw failed
 }
 fn size(path: String) uint {
@@ -98,7 +98,7 @@ fn exists(path: String) bool {
     #end
 }
 fn remove(path: String) !failed {
-    let res = sys:unlink(path.data)
+    let res = sys:unlink(path.data_cstring())
     if res == -1 {
         throw failed
     }
@@ -107,12 +107,12 @@ fn remove(path: String) !failed {
 // TODO: use octal numbers
 // 493 = 0755
 fn mkdir(path: String, permissions: u32 (493)) !failed {
-    if sys:mkdir(path.data, permissions) == -1 {
+    if sys:mkdir(path.data_cstring(), permissions) == -1 {
         throw failed
     }
 }
 fn rmdir(path: String) !failed {
-    if sys:rmdir(path.data) == -1 {
+    if sys:rmdir(path.data_cstring()) == -1 {
         throw failed
     }
 }
@@ -135,7 +135,7 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
 
     let path = directory.rtrim("\\").rtrim("//") + "\\"
     let pat = path + "*"
-    let pattern = pat.data
+    let pattern = pat.data_cstring()
     let data = @stack(sys:libc_WIN32_FIND_DATAA)
     let hFind = sys:FindFirstFileA(pattern, data)
     if hFind != -1 @as ptr {
@@ -164,7 +164,7 @@ fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[Stri
     #else
 
     let dir = directory.rtrim("/") + "/"
-    let d = sys:opendir(dir.data)
+    let d = sys:opendir(dir.data_cstring())
 
     if isset(d) {
         while true {

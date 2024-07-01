@@ -243,7 +243,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     Str* code = b->str_buf;
     str_clear(code);
 
-    str_flat(code, "(to_state: u8) void {\n");
+    str_flat(code, "() void {\n");
     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
@@ -274,7 +274,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
         }
         str_flat(code, "  ");
         str_add(code, var);
-        str_flat(code, "._v_transfer(to_state)\n");
+        str_flat(code, "._v_transfer()\n");
     }
 
     Func* hook = map_get(class->funcs, "_gc_transfer");

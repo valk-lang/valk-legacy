@@ -8,7 +8,7 @@ fn exec(cmd: String) (i32, String) !failed !pipe {
     cmd += " 2>&1"
     let buf = utils:ByteBuffer.new(1024)
     let cstr = @stack_bytes(1024) @as cstring
-    let pipe = sys:popen(cmd.data, "r".data)
+    let pipe = sys:popen(cmd.data_cstring(), "r".data_cstring())
     if !isset(pipe) : throw pipe
 
     while sys:fgets(cstr, 1024, pipe) != null {
