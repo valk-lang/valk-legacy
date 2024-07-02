@@ -43,7 +43,7 @@ struct Connection {
     }
 
     fn send_string(data: String) !connection {
-        this.send_from_ptr(data.data, data.bytes) ! throw connection
+        this.send_from_ptr(data.data_ptr(), data.bytes) ! throw connection
     }
     fn send_byte_buffer(data: utils:ByteBuffer) !connection {
         this.send_from_ptr(data.data, data.length) ! throw connection

@@ -64,7 +64,7 @@ struct ByteBuffer {
     }
 
     fn append_str(str: String) {
-        this.append_from_ptr(str.data, str.bytes)
+        this.append_from_ptr(str.data_ptr(), str.bytes)
     }
     fn append_uint(value: uint) {
         this.minimum_free_space(64)
@@ -127,7 +127,7 @@ struct ByteBuffer {
             return ""
         }
         let str = String.make_empty(this.length)
-        mem:copy(this.data, str.data, this.length)
+        mem:copy(this.data, str.data_ptr(), this.length)
         return str
     }
 
@@ -143,7 +143,7 @@ struct ByteBuffer {
             length = len - start_index
         }
         let str = String.make_empty(length)
-        mem:copy(@ptr_offset(this.data, start_index), str.data, length)
+        mem:copy(@ptr_offset(this.data, start_index), str.data_ptr(), length)
         return str
     }
 

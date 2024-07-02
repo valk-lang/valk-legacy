@@ -163,14 +163,14 @@ struct RequestParser {
             header_data.append_str("\r\n")
 
             let cmp = "content-length"
-            if key_len == cmp.bytes && mem:equal(key_adr, cmp.data, cmp.bytes) {
+            if key_len == cmp.bytes && mem:equal(key_adr, cmp.data_ptr(), cmp.bytes) {
                 let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
                 this.content_length = content_len
             }
             let cmp_te = "transfer-encoding"
-            if key_len == cmp_te.bytes && mem:equal(key_adr, cmp_te.data, cmp.bytes) {
+            if key_len == cmp_te.bytes && mem:equal(key_adr, cmp_te.data_ptr(), cmp.bytes) {
                 let v = "chunked"
-                if mem:equal(value_adr, v.data, v.bytes) {
+                if mem:equal(value_adr, v.data_ptr(), v.bytes) {
                     this.chunked = true
                     this.content_length = 0
                 }

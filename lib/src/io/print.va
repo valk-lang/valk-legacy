@@ -17,5 +17,5 @@ fn print_from_ptr(adr: ptr, len: uint) {
     write_from_ptr(1, adr, len) ! return
 }
 fn print_fake(adr: ptr) {
-    write_from_ptr(1, (adr @as String).data, (adr @as String).bytes) ! return
+    write_from_ptr(1, (adr @as String).data_ptr(), (adr @as String).bytes) ! return
 }
