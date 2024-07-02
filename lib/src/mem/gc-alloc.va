@@ -1,33 +1,32 @@
 
 -ns global allocators : @ignu(ptr)
 
-fn gc_alloc(size: uint, vtable: u32) GcPtr {
+fn gc_alloc(size: uint) GcPtr {
     let pow : uint = sizeof(ptr) * 8 - bit_lz(size)
     if pow < 3 : pow = 3
     let res = @ptrv(allocators, GcAlloc, pow).get() @as GcPtr
-    @ptrv(res, u32, -1) = vtable
     return res
 }
 
 -ns fn gc_alloc_init() {
     allocators = alloc(sizeof(ptr) * 8 * sizeof(ptr))
-    let i : uint = 3
-    let until : uint = sizeof(ptr) * 8 - 2
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
     while i < until {
-        @ptrv(allocators, GcAlloc, i) = GcAlloc.init(1 << i)
+        @ptrv(allocators, GcAlloc, i) = GcAlloc.init(i)
         i++;
     }
 }
 -ns fn gc_alloc_clean_unmarked(age: u8) {
-    let i : uint = 3
-    let until : uint = sizeof(ptr) * 8 - 2
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
     while i < until {
         @ptrv(allocators, GcAlloc, i++).clean_unmarked(age)
     }
 }
 -ns fn gc_alloc_reset() {
-    let i : uint = 3
-    let until : uint = sizeof(ptr) * 8 - 2
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
     while i < until {
         @ptrv(allocators, GcAlloc, i++).reset()
     }
@@ -41,19 +40,22 @@ cstruct GcAlloc {
     block: ptr
     index: uint (0)
     isize: uint (0)
+    pow: u8
 
-    static fn init(isize: uint) SELF {
+    static fn init(pow: u8) SELF {
+        let isize = (1 << pow) + 8
         let blockc : uint = 1
         let block = null @as ptr
         return SELF{
             blockc: blockc
             first: block
             block: block
-            isize: isize + 8
+            isize: isize
+            pow: pow
         }
     }
 
-    static fn create_block(size: uint, isize: uint) ptr {
+    static fn create_block(size: uint, isize: uint, pow: u8) ptr {
         if size > 248 : size = 248
         let b = alloc(size * isize + GP_DATA_OFFSET)
         // Settings
@@ -63,14 +65,15 @@ cstruct GcAlloc {
         @ptrv(b, uint, 3) = 0 // usage percent
         // Set indexes
         let data = b + GP_DATA_OFFSET
-        let i : uint = 0
+        let i : u8 = 0
         while i < size {
             let item : ptr = data + i * isize
             @ptrv(item, u8, 0) = state_new
-            @ptrv(item, u8, 1) = i @as u8
+            @ptrv(item, u8, 1) = 250 @as u8
             @ptrv(item, u16, 1) = 0
-            // @ptrv(item, u32, 1) = @type_vtable_index(T)
             @ptrv(item, u32, 1) = 0
+            @ptrv(item, u8, 4) = pow
+            @ptrv(item, u8, 5) = i
             i++
         }
         return b
@@ -83,7 +86,7 @@ cstruct GcAlloc {
 
         let isize = this.isize
         if this.block == null {
-            this.block = SELF.create_block(this.blockc * 2, isize)
+            this.block = SELF.create_block(this.blockc * 2, isize, this.pow)
             this.first = this.block
         }
 
@@ -126,7 +129,7 @@ cstruct GcAlloc {
         } else {
             // Create new block
             let blockc = ++this.blockc
-            let new = SELF.create_block(blockc * blockc, this.isize)
+            let new = SELF.create_block(blockc * blockc, this.isize, this.pow)
             // Set next
             @ptrv(block, ptr, 0) = new
             this.set_block(new)

@@ -109,9 +109,6 @@ char *ir_string(IR *ir, VString *str) {
     itos(len, len_str, 10);
 
     Type* stype = type_gen_valk(ir->alc, ir->b, "String");
-    Type* ctype = type_gen_valk(ir->alc, ir->b, "StringConst");
-    ctype->is_pointer = false;
-    char *ltype = ir_type(ir, ctype);
 
     char vt[32];
     itos(stype->class->gc_vtable_index, vt, 10);

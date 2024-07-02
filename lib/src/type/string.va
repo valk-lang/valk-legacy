@@ -3,16 +3,6 @@ use mem
 use utils
 use io
 
-- cstruct StringConst {
-    v1: u8 (0)
-    v2: u8 (0)
-    v3: u8 (0)
-    v4: u8 (0)
-    v5: u32 (0)
-    data: ptr
-    bytes: uint
-}
-
 - cstruct CharStep {
     data: ptr
     bytes: uint
@@ -49,7 +39,6 @@ use io
 }
 
 struct String {
-    // data: mem:GcPtr
     bytes: uint
 
     /////////////////////
@@ -412,8 +401,8 @@ struct String {
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
         // let d = mem:alloc(length + 1)
-        let str = mem:gc_alloc(sizeof(String) + length + 1, @type_vtable_index(String)) @as String
-        @ptrv(str, u8, sizeof(String) + length) = 0 // trailing 0 byte
+        let str = mem:gc_alloc(sizeof(String) + length + 1) @as String
+        @ptrv(@ptr_offset(str, sizeof(String)), u8, length) = 0 // trailing 0 byte
         str.bytes = length
         // let str = String {
         //     // data: d
