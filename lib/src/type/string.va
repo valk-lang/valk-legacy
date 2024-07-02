@@ -41,6 +41,8 @@ use io
 struct String {
     bytes: uint
 
+    @use_gc_alloc
+
     /////////////////////
     // UTF8
     /////////////////////

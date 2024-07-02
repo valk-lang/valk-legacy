@@ -38,6 +38,7 @@ struct Class {
     bool is_generic_base;
     bool in_header;
     bool is_used;
+    bool use_gc_alloc;
 };
 struct ClassProp {
     Type* type;

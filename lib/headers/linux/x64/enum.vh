@@ -8,6 +8,7 @@ value EINPROGRESS (115)
 
 value SOCK_STREAM (1)
 value SOCK_NONBLOCK (2048)
+value MSG_NOSIGNAL (16384)
 
 value SOL_SOCKET (1)
 value SOL_TCP (6)

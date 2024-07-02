@@ -81,7 +81,7 @@ struct Connection {
             #if OS == win
             let wbytes = sys:send(this.fd @as uint, data, bytes_to_send @as i32, 0)
             #else
-            let wbytes = sys:send(this.fd @as i32, data, bytes_to_send, 0)
+            let wbytes = sys:send(this.fd @as i32, data, bytes_to_send, sys:MSG_NOSIGNAL)
             #end
 
             if wbytes < 0 {
