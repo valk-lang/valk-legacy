@@ -69,11 +69,10 @@ cstruct GcAlloc {
         while i < size {
             let item : ptr = data + i * isize
             @ptrv(item, u8, 0) = state_new
-            @ptrv(item, u8, 1) = 250 @as u8
+            @ptrv(item, u8, 1) = i
             @ptrv(item, u16, 1) = 0
             @ptrv(item, u32, 1) = 0
-            @ptrv(item, u8, 4) = pow
-            @ptrv(item, u8, 5) = i
+            @ptrv(item, u8, 7) = pow
             i++
         }
         return b

@@ -49,6 +49,11 @@ cstruct GcPool2[T] {
         }
 
         let isize = this.isize
+        if this.block == null {
+            this.block = SELF.create_block(this.blockc * 2, isize)
+            this.first = this.block
+        }
+
         while true {
             let block = this.block
             if @ptrv(block, uint, 3) > 40 {

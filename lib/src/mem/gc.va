@@ -15,16 +15,15 @@ fn force_gc() {
 
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
-    let bi = @ptrv(item, u8, -7)
-    if bi == 250 {
+    let vtable = @ptrv(item, u32, -1) & 0xffffff
+    if vtable == 0 {
         @ptrv(item, u8, byte_state_rel) = state_solid
-        let size : uint = (1 @as uint << @ptrv(item, u8, -4)) + 8
+        let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
         mem_transfered += size
-        let ri = @ptrv(item, u8, -3)
+        let ri = @ptrv(item, u8, -7)
         let data = item - 8 - ri * size
         @ptrv(data, uint, -2)++
     } else {
-        let vtable = @ptrv(item, u32, -1)
         let table = @gc_get_vtable(vtable)
         let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
         func(item, state_solid)
@@ -32,13 +31,12 @@ fn gc_transfer_item(item: ptr) {
 }
 fn gc_mark_item(item: ptr) {
     if item == null {return}
-    let bi = @ptrv(item, u8, -7)
-    if bi == 250 {
+    let vtable = @ptrv(item, u32, -1) & 0xffffff
+    if vtable == 0 {
         @ptrv(item, u8, byte_age_rel) = stack.age
-        let size : uint = (1 @as uint << @ptrv(item, u8, -4)) + 8
+        let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
         mem_marked += size
     } else {
-        let vtable = @ptrv(item, u32, -1)
         let table = @gc_get_vtable(vtable)
         let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
         func(item, stack.age)
@@ -46,20 +44,31 @@ fn gc_mark_item(item: ptr) {
 }
 fn gc_mark_shared_item(item: ptr) {
     if item == null {return}
-    let bi = @ptrv(item, u8, -7)
-    if bi == 250 {
+    let vtable = @ptrv(item, u32, -1) & 0xffffff
+    if vtable == 0 {
         @ptrv(item, u8, byte_gc_age_rel) = gc_age
     } else {
-        let vtable = @ptrv(item, u32, -1)
         let table = @gc_get_vtable(vtable)
         let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
         func(item, gc_age)
     }
 }
 fn gc_share(item: ptr) {
-    let bi = @ptrv(item, u8, -7)
-    if bi != 250 {
-        let vtable = @ptrv(item, u32, -1)
+    let vtable = @ptrv(item, u32, -1) & 0xffffff
+    if vtable == 0 {
+        let state = @ptrv(item, u8, byte_state_rel)
+        if state > state_solid : return
+        @ptrv(item, u8, byte_state_rel) = state_shared
+        @ptrv(item, u8, byte_gc_age_rel) = gc_age
+        if state < state_solid {
+            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+            mem_transfered += size
+            let ri = @ptrv(item, u8, -7)
+            let data = item - 8 - ri * size
+            @ptrv(data, uint, -2)++
+        }
+        stack.add_shared(item)
+    } else {
         let table = @gc_get_vtable(vtable)
         let func = @ptrv(table, fn(ptr)(), vt_share)
         func(item)
