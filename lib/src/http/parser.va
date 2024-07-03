@@ -107,7 +107,7 @@ struct RequestParser {
         }
 
         // Headers
-        let headers = request.headerz
+        let headers = request.headers_
         while stage == 1 {
             let index = input.byte_index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {

@@ -11,7 +11,7 @@ struct Request {
     body: String ("")
     status: uint (0)
 
-    -ns headerz: Map[String] (map[String]{})
+    -ns headers_: Map[String] (map[String]{})
     -ns header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
     -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
