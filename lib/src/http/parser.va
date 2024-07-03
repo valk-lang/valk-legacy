@@ -134,45 +134,50 @@ struct RequestParser {
                 break
             }
 
-            let split = input.byte_index_of_byte(':', pos) ! { throw invalid }
-            if split > index { throw invalid }
-            while @ptrv(data, u8, split + 1) == ' ' {
-                split++
-            }
+            let key_adr = input.data + pos
+            let header_len = index - pos
+            if header_len > 4095 : throw http413
+            header_data.append_from_ptr(key_adr, index - pos)
 
-            // let key = input.sub_str(pos, split - pos - 1)
-            // let value = input.sub_str(split + 1, index - split - 1)
-            // headers.set(key.to_lower(), value)
-
-            let key_len = split - pos - 1
-            let value_len = index - split - 1
-            if key_len > 4095 || value_len > 4095 : throw http413
-
-            let headers_length = this.headers_length + key_len + value_len + 2
+            let headers_length = this.headers_length + header_len
             if headers_length > 8192 : throw http413
             this.headers_length = headers_length
 
-            let key_adr = input.data + pos
-            let value_adr = input.data + split + 1
+            // let split = input.byte_index_of_byte(':', pos) ! { throw invalid }
+            // if split > index { throw invalid }
+            // while @ptrv(data, u8, split + 1) == ' ' {
+            //     split++
+            // }
+
+            // let key_len = split - pos - 1
+            // let value_len = index - split - 1
+            // if key_len > 4095 || value_len > 4095 : throw http413
+
+            // let key_adr = input.data + pos
+            // let value_adr = input.data + split + 1
             // Convert key to lowercase
-            mem:ascii_bytes_to_lower(key_adr, key_len)
 
-            header_data.append_from_ptr(key_adr, key_len)
-            header_data.append_byte(':')
-            header_data.append_from_ptr(value_adr, value_len)
-            header_data.append_str("\r\n")
-
-            let cmp = "content-length"
-            if key_len == cmp.bytes && mem:equal(key_adr, cmp.data_ptr(), cmp.bytes) {
-                let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
-                this.content_length = content_len
-            }
-            let cmp_te = "transfer-encoding"
-            if key_len == cmp_te.bytes && mem:equal(key_adr, cmp_te.data_ptr(), cmp.bytes) {
-                let v = "chunked"
-                if mem:equal(value_adr, v.data_ptr(), v.bytes) {
-                    this.chunked = true
-                    this.content_length = 0
+            let h1 = "content-length"
+            let h2 = "transfer-encoding"
+            if header_len > h1.bytes && @ptrv(key_adr, u8, h1.bytes) == ':' {
+                mem:ascii_bytes_to_lower(key_adr, h1.bytes)
+                if mem:equal(key_adr, h1.data_ptr(), h1.bytes) {
+                    let value_adr = key_adr + h1.bytes;
+                    while @ptrv(value_adr, u8) == ' ' : value_adr += 1
+                    let value_len = ((input.data + index) - value_adr) @as uint
+                    let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
+                    this.content_length = content_len
+                }
+            } else if header_len > h2.bytes && @ptrv(key_adr, u8, h2.bytes) == ':' {
+                mem:ascii_bytes_to_lower(key_adr, h2.bytes)
+                if mem:equal(key_adr, h2.data_ptr(), h2.bytes) {
+                    let value_adr = key_adr + h1.bytes;
+                    while @ptrv(value_adr, u8) == ' ' : value_adr += 1
+                    let v = "chunked"
+                    if mem:equal(value_adr, v.data_ptr(), v.bytes) {
+                        this.chunked = true
+                        this.content_length = 0
+                    }
                 }
             }
 
