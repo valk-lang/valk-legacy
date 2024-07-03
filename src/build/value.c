@@ -169,6 +169,31 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
 
             v = vgen_memset(alc, on, length, with);
+
+        } else if (str_is(tkn, "@memcpy")) {
+            tok_expect(p, "(", false, false);
+            Value* from = read_value(alc, p, true, 0);
+            if(from->rett->type != type_ptr) {
+                parse_err(p, -1, "The first argument for '@memset' should be a ptr value");
+            }
+            tok_expect(p, ",", true, true);
+            Value* to = read_value(alc, p, true, 0);
+            if(from->rett->type != type_ptr) {
+                parse_err(p, -1, "The 2nd argument for '@memset' should be a ptr value");
+            }
+            tok_expect(p, ",", true, true);
+            Value* len = read_value(alc, p, true, 0);
+            if(len->rett->type != type_int) {
+                parse_err(p, -1, "The 3rd argument for '@memset' should be an integer value");
+            }
+            tok_expect(p, ")", true, true);
+
+            VMemcpy* mc = al(alc, sizeof(VMemcpy));
+            mc->from = from;
+            mc->to = to;
+            mc->length = len;
+            v = value_make(alc, v_memcpy, mc, type_gen_valk(alc, b, "ptr"));
+
         }
     } else if (t == tok_string) {
         char *body = tkn;

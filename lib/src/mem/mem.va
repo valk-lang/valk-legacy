@@ -18,17 +18,27 @@ fn calloc(size: uint) ptr {
 }
 
 fn copy(from: ptr, to: ptr, length: uint) {
-    let i = 0 @as uint
-    let chunks = length / sizeof(uint)
-    while i < chunks {
-        @ptrv(to, uint, i) = @ptrv(from, uint, i)
-        i++
-    }
-    i = i * sizeof(uint)
-    while i < length {
-        @ptrv(to, u8, i) = @ptrv(from, u8, i)
-        i++
-    }
+    @memcpy(from, to, length)
+
+    // let i = 0 @as uint
+    // let chunks = length / (sizeof(uint) * 8)
+    // while i < chunks {
+    //     let k = i
+    //     @ptrv(to, uint, k) = @ptrv(from, uint, k)
+    //     @ptrv(to, uint, k + 1) = @ptrv(from, uint, k + 1)
+    //     @ptrv(to, uint, k + 2) = @ptrv(from, uint, k + 2)
+    //     @ptrv(to, uint, k + 3) = @ptrv(from, uint, k + 3)
+    //     @ptrv(to, uint, k + 4) = @ptrv(from, uint, k + 4)
+    //     @ptrv(to, uint, k + 5) = @ptrv(from, uint, k + 5)
+    //     @ptrv(to, uint, k + 6) = @ptrv(from, uint, k + 6)
+    //     @ptrv(to, uint, k + 7) = @ptrv(from, uint, k + 7)
+    //     i++
+    // }
+    // i = i * (sizeof(uint) * 8)
+    // while i < length {
+    //     @ptrv(to, u8, i) = @ptrv(from, u8, i)
+    //     i++
+    // }
 }
 
 fn clear(adr: ptr, length: uint) {
@@ -84,4 +94,57 @@ fn bytes_to_uint(adr: ptr, len: uint) uint !not_a_number {
         mult *= 10
     }
     return result
+}
+
+fn find_char(adr: ptr, ch: u8, length: uint) ptr !not_found {
+    let until = adr - adr % 8
+    let end = adr + length
+    while adr < until {
+        let p = @ptrv(adr, u64)
+        if p @as u8 == ch : return adr
+        if (p << 1) @as u8 == ch : return adr + 1
+        if (p << 2) @as u8 == ch : return adr + 2
+        if (p << 3) @as u8 == ch : return adr + 3
+        if (p << 4) @as u8 == ch : return adr + 4
+        if (p << 5) @as u8 == ch : return adr + 5
+        if (p << 6) @as u8 == ch : return adr + 6
+        if (p << 7) @as u8 == ch : return adr + 7
+        adr += 8
+    }
+    while adr < end {
+        if @ptrv(adr, u8, 0) == ch : return adr
+        adr += 1
+    }
+    throw not_found
+}
+
+// Libc version
+fn find_char_(adr: ptr, ch: u8, length: uint) ptr !not_found {
+
+    while (adr % sizeof(ptr) != 0) {
+      if @ptrv(adr, u8) == ch : return adr
+      adr += 1
+    }
+
+    let rep_one : u64 = 0x0101010101010101
+    let rep_ch1 : u64 = ch | (ch << 8) | (ch << 16) | (ch << 24)
+    let rep_ch = rep_ch1 | rep_ch1 << 32
+
+    while length >= sizeof(u64) {
+        let cmp = @ptrv(adr, u64) ^ rep_ch
+        let inv = 0xffffffff - cmp
+
+        if (((cmp - rep_one) & inv) & (rep_one << 7)) != 0 {
+            break
+        }
+        adr += sizeof(u64)
+        length -= sizeof(u64)
+    }
+
+    while length-- > 0 {
+        if @ptrv(adr, u8) == ch : return adr
+        adr += 1
+    }
+
+    throw not_found
 }

@@ -28,6 +28,7 @@ void ir_gen_final(IR* ir) {
     str_append_chars(code, "declare void @_setjmp(ptr) nounwind\n");
     str_append_chars(code, "declare void @longjmp(ptr, i32) nounwind\n");
     str_append_chars(code, "declare void @llvm.memset.inline.p0.p0.i64(ptr, i8, i64, i1)\n");
+    str_append_chars(code, "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n");
     str_append_chars(code, "\n");
 
     for(int i = 8; i <= 64; i *= 2) {

@@ -458,6 +458,21 @@ char* ir_value(IR* ir, Value* v) {
         str_flat(code, ", i1 0)\n");
         r = "";
     }
+    else if (vt == v_memcpy) {
+        VMemcpy* mc = v->item;
+        char* from = ir_value(ir, mc->from);
+        char* to = ir_value(ir, mc->to);
+        char* len = ir_value(ir, mc->length);
+        Str *code = ir->block->code;
+        str_flat(code, "  call void @llvm.memcpy.p0.p0.i64(ptr ");
+        str_add(code, to);
+        str_flat(code, ", ptr ");
+        str_add(code, from);
+        str_flat(code, ", i64 ");
+        str_add(code, len);
+        str_flat(code, ", i1 0)\n");
+        r = "";
+    }
 
     if(r) {
         v->ir_v = r;
