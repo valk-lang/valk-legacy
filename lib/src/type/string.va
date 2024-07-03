@@ -233,10 +233,10 @@ struct String {
         return new_str
     }
     fn data_cstring() cstring {
-        return @ptr_offset(this, 8) @as cstring
+        return @ptr_offset(this, sizeof(inline String)) @as cstring
     }
     fn data_ptr() ptr {
-        return @ptr_offset(this, 8) @as ptr
+        return @ptr_offset(this, sizeof(inline String)) @as ptr
     }
 
     /////////////////////
@@ -403,8 +403,8 @@ struct String {
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
         // let d = mem:alloc(length + 1)
-        let str = mem:gc_alloc(sizeof(String) + length + 1) @as String
-        @ptrv(@ptr_offset(str, sizeof(String)), u8, length) = 0 // trailing 0 byte
+        let str = mem:gc_alloc(sizeof(inline String) + length + 1) @as String
+        @ptrv(@ptr_offset(str, sizeof(inline String)), u8, length) = 0 // trailing 0 byte
         str.bytes = length
         // let str = String {
         //     // data: d

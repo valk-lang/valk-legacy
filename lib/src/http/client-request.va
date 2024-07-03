@@ -81,7 +81,7 @@ struct ClientRequest {
         return ClientResponse {
             status: request.status
             headers: request.headers()
-            body: request.body
+            body: request.body()
         }
     }
 

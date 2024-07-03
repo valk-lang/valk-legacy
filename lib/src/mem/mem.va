@@ -118,8 +118,8 @@ fn find_char(adr: ptr, ch: u8, length: uint) ptr !not_found {
     throw not_found
 }
 
-// Libc version
-fn find_char_(adr: ptr, ch: u8, length: uint) ptr !not_found {
+// GNU libc version for find_char aka. memchar (same performance, just here in case we need it)
+- fn gnu_libc_memchar(adr: ptr, ch: u8, length: uint) ptr !not_found {
 
     while (adr % sizeof(ptr) != 0) {
       if @ptrv(adr, u8) == ch : return adr

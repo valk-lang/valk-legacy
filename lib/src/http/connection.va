@@ -88,6 +88,7 @@ struct Connection {
 
         while true {
 
+            println("1")
             parser.parse(request, false) err ! {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
@@ -103,8 +104,6 @@ struct Connection {
                 this.send_error(400)
                 return
             }
-
-            parser.soft_reset()
 
             let is_file = false
             if server.static_dirs.length > 0 {
@@ -124,11 +123,25 @@ struct Connection {
 
             // Response
             if !is_file {
+                println(parser.input.data)
+                println(parser.input.length)
+                println(request.header_data)
+                println(request.header_length)
+                println(request.body_data)
+                println(request.body_length)
+                print("'")
+                print(request.header_data.create_string(request.header_length))
+                print("'\n")
+                print("'")
+                print(request.body_data.create_string(request.body_length))
+                print("'\n")
                 let resp = server.handler(request)
                 this.respond(resp)
             }
 
-            // Clear request
+            println("5")
+            // Clear parser / request
+            parser.soft_reset()
             request.reset()
 
             // Flush output

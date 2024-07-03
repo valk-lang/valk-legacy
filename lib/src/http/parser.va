@@ -11,6 +11,7 @@ struct RequestParser {
     input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     input_pos: uint (0)
+    headers_pos: uint (0)
     headers_length: uint (0)
     content_length: uint (0)
     parsed_headers: bool (false)
@@ -32,6 +33,7 @@ struct RequestParser {
         }
         this.chunks.clear()
         this.stage = 0
+        this.headers_pos = 0
         this.headers_length = 0
         this.content_length = 0
         this.parsed_headers = false
@@ -52,7 +54,7 @@ struct RequestParser {
         let data = input.data
         let length = input.length
 
-        let header_data = request.header_data
+        // let header_data = request.header_data
 
         // Header
         if stage == 0 {
@@ -102,12 +104,13 @@ struct RequestParser {
 
             pos = index + 2
             this.input_pos = pos
+            this.headers_pos = pos
+
             stage = 1
             this.stage = stage
         }
 
         // Headers
-        let headers = request.headers_
         while stage == 1 {
             let index = input.byte_index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {
@@ -120,26 +123,21 @@ struct RequestParser {
 
             if index == pos {
                 // End of headers
+                request.header_length = this.headers_length + 2
                 pos = index + 2
                 this.input_pos = pos
                 stage = 2
                 this.stage = stage
                 this.parsed_headers = true
-
-                // this.content_length = (headers.get("content-length") ? "0").to_uint() ! throw invalid
-                // if (headers.get("transfer-encoding") ? "") == "chunked" {
-                //     this.chunked = true
-                //     this.content_length = 0
-                // }
                 break
             }
 
             let key_adr = input.data + pos
             let header_len = index - pos
             if header_len > 4095 : throw http413
-            header_data.append_from_ptr(key_adr, index - pos)
+            // header_data.append_from_ptr(key_adr, index - pos)
 
-            let headers_length = this.headers_length + header_len
+            let headers_length = this.headers_length + header_len + 2
             if headers_length > 8192 : throw http413
             this.headers_length = headers_length
 
@@ -157,13 +155,14 @@ struct RequestParser {
             // let value_adr = input.data + split + 1
             // Convert key to lowercase
 
+            // Check certain headers
             let h1 = "content-length"
             let h2 = "transfer-encoding"
             if header_len > h1.bytes && @ptrv(key_adr, u8, h1.bytes) == ':' {
                 mem:ascii_bytes_to_lower(key_adr, h1.bytes)
                 if mem:equal(key_adr, h1.data_ptr(), h1.bytes) {
-                    let value_adr = key_adr + h1.bytes;
-                    while @ptrv(value_adr, u8) == ' ' : value_adr += 1
+                    let value_adr = key_adr + h1.bytes + 1;
+                    while @ptrv(value_adr, u8).is_html_spacing() : value_adr += 1
                     let value_len = ((input.data + index) - value_adr) @as uint
                     let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
                     this.content_length = content_len
@@ -171,8 +170,8 @@ struct RequestParser {
             } else if header_len > h2.bytes && @ptrv(key_adr, u8, h2.bytes) == ':' {
                 mem:ascii_bytes_to_lower(key_adr, h2.bytes)
                 if mem:equal(key_adr, h2.data_ptr(), h2.bytes) {
-                    let value_adr = key_adr + h1.bytes;
-                    while @ptrv(value_adr, u8) == ' ' : value_adr += 1
+                    let value_adr = key_adr + h1.bytes + 1;
+                    while @ptrv(value_adr, u8).is_html_spacing() : value_adr += 1
                     let v = "chunked"
                     if mem:equal(value_adr, v.data_ptr(), v.bytes) {
                         this.chunked = true
@@ -232,23 +231,27 @@ struct RequestParser {
                 }
 
                 this.parsed_body = true
-                request.body = chunks.to_string()
+                // request.body = chunks.to_string()
+                request.body_data = this.chunks.data
+                request.body_length = this.chunks.length
                 this.stage = 3
-                chunks.clear()
 
             } else {
                 // Non chunked
                 if bytes_left < content_len : throw incomplete
 
-                let body = input.sub_str(pos, content_len)
+                // request.body = input.sub_str(pos, content_len)
+                request.body_data = input.data + pos
+                request.body_length = content_len
 
                 pos += content_len
                 this.parsed_body = true
-                request.body = body
                 this.stage = 3
 
                 this.input_pos = pos
             }
         }
+
+        request.header_data = input.data + this.headers_pos
     }
 }
