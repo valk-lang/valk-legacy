@@ -43,7 +43,7 @@ cstruct GcAlloc {
     pow: u8
 
     static fn init(pow: u8) SELF {
-        let isize = (1 << pow) + 8
+        let isize = (1 @as uint << pow) + 8
         let blockc : uint = 1
         let block = null @as ptr
         return SELF{
@@ -57,9 +57,6 @@ cstruct GcAlloc {
 
     static fn create_block(size: uint, isize: uint, pow: u8) ptr {
         if size > 248 : size = 248
-        // let s = size * isize + GP_DATA_OFFSET
-        // s.print(10)
-        // print("<\n")
         let b = alloc(size * isize + GP_DATA_OFFSET)
         // Settings
         @ptrv(b, ?ptr, 0) = null // next block
