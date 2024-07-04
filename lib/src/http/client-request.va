@@ -60,7 +60,7 @@ struct ClientRequest {
         let parser = RequestParser{}
         let request = Request{}
         let rbytes : uint = 8192
-        let buffer = parser.input
+        let buffer = request.input
         while true {
             parser.parse(request, true) err ! {
                 // Check if we need more data
@@ -81,7 +81,7 @@ struct ClientRequest {
         return ClientResponse {
             status: request.status
             headers: request.headers()
-            body: request.body()
+            body: request.body
         }
     }
 

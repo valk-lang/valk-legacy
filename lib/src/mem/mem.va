@@ -97,18 +97,26 @@ fn bytes_to_uint(adr: ptr, len: uint) uint !not_a_number {
 }
 
 fn find_char(adr: ptr, ch: u8, length: uint) ptr !not_found {
-    let until = adr - adr % 8
+    let start = adr + 8 - (adr % 8)
     let end = adr + length
+    let until = end - (end % 8)
+    //
+    if start > end : start = end
+    let s = start
+    while adr < s {
+        if @ptrv(adr, u8, 0) == ch : return adr
+        adr += 1
+    }
     while adr < until {
         let p = @ptrv(adr, u64)
         if p @as u8 == ch : return adr
-        if (p << 1) @as u8 == ch : return adr + 1
-        if (p << 2) @as u8 == ch : return adr + 2
-        if (p << 3) @as u8 == ch : return adr + 3
-        if (p << 4) @as u8 == ch : return adr + 4
-        if (p << 5) @as u8 == ch : return adr + 5
-        if (p << 6) @as u8 == ch : return adr + 6
-        if (p << 7) @as u8 == ch : return adr + 7
+        if (p >> 8) @as u8 == ch : return adr + 1
+        if (p >> 16) @as u8 == ch : return adr + 2
+        if (p >> 24) @as u8 == ch : return adr + 3
+        if (p >> 32) @as u8 == ch : return adr + 4
+        if (p >> 40) @as u8 == ch : return adr + 5
+        if (p >> 48) @as u8 == ch : return adr + 6
+        if (p >> 56) @as u8 == ch : return adr + 7
         adr += 8
     }
     while adr < end {

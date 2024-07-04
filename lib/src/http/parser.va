@@ -8,7 +8,6 @@ use fs
 
 struct RequestParser {
     stage: uint (0)
-    input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     input_pos: uint (0)
     headers_pos: uint (0)
@@ -18,19 +17,7 @@ struct RequestParser {
     parsed_body: bool (false)
     chunked: bool (false)
 
-    fn full_reset() {
-        this.input_pos = 0
-        this.input.clear()
-        this.soft_reset()
-    }
-
-    fn soft_reset() {
-        let input = this.input
-        let pos = this.input_pos
-        if pos >= input.length {
-            this.input_pos = 0
-            input.clear()
-        }
+    fn reset() {
         this.chunks.clear()
         this.stage = 0
         this.headers_pos = 0
@@ -41,24 +28,25 @@ struct RequestParser {
         this.chunked = false
     }
 
-    fn parse(request: Request, is_response: bool) !invalid !http413 !incomplete {
+    fn parse(request: Request, is_response: bool) !invalid !http413 !incomplete !data_removed_from_input {
 
         if this.parsed_body {
             throw invalid
         }
 
-        let input = this.input
+        let input = request.input
         let pos = this.input_pos
+        if pos > input.length {
+            throw data_removed_from_input
+        }
 
         let stage = this.stage
         let data = input.data
         let length = input.length
 
-        // let header_data = request.header_data
-
         // Header
         if stage == 0 {
-            let index = input.byte_index_of_byte('\r', pos) ! {
+            let index = input.index_of_byte('\r', pos) ! {
                 if length - pos > 4096 {
                     throw http413
                 }
@@ -79,8 +67,8 @@ struct RequestParser {
                 if index + 1 == length : throw incomplete
                 if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-                let space1 = input.byte_index_of_byte(' ', pos) ! { throw invalid }
-                let space2 = input.byte_index_of_byte(' ', space1 + 1) ! { throw invalid }
+                let space1 = input.index_of_byte(' ', pos) ! { throw invalid }
+                let space2 = input.index_of_byte(' ', space1 + 1) ! { throw invalid }
 
                 if space1 > index { throw invalid }
                 if space2 > index { throw invalid }
@@ -112,7 +100,7 @@ struct RequestParser {
 
         // Headers
         while stage == 1 {
-            let index = input.byte_index_of_byte('\r', pos) ! {
+            let index = input.index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {
                     throw http413
                 }
@@ -123,7 +111,7 @@ struct RequestParser {
 
             if index == pos {
                 // End of headers
-                request.header_length = this.headers_length + 2
+                request.header_data = input.sub_str(this.headers_pos, this.headers_length + 2)
                 pos = index + 2
                 this.input_pos = pos
                 stage = 2
@@ -135,25 +123,10 @@ struct RequestParser {
             let key_adr = input.data + pos
             let header_len = index - pos
             if header_len > 4095 : throw http413
-            // header_data.append_from_ptr(key_adr, index - pos)
 
             let headers_length = this.headers_length + header_len + 2
             if headers_length > 8192 : throw http413
             this.headers_length = headers_length
-
-            // let split = input.byte_index_of_byte(':', pos) ! { throw invalid }
-            // if split > index { throw invalid }
-            // while @ptrv(data, u8, split + 1) == ' ' {
-            //     split++
-            // }
-
-            // let key_len = split - pos - 1
-            // let value_len = index - split - 1
-            // if key_len > 4095 || value_len > 4095 : throw http413
-
-            // let key_adr = input.data + pos
-            // let value_adr = input.data + split + 1
-            // Convert key to lowercase
 
             // Check certain headers
             let h1 = "content-length"
@@ -196,7 +169,7 @@ struct RequestParser {
                     // Read length line
                     let chlen = this.content_length
                     if chlen == 0 {
-                        let index = input.byte_index_of_byte('\r', pos) ! {
+                        let index = input.index_of_byte('\r', pos) ! {
                             if bytes_left > 16 { 
                                 throw invalid
                             }
@@ -231,18 +204,14 @@ struct RequestParser {
                 }
 
                 this.parsed_body = true
-                // request.body = chunks.to_string()
-                request.body_data = this.chunks.data
-                request.body_length = this.chunks.length
+                request.body = chunks.to_string()
                 this.stage = 3
 
             } else {
                 // Non chunked
                 if bytes_left < content_len : throw incomplete
 
-                // request.body = input.sub_str(pos, content_len)
-                request.body_data = input.data + pos
-                request.body_length = content_len
+                request.body = input.sub_str(pos, content_len)
 
                 pos += content_len
                 this.parsed_body = true
@@ -251,7 +220,5 @@ struct RequestParser {
                 this.input_pos = pos
             }
         }
-
-        request.header_data = input.data + this.headers_pos
     }
 }
