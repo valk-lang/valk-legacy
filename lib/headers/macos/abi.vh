@@ -21,7 +21,7 @@ fn free(adr: ptr) void;
 fn sync() void;
 fn read(fd: i32, buf: cstring, size: uint) int;
 fn write(fd: i32, buf: cstring, size: uint) int;
-fn open(path: cstring, flags: i32, mode: u32) i32;
+fn open(path: cstring, flags: i32, @infinite) i32;
 fn close(fd: i32) i32;
 
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;

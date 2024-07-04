@@ -19,7 +19,7 @@ fn __errno_location() ptr;
 fn sync() void;
 fn read(fd: i32, buf: ptr, size: uint) int;
 fn write(fd: i32, data: ptr, length: uint) i32;
-fn open(path: ptr, flags: i32, mode: u32) i32;
+fn open(path: ptr, flags: i32, @infinite) i32;
 fn close(fd: i32) i32;
 
 fn recv(fd: i32, buf: ptr, len: uint, flags: i32) int;
