@@ -19,26 +19,6 @@ fn calloc(size: uint) ptr {
 
 fn copy(from: ptr, to: ptr, length: uint) {
     @memcpy(from, to, length)
-
-    // let i = 0 @as uint
-    // let chunks = length / (sizeof(uint) * 8)
-    // while i < chunks {
-    //     let k = i
-    //     @ptrv(to, uint, k) = @ptrv(from, uint, k)
-    //     @ptrv(to, uint, k + 1) = @ptrv(from, uint, k + 1)
-    //     @ptrv(to, uint, k + 2) = @ptrv(from, uint, k + 2)
-    //     @ptrv(to, uint, k + 3) = @ptrv(from, uint, k + 3)
-    //     @ptrv(to, uint, k + 4) = @ptrv(from, uint, k + 4)
-    //     @ptrv(to, uint, k + 5) = @ptrv(from, uint, k + 5)
-    //     @ptrv(to, uint, k + 6) = @ptrv(from, uint, k + 6)
-    //     @ptrv(to, uint, k + 7) = @ptrv(from, uint, k + 7)
-    //     i++
-    // }
-    // i = i * (sizeof(uint) * 8)
-    // while i < length {
-    //     @ptrv(to, u8, i) = @ptrv(from, u8, i)
-    //     i++
-    // }
 }
 
 fn clear(adr: ptr, length: uint) {

@@ -273,12 +273,6 @@ cstruct Stack {
                 }
                 let vtable = @ptrv(item, u32, -1) & 0xffffff
                 if vtable == 0 {
-                    // @ptrv(item, u8, byte_state_rel) = state_solid
-                    // let size : uint = (1 @as uint << @ptrv(item, u8, -4)) + 8
-                    // mem_transfered += size
-                    // let ri = @ptrv(item, u8, -3)
-                    // let data = item - 8 - ri * size
-                    // @ptrv(data, uint, -2)++
                     @ptrv(item, u8, byte_state_rel) = state_solid
                     let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
                     mem_transfered += size
