@@ -13,6 +13,7 @@ value O_NONBLOCK (4)
 value SOL_SOCKET (65535)
 value SO_REUSEADDR (4)
 value SO_RCVTIMEO (4102)
+value SO_NOSIGPIPE (4130)
 
 value AF_INET (2)
 value AF_UNIX (1)

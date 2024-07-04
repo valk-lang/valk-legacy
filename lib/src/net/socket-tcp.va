@@ -47,6 +47,12 @@ struct SocketTCP {
         sys:setsockopt(ufd, sys:SOL_SOCKET, sys:SO_RCVTIMEO, timeout, sizeof(inline sys:libc_timeval))
         #end
 
+        // SO_NOSIGPIPE
+        #if OS == macos
+        let nosigv : i32 = 1
+        sys:setsockopt(ufd, sys:SOL_SOCKET, sys:SO_NOSIGPIPE, @ptr_of(nosigv), sizeof(i32))
+        #end
+
         return SocketTCP{
             host: host,
             port: port,

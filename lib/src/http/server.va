@@ -42,8 +42,6 @@ struct Server {
 
     fn start(worker_count: i32 (16)) void {
 
-        // SIGINT
-        os:signal(1, interrupt)
         // SIGPIPE
         os:signal_ignore(13)
 
@@ -107,16 +105,5 @@ struct Server {
         }
         this.static_dirs.push(full)
     }
-}
-
-global interrupted : bool
-fn interrupt(sig: i32) void {
-    if(interrupted){
-        println("Interrupt - Stopping http servers...")
-        os:exit(1)
-    }
-    interrupted = true
-    println("Interrupt - Stopping http servers...")
-    os:exit(1)
 }
 
