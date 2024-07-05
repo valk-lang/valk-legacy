@@ -6,35 +6,67 @@ use mem
 use io
 use fs
 
-struct RequestParser {
-    stage: uint (0)
-    chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
-    input_pos: uint (0)
-    headers_pos: uint (0)
-    headers_length: uint (0)
-    content_length: uint (0)
-    parsed_headers: bool (false)
-    parsed_body: bool (false)
-    chunked: bool (false)
+struct Parser {
+    ~ stage: uint (0)
+    ~ input_pos: uint (0)
+    ~ status: uint (0)
+    ~ headers_start: uint (0)
+    ~ content_start: uint (0)
+    ~ headers_length: uint (0)
+    ~ content_length: uint (0)
+
+    ~ method: String ("")
+    ~ path: String ("")
+    ~ query_string: String ("")
+    ~ header_data: String ("")
+
+    - chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+    ~ input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+
+    ~ chunked: bool (false)
+    ~ done: bool (false)
 
     fn reset() {
-        this.chunks.clear()
         this.stage = 0
-        this.headers_pos = 0
+        this.status = 0
+        this.headers_start = 0
+        this.content_start = 0
         this.headers_length = 0
         this.content_length = 0
-        this.parsed_headers = false
-        this.parsed_body = false
+
+        this.path = ""
+        this.method = ""
+        this.query_string = ""
+        this.header_data = ""
+
+        this.chunks.clear()
+
         this.chunked = false
+        this.done = false
+
+        if this.input_pos >= this.input.length {
+            this.input.clear()
+            this.input_pos = 0
+        }
+    }
+    fn reset_input() {
+        this.input.clear()
+        this.input_pos = 0
     }
 
-    fn parse(request: Request, is_response: bool) !invalid !http413 !incomplete !data_removed_from_input {
+    fn body() String {
+        if !this.done : return ""
+        if this.chunked : return this.chunks.to_string()
+        return this.input.sub_str(this.content_start, this.content_length)
+    }
 
-        if this.parsed_body {
-            throw invalid
+    fn parse(is_response: bool) !invalid !http413 !incomplete !data_removed_from_input {
+
+        if this.done {
+            return
         }
 
-        let input = request.input
+        let input = this.input
         let pos = this.input_pos
         if pos > input.length {
             throw data_removed_from_input
@@ -61,7 +93,7 @@ struct RequestParser {
                 if split.length < 2 : throw invalid
                 version = split.get(0) ? ""
                 let status = split.get(1) ? ""
-                request.status = status.to_uint() ! throw invalid
+                this.status = status.to_uint() ! throw invalid
 
             } else {
                 if index + 1 == length : throw incomplete
@@ -81,18 +113,18 @@ struct RequestParser {
                 let qmark = path.byte_index_of_byte('?') ? 0
                 if qmark > 0 {
                     let len = path.bytes
-                    request.params_data = path.byte_sub_str(qmark + 1, len - qmark - 1)
+                    this.query_string = path.byte_sub_str(qmark + 1, len - qmark - 1)
                     path = path.byte_sub_str(0, qmark)
                 }
                 version = input.sub_str(space2 + 1, index - space2 - 1)
 
-                request.method = method
-                request.path = path
+                this.method = method
+                this.path = path
             }
 
             pos = index + 2
             this.input_pos = pos
-            this.headers_pos = pos
+            this.headers_start = pos
 
             stage = 1
             this.stage = stage
@@ -111,12 +143,14 @@ struct RequestParser {
 
             if index == pos {
                 // End of headers
-                request.header_data = input.sub_str(this.headers_pos, this.headers_length + 2)
                 pos = index + 2
                 this.input_pos = pos
+
                 stage = 2
                 this.stage = stage
-                this.parsed_headers = true
+
+                this.content_start = pos
+                this.header_data = this.input.sub_str(this.headers_start, this.headers_length + 2)
                 break
             }
 
@@ -203,22 +237,16 @@ struct RequestParser {
                     bytes_left = length - (pos + chlen)
                 }
 
-                this.parsed_body = true
-                request.body = chunks.to_string()
-                this.stage = 3
-
             } else {
                 // Non chunked
                 if bytes_left < content_len : throw incomplete
 
-                request.body = input.sub_str(pos, content_len)
-
                 pos += content_len
-                this.parsed_body = true
-                this.stage = 3
-
                 this.input_pos = pos
             }
+
+            this.stage = 3
+            this.done = true
         }
     }
 }

@@ -4,37 +4,20 @@
 use utils
 use fs
 use url
+use mem
 
 struct Request {
     method: String ("GET")
     path: String ("/")
     body: String ("")
-    header_data: String ("")
-    status: uint (0)
+    ~ header_data: String ("")
+    ~ query_string: String ("")
 
-    -ns input: utils:ByteBuffer (utils:ByteBuffer.new(1024))
-
-    -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
     -ns params_map: ?Map[String] (null)
     -ns params_grp: ?Map[Array[String]] (null)
     -ns data_map: ?Map[String] (null)
     -ns files_map: ?Map[fs:InMemoryFile] (null)
-
-    fn reduce_mem_usage() {
-
-        this.path = ""
-        this.body = ""
-        this.header_data = ""
-        this.status = 0
-
-        this.params_data = ""
-        this.header_map = null
-        this.params_map = null
-        this.params_grp = null
-        this.data_map = null
-        this.files_map = null
-    }
 
     fn headers() Map[String] {
         let headers = this.header_map
@@ -49,7 +32,7 @@ struct Request {
         let params = this.params_map
         if isset(params) : return params
         let new = map[String]{}
-        let data = this.params_data
+        let data = this.query_string
         if data.bytes > 0 {
             let parts = data.split("&")
             each parts as part {
@@ -65,7 +48,7 @@ struct Request {
         let params = this.params_grp
         if isset(params) : return params
         let new = map[Array[String]]{}
-        let data = this.params_data
+        let data = this.query_string
         if data.bytes > 0 {
             let parts = data.split("&")
             each parts as part {

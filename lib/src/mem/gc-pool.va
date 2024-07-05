@@ -123,8 +123,8 @@ cstruct GcPool2[T] {
             while i < count {
                 let item = data + i * isize
                 if @ptrv(item, u8, byte_state) == state_used {
-                    ((item + 8) @as T)._gc_free()
                     @ptrv(item, u8, byte_state) = state_new
+                    ((item + 8) @as T)._gc_free()
                 }
                 i++
             }
@@ -138,8 +138,8 @@ cstruct GcPool2[T] {
         while i < index {
             let item = data + i * isize
             if @ptrv(item, u8, byte_state) == state_used {
-                ((item + 8) @as T)._gc_free()
                 @ptrv(item, u8, byte_state) = state_new
+                ((item + 8) @as T)._gc_free()
             }
             i++
         }
@@ -164,11 +164,11 @@ cstruct GcPool2[T] {
                     let item = data + i * isize
                     let iage = @ptrv(item, u8, byte_age)
                     if iage != age && @ptrv(item, u8, byte_state) == state_solid {
+                        @ptrv(item, u8, byte_state) = state_new
+                        @ptrv(item, u16, 1) = 0
                         #if @type_has_method(T, _gc_free)
                         ((item + 8) @as T)._gc_free()
                         #end
-                        @ptrv(item, u8, byte_state) = state_new
-                        @ptrv(item, u16, 1) = 0
                         used--
                     }
                     i++

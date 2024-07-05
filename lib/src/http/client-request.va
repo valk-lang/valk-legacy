@@ -57,32 +57,33 @@ struct ClientRequest {
         }
 
         //
-        let parser = RequestParser{}
-        let request = Request{}
-        let rbytes : uint = 8192
-        let buffer = request.input
+        let parser = Parser{}
         while true {
-            parser.parse(request, true) err ! {
+            parser.parse(true) err ! {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
-                    let bytes = con.recv(buffer, rbytes) err ! {
+                    let bytes = con.recv(parser.input, 8192) err ! {
                         con.close()
                         throw invalid_response
                     }
-                    if bytes == 0 : throw invalid_response
-                    continue
+                    if bytes > 0 : continue
                 }
                 con.close()
                 throw invalid_response
             }
-            if parser.parsed_body : break
+            if parser.done : break
+            throw invalid_response
         }
 
-        return ClientResponse {
-            status: request.status
-            headers: request.headers()
-            body: request.body
+        let resp = ClientResponse {
+            status: parser.status
+            // headers: request.headers()
+            body: parser.body()
         }
+
+        parser.reset()
+
+        return resp
     }
 
     - fn get_send_data(parts: url:Url) utils:ByteBuffer {

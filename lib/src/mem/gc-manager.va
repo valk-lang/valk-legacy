@@ -147,7 +147,8 @@ cstruct GcManager {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
                     let vtable = @ptrv(item, u32, -1) & 0xffffff
                     if vtable == 0 {
-                        @ptrv(item, u8, byte_gc_age_rel) = age
+                        if @ptrv(item, u8, byte_gc_age_rel) != age :
+                            @ptrv(item, u8, byte_gc_age_rel) = age
                     } else {
                         let table = @gc_get_vtable(vtable)
                         let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)

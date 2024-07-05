@@ -38,7 +38,7 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p) {
 
 void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
     Scope* closest = scope;
-    while (closest && closest->type == sc_default) {
+    while (closest && closest->type != sc_loop) {
         closest = closest->parent;
     }
     while (scope && scope->type != sc_func) {
@@ -49,7 +49,7 @@ void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {
         exit(1);
     }
     // Closest scope, e.g. if / while
-    if(decl->is_gc && closest != scope) {
+    if(decl->is_gc && closest && closest != scope) {
         if (!closest->decls)
             closest->decls = array_make(alc, 4);
         array_push(closest->decls, decl);

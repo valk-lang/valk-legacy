@@ -1,9 +1,14 @@
 
+use valk:mem
+
+global node_count: uint
+
 struct Node {
     left : ?Node (null)
     right : ?Node (null)
 
     static fn tree(x: int) Node {
+        node_count++
         if x == 0 {
             let res = Node {}
             return res
@@ -24,6 +29,10 @@ struct Node {
             res += rt.check()
         }
         return res
+    }
+
+    fn _gc_free() {
+        node_count--
     }
 }
 
@@ -46,7 +55,15 @@ test "GC" {
 
     assert(stretch(depth + 1) == 16383)
 
+    assert(node_count == 16383)
+    mem:force_gc()
+    assert(node_count == 0)
+
     let longlived = Node.tree(depth)
+
+    assert(node_count == 8191)
+    mem:force_gc()
+    assert(node_count == 8191)
 
     let x = 4
     while x <= depth {
@@ -70,4 +87,7 @@ test "GC" {
     }
 
     assert(longlived.check() == 8191)
+    longlived = null @as Node
+    mem:force_gc()
+    assert(node_count == 0)
 }

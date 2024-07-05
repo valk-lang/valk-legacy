@@ -14,7 +14,7 @@ struct Connection {
 
     // Request
     request: Request (Request{})
-    parser: RequestParser (RequestParser{})
+    parser: Parser (Parser{})
 
     // Response
     output_file: ?fs:FileStream (null)
@@ -72,13 +72,13 @@ struct Connection {
         let max_bs = server.max_request_body_size
         let max_sbs = server.max_server_wide_body_size
 
-        let request = this.request
+        // let request = this.request
         let parser = this.parser
-        let input = request.input
+        let input = parser.input
 
         while true {
 
-            parser.parse(request, false) err ! {
+            parser.parse(false) err ! {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
                     let bytes = this.read_more(input) ? 0
@@ -91,6 +91,24 @@ struct Connection {
                 return
             }
 
+            // Create request
+            let request = Request {
+                method: parser.method
+                path: parser.path
+                query_string: parser.query_string
+                header_data: parser.header_data
+                body: parser.body()
+            }
+            // request.method = parser.method
+            // request.path = parser.path
+            // request.query_string = parser.query_string
+            // request.header_data = parser.header_data
+            // request.body = parser.body()
+
+            // Reset parser for next request
+            parser.reset()
+
+            // Handle request
             // Check static dirs
             let is_file = false
             if server.static_dirs.length > 0 {
@@ -112,18 +130,6 @@ struct Connection {
             if !is_file {
                 let resp = server.handler(request)
                 this.respond(resp)
-            }
-
-            // Throw away data we dont need anymore
-            request.reduce_mem_usage()
-
-            // Reset parser
-            parser.reset()
-
-            // Clean input
-            if parser.input_pos >= input.length {
-                input.clear()
-                parser.input_pos = 0
             }
 
             // Flush output
