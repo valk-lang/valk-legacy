@@ -2,7 +2,7 @@
 use utils
 
 fn encode(str: String) String {
-    let data = str.data
+    let data = str.data_ptr()
     let bytes = str.bytes
     let buffer = utils:ByteBuffer.new(bytes)
     let i : uint = 0
@@ -28,7 +28,7 @@ fn encode(str: String) String {
         }
         // ch -> %{HEX}
         buffer.append_byte('%')
-        let x : u16 = 0
+        let x : u32 = 0
         let ref = @ptr_of(x)
         let bytes_used = ch.to_base_to_ptr(16, ref)
         if bytes_used == 1 {
@@ -41,7 +41,7 @@ fn encode(str: String) String {
 }
 
 fn decode(str: String) String {
-    let data = str.data
+    let data = str.data_ptr()
     let bytes = str.bytes
     let buffer = utils:ByteBuffer.new(bytes)
     let i : uint = 0

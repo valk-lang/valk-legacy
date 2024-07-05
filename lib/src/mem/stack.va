@@ -31,12 +31,12 @@ value vt_share (3)
 value vt_gc_free (4)
 
 value byte_state (0)
-value byte_bools (1)
+value byte_pow (1)
 value byte_age (2)
 value byte_gc_age (3)
 
 value byte_state_rel (-8)
-value byte_bools_rel (-7)
+value byte_pow_rel (-7)
 value byte_age_rel (-6)
 value byte_gc_age_rel (-5)
 
@@ -87,6 +87,7 @@ cstruct Stack {
 
     static fn init() {
 
+        gc_alloc_init()
         // let id = atomic(stack_count + 1)
 
         let pos = create_stack()
@@ -270,10 +271,19 @@ cstruct Stack {
                 if @ptrv(item, u8, -8) != state_transfer {
                     continue
                 }
-                let vtable = @ptrv(item, u32, -1)
-                let table = @gc_get_vtable(vtable)
-                let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
-                func(item, state_solid)
+                let vtable = @ptrv(item, u32, -1) & 0xffffff
+                if vtable == 0 {
+                    @ptrv(item, u8, byte_state_rel) = state_solid
+                    let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                    mem_transfered += size
+                    let ri = @ptrv(item, u8, -7)
+                    let data = item - 8 - ri * size
+                    @ptrv(data, uint, -2)++
+                } else {
+                    let table = @gc_get_vtable(vtable)
+                    let func = @ptrv(table, fn(ptr, u8)(), vt_transfer)
+                    func(item, state_solid)
+                }
             }
             if is_last {
                 break
@@ -306,10 +316,16 @@ cstruct Stack {
             if item != null {
                 if @ptrv(item, u8, -8) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
-                        let vtable = @ptrv(item, u32, -1)
-                        let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
-                        func(item, age)
+                        let vtable = @ptrv(item, u32, -1) & 0xffffff
+                        if vtable == 0 {
+                            @ptrv(item, u8, byte_age_rel) = age
+                            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                            mem_marked += size
+                        } else {
+                            let table = @gc_get_vtable(vtable)
+                            let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
+                            func(item, age)
+                        }
                     }
                 }
             }
@@ -322,17 +338,23 @@ cstruct Stack {
         let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr)
+            item_adr += sizeof(ptr)
             if item != null {
                 if @ptrv(item, u8, -8) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
-                        let vtable = @ptrv(item, u32, -1)
-                        let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
-                        func(item, age)
+                        let vtable = @ptrv(item, u32, -1) & 0xffffff
+                        if vtable == 0 {
+                            @ptrv(item, u8, byte_age_rel) = age
+                            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                            mem_marked += size
+                        } else {
+                            let table = @gc_get_vtable(vtable)
+                            let func = @ptrv(table, fn(ptr, u8)(), vt_mark)
+                            func(item, age)
+                        }
                     }
                 }
             }
-            item_adr = item_adr + sizeof(ptr)
         }
     }
     fn mark_stack_gc_age(age: u8) {
@@ -344,10 +366,14 @@ cstruct Stack {
             let item = @ptrv(ref, ptr)
             if item != null {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
-                    let vtable = @ptrv(item, u32, -1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
-                    func(item, age)
+                    let vtable = @ptrv(item, u32, -1) & 0xffffff
+                    if vtable == 0 {
+                        @ptrv(item, u8, byte_gc_age_rel) = age
+                    } else {
+                        let table = @gc_get_vtable(vtable)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
+                        func(item, age)
+                    }
                 }
             }
         }
@@ -359,10 +385,14 @@ cstruct Stack {
             let item = @ptrv(item_adr, ptr)
             if item != null {
                 if @ptrv(item, u8, byte_gc_age_rel) != age {
-                    let vtable = @ptrv(item, u32, -1)
-                    let table = @gc_get_vtable(vtable)
-                    let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
-                    func(item, age)
+                    let vtable = @ptrv(item, u32, -1) & 0xffffff
+                    if vtable == 0 {
+                        @ptrv(item, u8, byte_gc_age_rel) = age
+                    } else {
+                        let table = @gc_get_vtable(vtable)
+                        let func = @ptrv(table, fn(ptr, u8)(), vt_mark_shared)
+                        func(item, age)
+                    }
                 }
             }
             item_adr = item_adr + sizeof(ptr)

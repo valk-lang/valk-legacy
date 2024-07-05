@@ -1,27 +1,61 @@
 
-use io
+-ns global allocators : @ignu(ptr)
 
-value GP_DATA_OFFSET (sizeof(ptr) * 4)
+fn gc_alloc(size: uint) GcPtr {
+    let pow : uint = sizeof(ptr) * 8 - bit_lz(size)
+    if pow < 3 : pow = 3
+    let res = @ptrv(allocators, GcAlloc, pow).get() @as GcPtr
+    return res
+}
 
-cstruct GcPool2[T] {
+-ns fn gc_alloc_init() {
+    allocators = alloc(sizeof(ptr) * 8 * sizeof(ptr))
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
+    while i < until {
+        @ptrv(allocators, GcAlloc, i) = GcAlloc.init(i)
+        i++;
+    }
+}
+-ns fn gc_alloc_clean_unmarked(age: u8) {
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
+    while i < until {
+        @ptrv(allocators, GcAlloc, i++).clean_unmarked(age)
+    }
+}
+-ns fn gc_alloc_reset() {
+    let i : u8 = 3
+    let until : u8 = sizeof(ptr) * 8 - 2
+    while i < until {
+        @ptrv(allocators, GcAlloc, i++).reset()
+    }
+}
+
+struct GcPtr{}
+
+cstruct GcAlloc {
     blockc: uint
     first: ptr
     block: ptr
     index: uint (0)
     isize: uint (0)
+    pow: u8
 
-    static fn init() SELF {
-        let isize : uint = (sizeof(inline T) + 8) @as uint
+    static fn init(pow: u8) SELF {
+        let isize = (1 @as uint << pow) + 8
         let blockc : uint = 1
-        let block = SELF.create_block(blockc * 2, isize)
+        let block = null @as ptr
         return SELF{
             blockc: blockc
             first: block
             block: block
             isize: isize
+            pow: pow
         }
     }
-    static fn create_block(size: uint, isize: uint) ptr {
+
+    static fn create_block(size: uint, isize: uint, pow: u8) ptr {
         if size > 248 : size = 248
         let b = alloc(size * isize + GP_DATA_OFFSET)
         // Settings
@@ -31,26 +65,27 @@ cstruct GcPool2[T] {
         @ptrv(b, uint, 3) = 0 // usage percent
         // Set indexes
         let data = b + GP_DATA_OFFSET
-        let i : uint = 0
+        let i : u8 = 0
         while i < size {
             let item : ptr = data + i * isize
             @ptrv(item, u8, 0) = state_new
-            @ptrv(item, u8, 1) = i @as u8
+            @ptrv(item, u8, 1) = i
             @ptrv(item, u16, 1) = 0
-            @ptrv(item, u32, 1) = @type_vtable_index(T)
+            @ptrv(item, u32, 1) = 0
+            @ptrv(item, u8, 7) = pow
             i++
         }
         return b
     }
 
-    fn get() T {
+    fn get() ptr {
         if mem_usage > 70 {
             gc()
         }
 
         let isize = this.isize
         if this.block == null {
-            this.block = SELF.create_block(this.blockc * 2, isize)
+            this.block = SELF.create_block(this.blockc * 2, isize, this.pow)
             this.first = this.block
         }
 
@@ -72,14 +107,14 @@ cstruct GcPool2[T] {
                 continue
             }
 
-            #if @type_has_method(T, _gc_free)
-            @ptrv(item, u8, byte_state) = state_used
-            #end
+            // #if @type_has_method(T, _gc_free)
+            // @ptrv(item, u8, byte_state) = state_used
+            // #end
 
             // Increase mem usage
-            mem_new += sizeof(inline T)
+            mem_new += isize
 
-            return (item + 8) @as T
+            return (item + 8)
         }
         print("Failed to allocate memory")
         print("\n")
@@ -93,7 +128,7 @@ cstruct GcPool2[T] {
         } else {
             // Create new block
             let blockc = ++this.blockc
-            let new = SELF.create_block(blockc * blockc, this.isize)
+            let new = SELF.create_block(blockc * blockc, this.isize, this.pow)
             // Set next
             @ptrv(block, ptr, 0) = new
             this.set_block(new)
@@ -108,43 +143,43 @@ cstruct GcPool2[T] {
         this.index = 0
     }
 
-    fn swap_transfers() {
-        #if @type_has_method(T, _gc_free)
-        let current = this.block
-        let block = this.first
-        let isize = this.isize
+    // fn swap_transfers() {
+    //     #if @type_has_method(T, _gc_free)
+    //     let current = this.block
+    //     let block = this.first
+    //     let isize = this.isize
 
-        while block != current {
-            let b = block
-            let count = @ptrv(b, uint, 1)
-            // Loop items
-            let i : uint = 0
-            let data = b + GP_DATA_OFFSET
-            while i < count {
-                let item = data + i * isize
-                if @ptrv(item, u8, byte_state) == state_used {
-                    @ptrv(item, u8, byte_state) = state_new
-                    ((item + 8) @as T)._gc_free()
-                }
-                i++
-            }
+    //     while block != current {
+    //         let b = block
+    //         let count = @ptrv(b, uint, 1)
+    //         // Loop items
+    //         let i : uint = 0
+    //         let data = b + GP_DATA_OFFSET
+    //         while i < count {
+    //             let item = data + i * isize
+    //             if @ptrv(item, u8, byte_state) == state_used {
+    //                 ((item + 8) @as T)._gc_free()
+    //                 @ptrv(item, u8, byte_state) = state_new
+    //             }
+    //             i++
+    //         }
 
-            block = @ptrv(block, ptr, 0)
-        }
+    //         block = @ptrv(block, ptr, 0)
+    //     }
 
-        let index = this.index
-        let i : uint = 0
-        let data = current + GP_DATA_OFFSET
-        while i < index {
-            let item = data + i * isize
-            if @ptrv(item, u8, byte_state) == state_used {
-                @ptrv(item, u8, byte_state) = state_new
-                ((item + 8) @as T)._gc_free()
-            }
-            i++
-        }
-        #end
-    }
+    //     let index = this.index
+    //     let i : uint = 0
+    //     let data = current + GP_DATA_OFFSET
+    //     while i < index {
+    //         let item = data + i * isize
+    //         if @ptrv(item, u8, byte_state) == state_used {
+    //             ((item + 8) @as T)._gc_free()
+    //             @ptrv(item, u8, byte_state) = state_new
+    //         }
+    //         i++
+    //     }
+    //     #end
+    // }
 
     fn clean_unmarked(age: u8) {
         let current = this.block
@@ -164,11 +199,11 @@ cstruct GcPool2[T] {
                     let item = data + i * isize
                     let iage = @ptrv(item, u8, byte_age)
                     if iage != age && @ptrv(item, u8, byte_state) == state_solid {
+                        // #if @type_has_method(T, _gc_free)
+                        // ((item + 8) @as T)._gc_free()
+                        // #end
                         @ptrv(item, u8, byte_state) = state_new
                         @ptrv(item, u16, 1) = 0
-                        #if @type_has_method(T, _gc_free)
-                        ((item + 8) @as T)._gc_free()
-                        #end
                         used--
                     }
                     i++
@@ -180,31 +215,12 @@ cstruct GcPool2[T] {
 
             block = @ptrv(b, ptr, 0) // next block
         }
-
-        // let index = this.index
-        // let count = @ptrv(current, uint, 1)
-        // let used = @ptrv(current, uint, 2)
-        // let i : uint = 0
-        // let data = current + GP_DATA_OFFSET
-        // while i < index {
-        //     let item = data + i * isize
-        //     if @ptrv(item, u8, byte_state) == state_used {
-        //         #if @type_has_method(T, _gc_free)
-        //         ((item + 8) @as T)._gc_free()
-        //         #end
-        //         @ptrv(item, u8, byte_state) = state_new
-        //         @ptrv(item, u16, 1) = 0
-        //         used--
-        //     }
-        //     i++
-        // }
-        // @ptrv(current, uint, 2) = used
-        // @ptrv(current, uint, 3) = used * 100 / count
     }
 
     fn reset() {
         // Update usage percentage
         let current = this.block
+        if current == null : return
         let first = this.first
         let block = first
         let prev = first

@@ -4,46 +4,29 @@
 use utils
 use fs
 use url
+use mem
 
 struct Request {
     method: String ("GET")
     path: String ("/")
     body: String ("")
-    status: uint (0)
+    ~ header_data: String ("")
+    ~ query_string: String ("")
 
-    -ns headerz: Map[String] (map[String]{})
-    -ns header_data: utils:ByteBuffer (utils:ByteBuffer.new(1024))
-    -ns params_data: String ("")
     -ns header_map: ?Map[String] (null)
     -ns params_map: ?Map[String] (null)
     -ns params_grp: ?Map[Array[String]] (null)
     -ns data_map: ?Map[String] (null)
     -ns files_map: ?Map[fs:InMemoryFile] (null)
 
-    response: Response (Response.text(""))
-
-    fn reset() {
-        this.method = "GET"
-        this.path = ""
-        this.body = ""
-        this.status = 0
-
-        this.header_data.clear()
-        this.params_data = ""
-        this.header_map = null
-        this.params_map = null
-        this.params_grp = null
-        this.data_map = null
-        this.files_map = null
-
-        this.response.reset()
-    }
+    -ns output: ?utils:ByteBuffer (null) 
+    ~ responded: bool (true) 
 
     fn headers() Map[String] {
         let headers = this.header_map
         if isset(headers) : return headers
         let new = map[String]{}
-        this.parse_headers(this.header_data, new) ? 0
+        this.parse_headers(this.header_data.data_ptr(), this.header_data.bytes, new) ? 0
         this.header_map = new
         return new
     }
@@ -52,7 +35,7 @@ struct Request {
         let params = this.params_map
         if isset(params) : return params
         let new = map[String]{}
-        let data = this.params_data
+        let data = this.query_string
         if data.bytes > 0 {
             let parts = data.split("&")
             each parts as part {
@@ -68,7 +51,7 @@ struct Request {
         let params = this.params_grp
         if isset(params) : return params
         let new = map[Array[String]]{}
-        let data = this.params_data
+        let data = this.query_string
         if data.bytes > 0 {
             let parts = data.split("&")
             each parts as part {
@@ -130,7 +113,6 @@ struct Request {
             
         // <some binary data>
         // --boundary--
-        let buffer = utils:ByteBuffer.new(2048)
         let headers = map[String]{}
         let dispos = map[String]{}
         let body = this.body
@@ -144,9 +126,8 @@ struct Request {
             // Parse headers
             headers.clear()
             dispos.clear()
-            buffer.clear()
-            buffer.append_from_ptr(part.data + 2, part.bytes - 2)
-            let header_bytes = this.parse_headers(buffer, headers) ! continue
+            let part_data = part.data_ptr()
+            let header_bytes = this.parse_headers(part_data, part.bytes, headers) ! continue
             // Content disposition
             let dispo = headers.get("content-disposition") ! continue
             this.parse_content_disposition(dispo, dispos)
@@ -158,7 +139,7 @@ struct Request {
             let body_bytes = part.bytes - body_offset - 2
 
             if isset(fn) {
-                let file = fs:InMemoryFile.create_from_ptr(part.data + body_offset, body_bytes)
+                let file = fs:InMemoryFile.create_from_ptr(part_data + body_offset, body_bytes)
                 file.filename = fn
                 files.set(name, file)
                 file.mime_type = headers.get("content-type") ! continue
@@ -183,16 +164,15 @@ struct Request {
         // TODO
     }
 
-    - fn parse_headers(data: utils:ByteBuffer, result: Map[String]) uint !invalid {
+    - fn parse_headers(data: ptr, memory_size: uint, result: Map[String]) uint !invalid {
 
         let pos : uint = 0
-        let bytes = data.data
-        let length = data.length
+        let length = memory_size
 
         while true {
-            let index = data.byte_index_of_byte('\r', pos) ! throw invalid
+            let index = data.index_of_byte('\r', pos) ! throw invalid
             if index + 1 == length : throw invalid
-            if @ptrv(bytes, u8, index + 1) != '\n' : throw invalid
+            if @ptrv(data, u8, index + 1) != '\n' : throw invalid
 
             // End of headers
             if index == pos {
@@ -200,16 +180,16 @@ struct Request {
                 break
             }
 
-            let split = data.byte_index_of_byte(':', pos) ! throw invalid
+            let split = data.index_of_byte(':', pos) ! throw invalid
             if split > index : throw invalid
 
             let value_pos = split + 1
-            while @ptrv(bytes, u8, value_pos) == ' ' {
+            while @ptrv(data, u8, value_pos) == ' ' {
                 value_pos++
             }
 
-            let key = data.sub_str(pos, split - pos)
-            let value = data.sub_str(value_pos, index - value_pos)
+            let key = data.offset(pos).create_string(split - pos)
+            let value = data.offset(value_pos).create_string(index - value_pos)
             result.set(key.to_lower(), value)
 
             pos = index + 2

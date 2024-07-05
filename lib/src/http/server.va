@@ -6,8 +6,11 @@ use net
 use io
 use fs
 
-fn test(req: Request) Response {
+fn handler_default(req: Request) Response {
     return Response.html("Hello world!")
+}
+fn fast_handler_default(req: Request) {
+    Response.write_html(req, "Hello world!")
 }
 
 struct Server {
@@ -15,7 +18,8 @@ struct Server {
     - port: u16
     - socket: net:SocketTCP
     - max_connections: uint
-    -ns handler: fn(Request)(Response) (test)
+    handler: fn(Request)(Response) (handler_default)
+    fast_handler: ?fn(Request)() (null)
     -ns static_dirs: Array[String] (Array[String].new())
     ~ns active_body_size: uint (0)
     max_request_header_size: uint (8 * 1024) // 8 KB
@@ -42,8 +46,6 @@ struct Server {
 
     fn start(worker_count: i32 (16)) void {
 
-        // SIGINT
-        os:signal(1, interrupt)
         // SIGPIPE
         os:signal_ignore(13)
 
@@ -107,16 +109,5 @@ struct Server {
         }
         this.static_dirs.push(full)
     }
-}
-
-global interrupted : bool
-fn interrupt(sig: i32) void {
-    if(interrupted){
-        println("Interrupt - Stopping http servers...")
-        os:exit(1)
-    }
-    interrupted = true
-    println("Interrupt - Stopping http servers...")
-    os:exit(1)
 }
 

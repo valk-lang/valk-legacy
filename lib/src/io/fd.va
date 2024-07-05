@@ -21,7 +21,7 @@ fn write(fd: FD, str: String) !failed !again {
     let bytes = str.bytes
     #end
     if bytes == 0 : return
-    let c = sys:write(fd @as i32, str.data, bytes)
+    let c = sys:write(fd @as i32, str.data_ptr(), bytes)
     if c == -2 {
         throw again
     }

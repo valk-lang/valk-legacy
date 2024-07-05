@@ -18,9 +18,9 @@ struct FileStream {
         if !this.can_read || !this.reading : return ""
 
         let str = String.make_empty(bytes)
-        let rcount = io:read(this.fd, str.data, bytes) ! throw read_err
+        let rcount = io:read(this.fd, str.data_ptr(), bytes) ! throw read_err
         str.bytes = rcount
-        @ptrv(str.data, u8, rcount) = 0
+        @ptrv(str.data_ptr(), u8, rcount) = 0
 
         if rcount < bytes : this.close()
 

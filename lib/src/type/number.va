@@ -39,7 +39,7 @@ trait Number {
 
     fn to_base_to_ptr(base: SELF, result: ptr) uint {
 
-        let chars = "0123456789ABCDEF".data
+        let chars = "0123456789ABCDEF".data_ptr()
 
         if str_rev == null {
             str_rev = mem:alloc(24)

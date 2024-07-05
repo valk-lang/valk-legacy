@@ -5,6 +5,7 @@ use io
 use net
 use utils
 use fs
+use mem
 
 struct Connection {
     server: Server
@@ -12,19 +13,12 @@ struct Connection {
     fd: FD
 
     // Request
-    request: Request (Request{})
-    parser: RequestParser (RequestParser{})
+    parser: Parser (Parser{})
 
     // Response
     output_file: ?fs:FileStream (null)
     output: utils:ByteBuffer (utils:ByteBuffer.new(8192))
     output_pos: uint (0)
-
-    fn full_reset() {
-        this.request.reset()
-        this.parser.full_reset()
-        this.reset_output()
-    }
 
     fn reset_output() void {
         // Reset output
@@ -35,6 +29,7 @@ struct Connection {
         }
         this.output.clear()
         this.output_pos = 0
+        this.output.reduce_size(8192)
     }
 
     fn send_file(stream: fs:FileStream, filename: ?String) void {
@@ -64,13 +59,8 @@ struct Connection {
         return this.parser.input_pos == 0 || this.count_bytes_to_send() > (128 * 1024) || this.output_file != null
     }
 
-    fn read_more() uint !err {
-        let parser = this.parser
-        let input = parser.input
-        let rbytes : uint = 65535
-        let bytes = this.netcon.recv(input, rbytes) err ! {
-            throw err
-        }
+    fn read_more(buffer: utils:ByteBuffer) uint !err {
+        let bytes = this.netcon.recv(buffer, 65535) err ! { throw err }
         return bytes
     }
 
@@ -83,18 +73,20 @@ struct Connection {
         let max_sbs = server.max_server_wide_body_size
 
         let parser = this.parser
-        let request = this.request
-        let file = this.output_file
+        let input = parser.input
+        let handler = server.handler
+        let fast_handler = server.fast_handler
+
+        let request = Request{
+            output: this.output
+        }
 
         while true {
 
-            parser.parse(request, false) err ! {
+            parser.parse(false) err ! {
                 // Check if we need more data
                 if error_is(err, !incomplete) {
-                    let bytes = this.read_more() ! {
-                        this.send_error(400)
-                        return
-                    }
+                    let bytes = this.read_more(input) ? 0
                     if bytes > 0 : continue
                 } else if error_is(err, !http413) {
                     this.send_error(413)
@@ -104,11 +96,34 @@ struct Connection {
                 return
             }
 
-            parser.soft_reset()
+            // Create request
+            if isset(fast_handler) {
+                let req = request
+                req.method = parser.method
+                req.path = parser.path
+                req.query_string = parser.query_string
+                req.header_data = parser.header_data
+                req.body = parser.body()
+                req.responded = false
+            } else {
+                request = Request {
+                    method: parser.method
+                    path: parser.path
+                    query_string: parser.query_string
+                    header_data: parser.header_data
+                    body: parser.body()
+                }
+            }
+            let req = request
 
+            // Reset parser for next request
+            parser.reset()
+
+            // Handle request
+            // Check static dirs
             let is_file = false
             if server.static_dirs.length > 0 {
-                let path = request.path.trim("/")
+                let path = req.path.trim("/")
                 if path.bytes > 0 {
                     each server.static_dirs as dir {
                         let fullpath = dir + path 
@@ -124,12 +139,17 @@ struct Connection {
 
             // Response
             if !is_file {
-                let resp = server.handler(request)
-                this.respond(resp)
+                if isset(fast_handler) {
+                    fast_handler(req)
+                    if !request.responded {
+                        this.close()
+                        return
+                    }
+                } else {
+                    let resp = handler(req)
+                    this.respond(resp)
+                }
             }
-
-            // Clear request
-            request.reset()
 
             // Flush output
             if this.should_flush_output() {
@@ -146,7 +166,7 @@ struct Connection {
         let filepath = resp.filepath
         if isset(filepath) {
             let stream = fs:stream(filepath, true, false) ! {
-                this.respond(Response.error(404))
+                this.respond(Response.empty(404))
                 return
             }
             this.send_file(stream, resp.filename)
@@ -189,17 +209,14 @@ struct Connection {
 
     fn send_error(code: uint) {
         if this.output.length == 0 {
-            let resp = this.request.response
-            resp.reset()
-            resp.status = code @as u32
-            this.respond(resp)
+            this.respond(Response.empty(code @as u32))
             this.send_response_bytes() _
         }
         this.close()
     }
 
     fn close() {
-        this.full_reset()
+        this.reset_output()
         this.netcon.close()
     }
 }

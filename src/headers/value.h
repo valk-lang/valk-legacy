@@ -173,6 +173,11 @@ struct VMemset {
     Value* length;
     Value* with;
 };
+struct VMemcpy {
+    Value* from;
+    Value* to;
+    Value* length;
+};
 struct VThisButThat {
     Value* this;
     Value* that;

@@ -43,7 +43,7 @@ struct Connection {
     }
 
     fn send_string(data: String) !connection {
-        this.send_from_ptr(data.data, data.bytes) ! throw connection
+        this.send_from_ptr(data.data_ptr(), data.bytes) ! throw connection
     }
     fn send_byte_buffer(data: utils:ByteBuffer) !connection {
         this.send_from_ptr(data.data, data.length) ! throw connection
@@ -78,10 +78,13 @@ struct Connection {
             //////////////
             // NO SSL
             //////////////
-            #if OS == win
-            let wbytes = sys:send(this.fd @as uint, data, bytes_to_send @as i32, 0)
+            let ofd = io:os_fd(this.fd)
+            #if OS == linux
+            let wbytes = sys:send(ofd, data, bytes_to_send, sys:MSG_NOSIGNAL)
+            #elif OS == win
+            let wbytes = sys:send(ofd, data, bytes_to_send @as i32, 0)
             #else
-            let wbytes = sys:send(this.fd @as i32, data, bytes_to_send, 0)
+            let wbytes = sys:send(ofd, data, bytes_to_send, 0)
             #end
 
             if wbytes < 0 {

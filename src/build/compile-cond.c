@@ -74,6 +74,10 @@ void cc_parse(Parser* p) {
         }
         p->cc_index--;
 
+    } else if(str_is(tkn, "endif")) {
+
+        parse_err(p, -1, "Invalid token '#endif', use '#end' instead");
+
     } else if(str_is(tkn, "loop_globals")) {
         CCLoop* cl = cc_init_loop(b->alc, b->globals);
         cl->idf_type = idf_global;
@@ -313,6 +317,8 @@ void cc_skip_to_next_cond(Parser* p) {
                 }
                 if (str_is(tkn, "end"))
                     depth--;
+            } else if (str_is(tkn, "endif")) {
+                parse_err(p, -1, "Invalid token '#endif', use '#end' instead");
             }
         }
     }
@@ -326,7 +332,7 @@ void cc_skip_loop(Parser* p) {
         char t = tok(p, true, true, true);
 
         if (t == tok_eof) {
-            parse_err(p, -1, "Unexpected end of file, cannot find #end token");
+            parse_err(p, -1, "Unexpected end of file, cannot find #endloop token");
         }
 
         if (t == tok_hashtag && p->on_newline) {

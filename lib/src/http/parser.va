@@ -6,57 +6,86 @@ use mem
 use io
 use fs
 
-struct RequestParser {
-    stage: uint (0)
-    input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
-    chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
-    input_pos: uint (0)
-    headers_length: uint (0)
-    content_length: uint (0)
-    parsed_headers: bool (false)
-    parsed_body: bool (false)
-    chunked: bool (false)
+struct Parser {
+    ~ stage: uint (0)
+    ~ input_pos: uint (0)
+    ~ status: uint (0)
+    ~ headers_start: uint (0)
+    ~ content_start: uint (0)
+    ~ headers_length: uint (0)
+    ~ content_length: uint (0)
 
-    fn full_reset() {
-        this.input_pos = 0
-        this.input.clear()
-        this.soft_reset()
-    }
+    ~ method: String ("")
+    ~ path: String ("")
+    ~ query_string: String ("")
+    ~ header_data: String ("")
 
-    fn soft_reset() {
-        let input = this.input
-        let pos = this.input_pos
-        if pos >= input.length {
-            this.input_pos = 0
-            input.clear()
-        }
-        this.chunks.clear()
+    - chunks: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+    ~ input: utils:ByteBuffer (utils:ByteBuffer.new(8192))
+
+    ~ chunked: bool (false)
+    ~ done: bool (false)
+
+    fn reset() {
         this.stage = 0
+        this.status = 0
+        this.headers_start = 0
+        this.content_start = 0
         this.headers_length = 0
         this.content_length = 0
-        this.parsed_headers = false
-        this.parsed_body = false
+
+        this.path = ""
+        this.method = ""
+        this.query_string = ""
+        this.header_data = ""
+
+        this.chunks.clear()
+
         this.chunked = false
+        this.done = false
+
+        let input = this.input
+        if this.input_pos >= input.length {
+            input.clear()
+            this.input_pos = 0
+            input.reduce_size(8192)
+        } else {
+            let pos = this.input_pos
+            if pos > 64 * 1024 {
+                input.clear_until(pos)
+            }
+        }
+    }
+    fn reset_input() {
+        this.input.clear()
+        this.input_pos = 0
     }
 
-    fn parse(request: Request, is_response: bool) !invalid !http413 !incomplete {
+    fn body() String {
+        if !this.done : return ""
+        if this.chunked : return this.chunks.to_string()
+        return this.input.sub_str(this.content_start, this.content_length)
+    }
 
-        if this.parsed_body {
-            throw invalid
+    fn parse(is_response: bool) !invalid !http413 !incomplete !data_removed_from_input {
+
+        if this.done {
+            return
         }
 
         let input = this.input
         let pos = this.input_pos
+        if pos > input.length {
+            throw data_removed_from_input
+        }
 
         let stage = this.stage
         let data = input.data
         let length = input.length
 
-        let header_data = request.header_data
-
         // Header
         if stage == 0 {
-            let index = input.byte_index_of_byte('\r', pos) ! {
+            let index = input.index_of_byte('\r', pos) ! {
                 if length - pos > 4096 {
                     throw http413
                 }
@@ -71,14 +100,14 @@ struct RequestParser {
                 if split.length < 2 : throw invalid
                 version = split.get(0) ? ""
                 let status = split.get(1) ? ""
-                request.status = status.to_uint() ! throw invalid
+                this.status = status.to_uint() ! throw invalid
 
             } else {
                 if index + 1 == length : throw incomplete
                 if @ptrv(data, u8, index + 1) != '\n' { throw invalid }
 
-                let space1 = input.byte_index_of_byte(' ', pos) ! { throw invalid }
-                let space2 = input.byte_index_of_byte(' ', space1 + 1) ! { throw invalid }
+                let space1 = input.index_of_byte(' ', pos) ! { throw invalid }
+                let space2 = input.index_of_byte(' ', space1 + 1) ! { throw invalid }
 
                 if space1 > index { throw invalid }
                 if space2 > index { throw invalid }
@@ -91,25 +120,26 @@ struct RequestParser {
                 let qmark = path.byte_index_of_byte('?') ? 0
                 if qmark > 0 {
                     let len = path.bytes
-                    request.params_data = path.byte_sub_str(qmark + 1, len - qmark - 1)
+                    this.query_string = path.byte_sub_str(qmark + 1, len - qmark - 1)
                     path = path.byte_sub_str(0, qmark)
                 }
                 version = input.sub_str(space2 + 1, index - space2 - 1)
 
-                request.method = method
-                request.path = path
+                this.method = method
+                this.path = path
             }
 
             pos = index + 2
             this.input_pos = pos
+            this.headers_start = pos
+
             stage = 1
             this.stage = stage
         }
 
         // Headers
-        let headers = request.headerz
         while stage == 1 {
-            let index = input.byte_index_of_byte('\r', pos) ! {
+            let index = input.index_of_byte('\r', pos) ! {
                 if input.length - pos > 4096 {
                     throw http413
                 }
@@ -122,57 +152,45 @@ struct RequestParser {
                 // End of headers
                 pos = index + 2
                 this.input_pos = pos
+
                 stage = 2
                 this.stage = stage
-                this.parsed_headers = true
 
-                // this.content_length = (headers.get("content-length") ? "0").to_uint() ! throw invalid
-                // if (headers.get("transfer-encoding") ? "") == "chunked" {
-                //     this.chunked = true
-                //     this.content_length = 0
-                // }
+                this.content_start = pos
+                this.header_data = this.input.sub_str(this.headers_start, this.headers_length + 2)
                 break
             }
 
-            let split = input.byte_index_of_byte(':', pos) ! { throw invalid }
-            if split > index { throw invalid }
-            while @ptrv(data, u8, split + 1) == ' ' {
-                split++
-            }
+            let key_adr = input.data + pos
+            let header_len = index - pos
+            if header_len > 4095 : throw http413
 
-            // let key = input.sub_str(pos, split - pos - 1)
-            // let value = input.sub_str(split + 1, index - split - 1)
-            // headers.set(key.to_lower(), value)
-
-            let key_len = split - pos - 1
-            let value_len = index - split - 1
-            if key_len > 4095 || value_len > 4095 : throw http413
-
-            let headers_length = this.headers_length + key_len + value_len + 2
+            let headers_length = this.headers_length + header_len + 2
             if headers_length > 8192 : throw http413
             this.headers_length = headers_length
 
-            let key_adr = input.data + pos
-            let value_adr = input.data + split + 1
-            // Convert key to lowercase
-            mem:ascii_bytes_to_lower(key_adr, key_len)
-
-            header_data.append_from_ptr(key_adr, key_len)
-            header_data.append_byte(':')
-            header_data.append_from_ptr(value_adr, value_len)
-            header_data.append_str("\r\n")
-
-            let cmp = "content-length"
-            if key_len == cmp.bytes && mem:equal(key_adr, cmp.data, cmp.bytes) {
-                let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
-                this.content_length = content_len
-            }
-            let cmp_te = "transfer-encoding"
-            if key_len == cmp_te.bytes && mem:equal(key_adr, cmp_te.data, cmp.bytes) {
-                let v = "chunked"
-                if mem:equal(value_adr, v.data, v.bytes) {
-                    this.chunked = true
-                    this.content_length = 0
+            // Check certain headers
+            let h1 = "content-length"
+            let h2 = "transfer-encoding"
+            if header_len > h1.bytes && @ptrv(key_adr, u8, h1.bytes) == ':' {
+                mem:ascii_bytes_to_lower(key_adr, h1.bytes)
+                if mem:equal(key_adr, h1.data_ptr(), h1.bytes) {
+                    let value_adr = key_adr + h1.bytes + 1;
+                    while @ptrv(value_adr, u8).is_html_spacing() : value_adr += 1
+                    let value_len = ((input.data + index) - value_adr) @as uint
+                    let content_len = mem:bytes_to_uint(value_adr, value_len) ! { throw invalid }
+                    this.content_length = content_len
+                }
+            } else if header_len > h2.bytes && @ptrv(key_adr, u8, h2.bytes) == ':' {
+                mem:ascii_bytes_to_lower(key_adr, h2.bytes)
+                if mem:equal(key_adr, h2.data_ptr(), h2.bytes) {
+                    let value_adr = key_adr + h1.bytes + 1;
+                    while @ptrv(value_adr, u8).is_html_spacing() : value_adr += 1
+                    let v = "chunked"
+                    if mem:equal(value_adr, v.data_ptr(), v.bytes) {
+                        this.chunked = true
+                        this.content_length = 0
+                    }
                 }
             }
 
@@ -192,7 +210,7 @@ struct RequestParser {
                     // Read length line
                     let chlen = this.content_length
                     if chlen == 0 {
-                        let index = input.byte_index_of_byte('\r', pos) ! {
+                        let index = input.index_of_byte('\r', pos) ! {
                             if bytes_left > 16 { 
                                 throw invalid
                             }
@@ -226,24 +244,16 @@ struct RequestParser {
                     bytes_left = length - (pos + chlen)
                 }
 
-                this.parsed_body = true
-                request.body = chunks.to_string()
-                this.stage = 3
-                chunks.clear()
-
             } else {
                 // Non chunked
                 if bytes_left < content_len : throw incomplete
 
-                let body = input.sub_str(pos, content_len)
-
                 pos += content_len
-                this.parsed_body = true
-                request.body = body
-                this.stage = 3
-
                 this.input_pos = pos
             }
+
+            this.stage = 3
+            this.done = true
         }
     }
 }

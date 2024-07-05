@@ -130,61 +130,62 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             t = tok(p, true, false, true);
             tkn = p->tkn;
         }
+    }
 
-        if (t == tok_sq_bracket_open) {
-            Type* array_type = read_type(p, alc, false);
-            tok_expect(p, ",", true, false);
-            t = tok(p, true, false, true);
-            if(t != tok_number) {
-                parse_err(p, -1, "Expected a valid number here to define the length of the static array");
-            }
-            int itemc = atoi(p->tkn);
-            if(itemc == 0) {
-                parse_err(p, -1, "Static array size must be larger than 0, size: '%s'", p->tkn);
-            }
-            tok_expect(p, "]", true, false);
-            Type *t = type_make(alc, type_static_array);
-            t->array_type = array_type;
-            t->is_pointer = !is_inline;
-            t->size = is_inline ? (array_type->size * itemc) : b->ptr_size;
-            t->array_size = itemc;
-            return t;
+    if (t == tok_sq_bracket_open) {
+        Type *array_type = read_type(p, alc, false);
+        tok_expect(p, ",", true, false);
+        t = tok(p, true, false, true);
+        if (t != tok_number) {
+            parse_err(p, -1, "Expected a valid number here to define the length of the static array");
         }
+        int itemc = atoi(p->tkn);
+        if (itemc == 0) {
+            parse_err(p, -1, "Static array size must be larger than 0, size: '%s'", p->tkn);
+        }
+        tok_expect(p, "]", true, false);
+        Type *t = type_make(alc, type_static_array);
+        t->array_type = array_type;
+        t->is_pointer = !is_inline;
+        t->size = is_inline ? (array_type->size * itemc) : b->ptr_size;
+        t->array_size = itemc;
+        return t;
+    }
 
-        if (t == tok_id) {
-            // Identifier
-            Id id;
-            read_id(p, tkn, &id);
-            Idf *idf = idf_by_id(p, scope, &id, false);
-            if (!idf) {
-                id.ns ? parse_err(p, -1, "Unknown type: '%s:%s'", id.ns, id.name)
-                      : parse_err(p, -1, "Unknown type: '%s'", id.name);
-            }
-            if (idf->type == idf_class) {
-                Class *class = idf->item;
+    if (t == tok_id) {
+        // Identifier
+        char* tkn = p->tkn;
+        Id id;
+        read_id(p, tkn, &id);
+        Idf *idf = idf_by_id(p, scope, &id, false);
+        if (!idf) {
+            id.ns ? parse_err(p, -1, "Unknown type: '%s:%s'", id.ns, id.name)
+                  : parse_err(p, -1, "Unknown type: '%s'", id.name);
+        }
+        if (idf->type == idf_class) {
+            Class *class = idf->item;
 
-                if (class->is_generic_base) {
-                    tok_expect(p, "[", false, false);
-                    int count = class->generic_names->length;
-                    Array* generic_types = array_make(alc, count + 1);
-                    for (int i = 0; i < count; i++) {
-                        Type* type = read_type(p, alc, false);
-                        array_push(generic_types, type);
-                        if(i + 1 < count) {
-                            tok_expect(p, ",", true, false);
-                        } else {
-                            tok_expect(p, "]", true, false);
-                            break;
-                        }
+            if (class->is_generic_base) {
+                tok_expect(p, "[", false, false);
+                int count = class->generic_names->length;
+                Array *generic_types = array_make(alc, count + 1);
+                for (int i = 0; i < count; i++) {
+                    Type *type = read_type(p, alc, false);
+                    array_push(generic_types, type);
+                    if (i + 1 < count) {
+                        tok_expect(p, ",", true, false);
+                    } else {
+                        tok_expect(p, "]", true, false);
+                        break;
                     }
-                    class = get_generic_class(p, class, generic_types);
                 }
+                class = get_generic_class(p, class, generic_types);
+            }
 
-                type = type_gen_class(alc, class);
-            }
-            if (idf->type == idf_type) {
-                type = type_clone(alc, idf->item);
-            }
+            type = type_gen_class(alc, class);
+        }
+        if (idf->type == idf_type) {
+            type = type_clone(alc, idf->item);
         }
     }
 

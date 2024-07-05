@@ -330,9 +330,29 @@ char* ir_value(IR* ir, Value* v) {
         ir->block = block_after;
         r = ir_phi(ir, values, ir_type(ir, v->rett));
     }
-    else if (vt == v_await) {
-        VAwait* aw = v->item;
-    //     return ir_await(ir, scope, aw);
+    // else if (vt == v_await) {
+    //     VAwait* aw = v->item;
+    // //     return ir_await(ir, scope, aw);
+    // }
+    else if (vt == v_bit_lz) {
+        Value* val = v->item;
+        Str *code = ir->block->code;
+        // declare i8   @llvm.ctlz.i8  (i8   <src>, i1 <is_zero_poison>)
+        char* on = ir_value(ir, val);
+        char* var = ir_var(ir->func);
+        char* type = ir_type(ir, val->rett);
+        str_flat(code, "  ");
+        str_add(code, var);
+        str_flat(code, " = call ");
+        str_add(code, type);
+        str_flat(code, " @llvm.ctlz.");
+        str_add(code, type);
+        str_flat(code, " (");
+        str_add(code, type);
+        str_flat(code, " ");
+        str_add(code, on);
+        str_flat(code, ", i1 0)\n");
+        r = var;
     }
     else if (vt == v_this_but_that) {
         VThisButThat* tbt = v->item;
@@ -433,6 +453,21 @@ char* ir_value(IR* ir, Value* v) {
         str_add(code, on);
         str_flat(code, ", i8 ");
         str_add(code, with);
+        str_flat(code, ", i64 ");
+        str_add(code, len);
+        str_flat(code, ", i1 0)\n");
+        r = "";
+    }
+    else if (vt == v_memcpy) {
+        VMemcpy* mc = v->item;
+        char* from = ir_value(ir, mc->from);
+        char* to = ir_value(ir, mc->to);
+        char* len = ir_value(ir, mc->length);
+        Str *code = ir->block->code;
+        str_flat(code, "  call void @llvm.memcpy.p0.p0.i64(ptr ");
+        str_add(code, to);
+        str_flat(code, ", ptr ");
+        str_add(code, from);
         str_flat(code, ", i64 ");
         str_add(code, len);
         str_flat(code, ", i1 0)\n");
