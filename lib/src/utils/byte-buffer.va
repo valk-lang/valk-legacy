@@ -161,6 +161,7 @@ struct ByteBuffer {
         mem:copy(data, adr, len)
         mem:free(data)
         this.data = adr
+        this.size = size
     }
 
     fn print() {
