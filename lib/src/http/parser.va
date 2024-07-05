@@ -44,9 +44,16 @@ struct Parser {
         this.chunked = false
         this.done = false
 
-        if this.input_pos >= this.input.length {
-            this.input.clear()
+        let input = this.input
+        if this.input_pos >= input.length {
+            input.clear()
             this.input_pos = 0
+            input.reduce_size(8192)
+        } else {
+            let pos = this.input_pos
+            if pos > 64 * 1024 {
+                input.clear_until(pos)
+            }
         }
     }
     fn reset_input() {

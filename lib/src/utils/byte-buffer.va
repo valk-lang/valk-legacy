@@ -152,6 +152,17 @@ struct ByteBuffer {
         }
     }
 
+    fn reduce_size(size: uint) {
+        if this.size <= size : return
+        let len = this.length
+        if len > size : size = len
+        let data = this.data
+        let adr : ptr = mem:alloc(size)
+        mem:copy(data, adr, len)
+        mem:free(data)
+        this.data = adr
+    }
+
     fn print() {
         if this.length == 0 : return
         io:print_from_ptr(this.data, this.length)

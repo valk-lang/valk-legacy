@@ -13,7 +13,6 @@ struct Connection {
     fd: FD
 
     // Request
-    request: Request (Request{})
     parser: Parser (Parser{})
 
     // Response
@@ -30,6 +29,7 @@ struct Connection {
         }
         this.output.clear()
         this.output_pos = 0
+        this.output.reduce_size(8192)
     }
 
     fn send_file(stream: fs:FileStream, filename: ?String) void {
@@ -72,9 +72,14 @@ struct Connection {
         let max_bs = server.max_request_body_size
         let max_sbs = server.max_server_wide_body_size
 
-        // let request = this.request
         let parser = this.parser
         let input = parser.input
+        let handler = server.handler
+        let fast_handler = server.fast_handler
+
+        let request = Request{
+            output: this.output
+        }
 
         while true {
 
@@ -92,18 +97,24 @@ struct Connection {
             }
 
             // Create request
-            let request = Request {
-                method: parser.method
-                path: parser.path
-                query_string: parser.query_string
-                header_data: parser.header_data
-                body: parser.body()
+            if isset(fast_handler) {
+                let req = request
+                req.method = parser.method
+                req.path = parser.path
+                req.query_string = parser.query_string
+                req.header_data = parser.header_data
+                req.body = parser.body()
+                req.responded = false
+            } else {
+                request = Request {
+                    method: parser.method
+                    path: parser.path
+                    query_string: parser.query_string
+                    header_data: parser.header_data
+                    body: parser.body()
+                }
             }
-            // request.method = parser.method
-            // request.path = parser.path
-            // request.query_string = parser.query_string
-            // request.header_data = parser.header_data
-            // request.body = parser.body()
+            let req = request
 
             // Reset parser for next request
             parser.reset()
@@ -112,7 +123,7 @@ struct Connection {
             // Check static dirs
             let is_file = false
             if server.static_dirs.length > 0 {
-                let path = request.path.trim("/")
+                let path = req.path.trim("/")
                 if path.bytes > 0 {
                     each server.static_dirs as dir {
                         let fullpath = dir + path 
@@ -128,8 +139,16 @@ struct Connection {
 
             // Response
             if !is_file {
-                let resp = server.handler(request)
-                this.respond(resp)
+                if isset(fast_handler) {
+                    fast_handler(req)
+                    if !request.responded {
+                        this.close()
+                        return
+                    }
+                } else {
+                    let resp = handler(req)
+                    this.respond(resp)
+                }
             }
 
             // Flush output
