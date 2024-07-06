@@ -20,19 +20,19 @@ cstruct libc_pollfd {
     revents: i16
 }
 
-cstruct libc_stat {
-    st_gid: i32
-    st_atime: i16
-    st_ctime: i16
-    st_dev: i16
-    st_ino: i16
-    st_mode: i16
-    st_mtime: i32
-    st_nlink: i32
-    st_rdev: i64
-    st_size: i64
-    st_uid: i64
-}
+// cstruct libc_stat {
+//     st_gid: i32
+//     st_atime: i16
+//     st_ctime: i16
+//     st_dev: i16
+//     st_ino: i16
+//     st_mode: i16
+//     st_mtime: i32
+//     st_nlink: i32
+//     st_rdev: i64
+//     st_size: i64
+//     st_uid: i64
+// }
 
 cstruct libc_addrinfo {
     ai_flags: i32

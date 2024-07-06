@@ -1,4 +1,6 @@
 
+alias libc_stat as libc_stat_fix
+
 cstruct libc_jmp_buf {
     data: inline [ptr, 5]
 }
@@ -17,4 +19,20 @@ cstruct libc_addrinfo_fix {
     ai_canonname: ptr
     ai_addr: ptr
     ai_next: ptr
+}
+
+cstruct libc_stat_fix {
+    st_dev: u32
+    st_ino: u16
+    st_mode: u16
+
+    st_nlink: i16
+    st_uid: i16
+    st_gid: i16
+    st_rdev: u32
+    st_size: i32
+
+    st_atime: i64
+    st_mtime: i64
+    st_ctime: i64
 }

@@ -14,6 +14,10 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
 
     // let flags : i32 = (sys:O_RDONLY | sys:O_NONBLOCK) @as i32
     let flags : i32 = sys:O_RDONLY @as i32
+    #if OS == win
+    flags = flags | 0x8000 // O_BINARY
+    #end
+
     if writable : flags = sys:O_RDWR
     if create_file_if_doesnt_exist : flags = flags | sys:O_CREATE
     if append_on_write : flags = flags | sys:O_APPEND
