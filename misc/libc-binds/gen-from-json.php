@@ -14,10 +14,10 @@ function extract_c_base_type(string $ctype): string {
 }
 
 function mark_used_struct($struct, $lookup) {
-    if(isset($lookup->set_name)) {
-        $struct->name = $lookup->set_name;
-        $lookup->set_name = null;
-    }
+    // if(isset($lookup->set_name)) {
+    //     $struct->name = $lookup->set_name;
+    //     $lookup->set_name = null;
+    // }
     if($struct->used)
         return;
     $struct->used = true;
@@ -97,7 +97,7 @@ function convert_type_td($td, $lookup) : String {
     if ($td->kind == 'RecordType') {
         $struct_id = $td->decl->id;
         $struct = $lookup->structs_by_id->{$struct_id};
-        return "inline libc_" .  $struct->name;
+        return "inline libc_gen_" .  $struct->name;
     }
     var_dump("Unknown kind: $td->kind");
     exit(1);
@@ -108,7 +108,7 @@ function convert_type_qt(string $qt, object $lookup) : String {
     // Struct
     if(isset($lookup->structs->$qt)) {
         $struct = $lookup->structs->$qt;
-        return "inline libc_" .  $struct->name;
+        return "inline libc_gen_" .  $struct->name;
     }
 
     // Array
@@ -249,9 +249,9 @@ function gen_valk_structs_ast(string $json, array $target): string
 
     foreach($vars as $valk_name => $var) {
         $type = $jvars->{'var_' . $valk_name};
-        $lookup->set_name = $valk_name;
+        // $lookup->set_name = $valk_name;
         mark_used_type($type, $lookup);
-        $type->valk_name = $valk_name;
+        // $type->valk_name = $valk_name;
     }
 
     // // Remove un-used
@@ -264,10 +264,18 @@ function gen_valk_structs_ast(string $json, array $target): string
     // file_put_contents(__DIR__ . '/tmp/debug.json', json_encode($lookup, JSON_PRETTY_PRINT));
     // file_put_contents(__DIR__ . '/tmp/debug-vars.json', json_encode($jvars, JSON_PRETTY_PRINT));
 
+    $code .= "\n";
+    foreach($vars as $valk_name => $var) {
+        $type = $jvars->{'var_' . $valk_name};
+        $conv = convert_type($type, $lookup);
+        $conv = substr($conv, 7, strlen($conv) - 7);
+        $code .= "type libc_$valk_name ($conv)\n";
+    }
+
     // Write code
     $code .= "\n";
     foreach($structs as $name => $struct) {
-        $code .= "cstruct libc_" . $struct->name . " {\n";
+        $code .= "cstruct libc_gen_" . $struct->name . " {\n";
         foreach ($struct->fields as $name => $field) {
             $type = convert_type($field->type, $lookup);
             $code .= "    $name: " . $type . "\n";

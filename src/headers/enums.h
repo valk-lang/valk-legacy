@@ -86,6 +86,7 @@ enum IDF {
     idf_class,
     idf_global,
     idf_value_alias,
+    idf_type_alias,
     idf_snippet,
     idf_value,
     idf_type,

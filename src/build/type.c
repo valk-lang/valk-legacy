@@ -187,6 +187,18 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
         if (idf->type == idf_type) {
             type = type_clone(alc, idf->item);
         }
+        if (idf->type == idf_type_alias) {
+            ValueAlias *va = idf->item;
+            // value_check_act(va->act, va->fc, p, "type-alias");
+            Chunk ch;
+            ch = *p->chunk;
+            *p->chunk = *va->chunk;
+            Scope *scope = p->scope;
+            p->scope = va->scope;
+            type = read_type(p, alc, true);
+            p->scope = scope;
+            *p->chunk = ch;
+        }
     }
 
     if (type) {

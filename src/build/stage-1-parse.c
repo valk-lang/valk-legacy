@@ -9,6 +9,7 @@ void stage_1_trait(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_use(Parser* p, Unit* u);
 void stage_1_global(Parser* p, Unit* u, bool shared, int act, Fc* fc);
 void stage_1_value_alias(Parser* p, Unit* u, int act, Fc* fc);
+void stage_1_type_alias(Parser* p, Unit* u, int act, Fc* fc);
 void stage_1_alias(Parser* p, Unit* u, Fc* fc);
 void stage_1_macro(Parser* p, Unit* u, Fc* fc);
 void stage_1_test(Parser* p, Unit* u, Fc* fc);
@@ -121,6 +122,10 @@ void stage_parse(Parser* p, Unit* u, Fc* fc) {
             }
             if (str_is(tkn, "value")) {
                 stage_1_value_alias(p, u, act, fc);
+                continue;
+            }
+            if (str_is(tkn, "type")) {
+                stage_1_type_alias(p, u, act, fc);
                 continue;
             }
             if (str_is(tkn, "alias")) {
@@ -452,6 +457,29 @@ void stage_1_value_alias(Parser *p, Unit *u, int act, Fc* fc) {
     skip_body(p);
 
     Idf* idf = idf_make(b->alc, idf_value_alias, va);
+    scope_set_idf(u->nsc->scope, name, idf, p);
+}
+
+void stage_1_type_alias(Parser *p, Unit *u, int act, Fc* fc) {
+    Build *b = u->b;
+    char t = tok(p, true, false, true);
+    char* name = p->tkn;
+    if(t != tok_id) {
+        parse_err(p, -1, "Invalid value name: '%s'", name);
+    }
+
+    tok_expect(p, "(", true, false);
+
+    Chunk *chunk = chunk_clone(b->alc, p->chunk);
+    ValueAlias *va = al(b->alc, sizeof(ValueAlias));
+    va->chunk = chunk;
+    va->scope = p->scope;
+    va->fc = fc;
+    va->act = act;
+
+    skip_body(p);
+
+    Idf* idf = idf_make(b->alc, idf_type_alias, va);
     scope_set_idf(u->nsc->scope, name, idf, p);
 }
 
