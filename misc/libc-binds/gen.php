@@ -1,6 +1,7 @@
 <?php
 
 include __DIR__ . '/gen-structs.php';
+include __DIR__ . '/gen-from-json.php';
 
 $imports = ['sys/stat'];
 $unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time'];
@@ -11,19 +12,15 @@ $win_imports = array_merge($imports, ['winsock2', 'time']);
 $vars = [
     'timespec' => [
         'ctype' => 'struct timespec',
-        'fields' => ['tv_sec', 'tv_nsec']
     ],
     'timeval' => [
         'ctype' => 'struct timeval',
-        'fields' => ['tv_sec', 'tv_usec']
     ],
     'sockaddr' => [
         'ctype' => 'struct sockaddr',
-        'fields' => ['sa_family', 'sa_data']
     ],
     'pollfd' => [
         'ctype' => 'struct pollfd',
-        'fields' => ['fd', 'events', 'revents']
     ],
 ];
 $linux_vars = array_merge($vars, [
@@ -32,23 +29,18 @@ $linux_vars = array_merge($vars, [
     ],
     'stat' => [
         'ctype' => 'struct stat',
-        'fields' => ['st_dev', 'st_ino', 'st_nlink', 'st_mode', 'st_uid', 'st_gid', '__pad0', 'st_rdev', 'st_size', 'st_blksize', 'st_blocks', 'st_atime', 'st_mtime', 'st_ctime', '__unused']
     ],
     'dirent' => [
         'ctype' => 'struct dirent',
-        'fields' => ['d_ino', 'd_off', 'd_reclen', 'd_type', 'd_name']
     ],
     'timezone' => [
         'ctype' => 'struct timezone',
-        'fields' => ['tz_minuteswest', 'tz_dsttime']
     ],
     'addrinfo' => [
         'ctype' => 'struct addrinfo',
-        'fields' => ['ai_flags', 'ai_family', 'ai_socktype', 'ai_protocol', 'ai_addrlen', 'ai_addr', 'ai_canonname', 'ai_next']
     ],
     'epoll_event' => [
         'ctype' => 'struct epoll_event',
-        'fields' => ['events', 'data']
     ],
 ]);
 $macos_vars = array_merge($vars, [
@@ -57,58 +49,40 @@ $macos_vars = array_merge($vars, [
     ],
     'stat' => [
         'ctype' => 'struct stat',
-        'fields' => ['st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev', 'st_atime', 'st_mtime', 'st_ctime', 'st_size', 'st_blocks', 'st_blksize', 'st_flags', 'st_gen', 'st_lspare', '__unused'],
-        'fields_arch' => [
-            'arm64' => [
-                'st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev', 'st_atime', 'st_mtime', 'st_xtime', 'st_ctime', 'st_size', 'st_blocks', 'st_blksize', 'st_flags', 'st_gen', 'st_lspare', '__unused'
-            ]
-        ]
     ],
     'dirent' => [
         'ctype' => 'struct dirent',
-        'fields' => ['d_ino', 'd_off', 'd_reclen', 'd_type', 'd_name'],
-        'fields_arch' => [
-            'arm64' => ['unknown1', 'unknown2', 'unknown3', 'd_reclen', 'd_type', 'd_name']
-        ]
     ],
     'timezone' => [
         'ctype' => 'struct timezone',
-        'fields' => ['tz_minuteswest', 'tz_dsttime']
     ],
     'addrinfo' => [
         'ctype' => 'struct addrinfo',
-        'fields' => ['ai_flags', 'ai_family', 'ai_socktype', 'ai_protocol', 'ai_addrlen', 'ai_canonname', 'ai_addr', 'ai_next']
     ],
     'sockaddr' => [
         'ctype' => 'struct sockaddr',
-        'fields' => ['sa_len', 'sa_family', 'sa_data']
     ],
 ]);
 $win_vars = array_merge($vars, [
     'stat' => [
         'ctype' => 'struct stat',
-        'fields' => ['st_gid', 'st_atime', 'st_ctime', 'st_dev', 'st_ino', 'st_mode', 'st_mtime', 'st_nlink', 'st_rdev', 'st_size', 'st_uid']
     ],
     'pollfd' => [
         'ctype' => 'WSAPOLLFD',
-        'fields' => ['fd', 'events', 'revents']
     ],
     'addrinfo' => [
         'ctype' => 'ADDRINFOA',
-        'fields' => ['ai_flags', 'ai_family', 'ai_socktype', 'ai_protocol', 'ai_addrlen', 'ai_addr', 'ai_canonname', 'ai_next']
     ],
     'WIN32_FIND_DATAA' => [
         'ctype' => 'WIN32_FIND_DATAA',
-        'fields' => ['dwFileAttributes', 'ftCreationTime', 'ftLastAccessTime', 'ftLastWriteTime', 'nFileSizeHigh', 'nFileSizeLow', 'dwReserved0', 'dwReserved1', 'cFileName', 'cAlternateFileName']
     ],
     'FILETIME' => [
         'ctype' => 'FILETIME',
-        'fields' => ['dwLowDateTime', 'dwHighDateTime']
     ],
 ]);
 
 $targets = [
-    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-x64/x86_64-buildroot-linux-gnu/sysroot', 'imports' => $linux_imports, 'vars' => $linux_vars],
+    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-amd64', 'imports' => $linux_imports, 'vars' => $linux_vars],
     'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'arch' => 'x64', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
     'macos-arm64' => ['target' => 'arm64-apple-darwin-macho', 'arch' => 'arm64', 'header_dir' => 'macos/arm64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
     'win-x64' => [
@@ -178,15 +152,17 @@ foreach($targets as $valk_target => $target) {
     $ast_cmd = $cmd . " -c $path -Xclang -ast-dump=json > $path_ast";
     $cmd .= " -S -emit-llvm $path -o $path_ir";
 
-    // echo $cmd . "\n";
-    // echo $ast_cmd . "\n";
+    echo $cmd . "\n";
+    echo $ast_cmd . "\n";
     exec($cmd);
     exec($ast_cmd);
 
-    $ir = file_get_contents($path_ir);
 
     // Gen valk structs
-    $code = gen_valk_structs($ir, $target);
+    // $ir = file_get_contents($path_ir);
+    // $code = gen_valk_structs($ir, $target);
+    $ast = file_get_contents($path_ast);
+    $code = gen_valk_structs_ast($ast, $target);
 
     $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
     file_put_contents($hpath, $code);
