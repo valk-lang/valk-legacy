@@ -212,10 +212,13 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
 Type* type_clone(Allocator* alc, Type* type) {
     Type* t = al(alc, sizeof(Type));
     *t = *type;
+    t->func_info = type_clone_function_info(alc, type->func_info);
     return t;
 }
 
 TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi) {
+    if(!fi)
+        return NULL;
 
     TypeFuncInfo* fi2 = al(alc, sizeof(TypeFuncInfo));
     *fi2 = *fi;

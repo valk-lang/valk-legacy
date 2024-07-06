@@ -26,7 +26,7 @@ struct Response {
     static fn empty(code: u32, headers: ?Map[String] (null)) Response {
     	return Response{ status: code, headers: headers }
     }
-    static fn file(path: String, filename: String (null)) Response {
+    static fn file(path: String, filename: ?String (null)) Response {
     	return Response{ filepath: path, filename: filename }
     }
 

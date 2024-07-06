@@ -407,6 +407,15 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
             v = vgen_func_call(alc, p, fptr, args);
 
+        } else if (str_is(tkn, "__FILE__")) {
+            char* body = p->func->fc->path;
+            v = vgen_string(alc, p->unit, body);
+
+        } else if (str_is(tkn, "__DIR__")) {
+            char body[VALK_PATH_MAX];
+            get_dir_from_path(p->func->fc->path, body);
+            v = vgen_string(alc, p->unit, dups(alc, body));
+
         } else {
             // Identifiers
             Id id;
