@@ -2,6 +2,7 @@
 header "sys" as sys
 
 use os
+use io
 use type
 
 struct CoroPoll {
@@ -26,7 +27,8 @@ struct CoroPoll {
         let pi = pis.get(index)
 
         #if OS == win
-        pi.fd = fd
+        let ofd = io:os_fd(fd)
+        pi.fd = ofd
         #else
         pi.fd = fd @as i32
         #end
