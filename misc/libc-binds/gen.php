@@ -112,6 +112,8 @@ $header_dir = $root . '/../../lib/headers';
 // Generate
 foreach($targets as $valk_target => $target) {
 
+    $target['name'] = $valk_target;
+
     $code = "";
     $code .= '#pragma clang diagnostic ignored "-Wpragma-pack"' . "\n";
     $code .= '#pragma clang diagnostic ignored "-Wignored-attributes"' . "\n";

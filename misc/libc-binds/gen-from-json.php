@@ -147,9 +147,9 @@ function convert_type_qt(string $qt, object $lookup) : String {
     if($qt == 'unsigned int')
         return "u32";
     if($qt == 'long')
-        return "int";
+        return $lookup->is_windows ? "i32" : "int";
     if($qt == 'unsigned long')
-        return "uint";
+        return $lookup->is_windows ? "u32" : "uint";
     if($qt == 'long long')
         return "int";
     if($qt == 'unsigned long long')
@@ -202,6 +202,8 @@ function gen_valk_structs_ast(string $json, array $target): string
         'structs_by_id' => $structs_by_id,
         'typedefs' => $typedefs,
         'typedefs_by_name' => $typedefs_by_name,
+        'target' => $target,
+        'is_windows' => str_starts_with($target['name'], 'win-'), 
     ];
 
     foreach($data as $item) {

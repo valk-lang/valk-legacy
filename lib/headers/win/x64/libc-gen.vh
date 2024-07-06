@@ -16,26 +16,26 @@ cstruct libc_gen_stat {
     st_uid: i16
     st_gid: i16
     st_rdev: u32
-    st_size: int
+    st_size: i32
     st_atime: int
     st_mtime: int
     st_ctime: int
 }
 
 cstruct libc_gen__FILETIME {
-    dwLowDateTime: uint
-    dwHighDateTime: uint
+    dwLowDateTime: u32
+    dwHighDateTime: u32
 }
 
 cstruct libc_gen__WIN32_FIND_DATAA {
-    dwFileAttributes: uint
+    dwFileAttributes: u32
     ftCreationTime: inline libc_gen__FILETIME
     ftLastAccessTime: inline libc_gen__FILETIME
     ftLastWriteTime: inline libc_gen__FILETIME
-    nFileSizeHigh: uint
-    nFileSizeLow: uint
-    dwReserved0: uint
-    dwReserved1: uint
+    nFileSizeHigh: u32
+    nFileSizeLow: u32
+    dwReserved0: u32
+    dwReserved1: u32
     cFileName: inline [i8, 260]
     cAlternateFileName: inline [i8, 14]
 }
@@ -57,8 +57,8 @@ cstruct libc_gen_addrinfo {
 }
 
 cstruct libc_gen_timeval {
-    tv_sec: int
-    tv_usec: int
+    tv_sec: i32
+    tv_usec: i32
 }
 
 cstruct libc_gen_pollfd {
@@ -69,6 +69,6 @@ cstruct libc_gen_pollfd {
 
 cstruct libc_gen_timespec {
     tv_sec: int
-    tv_nsec: int
+    tv_nsec: i32
 }
 
