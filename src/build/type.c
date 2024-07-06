@@ -196,6 +196,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             Scope *scope = p->scope;
             p->scope = va->scope;
             type = read_type(p, alc, true);
+            type = type_clone(alc, type);
             p->scope = scope;
             *p->chunk = ch;
         }
@@ -206,6 +207,9 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             type->is_pointer = false;
             if(type->type == type_struct) {
                 type->size = type->class->size;
+            }
+            if(type->type == type_static_array) {
+                type->size = type->array_type->size * type->array_size;
             }
         }
         if (nullable) {
