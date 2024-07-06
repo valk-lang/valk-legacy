@@ -138,6 +138,8 @@ function convert_type_qt(string $qt, object $lookup) : String {
         return "int";
     if($qt == 'unsigned long')
         return "uint";
+    if($qt == 'long long')
+        return "int";
 
     if(isset($lookup->typedefs_by_name->$qt)) {
         $td = $lookup->typedefs_by_name->$qt;
