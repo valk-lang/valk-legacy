@@ -14,6 +14,10 @@ function extract_c_base_type(string $ctype): string {
 }
 
 function mark_used_struct($struct, $lookup) {
+    if(isset($lookup->set_name)) {
+        $struct->name = $lookup->set_name;
+        $lookup->set_name = null;
+    }
     if($struct->used)
         return;
     $struct->used = true;
@@ -27,6 +31,10 @@ function mark_used_td($td, $lookup) {
         return;
     }
     if ($td->kind == 'TypedefType') {
+        if(isset($td->decl->id)) {
+            $subtd = $lookup->typedefs->{$td->decl->id};
+            return mark_used_td($subtd[0], $lookup);
+        }
         foreach($td->inner as $td_item) {
             mark_used_td($td_item, $lookup);
         }
@@ -80,6 +88,10 @@ function convert_type_td($td, $lookup) : String {
         return convert_type_td($td->inner[0], $lookup);
     }
     if ($td->kind == 'TypedefType') {
+        if(isset($td->decl->id)) {
+            $subtd = $lookup->typedefs->{$td->decl->id};
+            return convert_type_td($subtd[0], $lookup);
+        }
         return convert_type_td($td->inner[0], $lookup);
     }
     if ($td->kind == 'RecordType') {
@@ -140,6 +152,8 @@ function convert_type_qt(string $qt, object $lookup) : String {
         return "uint";
     if($qt == 'long long')
         return "int";
+    if($qt == 'unsigned long long')
+        return "uint";
 
     if(isset($lookup->typedefs_by_name->$qt)) {
         $td = $lookup->typedefs_by_name->$qt;
@@ -201,10 +215,14 @@ function gen_valk_structs_ast(string $json, array $target): string
             if (!isset($item->inner)) {
                 continue;
             }
+            $bitfields = 0;
             $fields = (object)[];
             foreach($item->inner as $field) {
                 if ($field->kind != 'FieldDecl')
                     continue;
+                if(!isset($field->name)) {
+                    $field->name = 'bitfield_' . ($bitfields++);
+                }
                 $fields->{$field->name} = (object)[
                     'type' => $field->type
                 ];
@@ -231,6 +249,7 @@ function gen_valk_structs_ast(string $json, array $target): string
 
     foreach($vars as $valk_name => $var) {
         $type = $jvars->{'var_' . $valk_name};
+        $lookup->set_name = $valk_name;
         mark_used_type($type, $lookup);
         $type->valk_name = $valk_name;
     }

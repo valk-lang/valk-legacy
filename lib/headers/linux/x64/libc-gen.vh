@@ -26,7 +26,7 @@ cstruct libc_anon_struct_1 {
     __val: inline [uint, 16]
 }
 
-cstruct libc___jmp_buf_tag {
+cstruct libc_jmp_buf {
     __jmpbuf: inline [int, 8]
     __mask_was_saved: i32
     __saved_mask: inline libc_anon_struct_1
