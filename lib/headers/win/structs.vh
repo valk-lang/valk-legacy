@@ -1,5 +1,5 @@
 
-alias libc_stat as libc_stat_fix
+// alias libc_stat as libc_stat_fix
 
 cstruct libc_jmp_buf {
     data: inline [ptr, 5]

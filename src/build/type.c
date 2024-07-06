@@ -187,6 +187,19 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
         if (idf->type == idf_type) {
             type = type_clone(alc, idf->item);
         }
+        if (idf->type == idf_type_alias) {
+            ValueAlias *va = idf->item;
+            // value_check_act(va->act, va->fc, p, "type-alias");
+            Chunk ch;
+            ch = *p->chunk;
+            *p->chunk = *va->chunk;
+            Scope *scope = p->scope;
+            p->scope = va->scope;
+            type = read_type(p, alc, true);
+            type = type_clone(alc, type);
+            p->scope = scope;
+            *p->chunk = ch;
+        }
     }
 
     if (type) {
@@ -194,6 +207,9 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             type->is_pointer = false;
             if(type->type == type_struct) {
                 type->size = type->class->size;
+            }
+            if(type->type == type_static_array) {
+                type->size = type->array_type->size * type->array_size;
             }
         }
         if (nullable) {

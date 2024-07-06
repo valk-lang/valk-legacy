@@ -1,70 +1,77 @@
 
-cstruct libc_timespec {
-    tv_sec: i64
-    tv_nsec: i64
+type libc_timespec (libc_gen_timespec)
+type libc_timeval (libc_gen_timeval)
+type libc_sockaddr (libc_gen_sockaddr)
+type libc_pollfd (libc_gen_pollfd)
+type libc_jmp_buf ([i32, 37])
+type libc_stat (libc_gen_stat)
+type libc_dirent (libc_gen_dirent)
+type libc_timezone (libc_gen_timezone)
+type libc_addrinfo (libc_gen_addrinfo)
+
+cstruct libc_gen_timespec {
+    tv_sec: int
+    tv_nsec: int
 }
 
-cstruct libc_timeval {
-    tv_sec: i64
+cstruct libc_gen_stat {
+    st_dev: i32
+    st_ino: u32
+    st_mode: u16
+    st_nlink: u16
+    st_uid: u32
+    st_gid: u32
+    st_rdev: i32
+    st_atimespec: inline libc_gen_timespec
+    st_mtimespec: inline libc_gen_timespec
+    st_ctimespec: inline libc_gen_timespec
+    st_size: int
+    st_blocks: int
+    st_blksize: i32
+    st_flags: u32
+    st_gen: u32
+    st_lspare: i32
+    st_qspare: inline [int, 2]
+}
+
+cstruct libc_gen_dirent {
+    d_ino: u32
+    d_reclen: u16
+    d_type: u8
+    d_namlen: u8
+    d_name: inline [i8, 256]
+}
+
+cstruct libc_gen_timeval {
+    tv_sec: int
     tv_usec: i32
 }
 
-cstruct libc_sockaddr {
-    sa_len: i8
-    sa_family: i8
-    sa_data: inline [i8, 14]
-}
-
-cstruct libc_pollfd {
+cstruct libc_gen_pollfd {
     fd: i32
     events: i16
     revents: i16
 }
 
-cstruct libc_stat {
-    st_dev: i32
-    st_ino: i32
-    st_mode: i16
-    st_nlink: i16
-    st_uid: i32
-    st_gid: i32
-    st_rdev: i32
-    st_atime: inline libc_timespec
-    st_mtime: inline libc_timespec
-    st_ctime: inline libc_timespec
-    st_size: i64
-    st_blocks: i64
-    st_blksize: i32
-    st_flags: i32
-    st_gen: i32
-    st_lspare: i32
-    __unused: inline [i64, 2]
+cstruct libc_gen_sockaddr {
+    sa_len: u8
+    sa_family: u8
+    sa_data: inline [i8, 14]
 }
 
-cstruct libc_dirent {
-    d_ino: i32
-    d_off: i16
-    d_reclen: i8
-    d_type: i8
-    d_name: inline [i8, 256]
-}
-
-cstruct libc_timezone {
-    tz_minuteswest: i32
-    tz_dsttime: i32
-}
-
-cstruct libc_addrinfo {
+cstruct libc_gen_addrinfo {
     ai_flags: i32
     ai_family: i32
     ai_socktype: i32
     ai_protocol: i32
-    ai_addrlen: i32
-    ai_canonname: ptr
-    ai_addr: ptr
-    ai_next: ptr
+    ai_addrlen: u32
+    ai_canonname: cstring
+    ai_addr: libc_gen_sockaddr
+    ai_next: libc_gen_addrinfo
 }
 
-cstruct libc_jmp_buf {
-    prop_0: inline [i32, 37]
+cstruct libc_gen_timezone {
+    tz_minuteswest: i32
+    tz_dsttime: i32
 }
+
