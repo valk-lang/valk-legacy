@@ -3,7 +3,7 @@
 include __DIR__ . '/gen-structs.php';
 include __DIR__ . '/gen-from-json.php';
 
-$imports = ['sys/stat'];
+$imports = ['sys/stat', 'stdio', 'fcntl'];
 $unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time'];
 $linux_imports = array_merge($imports, $unix_imports, ['sys/epoll']);
 $macos_imports = array_merge($imports, $unix_imports, []);
@@ -152,20 +152,27 @@ foreach($targets as $valk_target => $target) {
         $cmd .= ' -I' . $ttc_dir . '/' . $inc;
     }
     $ast_cmd = $cmd . " -c $path -Xclang -ast-dump=json > $path_ast";
-    $cmd .= " -S -emit-llvm $path -o $path_ir";
+    $ir_cmd = $cmd . " -S -emit-llvm $path -o $path_ir";
+    $enu_cmd = $cmd . " -dM -E $path";
 
-    echo $cmd . "\n";
-    echo $ast_cmd . "\n";
-    exec($cmd);
-    exec($ast_cmd);
+    // echo $ir_cmd . "\n";
+    // exec($ir_cmd);
 
+    // echo $ast_cmd . "\n";
+    // exec($ast_cmd);
+
+    // Defines
+    echo $enu_cmd . "\n";
+    $defines = [];
+    exec($enu_cmd, $defines);
+    $enums = gen_enums($defines);
+    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-enums.vh';
+    file_put_contents($hpath, $enums);
 
     // Gen valk structs
-    // $ir = file_get_contents($path_ir);
-    // $code = gen_valk_structs($ir, $target);
-    $ast = file_get_contents($path_ast);
-    $code = gen_valk_structs_ast($ast, $target);
+    // $ast = file_get_contents($path_ast);
+    // $code = gen_valk_structs_ast($ast, $target);
 
-    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
-    file_put_contents($hpath, $code);
+    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
+    // file_put_contents($hpath, $code);
 }
