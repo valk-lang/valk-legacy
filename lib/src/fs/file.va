@@ -97,7 +97,7 @@ fn write_from_ptr(path: String, data: ptr, size: uint, append: bool (false)) !op
 fn exists(path: String) bool {
 	#if OS == win
 	let dwAttrib = sys:GetFileAttributesA(path.data_cstring())
-    return dwAttrib != sys:INVALID_FILE_ATTRIBUTES
+    return dwAttrib != sys:INVALID_FILE_ATTRIBUTES_fix
 	#else
     let buf = @stack(sys:libc_stat)
     stat(path, buf) ! return false
