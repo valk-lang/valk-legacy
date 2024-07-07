@@ -184,10 +184,10 @@ function convert_type(object $type, object $lookup) : String {
     exit(1);
 }
 
-function gen_valk_structs_ast(string $json, array $target): string
+function gen_valk_structs_ast(object $ast_data, array $target): string
 {
     $code = "";
-    $data = json_decode($json)->inner;
+    $data = $ast_data->inner;
 
     $vars = $target['vars'];
 

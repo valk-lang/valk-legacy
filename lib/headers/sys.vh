@@ -22,9 +22,11 @@ link_dynamic "System"
 
 header "macos/abi"
 #if ARCH == arm64
+header "macos/arm64/enum"
 header "macos/arm64/libc-enums"
 header "macos/arm64/libc-gen"
 #elif ARCH == x64
+header "macos/x64/enum"
 header "macos/x64/libc-enums"
 header "macos/x64/libc-gen"
 #end
@@ -40,6 +42,7 @@ link_dynamic "libvcruntime"
 
 header "win/structs"
 header "win/abi"
+header "win/x64/enum"
 header "win/x64/libc-enums"
 header "win/x64/libc-gen"
 
