@@ -2,9 +2,10 @@
 
 include __DIR__ . '/gen-structs.php';
 include __DIR__ . '/gen-from-json.php';
+include __DIR__ . '/gen-enums.php';
 
-$imports = ['sys/stat', 'stdio', 'fcntl'];
-$unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time'];
+$imports = ['sys/stat', 'stdio', 'fcntl', 'errno'];
+$unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time', 'unistd'];
 $linux_imports = array_merge($imports, $unix_imports, ['sys/epoll']);
 $macos_imports = array_merge($imports, $unix_imports, []);
 $win_imports = array_merge($imports, ['winsock2', 'time']);
@@ -142,6 +143,7 @@ foreach($targets as $valk_target => $target) {
     // Paths
     $path_ir = $tmp . '/' . $valk_target . '.ir';
     $path_ast = $tmp . '/' . $valk_target . '-ast.json';
+    $path_enums = $tmp . '/' . $valk_target . '-enums.txt';
     $ttc_dir = $tc_dir . '/' . $target['toolchain'];
     // Args
     $args = $target['clang_args'] ?? '';
@@ -158,18 +160,19 @@ foreach($targets as $valk_target => $target) {
     // echo $ir_cmd . "\n";
     // exec($ir_cmd);
 
-    // echo $ast_cmd . "\n";
-    // exec($ast_cmd);
+    echo $ast_cmd . "\n";
+    exec($ast_cmd);
 
     // Defines
     echo $enu_cmd . "\n";
     $defines = [];
     exec($enu_cmd, $defines);
+    file_put_contents($path_enums, implode("\n", $defines));
     $enums = gen_enums($defines);
     $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-enums.vh';
     file_put_contents($hpath, $enums);
 
-    // Gen valk structs
+    // Gen valk structs / api
     // $ast = file_get_contents($path_ast);
     // $code = gen_valk_structs_ast($ast, $target);
 
