@@ -5,7 +5,7 @@ include __DIR__ . '/gen-structs.php';
 include __DIR__ . '/gen-from-json.php';
 include __DIR__ . '/gen-enums.php';
 
-$imports = ['sys/stat', 'stdio', 'fcntl', 'errno'];
+$imports = ['sys/stat', 'stdio', 'fcntl', 'errno', 'limits', 'string'];
 $unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time', 'unistd'];
 $linux_imports = array_merge($imports, $unix_imports, ['sys/epoll']);
 $macos_imports = array_merge($imports, $unix_imports, []);
@@ -84,7 +84,7 @@ $win_vars = array_merge($vars, [
 ]);
 
 $linux_args = "-D_GNU_SOURCE";
-$macos_args = "-D_GNU_SOURCE";
+$macos_args = "";
 
 $targets = [
     'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-amd64', 'imports' => $linux_imports, 'vars' => $linux_vars, 'args' => $linux_args],
