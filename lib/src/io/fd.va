@@ -7,7 +7,7 @@ alias FD as int
 
 
 #if OS == win
-macro valk_fd (V:fd) : <{ return ((fd == (0^-1) @as uint) ? -1 : fd @as int) }
+macro valk_fd (V:fd) : <{ return ((fd == -1 @as uint) ? -1 : fd @as int) }
 macro os_fd (V:fd) : <{ return fd @as uint }
 #else
 macro valk_fd (V:fd) : <{ return fd @as i32 }
