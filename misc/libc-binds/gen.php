@@ -1,10 +1,12 @@
 <?php
 
+include __DIR__ . '/gen-helpers.php';
 include __DIR__ . '/gen-structs.php';
 include __DIR__ . '/gen-from-json.php';
+include __DIR__ . '/gen-enums.php';
 
-$imports = ['sys/stat'];
-$unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time'];
+$imports = ['sys/stat', 'stdio', 'fcntl', 'errno', 'limits', 'string'];
+$unix_imports = ['setjmp', 'dirent', 'poll', 'sys/types', 'sys/socket', 'netdb', 'sys/time', 'unistd'];
 $linux_imports = array_merge($imports, $unix_imports, ['sys/epoll']);
 $macos_imports = array_merge($imports, $unix_imports, []);
 $win_imports = array_merge($imports, ['winsock2', 'time']);
@@ -81,10 +83,13 @@ $win_vars = array_merge($vars, [
     ],
 ]);
 
+$linux_args = "-D_GNU_SOURCE";
+$macos_args = "";
+
 $targets = [
-    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-amd64', 'imports' => $linux_imports, 'vars' => $linux_vars],
-    'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'arch' => 'x64', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
-    'macos-arm64' => ['target' => 'arm64-apple-darwin-macho', 'arch' => 'arm64', 'header_dir' => 'macos/arm64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars],
+    'linux-x64' => ['target' => 'x86_64-unknown-linux-gnu', 'arch' => 'x64', 'header_dir' => 'linux/x64', 'toolchain' => 'linux-amd64', 'imports' => $linux_imports, 'vars' => $linux_vars, 'args' => $linux_args],
+    'macos-x64' => ['target' => 'x86_64-apple-darwin-macho', 'arch' => 'x64', 'header_dir' => 'macos/x64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars, 'args' => $macos_args],
+    'macos-arm64' => ['target' => 'arm64-apple-darwin-macho', 'arch' => 'arm64', 'header_dir' => 'macos/arm64', 'toolchain' => 'macos-11-3', 'imports' => $macos_imports, 'vars' => $macos_vars, 'args' => $macos_args],
     'win-x64' => [
         'target' => 'x86_64-pc-windows-msvc',
         'arch' => 'x64',
@@ -101,13 +106,7 @@ $targets = [
 ];
 
 // Vars
-$root = __DIR__;
-$tmp = $root . '/tmp';
-if (!file_exists($tmp))
-    mkdir($tmp);
-$dist_dir = $root . '/../../dist';
-$tc_dir = $dist_dir . '/toolchains';
-$header_dir = $root . '/../../lib/headers';
+$tmp = get_tmp_dir();
 
 // Generate
 foreach($targets as $valk_target => $target) {
@@ -142,30 +141,36 @@ foreach($targets as $valk_target => $target) {
     // Paths
     $path_ir = $tmp . '/' . $valk_target . '.ir';
     $path_ast = $tmp . '/' . $valk_target . '-ast.json';
-    $ttc_dir = $tc_dir . '/' . $target['toolchain'];
-    // Args
-    $args = $target['clang_args'] ?? '';
-    $trg = $target['target'];
-    // Commands
-    $cmd = "clang-15 $args --target=$trg --sysroot=$ttc_dir";
-    foreach($target['tc_includes'] ?? [] as $inc) {
-        $cmd .= ' -I' . $ttc_dir . '/' . $inc;
-    }
+    $path_enums = $tmp . '/' . $valk_target . '-enums.txt';
+    $header_dir = __DIR__ . '/../../lib/headers';
+
+    $cmd = get_base_cmd($target);
+
     $ast_cmd = $cmd . " -c $path -Xclang -ast-dump=json > $path_ast";
-    $cmd .= " -S -emit-llvm $path -o $path_ir";
+    $ir_cmd = $cmd . " -S -emit-llvm $path -o $path_ir";
+    $enu_cmd = $cmd . " -dM -E $path";
 
-    echo $cmd . "\n";
+    // echo $ir_cmd . "\n";
+    // exec($ir_cmd);
+
     echo $ast_cmd . "\n";
-    exec($cmd);
     exec($ast_cmd);
+    $ast_json = file_get_contents($path_ast);
+    $ast_data = json_decode($ast_json);
 
+    // Defines
+    echo $enu_cmd . "\n";
+    $defines = [];
+    exec($enu_cmd, $defines);
+    file_put_contents($path_enums, implode("\n", $defines));
+    $enums = gen_enums_($defines, $ast_data);
+    // $enums = gen_enums($defines, $target);
+    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-enums.vh';
+    file_put_contents($hpath, $enums);
 
-    // Gen valk structs
-    // $ir = file_get_contents($path_ir);
-    // $code = gen_valk_structs($ir, $target);
-    $ast = file_get_contents($path_ast);
-    $code = gen_valk_structs_ast($ast, $target);
+    // Gen valk structs / api
+    $code = gen_valk_structs_ast($ast_data, $target);
 
-    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
-    file_put_contents($hpath, $code);
+    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
+    // file_put_contents($hpath, $code);
 }

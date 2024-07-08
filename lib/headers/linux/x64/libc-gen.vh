@@ -33,14 +33,14 @@ cstruct libc_gen_stat {
     __glibc_reserved: inline [int, 3]
 }
 
-cstruct libc_gen_anon_struct_1 {
+cstruct libc_gen_anon_struct_2 {
     __val: inline [uint, 16]
 }
 
 cstruct libc_gen___jmp_buf_tag {
     __jmpbuf: inline [int, 8]
     __mask_was_saved: i32
-    __saved_mask: inline libc_gen_anon_struct_1
+    __saved_mask: inline libc_gen_anon_struct_2
 }
 
 cstruct libc_gen_dirent {
