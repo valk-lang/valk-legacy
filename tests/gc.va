@@ -72,7 +72,7 @@ test "GC" {
         while mul-- > 0 {
             iters = iters * 2
         }
-        let check = 0 @as uint
+        let check : uint = 0
 
         let i = 0
         while i++ < iters {

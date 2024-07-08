@@ -6,6 +6,7 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->b = u->b;
     p->unit = u;
     p->tkn = NULL;
+    p->try_conv = NULL;
 
     p->prev = NULL;
     p->chunk = chunk_make(alc, u->b, NULL);

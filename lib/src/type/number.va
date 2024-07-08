@@ -74,7 +74,7 @@ trait Number {
         #end
         // Reverse
         let amount = i
-        let offset : uint = negative ? 1 @as uint : 0 @as uint
+        let offset : uint = negative ? 1 : 0
         while i-- > 0 {
             @ptrv(result, u8, i + offset) = @ptrv(rev, u8, amount - i - 1)
         }

@@ -43,7 +43,7 @@ cstruct GcAlloc {
     pow: u8
 
     static fn init(pow: u8) SELF {
-        let isize = (1 @as uint << pow) + 8
+        let isize : uint = (1 << pow) + 8
         let blockc : uint = 1
         let block = null @as ptr
         return SELF{

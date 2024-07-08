@@ -274,7 +274,7 @@ cstruct Stack {
                 let vtable = @ptrv(item, u32, -1) & 0xffffff
                 if vtable == 0 {
                     @ptrv(item, u8, byte_state_rel) = state_solid
-                    let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                    let size : uint = (1 << @ptrv(item, u8, -1)) + 8
                     mem_transfered += size
                     let ri = @ptrv(item, u8, -7)
                     let data = item - 8 - ri * size
@@ -319,7 +319,7 @@ cstruct Stack {
                         let vtable = @ptrv(item, u32, -1) & 0xffffff
                         if vtable == 0 {
                             @ptrv(item, u8, byte_age_rel) = age
-                            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                            let size : uint = (1 << @ptrv(item, u8, -1)) + 8
                             mem_marked += size
                         } else {
                             let table = @gc_get_vtable(vtable)
@@ -345,7 +345,7 @@ cstruct Stack {
                         let vtable = @ptrv(item, u32, -1) & 0xffffff
                         if vtable == 0 {
                             @ptrv(item, u8, byte_age_rel) = age
-                            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+                            let size : uint = (1 << @ptrv(item, u8, -1)) + 8
                             mem_marked += size
                         } else {
                             let table = @gc_get_vtable(vtable)

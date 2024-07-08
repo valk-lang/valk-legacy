@@ -265,6 +265,12 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
             v = vgen_int(alc, type->size, type_gen_valk(alc, b, "int"));
+
+            Type *tcv = p->try_conv;
+            bool tcv_int = tcv ? tcv->type == type_int : false;
+            if (tcv_int)
+                try_convert_number(v, tcv);
+
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_bool(alc, b, str_is(tkn, "true"));
         } else if (str_is(tkn, "null")) {
@@ -432,6 +438,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 parse_err(p, -1, "Invalid negative number syntax: '%s'", p->tkn);
             }
         }
+        Type *tcv = p->try_conv;
+        bool tcv_unsigned = tcv ? !tcv->is_signed : false;
+        bool tcv_float = tcv ? tcv->type == type_float : false;
+        bool tcv_int = tcv ? tcv->type == type_int : false;
+        bool tcv_ptr = tcv ? tcv->type == type_ptr : false;
         char* num = p->tkn;
         // Check if float
         int before = p->chunk->i;
@@ -447,6 +458,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
             double fv = atof(buf);
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
+            if(tcv_float)
+                try_convert_number(v, tcv);
         } else if (t1 == tok_id && t1tkn[0] == 'x') {
             // Hex number
             p->chunk->i = before2;
@@ -457,6 +470,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
             v_i64 hv = hex2int(value);
             v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
+            if(tcv_int)
+                try_convert_number(v, tcv);
 
         } else if (t1 == tok_id && t1tkn[0] == 'c') {
             // Octal number
@@ -468,6 +483,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             }
             v_i64 hv = oct2int(value);
             v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
+            if(tcv_int)
+                try_convert_number(v, tcv);
 
         } else {
             // Decimal number
@@ -477,6 +494,8 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 iv *= -1;
             }
             v = vgen_int(alc, iv, type_gen_valk(alc, b, "int"));
+            if(tcv_int)
+                try_convert_number(v, tcv);
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -595,7 +614,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_mod;
             else
                 break;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 10);
+            p->try_conv = tcv_prev;
+
             v = value_handle_op(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
@@ -611,7 +636,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_sub;
             else
                 break;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 20);
+            p->try_conv = tcv_prev;
+
             v = value_handle_op(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
@@ -627,7 +658,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_shr;
             else
                 break;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 25);
+            p->try_conv = tcv_prev;
+
             v = value_handle_op(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
@@ -645,7 +682,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_bit_xor;
             else
                 break;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 30);
+            p->try_conv = tcv_prev;
+
             v = value_handle_op(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
@@ -669,7 +712,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_gt;
             else
                 break;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 35);
+            p->try_conv = tcv_prev;
+
             v = value_handle_compare(alc, p, v, right, op);
             t = tok(p, true, true, false);
         }
@@ -688,7 +737,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                 op = op_or;
             }
 
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v->rett;
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 40);
+            p->try_conv = tcv_prev;
 
             if (right->rett->type != type_bool) {
                 parse_err(p, -1, "Right side must return a bool");
@@ -725,7 +778,12 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Scope* sv2 = scope_sub_make(alc, sc_default, scope);
             scope_apply_issets(alc, sv2, v->not_issets);
             p->scope = sv2;
+
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = v1->rett;
+            p->try_conv = tcv;
             Value *v2 = read_value(alc, p, true, 51);
+            p->try_conv = tcv_prev;
 
             //
             p->scope = scope;
@@ -893,7 +951,12 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
                 parse_err(p, -1, "Too many arguments");
             }
 
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = arg_type;
+            p->try_conv = tcv;
             Value *arg = read_value(alc, p, true, 0);
+            p->try_conv = tcv_prev;
+
             if(arg_type)
                 arg = try_convert(alc, p, p->scope, arg, arg_type);
 
@@ -937,7 +1000,12 @@ Value *value_func_call(Allocator *alc, Parser* p, Value *on) {
             Scope* scope = p->scope;
             p->scope = default_value_ch->fc->scope;
             //
-            Value* arg = read_value(b->alc, p, true, 0);
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = arg_type;
+            p->try_conv = tcv;
+            Value *arg = read_value(alc, p, true, 0);
+            p->try_conv = tcv_prev;
+            //
             arg = try_convert(alc, p, scope, arg, arg_type);
             type_check(p, arg_type, arg->rett);
             //
@@ -1025,8 +1093,15 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
             parse_err(p, -1, "Setting same property twice: '%s'", name);
         }
         tok_expect(p, ":", true, false);
-        Value* val = read_value(alc, p, true, 0);
+
+        Type *tcv_prev = p->try_conv;
+        Type *tcv = prop->type;
+        p->try_conv = tcv;
+        Value *val = read_value(alc, p, true, 0);
+        p->try_conv = tcv_prev;
+
         val = try_convert(alc, p, p->scope, val, prop->type);
+
         type_check(p, prop->type, val->rett);
         map_set_force_new(values, name, val);
         t = tok(p, true, true, true);
@@ -1163,22 +1238,27 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
         is_ptr = true;
         right = vgen_cast(alc, right, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
-    if(left->type == v_number && right->type != v_number) {
+
+    bool has_number_suggestion = p->try_conv && (p->try_conv->type == type_int || p->try_conv->type == type_float);
+
+if(!has_number_suggestion) {
+    if (left->type == v_number && right->type != v_number) {
         try_convert_number(left, right->rett);
-    } else if(right->type == v_number && left->type != v_number) {
+    } else if (right->type == v_number && left->type != v_number) {
         try_convert_number(right, left->rett);
-    } else if(left->type == v_number && right->type == v_number) {
+    } else if (left->type == v_number && right->type == v_number) {
         // Pre-calculate
         bool is_float = left->rett->type == type_float || right->rett->type == type_float;
-        Value* combo;
-        if(is_float) {
+        Value *combo;
+        if (is_float) {
             // combo = pre_calc_float(alc, fc->b, left, right, op);
         } else {
             combo = pre_calc_int(alc, b, left, right, op);
         }
-        if(combo)
+        if (combo)
             return combo;
     }
+}
 
     // Try match types
     match_value_types(alc, b, &left, &right);
@@ -1593,7 +1673,11 @@ Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) 
             errh->err_decl = decl;
         }
 
+        Type *tcv_prev = p->try_conv;
+        Type *tcv = on->rett;
+        p->try_conv = tcv;
         Value *errv = read_value(alc, p, false, 0);
+        p->try_conv = tcv_prev;
         // errv = try_convert(alc, p, sub_scope, errv, frett);
 
         p->scope = scope;

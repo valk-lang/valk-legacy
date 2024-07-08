@@ -227,7 +227,14 @@ void read_ast(Parser *p, bool single_line) {
                     parse_err(p, -1, "Expected '=' here, found: '%s'", p->tkn);
                 }
 
+                Type* tcv_prev = p->try_conv;
+                Type* tcv = array_get_index(types, 0);
+                p->try_conv = tcv;
+
                 Value* val = read_value(alc, p, true, 0);
+
+                p->try_conv = tcv_prev;
+
                 if (type_is_void(val->rett)) {
                     parse_err(p, -1, "Right side returns a 'void' value");
                 }
@@ -276,18 +283,22 @@ void read_ast(Parser *p, bool single_line) {
                 continue;
             }
             if (str_is(tkn, "return")){
-                Value* val = NULL;
 
                 if(p->vscope_values) {
-                    // Value scope
-                    val = read_value(alc, p, false, 0);
+                    Array *values = p->vscope_values;
+
+                    Type *tcv_prev = p->try_conv;
+                    Type *tcv = vscope_get_result_type(values);
+                    p->try_conv = tcv ? tcv : tcv_prev;
+
+                    Value *val = read_value(alc, p, false, 0);
                     // TODO: support multiple return types
 
-                    Array *values = p->vscope_values;
-                    Type *type = vscope_get_result_type(values);
-                    if(type) {
-                        val = try_convert(alc, p, scope, val, type);
-                        type_check(p, type, val->rett);
+                    p->try_conv = tcv_prev;
+
+                    if(tcv) {
+                        val = try_convert(alc, p, scope, val, tcv);
+                        type_check(p, tcv, val->rett);
                     }
                     array_push(values, val);
                     array_push(scope->ast, token_make(alc, t_return_vscope, val));
@@ -313,10 +324,18 @@ void read_ast(Parser *p, bool single_line) {
                     if (i > 0) {
                         tok_expect(p, ",", true, true);
                     }
-                    Type *type = array_get_index(rett_types, i);
+                    Type *rett = array_get_index(rett_types, i);
+
+                    Type *tcv_prev = p->try_conv;
+                    Type *tcv = rett;
+                    p->try_conv = tcv;
+
                     Value *val = read_value(alc, p, false, 0);
-                    val = try_convert(alc, p, p->scope, val, type);
-                    type_check(p, type, val->rett);
+
+                    p->try_conv = tcv_prev;
+
+                    val = try_convert(alc, p, p->scope, val, rett);
+                    type_check(p, rett, val->rett);
 
                     if (i == 0 && func->rett_eax) {
                         if(buffer_retv) {
@@ -329,7 +348,7 @@ void read_ast(Parser *p, bool single_line) {
                         }
                     } else {
                         Decl *decl = array_get_index(func->rett_decls, rett_decl_i++);
-                        Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), type, vgen_int(alc, 0, type_cache_i32(b)));
+                        Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), rett, vgen_int(alc, 0, type_cache_i32(b)));
                         array_push(scope->ast, tgen_assign(alc, var, val));
                     }
                     i++;
@@ -551,7 +570,13 @@ void read_ast(Parser *p, bool single_line) {
             }
             value_is_mutable(left);
 
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = left->rett;
+
+            p->try_conv = tcv;
             Value *right = read_value(alc, p, true, 0);
+            p->try_conv = tcv_prev;
+
             if (type_is_void(right->rett)) {
                 parse_err(p, -1, "Trying to assign a void value");
             }
