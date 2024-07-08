@@ -19,7 +19,7 @@ fn gc_transfer_item(item: ptr) {
     if vtable == 0 {
         if @ptrv(item, u8, byte_state_rel) > state_transfer : return
         @ptrv(item, u8, byte_state_rel) = state_solid
-        let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+        let size : uint = (1 << @ptrv(item, u8, -1)) + 8
         mem_transfered += size
         let ri = @ptrv(item, u8, -7)
         let data = item - 8 - ri * size
@@ -38,7 +38,7 @@ fn gc_mark_item(item: ptr) {
         if @ptrv(item, u8, byte_state_rel) > state_const : return
         if @ptrv(item, u8, byte_age_rel) == age : return
         @ptrv(item, u8, byte_age_rel) = age
-        let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+        let size : uint = (1 << @ptrv(item, u8, -1)) + 8
         mem_marked += size
     } else {
         let table = @gc_get_vtable(vtable)
@@ -67,7 +67,7 @@ fn gc_share(item: ptr) {
         @ptrv(item, u8, byte_state_rel) = state_shared
         @ptrv(item, u8, byte_gc_age_rel) = gc_age
         if state < state_solid {
-            let size : uint = (1 @as uint << @ptrv(item, u8, -1)) + 8
+            let size : uint = (1 << @ptrv(item, u8, -1)) + 8
             mem_transfered += size
             let ri = @ptrv(item, u8, -7)
             let data = item - 8 - ri * size

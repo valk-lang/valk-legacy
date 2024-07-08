@@ -27,6 +27,7 @@ struct Parser {
     char cc_results[100];
     //
     char* tkn;
+    Type* try_conv;
     //
     int line;
     int col;

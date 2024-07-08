@@ -26,7 +26,7 @@ struct ClientRequest {
 
         let split = parts.host.split(":")
         let host = parts.host
-        let port = is_https ? 443 @as u16 : 80 @as u16
+        let port : u16 = is_https ? 443 : 80
         if split.length > 2 : throw invalid_url
         if split.length == 2 {
             host = split.get(0) ? ""

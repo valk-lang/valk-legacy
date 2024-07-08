@@ -19,10 +19,10 @@ struct SocketTCP {
 
         #if OS == win
         let sock_fd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
-        let fd = io:valk_fd(sock_fd)
+        let fd : FD = io:valk_fd(sock_fd)
         #else
         let ufd = sys:socket(sys:AF_INET, sys:SOCK_STREAM, 0)
-        let fd = ufd @as FD
+        let fd : FD = ufd @as FD
         #end
 
         if fd == -1 {

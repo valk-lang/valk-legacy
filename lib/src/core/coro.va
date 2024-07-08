@@ -140,7 +140,7 @@ struct Coro {
             this.s_top = this.s_cont - 32
 
             #if OS == win
-            @ptrv(here, ptr, 0) += 0x80 @as ptr
+            @ptrv(here, ptr, 0) += 0x80
             #end
 
             // Copy stack
@@ -191,7 +191,7 @@ struct Coro {
         if @setjmp(jmpbuf) == 0 {
 
             #if OS == win
-            @ptrv(jmpbuf, ptr, 0) += 0x80 @as ptr
+            @ptrv(jmpbuf, ptr, 0) += 0x80
             #end
 
             this.s_back_buf = jmpbuf

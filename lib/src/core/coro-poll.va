@@ -34,13 +34,13 @@ struct CoroPoll {
         #end
 
         #if OS == win
-        let events = 0 @as i16
+        let events : i16 = 0
         #else
-        let events = sys:POLLRDHUP @as i16
+        let events : i16 = sys:POLLRDHUP
         #end
 
-        if read : events = events | sys:POLLIN @as i16
-        if write : events = events | sys:POLLOUT @as i16
+        if read : events = events | sys:POLLIN
+        if write : events = events | sys:POLLOUT
         pi.events = events
 
         this.items1.push(data)

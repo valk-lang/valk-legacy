@@ -22,7 +22,7 @@ fn copy(from: ptr, to: ptr, length: uint) {
 }
 
 fn clear(adr: ptr, length: uint) {
-    let i = 0 @as uint
+    let i : uint = 0
     let chunks = length / sizeof(uint)
     while i < chunks {
         @ptrv(adr, uint, i) = 0

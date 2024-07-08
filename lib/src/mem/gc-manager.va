@@ -35,7 +35,7 @@ cstruct GcManager {
     }
 
     fn add_stack(s: Stack) {
-        let index = 0 @as uint
+        let index : uint = 0
         let has_index = false
         // if(this.has_free_index) {
         //     let lock = atomic(this.free_index_lock + 1)
@@ -110,7 +110,7 @@ cstruct GcManager {
             // If all up-to-date
             if up_to_date_count == sc {
                 gm.clean_unused()
-                gc_age = (gc_age == 128) ? 64 @as u8 : 128 @as u8
+                gc_age = (gc_age == 128) ? 64 : 128
                 timeout_count = 0
             } else {
                 timeout_count++
