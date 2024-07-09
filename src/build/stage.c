@@ -3,12 +3,6 @@
 
 void build_set_stages(Build* b) {
     stage_add(b, stage_prio_alias, stage_alias, NULL);
-    // stage_add(b, stage_prio_pools, stage_pools, NULL);
-    // stage_add(b, stage_prio_props, stage_props, NULL);
-    // stage_add(b, stage_prio_class_sizes, stage_classes, NULL);
-    // stage_add(b, stage_prio_types, stage_types, NULL);
-    // stage_add(b, stage_prio_gen_main, stage_gen, NULL);
-    // stage_add(b, stage_prio_ast, stage_ast, NULL);
 }
 
 void stage_add(Build* b, int prio, void(*func)(Build*, void*), void* payload) {

@@ -6,12 +6,6 @@
 
 #define stage_prio_fc 0
 #define stage_prio_alias 1
-// #define stage_prio_pools 2
-// #define stage_prio_props 3
-// #define stage_prio_class_sizes 4
-// #define stage_prio_types 5
-// #define stage_prio_gen_main 6
-// #define stage_prio_ast 7
 #define stage_last 1
 
 int cmd_build(int argc, char *argv[]);
@@ -41,7 +35,6 @@ void stage_pools(Build* b, void* payload);
 void stage_props(Build* b, void *payload);
 void stage_classes(Build* b, void* payload);
 void stage_types(Build* b, void *payload);
-void stage_gen(Build* b, void* payload);
 void stage_ast(Build *b, void* payload);
 //
 void stage_5_ir_final(Build* b);
@@ -85,6 +78,8 @@ struct Build {
     //
     Func *func_main;
     Func *func_main_gen;
+    Func *func_main_tests;
+    Func *func_set_globals;
     //
     Array *units;
     Array *classes;

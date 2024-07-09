@@ -1,6 +1,11 @@
 
 #include "../all.h"
 
+void stage_init_start_functions(Build *b);
+Func* stage_generate_set_globals(Build *b);
+Func* stage_generate_tests(Build *b);
+void stage_generate_main(Build *b);
+
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
 void ir_vtable_define_extern(Unit* u);
@@ -8,30 +13,44 @@ void loop_defer(Allocator* alc, Parser* p);
 
 void stage_ast(Build *b, void *payload) {
 
+    // Init IR
     Array *units = b->units;
     loop(units, i) {
         Unit *u = array_get_index(units, i);
         u->ir = ir_make(u);
     }
 
+    stage_init_start_functions(b);
     b->building_ast = true;
 
-    stage_ast_func(b->func_main_gen);
+    // Generate test functions
+    if(b->is_test)
+        stage_generate_tests(b);
+
+    // Parse AST for used functions
+    if (b->func_main)
+        stage_ast_func(b->func_main);
+    if (b->func_main_tests)
+        stage_ast_func(b->func_main_tests);
+
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "link"));
     stage_ast_func(get_valk_class_func(b, "mem", "Stack", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
-    // TODO: only include Coro.new if an async function was used
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_fd"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "await_coro"));
-    // stage_ast_func(get_valk_class_func(b, "core", "Coro", "complete"));
 
-    b->parse_last = true;
+    // Generate main and then globals
+    stage_generate_main(b);
+    stage_ast_func(b->func_main_gen);
+    stage_generate_set_globals(b);
+    stage_ast_func(b->func_set_globals);
 
     loop(units, i) {
         Unit *u = array_get_index(units, i);
         ir_gen_globals(u->ir);
     }
+
+    // Parse all parse-last functions
+    b->parse_last = true;
 
     stage_ast_func(get_valk_func(b, "mem", "pools_init"));
 
@@ -45,9 +64,11 @@ void stage_ast(Build *b, void *payload) {
     b->building_ast = false;
     b->parse_last = false;
 
+    // Define extern vtable
     Unit *um = b->nsc_main->unit;
     ir_vtable_define_extern(um);
 
+    // Gen IR
     loop(units, i) {
         Unit *u = array_get_index(units, i);
 
@@ -91,12 +112,14 @@ void stage_ast_func(Func *func) {
     // Parse function code
     usize start = microtime();
 
-    *p->chunk = *func->chunk_body;
-    p->func = func;
-    p->scope = func->scope;
-    p->loop_scope = NULL;
-    p->vscope_values = NULL;
-    read_ast(p, false);
+    if (func->chunk_body) {
+        *p->chunk = *func->chunk_body;
+        p->func = func;
+        p->scope = func->scope;
+        p->loop_scope = NULL;
+        p->vscope_values = NULL;
+        read_ast(p, false);
+    }
 
     if (p->cc_index > 0) {
         parse_err(p, -1, "Missing #end token");

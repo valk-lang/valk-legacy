@@ -177,6 +177,8 @@ int cmd_build(int argc, char *argv[]) {
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
+    b->func_main_tests = NULL;
+    b->func_set_globals = NULL;
 
     b->pkc_main = NULL;
     b->nsc_main = NULL;
