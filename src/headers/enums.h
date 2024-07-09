@@ -90,7 +90,6 @@ enum IDF {
     idf_snippet,
     idf_value,
     idf_type,
-    idf_cached_value,
     idf_error,
     idf_trait,
     idf_macro,

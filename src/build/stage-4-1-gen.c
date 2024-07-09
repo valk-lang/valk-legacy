@@ -112,7 +112,18 @@ void stage_generate_main(Build *b) {
 }
 
 Func* stage_generate_set_globals(Build *b) {
+    //
+    Array* all_globals = b->globals;
+    Array* globals = array_make(b->alc, all_globals->length + 2);
+    loop(all_globals, i) {
+        Global* g = array_get_index(all_globals, i);
+        if(g->is_used) {
+            array_push(globals, g);
+        }
+    }
+    b->used_globals = globals;
 
+    //
     Func* func = b->func_set_globals;
 
     int count = 0;
@@ -122,7 +133,6 @@ Func* stage_generate_set_globals(Build *b) {
     Scope* scope = func->scope;
     Parser* p = func->unit->parser;
 
-    Array* globals = b->globals;
     loop(globals, i) {
         Global* g = array_get_index(globals, i);
         if(!g->chunk_value) continue;
@@ -132,7 +142,7 @@ Func* stage_generate_set_globals(Build *b) {
         Value* v = read_value(b->alc, p, true, 0);
 
         Token* t = tgen_assign(b->alc, vgen_global(b->alc, g), v);
-        array_push(scope->ast, t);
+        // array_push(scope->ast, t);
     }
 
     return func;

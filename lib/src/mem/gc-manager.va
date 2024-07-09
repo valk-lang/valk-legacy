@@ -136,6 +136,7 @@ cstruct GcManager {
         }
     }
 
+    #parse_last
     fn clean_unused() {
         let age = gc_age
         // Mark shared globals

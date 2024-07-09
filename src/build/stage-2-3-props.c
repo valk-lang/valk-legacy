@@ -174,6 +174,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->is_inline = is_inline;
         func->in_header = class->in_header;
         func->init_thread = p->init_thread;
+        func->parse_last = p->parse_last;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

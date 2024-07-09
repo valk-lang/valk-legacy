@@ -47,6 +47,7 @@ struct Global {
     int act;
     bool is_shared;
     bool is_mut;
+    bool is_used;
 };
 struct ValueAlias {
     Chunk* chunk;

@@ -166,6 +166,7 @@ int cmd_build(int argc, char *argv[]) {
     b->pkcs = array_make(alc, 20);
 
     b->globals = array_make(alc, 40);
+    b->used_globals = NULL;
 
     b->units = array_make(alc, 100);
     b->classes = array_make(alc, 1000);

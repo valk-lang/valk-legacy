@@ -67,7 +67,7 @@ void generate_class_pool(Parser* p, Class* class) {
         Unit* u = class->unit;
 
         char buf[512];
-        strcpy(buf, "CLASS_POOL_");
+        strcpy(buf, "STRUCT_POOL_");
         strcat(buf, class->ir_name);
 
         Global *g = al(alc, sizeof(Global));
@@ -83,6 +83,7 @@ void generate_class_pool(Parser* p, Class* class) {
         g->declared_scope = NULL;
         g->is_shared = false;
         g->is_mut = true;
+        g->is_used = true;
 
         array_push(u->globals, g);
         array_push(b->globals, g);

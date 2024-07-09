@@ -6,8 +6,18 @@
 
 void disable_token(Token* t);
 Token *token_make(Allocator *alc, int type, void *item);
-void token_if(Allocator* alc, Parser* p);
-void token_while(Allocator* alc, Parser* p);
+
+void pt_let(Build *b, Allocator *alc, Parser *p);
+void pt_if(Build* b, Allocator* alc, Parser* p);
+void pt_while(Build* b, Allocator* alc, Parser* p);
+void pt_return(Build* b, Allocator* alc, Parser* p);
+void pt_throw(Build* b, Allocator* alc, Parser* p);
+void pt_each(Build* b, Allocator* alc, Parser* p);
+void pt_await_fd(Build* b, Allocator* alc, Parser* p);
+void pt_await_last(Build* b, Allocator* alc, Parser* p);
+void pt_gc_share(Build* b, Allocator* alc, Parser* p);
+void pt_assign(Build* b, Allocator* alc, Parser* p, Value* left);
+
 // Generate
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
 Token *tgen_return(Allocator *alc, Value *value);

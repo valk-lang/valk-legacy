@@ -417,6 +417,7 @@ void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
     g->declared_scope = p->scope;
     g->is_shared = shared;
     g->is_mut = true;
+    g->is_used = true;
 
     Idf* idf = idf_make(b->alc, idf_global, g);
     scope_set_idf(u->nsc->scope, name, idf, p);

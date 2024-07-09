@@ -894,9 +894,6 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
             parse_err(p, -1, "Unknown macro item property: '%s'", p->tkn);
         return value_handle_idf(alc, p, sub);
     }
-    if (type == idf_cached_value) {
-        return idf->item;
-    }
     if (type == idf_value) {
         Value* v = al(alc, sizeof(Value));
         Value* ori = idf->item;

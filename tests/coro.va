@@ -3,7 +3,7 @@ global coro_test_str: String ("")
 
 fn coro_test() {
     coro_test_str += "_2"
-    await_last_coro
+    await_last
     coro_test_str += "_4"
 }
 
