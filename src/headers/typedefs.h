@@ -13,13 +13,13 @@ typedef struct Map Map;
 typedef struct Str Str;
 // Build
 typedef struct Build Build;
+typedef struct Stage Stage;
 typedef struct Fc Fc;
 typedef struct Nsc Nsc;
 typedef struct Pkc Pkc;
 typedef struct PkgConfig PkgConfig;
 typedef struct Chunk Chunk;
 typedef struct ChunkPos ChunkPos;
-typedef struct Stage Stage;
 typedef struct CompileData CompileData;
 typedef struct Parser Parser;
 typedef struct Unit Unit;

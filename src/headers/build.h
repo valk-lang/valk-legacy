@@ -4,6 +4,16 @@
 
 #include "typedefs.h"
 
+#define stage_prio_fc 0
+#define stage_prio_alias 1
+// #define stage_prio_pools 2
+// #define stage_prio_props 3
+// #define stage_prio_class_sizes 4
+// #define stage_prio_types 5
+// #define stage_prio_gen_main 6
+// #define stage_prio_ast 7
+#define stage_last 1
+
 int cmd_build(int argc, char *argv[]);
 Str* build_get_str_buf(Build* b);
 void build_return_str_buf(Build* b, Str* buf);
@@ -22,18 +32,18 @@ Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header);
 
 // Stage functions
 void build_set_stages(Build *b);
-void stage_add_item(Stage *stage, void *item);
+void stage_add(Build* b, int prio, void(*func)(Build*, void*), void* payload);
 void build_run_stages(Build *b);
 // Stages
-void stage_1_parse(Fc *fc);
-void stage_2_pools(Build* b);
-void stage_2_alias(Unit *u);
-void stage_2_props(Unit *u);
-void stage_2_update_classes(Build* b);
-void stage_2_types(Unit *u);
-void stage_3_values(Unit *u);
-void stage_3_gen(Build* b);
-void stage_4_ast(Build *b);
+void stage_fc(Build* b, void *payload);
+void stage_alias(Build* b, void *payload);
+void stage_pools(Build* b, void* payload);
+void stage_props(Build* b, void *payload);
+void stage_classes(Build* b, void* payload);
+void stage_types(Build* b, void *payload);
+void stage_gen(Build* b, void* payload);
+void stage_ast(Build *b, void* payload);
+//
 void stage_5_ir_final(Build* b);
 void stage_5_objects(Build *b);
 void stage_6_link(Build* b, Array* o_files);
@@ -59,15 +69,7 @@ struct Build {
     usize time_ir;
     usize time_llvm;
     usize time_link;
-    Stage *stage_1_parse;
-    Stage *stage_2_pools;
-    Stage *stage_2_alias;
-    Stage *stage_2_props;
-    Stage *stage_2_class_sizes;
-    Stage *stage_2_types;
-    Stage *stage_3_values;
-    Stage *stage_3_gen;
-    Stage *stage_4_ast;
+    Array* stages;
     //
     Map *pkc_by_dir;
     Map *fc_by_path;
@@ -118,6 +120,12 @@ struct Build {
     bool parse_last;
     bool stage_1_done;
 };
+struct Stage {
+    void (*func)(Build *, void *);
+    void *payload;
+    int prio;
+    bool done;
+};
 struct Fc {
     Build *b;
     char *path;
@@ -148,11 +156,6 @@ struct Pkc {
     Map *pkc_by_name;
     Array *header_dirs;
     Map *headers_by_fn;
-};
-struct Stage {
-    Array *items;
-    void (*func)(void *);
-    int i;
 };
 struct CompileData {
     Build* b;

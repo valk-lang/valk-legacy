@@ -3,7 +3,7 @@
 
 void stage_determine_class_sizes(Build* b, Array* classes);
 
-void stage_2_update_classes(Build* b) {
+void stage_classes(Build* b, void* payload) {
 
     if (b->verbose > 2)
         printf("Stage 2 | Update class sizes\n");
@@ -20,6 +20,7 @@ void stage_2_update_classes(Build* b) {
     }
 
     b->time_parse += microtime() - start;
+    stage_types(b, NULL);
 }
 
 void stage_determine_class_sizes(Build* b, Array* classes) {

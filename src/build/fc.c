@@ -36,7 +36,7 @@ Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header) {
     fc->content = content;
 
     if(!is_sub_header)
-        stage_add_item(b->stage_1_parse, fc);
+        stage_add(b, stage_prio_fc, stage_fc, fc);
 
     return fc;
 }

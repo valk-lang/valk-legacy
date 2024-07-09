@@ -6,11 +6,11 @@ void stage_ast_class(Class *class);
 void ir_vtable_define_extern(Unit* u);
 void loop_defer(Allocator* alc, Parser* p);
 
-void stage_4_ast(Build *b) {
+void stage_ast(Build *b, void *payload) {
 
-    Array* units = b->units;
+    Array *units = b->units;
     loop(units, i) {
-        Unit* u = array_get_index(units, i);
+        Unit *u = array_get_index(units, i);
         u->ir = ir_make(u);
     }
 
@@ -29,15 +29,15 @@ void stage_4_ast(Build *b) {
     b->parse_last = true;
 
     loop(units, i) {
-        Unit* u = array_get_index(units, i);
+        Unit *u = array_get_index(units, i);
         ir_gen_globals(u->ir);
     }
 
     stage_ast_func(get_valk_func(b, "mem", "pools_init"));
 
-    Array* funcs = b->parse_later;
+    Array *funcs = b->parse_later;
     loop(funcs, i) {
-        Func* func = array_get_index(funcs, i);
+        Func *func = array_get_index(funcs, i);
         func->parsed = false;
         stage_ast_func(func);
     }
@@ -45,17 +45,17 @@ void stage_4_ast(Build *b) {
     b->building_ast = false;
     b->parse_last = false;
 
-    Unit* um = b->nsc_main->unit;
+    Unit *um = b->nsc_main->unit;
     ir_vtable_define_extern(um);
 
     loop(units, i) {
-        Unit* u = array_get_index(units, i);
+        Unit *u = array_get_index(units, i);
 
         // Parse functions from main package, just for validation
-        if(u->nsc->pkc == b->pkc_main) {
-            Array* funcs = u->funcs;
+        if (u->nsc->pkc == b->pkc_main) {
+            Array *funcs = u->funcs;
             loop(funcs, o) {
-                Func* func = array_get_index(funcs, o);
+                Func *func = array_get_index(funcs, o);
                 stage_ast_func(func);
             }
         }

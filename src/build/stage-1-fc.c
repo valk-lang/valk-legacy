@@ -16,10 +16,10 @@ void stage_1_test(Parser* p, Unit* u, Fc* fc);
 void stage_1_snippet(Parser* p, Unit* u);
 void stage_1_link(Parser* p, Unit* u, int link_dynamic);
 
-void stage_1_parse(Fc* fc) {
+void stage_fc(Build* b, void* payload) {
+    Fc *fc = (Fc *)payload;
     Unit* u = fc->nsc->unit;
     Parser* p = u->parser;
-    Build* b = u->b;
 
     if (b->verbose > 2)
         printf("Stage 1 | Parse: %s\n", fc->path);

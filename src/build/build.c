@@ -155,6 +155,7 @@ int cmd_build(int argc, char *argv[]) {
     b->alc = alc;
     b->alc_ast = alc_make();
     b->used_pkc_names = array_make(alc, 20);
+    b->stages = array_make(alc, 100);
     b->char_buf = char_buf;
     b->str_buf = str_buf;
     b->path_out = path_out;

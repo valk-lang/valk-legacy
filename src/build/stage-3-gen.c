@@ -4,7 +4,7 @@
 void stage_generate_main(Build *b);
 Func* stage_generate_tests(Build *b);
 
-void stage_3_gen(Build* b) {
+void stage_gen(Build* b, void* payload) {
 
     if (b->verbose > 2)
         printf("Stage 2 | Update class sizes\n");
@@ -14,8 +14,7 @@ void stage_3_gen(Build* b) {
     stage_generate_main(b);
 
     b->time_parse += microtime() - start;
-
-    stage_add_item(b->stage_4_ast, b);
+    stage_ast(b, NULL);
 }
 
 void stage_generate_main(Build *b) {
