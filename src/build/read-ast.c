@@ -117,7 +117,7 @@ void read_ast(Parser *p, bool single_line) {
 
         t = tok(p, true, false, false);
         if (t >= tok_eq && t <= tok_div_eq) {
-            pt_assign(b, alc, p, left);
+            pt_assign(b, alc, p, left, t);
             continue;
         }
 

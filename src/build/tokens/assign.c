@@ -1,10 +1,9 @@
 
 #include "../../all.h"
 
-void pt_assign(Build* b, Allocator* alc, Parser* p, Value* left) {
+void pt_assign(Build* b, Allocator* alc, Parser* p, Value* left, char t) {
 
     Scope* scope = p->scope;
-    char t;
 
     tok(p, true, false, true);
     if (!value_is_assignable(left)) {

@@ -16,7 +16,7 @@ void pt_each(Build* b, Allocator* alc, Parser* p);
 void pt_await_fd(Build* b, Allocator* alc, Parser* p);
 void pt_await_last(Build* b, Allocator* alc, Parser* p);
 void pt_gc_share(Build* b, Allocator* alc, Parser* p);
-void pt_assign(Build* b, Allocator* alc, Parser* p, Value* left);
+void pt_assign(Build* b, Allocator* alc, Parser* p, Value* left, char t);
 
 // Generate
 Token *tgen_assign(Allocator *alc, Value *left, Value *right);
