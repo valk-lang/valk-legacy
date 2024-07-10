@@ -29,5 +29,7 @@ void char_to_hex(const unsigned char ch, char* buf);
 char* itos(v_i64 val, char* buf, const int base);
 v_i64 hex2int(char *hex);
 v_i64 oct2int(char *oct);
+v_u64 hex2uint(char *hex);
+v_u64 oct2uint(char *oct);
 
 #endif

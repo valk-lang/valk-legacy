@@ -30,6 +30,7 @@ bool type_is_void(Type* type);
 bool type_is_bool(Type* type);
 bool type_is_gc(Type* type);
 bool type_fits_pointer(Type* type, Build* b);
+bool number_fits_type(v_i64 val, Type* type);
 bool types_contain_void(Array* types);
 char* type_to_str(Type* t, char* res);
 char* type_to_str_export(Type* t, char* res);

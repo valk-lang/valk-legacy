@@ -673,3 +673,19 @@ Type* rett_extract_eax(Build* b, Type* type) {
         return type;
     return NULL;
 }
+
+bool number_fits_type(v_i64 val, Type* type) {
+    if (type->size == sizeof(v_i64))
+        return true;
+    if (type->size > sizeof(v_i64))
+        return false;
+
+    v_i64 type_bits = type->size * 8;
+    v_i64 max_bits = sizeof(v_i64) * 8;
+    if(type->is_signed)
+        type_bits--;
+    v_i64 max = ((v_u64)-1) >> (max_bits - type_bits);
+    if (val < 0)
+        val *= -1;
+    return val <= max;
+}

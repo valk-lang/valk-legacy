@@ -451,8 +451,13 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         int before2 = p->chunk->i;
         char t2 = tok(p, false, false, true);
         //
+        bool is_float = false;
+        v_u64 uv = 0;
+        char value[64];
+        //
         if (t1 == tok_dot && t2 == tok_number) {
             // Float number
+            is_float = true;
             char *buf = b->char_buf;
             char* deci = p->tkn;
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
@@ -463,39 +468,46 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         } else if (t1 == tok_id && t1tkn[0] == 'x') {
             // Hex number
             p->chunk->i = before2;
-            char value[64];
             strcpy(value, t1tkn + 1);
             if(strlen(value) == 0 || !is_valid_hex_number(value)) {
                 parse_err(p, -1, "Invalid hex number syntax: '0x%s'", value);
             }
-            v_i64 hv = hex2int(value);
-            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            uv = hex2uint(value);
 
         } else if (t1 == tok_id && t1tkn[0] == 'c') {
             // Octal number
             p->chunk->i = before2;
-            char value[64];
             strcpy(value, t1tkn + 1);
             if(strlen(value) == 0 || !is_valid_octal_number(value)) {
                 parse_err(p, -1, "Invalid octal number syntax: '0c%s'", value);
             }
-            v_i64 hv = oct2int(value);
-            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            uv = oct2uint(value);
 
         } else {
             // Decimal number
             p->chunk->i = before;
-            v_i64 iv = atoll(num);
-            if (negative) {
-                iv *= -1;
+            strcpy(value, num);
+            uv = atoll(num);
+        }
+
+        if(!is_float) {
+            if(negative && uv > 0x7FFFFFFFFFFFFFFF) {
+                parse_err(p, -1, "Number too large: '%s'", value);
             }
-            v = vgen_int(alc, iv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            v_i64 iv = ((v_i64)uv) * (negative ? -1 : 1);
+            Type* type = tcv_int ? tcv : NULL;
+            if(type && !number_fits_type(iv, type)) {
+                type = NULL;
+            }
+            if(!type) {
+                if(uv > 0x7FFFFFFFFFFFFFFF) {
+                    type = type_gen_valk(alc, b, "uint");
+                } else {
+                    type = type_gen_valk(alc, b, "int");
+                }
+            }
+
+            v = vgen_int(alc, iv, type);
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -1487,24 +1499,9 @@ bool try_convert_number(Value* val, Type* to_type) {
     if(val->type != v_number || (tto != type_int && tto != type_float))
         return false;
 
-    int bytes = to_type->size;
-    if(bytes > sizeof(intptr_t)) {
-        bytes = sizeof(intptr_t);
-    }
-
-    int bits = bytes * 8;
     VNumber *number = val->item;
     if (tto == type_int && val->rett->type != type_float) {
-        v_i64 one = 1;
-        v_i64 max = one << (bits - (bytes == sizeof(intptr_t) ? 2 : (to_type->is_signed ? 2 : 1)));
-        v_i64 min = 0;
-        if (to_type->is_signed) {
-            min = max * -1;
-        }
-        v_i64 value = number->value_int;
-        // printf("try:%ld\n", value);
-        if (value >= min && value <= max) {
-            // printf("conv:%ld\n", value);
+        if(number_fits_type(number->value_int, to_type)) {
             val->rett = to_type;
             return true;
         }

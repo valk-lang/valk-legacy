@@ -317,8 +317,39 @@ v_i64 hex2int(char *hex) {
     }
     return val;
 }
+v_u64 hex2uint(char *hex) {
+    v_u64 val = 0;
+    while (*hex) {
+        // get current character then increment
+        uint8_t byte = *hex++;
+        // transform hex character to the 4bit equivalent number, using the ascii table indexes
+        if (byte >= '0' && byte <= '9')
+            byte = byte - '0';
+        else if (byte >= 'a' && byte <= 'f')
+            byte = byte - 'a' + 10;
+        else if (byte >= 'A' && byte <= 'F')
+            byte = byte - 'A' + 10;
+        // shift 4 to make space for new digit, and add the 4 bits of the new digit
+        val = (val << 4) | (byte & 0xF);
+    }
+    return val;
+}
+
 v_i64 oct2int(char *oct) {
     v_i64 val = 0;
+    while (*oct) {
+        // get current character then increment
+        uint8_t byte = *oct++;
+        // transform octal character to the 3bit equivalent number, using the ascii table indexes
+        if (byte >= '0' && byte <= '7')
+            byte = byte - '0';
+        // shift 3 to make space for new digit, and add the 3 bits of the new digit
+        val = (val << 3) | (byte & 0x7);
+    }
+    return val;
+}
+v_u64 oct2uint(char *oct) {
+    v_u64 val = 0;
     while (*oct) {
         // get current character then increment
         uint8_t byte = *oct++;
