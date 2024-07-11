@@ -98,7 +98,7 @@ Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
     VNumber *item = al(alc, sizeof(VNumber));
     item->value_uint = (v_u64)value;
     item->negative = false;
-    if(value < 0) {
+    if(value < 0 && type->is_signed) {
         item->value_uint *= -1;
         item->negative = true;
     }
