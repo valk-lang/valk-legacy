@@ -76,6 +76,9 @@ void stage_generate_main(Build *b) {
 
     } else {
         Func* mainfunc = b->func_main;
+        if(!mainfunc) {
+            build_err(b, "Missing 'main' function");
+        }
         bool main_has_return = mainfunc->rett_types->length > 0;
         bool main_has_arg = mainfunc->rett_types->length > 0;
 
