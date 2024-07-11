@@ -97,6 +97,7 @@ Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *prefer_t
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
     VNumber *item = al(alc, sizeof(VNumber));
     item->value_uint = (v_u64)value;
+    item->negative = false;
     if(value < 0) {
         item->value_uint *= -1;
         item->negative = true;

@@ -73,7 +73,7 @@ void stage_build_o_file(Build* b, Unit* u, Array* threads) {
     data->path_o = u->path_o;
     stage_set_target(b, data);
 
-    thread_make(b->alc, llvm_build_o_file, data, threads, 1);
+    thread_make(b->alc, llvm_build_o_file, data, threads, 16);
 
     if(b->verbose > 1)
         printf("⚙ Compile o file: %s\n", u->path_o);
