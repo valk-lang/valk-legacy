@@ -1231,7 +1231,7 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     }
 
     // Try convert left side number literal
-    if(left->type == v_number) {
+    if(left->type == v_number && op != op_shl && op != op_shr) {
         left = try_convert_number(alc, b, left, right->rett);
     }
     
