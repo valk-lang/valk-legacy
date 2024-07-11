@@ -8,8 +8,12 @@ test "Casting" {
     v2 += v3
     assert(v1 == v2)
 
-    // upscale
+    // upscale unsigned -> unsigned
     let v4 : u8 = 4
     let v5 : uint = 5
     let v6 = v4 + v5
+    let v7 = v5 + v4
+    // upscale unsigned -> signed 
+    let v9 : u8 = 5
+    let v10 : i16 = v9
 }
