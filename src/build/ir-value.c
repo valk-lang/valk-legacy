@@ -19,7 +19,10 @@ char* ir_value(IR* ir, Value* v) {
         VNumber* item = v->item;
         Type* rett = v->rett;
         int rt = rett->type;
-        if(rt == type_int || rt == type_bool || rett->is_pointer)
+        if(rett->is_pointer) {
+            die("Compiler bug: integer has a pointer type");
+        }
+        if(rt == type_int || rt == type_bool)
             r = ir_int(ir, item->value_int);
         else
             r = ir_float(ir, item->value_float);

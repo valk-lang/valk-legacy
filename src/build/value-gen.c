@@ -18,7 +18,7 @@ Value *vgen_ptr_of(Allocator *alc, Build* b, Value* from) {
 }
 
 Value* vgen_bool(Allocator *alc, Build* b, bool value) {
-    return vgen_int(alc, value, NULL, type_gen_valk(alc, b, "bool"));
+    return vgen_int(alc, value, type_gen_valk(alc, b, "bool"));
 }
 
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
@@ -84,14 +84,18 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     return retv;
 }
 
-Value *vgen_int(Allocator *alc, v_i64 value, Type *type, Type* alt_type) {
-    if(type && !number_fits_type(value, type)) {
+Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *type, Type* alt_type) {
+    if(type && !number_fits_type(value, type))
         type = NULL;
-    }
-    if(!type) {
+    if(!type)
         type = alt_type;
-    }
 
+    VNumber *item = al(alc, sizeof(VNumber));
+    item->value_int = value;
+    return value_make(alc, v_number, item, type);
+}
+
+Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
     VNumber *item = al(alc, sizeof(VNumber));
     item->value_int = value;
     return value_make(alc, v_number, item, type);
@@ -112,7 +116,7 @@ Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop) {
 Value *vgen_ptrv(Allocator *alc, Build* b, Value *on, Type* type, Value* index) {
     if(!index) {
         // return on;
-        index = vgen_int(alc, 0, NULL, type_gen_valk(alc, b, "int"));
+        index = vgen_int(alc, 0, type_gen_valk(alc, b, "int"));
     }
     VPtrv *item = al(alc, sizeof(VPtrv));
     item->on = on;
@@ -153,7 +157,7 @@ Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
     Func *func = get_valk_func(b, "mem", "alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    Value *vint = vgen_int(alc, size, NULL, type_gen_valk(alc, b, "uint"));
+    Value *vint = vgen_int(alc, size, type_gen_valk(alc, b, "uint"));
     array_push(alloc_values, vint);
     Value *res = vgen_func_call(alc, p, fptr, alloc_values);
     if(cast_as)
@@ -269,7 +273,7 @@ Value *vgen_stack(Allocator *alc, Build* b, Value* val) {
     return value_make(alc, v_stack, val, type_cache_ptr(b));
 }
 Value *vgen_stack_size(Allocator *alc, Build* b, int size) {
-    return vgen_stack(alc, b, vgen_int(alc, size, NULL, type_cache_uint(b)));
+    return vgen_stack(alc, b, vgen_int(alc, size, type_cache_uint(b)));
 }
 
 Value *vgen_string(Allocator *alc, Unit *u, char *body) {

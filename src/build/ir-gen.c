@@ -391,6 +391,11 @@ char *ir_i1_cast(IR *ir, char *val) {
 
 char* ir_op(IR* ir, int op, char* left, char* right, Type* rett) {
 
+    if(rett->is_pointer) {
+        printf("Compiler bug: IR operation on pointer types\n");
+        raise(11);
+    }
+
     bool is_float = rett->type == type_float;
     char *ltype = ir_type(ir, rett);
     char *var = ir_var(ir->func);

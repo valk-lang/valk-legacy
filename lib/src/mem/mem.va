@@ -120,7 +120,7 @@ fn find_char(adr: ptr, ch: u8, length: uint) ptr !not_found {
 
     while length >= sizeof(u64) {
         let cmp = @ptrv(adr, u64) ^ rep_ch
-        let inv = 0xffffffff - cmp
+        let inv : u64 = 0xffffffff - cmp
 
         if (((cmp - rep_one) & inv) & (rep_one << 7)) != 0 {
             break

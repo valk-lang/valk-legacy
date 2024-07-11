@@ -79,14 +79,14 @@ void ast_func_end(Allocator* alc, Parser* p) {
 
     // Zero out gc stack
     if(gc_decl_count > 0) {
-        Value *ms = vgen_memset(alc, func->v_cache_stack_pos, vgen_int(alc, gc_decl_count * b->ptr_size, NULL, type_cache_uint(b)), vgen_int(alc, 0, NULL, type_cache_u8(b)));
+        Value *ms = vgen_memset(alc, func->v_cache_stack_pos, vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b)), vgen_int(alc, 0, type_cache_u8(b)));
         array_push(start->ast, token_make(alc, t_statement, ms));
     }
 
     // Stack reserve & reduce
     if (gc_decl_count > 0) {
         // Stack reserve
-        Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, NULL, type_cache_uint(b));
+        Value *amount = vgen_int(alc, gc_decl_count * b->ptr_size, type_cache_uint(b));
         Value *offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, amount, 1);
         func->t_stack_incr = tgen_assign(alc, func->v_cache_stack_pos, offset);
         array_push(start->ast, func->t_stack_incr);
@@ -111,10 +111,10 @@ void ast_func_end(Allocator* alc, Parser* p) {
         // Set stack offset for variables
         if (decl->offset > -1) {
             if (decl->is_gc) {
-                Value* offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, vgen_int(alc, decl->offset, NULL, type_cache_u32(b)), b->ptr_size);
+                Value* offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, vgen_int(alc, decl->offset, type_cache_u32(b)), b->ptr_size);
                 array_push(start->ast, tgen_decl_set_store(alc, decl, offset));
             } else {
-                Value* offset = vgen_ptr_offset(alc, b, alloca, vgen_int(alc, decl->offset, NULL, type_cache_u32(b)), 1);
+                Value* offset = vgen_ptr_offset(alc, b, alloca, vgen_int(alc, decl->offset, type_cache_u32(b)), 1);
                 array_push(start->ast, tgen_decl_set_store(alc, decl, offset));
             }
         }

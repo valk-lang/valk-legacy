@@ -69,7 +69,7 @@ void pt_return(Build* b, Allocator* alc, Parser* p) {
             }
         } else {
             Decl *decl = array_get_index(func->rett_decls, rett_decl_i++);
-            Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), rett, vgen_int(alc, 0, NULL, type_cache_i32(b)));
+            Value *var = vgen_ptrv(alc, b, vgen_decl(alc, decl), rett, vgen_int(alc, 0, type_cache_i32(b)));
             array_push(scope->ast, tgen_assign(alc, var, val));
         }
         i++;
