@@ -84,20 +84,23 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     return retv;
 }
 
-Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *type, Type* alt_type) {
-    if(type && !number_fits_type(value, type))
-        type = NULL;
-    if(!type)
-        type = alt_type;
+Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *prefer_type, Type* type) {
+    if(prefer_type && prefer_type->type == type_int && number_fits_type(value, negative, prefer_type))
+        type = prefer_type;
 
     VNumber *item = al(alc, sizeof(VNumber));
-    item->value_int = value;
+    item->value_uint = value;
+    item->negative = negative;
     return value_make(alc, v_number, item, type);
 }
 
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type) {
     VNumber *item = al(alc, sizeof(VNumber));
-    item->value_int = value;
+    item->value_uint = (v_u64)value;
+    if(value < 0) {
+        item->value_uint *= -1;
+        item->negative = true;
+    }
     return value_make(alc, v_number, item, type);
 }
 Value *vgen_float(Allocator *alc, double value, Type *type) {

@@ -12,9 +12,11 @@ Thread *thread_make(Allocator *alc, void* (fn)(void *), void *arg, Array *pool, 
     void *thr = CreateThread(NULL, 0, fn, arg, 0, NULL);
 #else
     if (pool->length >= max_concurrent) {
+        printf("wait...\n");
         // Wait for the first thread
         Thread *t = array_pop_first(pool);
         pthread_join(*(pthread_t *)(t->thr), NULL);
+        printf("go!\n");
     }
 
     pthread_t *thr = al(alc, sizeof(pthread_t));

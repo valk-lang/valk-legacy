@@ -16,4 +16,9 @@ test "Casting" {
     // upscale unsigned -> signed 
     let v9 : u8 = 5
     let v10 : i16 = v9
+    // Auto cast 0xf to u8
+    let v11 : u8 = 0xf
+    let v12 = 0xf + v11 // should become u8
+    let v13 : u8 = v12 // check if u8
+    assert(v12 == 0x1e)
 }

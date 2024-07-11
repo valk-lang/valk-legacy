@@ -63,7 +63,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                     parse_err(p, -1, "Third argument of '@ptr_offset' must an integer literal. e.g. 1 or sizeof(ptr)");
                 }
                 VNumber* vn = s->item;
-                size = vn->value_int;
+                size = (int)vn->value_uint;
                 if (size < 1) {
                     parse_err(p, -1, "Third argument of '@ptr_offset' must be larger than 0");
                 }
@@ -485,22 +485,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         }
 
         if(!is_float) {
-            if(negative && uv > 0x7FFFFFFFFFFFFFFF) {
-                parse_err(p, -1, "Number too large: '%s'", value);
-            }
-            v_i64 iv = ((v_i64)uv) * (negative ? -1 : 1);
-            Type* type = tcv_int ? tcv : NULL;
-            if(type && !number_fits_type(iv, type)) {
-                type = NULL;
-            }
-            if(!type) {
-                if(uv > 0x7FFFFFFFFFFFFFFF) {
-                    type = type_gen_valk(alc, b, "uint");
-                } else {
-                    type = type_gen_valk(alc, b, "int");
-                }
-            }
-            v = vgen_int(alc, iv, type);
+            v = vgen_int_parse(alc, uv, negative, tcv, uv > 0x7FFFFFFFFFFFFFFF ? type_gen_valk(alc, b, "uint") : type_gen_valk(alc, b, "int"));
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -1244,6 +1229,11 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
         is_ptr = true;
         right = vgen_cast(alc, right, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
+
+    // Try convert left side number literal
+    if(left->type == v_number) {
+        left = try_convert_number(alc, b, left, right->rett);
+    }
     
     // Try match types
     match_value_types(alc, b, &left, &right);
@@ -1269,8 +1259,8 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
     VNumber* vn1 = n1->item;
     VNumber* vn2 = n2->item;
-    double v1 = n1->rett->type == type_int ? (double) vn1->value_int : vn1->value_float;
-    double v2 = n2->rett->type == type_int ? (double) vn2->value_int : vn2->value_float;
+    double v1 = n1->rett->type == type_int ? (double)vnumber_value_i64(vn1) : vn1->value_float;
+    double v2 = n2->rett->type == type_int ? (double)vnumber_value_i64(vn2) : vn2->value_float;
     if(op == op_add) {
         v1 = v1 + v2;
     } else if(op == op_sub) {
@@ -1288,8 +1278,8 @@ Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
     VNumber* vn1 = n1->item;
     VNumber* vn2 = n2->item;
-    int v1 = vn1->value_int;
-    int v2 = vn2->value_int;
+    v_i64 v1 = vnumber_value_i64(vn1);
+    v_i64 v2 = vnumber_value_i64(vn2);
     if(op == op_add) {
         v1 = v1 + v2;
     } else if(op == op_sub) {
@@ -1366,26 +1356,6 @@ bool value_is_assignable(Value *v) {
         return value_is_assignable(vc->value);
     }
     return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global; 
-}
-
-void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
-    //
-    Value* v1 = *v1_;
-    Value* v2 = *v2_;
-    Type* t1 = v1->rett;
-    Type* t2 = v2->rett;
-    bool is_signed = t1->is_signed || t2->is_signed;
-    bool is_float = t1->type == type_float || t2->type == type_float;
-    int size = is_float ? max_num(t1->size, t2->size) : (max_num(t1->is_signed != is_signed ? t1->size * 2 : t1->size, t2->is_signed != is_signed ? t2->size * 2 : t2->size));
-    Type* type = type_gen_number(alc, b, size, is_float, is_signed);
-    if(!type)
-        return;
-    if(t1->type != type->type || t1->is_signed != type->is_signed || t1->size != type->size) {
-        *v1_ = vgen_cast(alc, v1, type);
-    }
-    if(t2->type != type->type || t2->is_signed != type->is_signed || t2->size != type->size) {
-        *v2_ = vgen_cast(alc, v2, type);
-    }
 }
 
 void value_is_mutable(Value* v) {

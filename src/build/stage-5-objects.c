@@ -30,6 +30,7 @@ void stage_5_objects(Build* b) {
 
     usize start = microtime();
 
+    // Update cache
     Array *o_files = array_make(b->alc, 100);
     Array *threads = array_make(b->alc, 32);
     Array *units = b->units;
@@ -63,9 +64,6 @@ void stage_5_objects(Build* b) {
 
 void stage_build_o_file(Build* b, Unit* u, Array* threads) {
 
-    if(b->verbose > 1)
-        printf("⚙ Compile o file: %s\n", u->path_o);
-
     Array *ir_files = array_make(b->alc, 2);
     array_push(ir_files, u->path_ir);
 
@@ -75,8 +73,10 @@ void stage_build_o_file(Build* b, Unit* u, Array* threads) {
     data->path_o = u->path_o;
     stage_set_target(b, data);
 
-    thread_make(b->alc, llvm_build_o_file, data, threads, 8);
-    // llvm_build_o_file(data);
+    thread_make(b->alc, llvm_build_o_file, data, threads, 1);
+
+    if(b->verbose > 1)
+        printf("⚙ Compile o file: %s\n", u->path_o);
 }
 
 void* llvm_build_o_file(void* data_) {
@@ -94,8 +94,12 @@ void* llvm_build_o_file(void* data_) {
 
     int i = 0;
     while (i < ir_count) {
+
         char *ir_path = array_get_index(ir_files, i);
         i++;
+
+        if (b->verbose > 2)
+            printf("LLVM parse: %s\n", ir_path);
 
         LLVMModuleRef mod;
         LLVMMemoryBufferRef buf = NULL;
@@ -125,6 +129,8 @@ void* llvm_build_o_file(void* data_) {
     }
 
     // Verify
+    if(b->verbose > 2)
+        printf("LLVM verify module for: %s\n", path_o);
     char *error = NULL;
     if (LLVMVerifyModule(nsc_mod, LLVMReturnStatusAction, &error) != 0) {
         char *ir_code = LLVMPrintModuleToString(nsc_mod);
@@ -140,9 +146,13 @@ void* llvm_build_o_file(void* data_) {
     LLVMSetDataLayout(nsc_mod, data->data_layout);
 
     if (b->optimize) {
+        if (b->verbose > 2)
+            printf("LLVM optimize: %s\n", path_o);
         stage_5_optimize(nsc_mod);
     }
 
+    if(b->verbose > 2)
+        printf("LLVM write: %s\n", path_o);
     if (LLVMTargetMachineEmitToFile(data->target_machine, nsc_mod, path_o, LLVMObjectFile, &error) != 0) {
         fprintf(stderr, "Failed to emit machine code!\n");
         fprintf(stderr, "Error: %s\n", error);

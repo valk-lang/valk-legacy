@@ -22,10 +22,11 @@ char* ir_value(IR* ir, Value* v) {
         if(rett->is_pointer) {
             die("Compiler bug: integer has a pointer type");
         }
-        if(rt == type_int || rt == type_bool)
-            r = ir_int(ir, item->value_int);
-        else
+        if(rt == type_int || rt == type_bool) {
+            r = ir_int(ir, vnumber_value_i64(item));
+        } else {
             r = ir_float(ir, item->value_float);
+        }
     }
     else if (vt == v_null) {
         r = "null";
