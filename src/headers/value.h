@@ -10,7 +10,6 @@ void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_);
 Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int op);
 void value_is_mutable(Value* v);
 Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* type);
-bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
 void value_enable_cached(VIRCached* v);

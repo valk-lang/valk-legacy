@@ -266,11 +266,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             v = vgen_int_parse(alc, type->size, false, p->try_conv, type_gen_valk(alc, b, "int"));
 
-            // Type *tcv = p->try_conv;
-            // bool tcv_int = tcv ? tcv->type == type_int : false;
-            // if (tcv_int)
-            //     try_convert_number(v, tcv);
-
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_bool(alc, b, str_is(tkn, "true"));
         } else if (str_is(tkn, "null")) {
@@ -463,8 +458,6 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
             double fv = atof(buf);
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
-            // if(tcv_float)
-            //     try_convert_number(v, tcv);
 
         } else if (t1 == tok_id && t1tkn[0] == 'x') {
             // Hex number
@@ -1350,11 +1343,6 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
         // Numbers
         bool is_bool = lt->type == type_bool || rt->type == type_bool;
         if (!is_bool) {
-            // if (left->type == v_number && right->type != v_number) {
-            //     try_convert_number(left, rt);
-            // } else if (right->type == v_number && left->type != v_number) {
-            //     try_convert_number(right, lt);
-            // }
             match_value_types(alc, b, &left, &right);
         }
     }
@@ -1480,28 +1468,6 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
         }
     }
     return val;
-}
-
-bool try_convert_number(Value* val, Type* to_type) {
-    int tto = to_type->type;
-    if(val->type != v_number || (tto != type_int && tto != type_float))
-        return false;
-
-    VNumber *number = val->item;
-    if (tto == type_int && val->rett->type != type_float) {
-        if(number_fits_type(number->value_int, to_type)) {
-            val->rett = to_type;
-            return true;
-        }
-    } else if (tto == type_float) {
-        if(val->rett->type == type_int) {
-            // int -> float
-            number->value_float = (double) number->value_int;
-            val->rett = to_type;
-            return true;
-        }
-    }
-    return false;
 }
 
 bool value_needs_gc_buffer(Value* val) {
