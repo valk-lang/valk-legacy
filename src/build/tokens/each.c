@@ -71,7 +71,7 @@ void pt_each(Build* b, Allocator* alc, Parser* p) {
     scope_add_decl(alc, scope, index);
     Value *vindex = value_make(alc, v_decl, index, index->type);
     // Set index to 0
-    array_push(scope->ast, tgen_assign(alc, vindex, vgen_int(alc, 0, index->type)));
+    array_push(scope->ast, tgen_assign(alc, vindex, vgen_int(alc, 0, NULL, index->type)));
 
     p->scope = scope_each;
     p->loop_scope = scope_each;

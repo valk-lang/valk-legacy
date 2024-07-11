@@ -162,13 +162,13 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         if(b->verbose > 2)
             printf("Class: %s | vtable: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
         //
-        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
+        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, NULL, type_cache_u32(b)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
         scope_set_idf(class->scope, "STACK", idf, p);
         //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
+        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, NULL, type_cache_uint(b)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));

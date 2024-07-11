@@ -138,7 +138,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = vgen_int(alc, type->class->gc_vtable_index, type_gen_valk(alc, b, "int"));
+            v = vgen_int(alc, type->class->gc_vtable_index, p->try_conv, type_gen_valk(alc, b, "int"));
         } else if (str_is(tkn, "@class_of")) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
@@ -201,7 +201,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         v = vgen_string(alc, p->unit, body);
     } else if (t == tok_char) {
 
-        v = vgen_int(alc, tkn[0], type_gen_valk(alc, b, "u8"));
+        v = vgen_int(alc, tkn[0], NULL, type_gen_valk(alc, b, "u8"));
 
     } else if (t == tok_not) {
 
@@ -264,7 +264,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = vgen_int(alc, type->size, type_gen_valk(alc, b, "int"));
+            v = vgen_int(alc, type->size, p->try_conv, type_gen_valk(alc, b, "int"));
 
             Type *tcv = p->try_conv;
             bool tcv_int = tcv ? tcv->type == type_int : false;
@@ -409,7 +409,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             array_push(args, val);
             array_push(args, result);
             array_push(args, vgen_string(alc, p->unit, p->chunk->fc ? p->chunk->fc->path : "{generated-code}"));
-            array_push(args, vgen_int(alc, p->line, type_gen_valk(alc, b, "uint")));
+            array_push(args, vgen_int(alc, p->line, NULL, type_gen_valk(alc, b, "uint")));
             Value* fptr = vgen_func_ptr(alc, test_assert, NULL);
             v = vgen_func_call(alc, p, fptr, args);
 
@@ -506,8 +506,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                     type = type_gen_valk(alc, b, "int");
                 }
             }
-
-            v = vgen_int(alc, iv, type);
+            v = vgen_int(alc, iv, NULL, type);
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -1132,7 +1131,11 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);
             }
 
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = prop->type;
+            p->try_conv = tcv;
             Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope, prop->type);
+            p->try_conv = tcv_prev;
 
             map_set_force_new(values, name, val);
         }
@@ -1326,7 +1329,7 @@ Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
         return NULL;
     }
     int size = max_num(n1->rett->size, n2->rett->size);
-    return vgen_int(alc, v1, type_gen_number(alc, b, size, false, n1->rett->is_signed || n2->rett->is_signed));
+    return vgen_int(alc, v1, NULL, type_gen_number(alc, b, size, false, n1->rett->is_signed || n2->rett->is_signed));
 }
 
 Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right, int op) {
@@ -1450,13 +1453,13 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
 
 
     // If number literal, change the type
-    if(val->type == v_number){
-        if (type->type == type_int || type->type == type_float) {
-            try_convert_number(val, type);
-        } else if (val->rett->type == type_int && type->type == type_ptr) {
-            val = vgen_cast(alc, val, type);
-        }
-    }
+    // if(val->type == v_number){
+    //     if (type->type == type_int || type->type == type_float) {
+    //         try_convert_number(val, type);
+    //     } else if (val->rett->type == type_int && type->type == type_ptr) {
+    //         val = vgen_cast(alc, val, type);
+    //     }
+    // }
 
     // If number value, cast if appropriate
     if(val->type != v_number){
@@ -1578,7 +1581,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
         parse_err(p, -1, "Error can never be '%s', possible errors: %s", err_name, options);
     }
     unsigned int errv = array_get_index_u32(err_values, index);
-    return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
+    return vgen_int(alc, (v_i64)errv, NULL, type_cache_u32(p->b));
 }
 
 Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {
