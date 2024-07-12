@@ -13,7 +13,6 @@
 
 ```
 // Prio
-- global default values
 - math functions (pow, sqrt, ...)
 - json encode/decode
 - fix stack list in GcManager
