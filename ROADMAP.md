@@ -13,9 +13,6 @@
 
 ```
 // Prio
-- improve libc binding generator
-- improve AST gen
-- call try convert on the fly instead of afterwards
 - global default values
 - math functions (pow, sqrt, ...)
 - json encode/decode

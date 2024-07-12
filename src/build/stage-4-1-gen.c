@@ -138,14 +138,22 @@ Func* stage_generate_set_globals(Build *b) {
 
     loop(globals, i) {
         Global* g = array_get_index(globals, i);
-        if(!g->chunk_value) continue;
+        if(!g->chunk_value) {
+            if(type_is_gc(g->type) && !g->type->ignore_null) {
+                *p->chunk = *g->chunk_type;
+                parse_err(p, -1, "Missing global default value");
+            }
+            continue;
+        }
 
         *p->chunk = *g->chunk_value;
         p->scope = g->declared_scope;
         Value* v = read_value(b->alc, p, true, 0);
 
+        type_check(p, g->type, v->rett);
+
         Token* t = tgen_assign(b->alc, vgen_global(b->alc, g), v);
-        // array_push(scope->ast, t);
+        array_push(scope->ast, t);
     }
 
     return func;

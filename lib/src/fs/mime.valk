@@ -1,5 +1,5 @@
 
-global g_mimes : ?Map[String]
+global g_mimes : ?Map[String] (null)
 
 fn mime(ext_without_dot: String) String {
 
