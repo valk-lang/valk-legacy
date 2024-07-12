@@ -285,7 +285,7 @@ function gen_valk_structs_ast(object $ast_data, array $target): string
         $code .= "}\n\n";
     }
 
-    // file_put_contents(__DIR__ . '/tmp/result.va', $code);
+    // file_put_contents(__DIR__ . '/tmp/result.valk', $code);
     // exit;
 
     return $code;

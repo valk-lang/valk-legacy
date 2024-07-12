@@ -100,7 +100,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
     Array* files = get_subfiles(b->alc, dir, false, true);
     loop(files, i) {
         char* path = array_get_index(files, i);
-        if(ends_with(path, ".va"))
+        if(ends_with(path, ".valk"))
             fc_make(nsc, path, false);
     }
 

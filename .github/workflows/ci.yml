@@ -36,19 +36,19 @@ jobs:
       run: make
 
     - name: Test(linux-x64)
-      run: ./valk build ./tests/*.va --test -r
+      run: ./valk build ./tests/*.valk --test -r
 
     - name: Build test(cross compiling) for macos-x64
-      run: ./valk build ./tests/*.va -o _test --target macos-x64 --test
+      run: ./valk build ./tests/*.valk -o _test --target macos-x64 --test
     
     - name: Build test(cross compiling) for macos-x64
-      run: ./valk build ./tests/*.va -o _test --target macos-x64 --test
+      run: ./valk build ./tests/*.valk -o _test --target macos-x64 --test
 
     - name: Build test(cross compiling) for macos-arm64
-      run: ./valk build ./tests/*.va -o _test --target macos-arm64 --test
+      run: ./valk build ./tests/*.valk -o _test --target macos-arm64 --test
     
     - name: Build test(cross compiling) for win-x64
-      run: ./valk build ./tests/*.va -o _test.exe --target win-x64 --test
+      run: ./valk build ./tests/*.valk -o _test.exe --target win-x64 --test
     
   macos:
     name: "test on macos-13 x64"
@@ -67,16 +67,16 @@ jobs:
       run: make
 
     - name: Test(macos-x64)
-      run: ./valk build ./tests/*.va --test -r
+      run: ./valk build ./tests/*.valk --test -r
 
     - name: Build test(cross compiling) for linux-x64
-      run: ./valk build ./tests/*.va -o _test --target linux-x64 --test
+      run: ./valk build ./tests/*.valk -o _test --target linux-x64 --test
     
     - name: Build test(cross compiling) for macos-x64
-      run: ./valk build ./tests/*.va -o _test --target macos-x64 --test
+      run: ./valk build ./tests/*.valk -o _test --target macos-x64 --test
     
     - name: Build test(cross compiling) for win-x64
-      run: ./valk build ./tests/*.va -o _test.exe --target win-x64 --test
+      run: ./valk build ./tests/*.valk -o _test.exe --target win-x64 --test
 
   macos_arm:
     name: "test on macos-latest arm64"
@@ -95,16 +95,16 @@ jobs:
       run: make
 
     - name: Test(macos-x64)
-      run: ./valk build ./tests/*.va --test -r
+      run: ./valk build ./tests/*.valk --test -r
 
     - name: Build test(cross compiling) for linux-x64
-      run: ./valk build ./tests/*.va -o _test --target linux-x64 --test
+      run: ./valk build ./tests/*.valk -o _test --target linux-x64 --test
     
     - name: Build test(cross compiling) for macos-arm64
-      run: ./valk build ./tests/*.va -o _test --target macos-arm64 --test
+      run: ./valk build ./tests/*.valk -o _test --target macos-arm64 --test
     
     - name: Build test(cross compiling) for win-x64
-      run: ./valk build ./tests/*.va -o _test.exe --target win-x64 --test
+      run: ./valk build ./tests/*.valk -o _test.exe --target win-x64 --test
 
   windows:
     name: "test on windows-latest(MSYS2)"
@@ -133,4 +133,4 @@ jobs:
       run: make
     
     - name: Test(win-x64)
-      run: ./valk build ./tests/*.va --test -r
+      run: ./valk build ./tests/*.valk --test -r
