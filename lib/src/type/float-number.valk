@@ -1,7 +1,7 @@
 
 use mem
 
-global float_str_buf : ?ptr
+global float_str_buf : ?ptr (null)
 
 trait FloatNumber {
 

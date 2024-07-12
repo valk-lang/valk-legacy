@@ -135,11 +135,12 @@ Func* stage_generate_set_globals(Build *b) {
     // Generate main AST
     Scope* scope = func->scope;
     Parser* p = func->unit->parser;
+    p->func = func;
 
     loop(globals, i) {
         Global* g = array_get_index(globals, i);
         if(!g->chunk_value) {
-            if(type_is_gc(g->type) && !g->type->ignore_null) {
+            if(g->type->is_pointer && !g->type->nullable && !g->type->ignore_null) {
                 *p->chunk = *g->chunk_type;
                 parse_err(p, -1, "Missing global default value");
             }
