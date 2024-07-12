@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+void error_print_code(Allocator*alc, char* content, int line, int col);
+
 void build_err(Build *b, char *msg, ...) {
 
     va_list args;
@@ -49,7 +51,6 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     }
     int line = pos->line;
     int col = pos->col;
-    int i = 0;
 
     va_list args;
     va_start(args, msg);
@@ -60,6 +61,8 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     printf("# File: %s\n", chunk->fc ? chunk->fc->path : "(generated code)");
     printf("# Line: %d | Col: %d\n", line, col);
     printf("# Error: %s\n", error);
+
+    error_print_code(b->alc, chunk->content, line, col);
 
     loop(b->pkcs, i) {
         Pkc* pkc = array_get_index(b->pkcs, i);
@@ -72,6 +75,57 @@ void parse_err(Parser *p, int start, char *msg, ...) {
     alc_delete(b->alc);
 
     exit(1);
+}
+
+void error_print_code(Allocator*alc, char* content, int line, int col) {
+    int i = 0;
+    int len = strlen(content);
+    int l = 1;
+    int start_pos = 0;
+    while(l < line && i < len) {
+        char ch = content[i++];
+        if(ch == '\n') {
+            l++;
+            start_pos = i;
+        }
+    }
+    if(i == len)
+        return;
+    
+    // Barriers
+    // char* b1 = "###############################";
+    char* b1 = "-------------------------------------";
+    char* b2 = dups(alc, b1);
+    int bl = strlen(b2);
+    if (col > 0)
+        col--;
+    int offset = 0;
+    if(col + 10 >= bl) {
+        offset = col - bl + 10;
+        col -= offset;
+    }
+    if (col > 0)
+        b2[col - 1] = ' ';
+    b2[col] = '^';
+    b2[col + 1] = ' ';
+    //
+
+    // Get line start/end position
+    start_pos += offset;
+    i = start_pos;
+    int end_pos = start_pos;
+    while(i < len) {
+        char ch = content[i++];
+        if(ch == '\n')
+            break;
+        end_pos = i;
+    }
+    int line_len = end_pos - start_pos;
+
+    // Print all
+    printf("%s\n", b1);
+    printf("%*.*s\n", line_len, line_len, content + start_pos);
+    printf("%s\n", b2);
 }
 
 void lex_err(Build* b, Chunk *ch, int content_i, char *msg, ...) {
