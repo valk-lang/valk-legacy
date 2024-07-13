@@ -149,7 +149,11 @@ Func* stage_generate_set_globals(Build *b) {
 
         *p->chunk = *g->chunk_value;
         p->scope = g->declared_scope;
+
+        Type *tcv_prev = p->try_conv;
+        p->try_conv = g->type;
         Value* v = read_value(b->alc, p, true, 0);
+        p->try_conv = tcv_prev;
 
         type_check(p, g->type, v->rett);
 

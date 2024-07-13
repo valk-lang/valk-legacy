@@ -861,10 +861,10 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         Chunk ch;
         ch = *p->chunk;
         *p->chunk = *va->chunk;
-        Scope *scope = p->scope;
-        p->scope = va->scope;
+        // Scope *scope = p->scope;
+        // p->scope = va->scope;
         Value* val = read_value(alc, p, true, 0);
-        p->scope = scope;
+        // p->scope = scope;
         *p->chunk = ch;
         return val;
     }

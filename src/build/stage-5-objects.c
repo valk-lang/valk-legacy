@@ -22,6 +22,8 @@ void stage_build_o_file(Build* b, Unit* u, Array* threads);
 void stage_set_target(Build* b, CompileData* data);
 void* llvm_build_o_file(void* data);
 void stage_5_optimize(LLVMModuleRef mod);
+void llvm_optimizations(LLVMPassManagerRef function_passes,
+                        LLVMPassManagerRef module_passes);
 
 void stage_5_objects(Build* b) {
 
@@ -241,7 +243,7 @@ void stage_5_optimize(LLVMModuleRef mod) {
     // Note: O3 can produce slower code than O2 sometimes
     LLVMPassManagerBuilderSetOptLevel(passBuilder, 3);
     LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
-    LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 50);
+    // LLVMPassManagerBuilderUseInlinerWithThreshold(passBuilder, 100);
 
     LLVMPassManagerRef func_passes = LLVMCreateFunctionPassManagerForModule(mod);
     LLVMPassManagerRef mod_passes = LLVMCreatePassManager();
@@ -249,13 +251,8 @@ void stage_5_optimize(LLVMModuleRef mod) {
     LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder, func_passes);
     LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, mod_passes);
 
-    // Other optimizations
-    LLVMAddLoopDeletionPass(func_passes);
-    LLVMAddLoopIdiomPass(func_passes);
-    LLVMAddLoopRotatePass(func_passes);
-    LLVMAddLoopRerollPass(func_passes);
-    LLVMAddLoopUnrollPass(func_passes);
-    LLVMAddLoopUnrollAndJamPass(func_passes);
+    // Optional
+    // llvm_optimizations(func_passes, mod_passes);
 
     LLVMPassManagerBuilderDispose(passBuilder);
     LLVMInitializeFunctionPassManager(func_passes);
@@ -269,4 +266,65 @@ void stage_5_optimize(LLVMModuleRef mod) {
 
     LLVMDisposePassManager(func_passes);
     LLVMDisposePassManager(mod_passes);
+}
+
+void llvm_optimizations(LLVMPassManagerRef function_passes,
+                        LLVMPassManagerRef module_passes) {
+
+    LLVMAddBasicAliasAnalysisPass(function_passes);
+    LLVMAddBasicAliasAnalysisPass(module_passes);
+    LLVMAddTypeBasedAliasAnalysisPass(function_passes);
+    LLVMAddScopedNoAliasAAPass(function_passes);
+    LLVMAddAggressiveDCEPass(function_passes);
+    LLVMAddBitTrackingDCEPass(function_passes);
+
+    LLVMAddLoopDeletionPass(function_passes);
+    LLVMAddLoopIdiomPass(function_passes);
+    LLVMAddLoopRotatePass(function_passes);
+    LLVMAddLoopRerollPass(function_passes);
+    LLVMAddLoopUnrollPass(function_passes);
+    LLVMAddLoopUnrollAndJamPass(function_passes);
+    LLVMAddLoopUnrollAndJamPass(function_passes);
+
+    LLVMAddAlignmentFromAssumptionsPass(function_passes);
+    LLVMAddCFGSimplificationPass(function_passes);
+    LLVMAddDeadStoreEliminationPass(function_passes);
+    LLVMAddScalarizerPass(function_passes);
+    LLVMAddMergedLoadStoreMotionPass(function_passes);
+
+    LLVMAddGVNPass(function_passes);
+    LLVMAddNewGVNPass(function_passes);
+    LLVMAddIndVarSimplifyPass(function_passes);
+    LLVMAddInstructionCombiningPass(function_passes);
+    LLVMAddJumpThreadingPass(function_passes);
+
+    LLVMAddLICMPass(function_passes);
+    LLVMAddMemCpyOptPass(function_passes);
+    LLVMAddPartiallyInlineLibCallsPass(function_passes);
+    LLVMAddReassociatePass(function_passes);
+    LLVMAddSCCPPass(function_passes);
+
+    LLVMAddScalarReplAggregatesPass(function_passes);
+    LLVMAddScalarReplAggregatesPassSSA(function_passes);
+    LLVMAddScalarReplAggregatesPassWithThreshold(function_passes, 10);
+    LLVMAddSimplifyLibCallsPass(function_passes);
+
+    // LLVMAddDemoteMemoryToRegisterPass(function_passes); // Makes code slower
+    LLVMAddVerifierPass(function_passes);
+    LLVMAddCorrelatedValuePropagationPass(function_passes);
+
+    LLVMAddEarlyCSEMemSSAPass(function_passes);
+    LLVMAddLowerExpectIntrinsicPass(function_passes);
+
+    LLVMAddGlobalOptimizerPass(module_passes);
+    LLVMAddPruneEHPass(module_passes);
+    LLVMAddIPSCCPPass(module_passes);
+
+    LLVMAddConstantMergePass(module_passes);
+    LLVMAddStripDeadPrototypesPass(module_passes);
+    LLVMAddStripSymbolsPass(module_passes);
+
+    LLVMAddDeadArgEliminationPass(module_passes);
+    // LLVMAddFunctionInliningPass(module_passes); // Makes code slower
+    LLVMAddAlwaysInlinerPass(module_passes);
 }
