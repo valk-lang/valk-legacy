@@ -13,6 +13,7 @@ global mem_new : uint
 global mem_marked : uint
 global mem_transfered : uint
 global mem_usage : uint
+global mem_gc_loop : bool
 
 value mem_marked_default (8192)
 
@@ -49,6 +50,7 @@ cstruct StackPos {
     base: ptr
     adr: ptr
     lowest: ptr
+    max: ptr
     size: uint
     fn free() {
         free(this.base)
@@ -61,6 +63,7 @@ fn create_stack() StackPos {
         base: base
         adr: base
         lowest: base
+        max: base
         size: stack_size
     }
 }
@@ -167,6 +170,7 @@ cstruct Stack {
         mem_new = 0
         mem_usage = 0
         run_gc = false
+        mem_gc_loop = false
 
         this.mark_difference_down()
         this.handle_transfer_list()

@@ -3,7 +3,7 @@ use io
 use os
 
 snippet run_gc_check() {
-    if mem_usage > 35 {
+    if mem_gc_loop {
         gc()
     }
 }

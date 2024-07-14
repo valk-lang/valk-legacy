@@ -44,9 +44,6 @@ cstruct GcPool2[T] {
     }
 
     fn get() T {
-        if mem_usage > 70 {
-            gc()
-        }
 
         let isize = this.isize
         if this.block == null {
@@ -99,8 +96,7 @@ cstruct GcPool2[T] {
             this.set_block(new)
         }
 
-        // Check mem usage
-        mem_usage = mem_new * 100 / mem_marked
+        update_usage()
     }
 
     fn set_block(block: ptr) {

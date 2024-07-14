@@ -13,6 +13,31 @@ fn force_gc() {
     stack.gc()
 }
 
+fn update_usage() {
+
+    // Stack stats
+    let s = stack_pos
+    let adr = s.adr
+    let max = s.max
+    if adr > max {
+        s.max = adr
+        max = adr
+    }
+    let base = s.base
+    let full = max - base + 1
+    let used = adr - base + 1
+    let limit = (used * 100 / full) @as uint
+
+    // Check mem usage
+    mem_usage = mem_new * 100 / mem_marked
+
+    if mem_usage > limit {
+        gc()
+    } else {
+        mem_gc_loop = mem_usage > (limit / 4)
+    }
+}
+
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1) & 0xffffff
