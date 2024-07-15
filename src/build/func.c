@@ -11,6 +11,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->unit = u;
     f->act = act_public;
     f->fc = NULL;
+    f->ur = NULL;
     f->ast_alc = NULL;
 
     f->scope = scope_make(alc, sc_func, parent);
@@ -48,6 +49,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->t_run_gc = NULL;
 
     f->alloca_size = 0;
+    f->gc_decl_count = 0;
     f->arg_nr = 0;
     f->rett_count = 0;
 

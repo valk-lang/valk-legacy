@@ -21,6 +21,7 @@ struct Func {
     Unit* unit;
     Fc* fc;
     Scope* scope;
+    Unroll* ur;
     Allocator* ast_alc;
     //
     Chunk* chunk_args;
@@ -57,6 +58,7 @@ struct Func {
     //
     int act;
     int alloca_size;
+    int gc_decl_count;
     int arg_nr;
     int rett_count;
     //
