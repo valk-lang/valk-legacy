@@ -21,6 +21,7 @@ struct Func {
     Unit* unit;
     Fc* fc;
     Scope* scope;
+    Allocator* ast_alc;
     //
     Chunk* chunk_args;
     Chunk* chunk_rett;

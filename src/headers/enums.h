@@ -244,3 +244,9 @@ enum LINK {
     link_dynamic,
     link_static,
 };
+
+enum UNROLL {
+    ur_value,
+    ur_jump,
+    ur_cond_jump,
+};

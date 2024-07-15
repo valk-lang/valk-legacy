@@ -11,6 +11,8 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->unit = u;
     f->act = act_public;
     f->fc = NULL;
+    f->ast_alc = NULL;
+
     f->scope = scope_make(alc, sc_func, parent);
     f->scope->func = f;
     f->chunk_args = NULL;
