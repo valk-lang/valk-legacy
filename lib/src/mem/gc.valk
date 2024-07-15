@@ -17,16 +17,18 @@ fn update_usage() {
 
     // Stack stats
     let s = stack_pos
-    let adr = s.adr
-    let max = s.max
+    let adr = s.adr @as uint
+    let max = s.max @as uint
     if adr > max {
         s.max = adr
         max = adr
     }
     let base = s.base
-    let full = max - base + 1
-    let used = adr - base + 1
-    let limit = (used * 100 / full) @as uint
+    let full = max - base
+    let used = adr - base
+    // let limit = (used * 100 / full) @as uint
+    let limit_ = (used * 100 / full) @as uint
+    let limit = limit_ * limit_ / 30 + 10
 
     // Check mem usage
     mem_usage = mem_new * 100 / mem_marked
