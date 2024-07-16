@@ -27,6 +27,13 @@ void unroll_scope(Unroll* ur, Scope* scope) {
         Token* t = array_get_index(scope_ast, i);
         if(t->type == t_return || t->type == t_throw) {
             unroll_func_defer(ur, scope, unroll);
+
+            if(!type_is_gc(ur->func->rett) && ur->func->can_create_objects) {
+                Parser *p = ur->func->unit->parser;
+                Scope *gcscope = gen_snippet_ast(ur->alc, p, get_valk_snippet(ur->b, "mem", "run_gc_check"), map_make(ur->alc), scope);
+                Token *tgc = token_make(ur->alc, t_ast_scope, gcscope);
+                array_push(unroll, tgc);
+            }
         }
         array_push(unroll, t);
     }
