@@ -19,7 +19,6 @@ void stage_init_start_functions(Build *b) {
     // Generate main function
     func = func_make(b->alc, u, scope, "valk_tests", "valk_tests");
     b->func_main_tests = func;
-
 }
 
 void stage_generate_main(Build *b) {

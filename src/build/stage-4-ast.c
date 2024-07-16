@@ -40,8 +40,8 @@ void stage_ast(Build *b, void *payload) {
 
     // Generate main and then globals
     stage_generate_main(b);
-    stage_ast_func(b->func_main_gen);
     stage_generate_set_globals(b);
+    stage_ast_func(b->func_main_gen);
     stage_ast_func(b->func_set_globals);
 
     loop(units, i) {

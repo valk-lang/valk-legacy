@@ -99,12 +99,12 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
         // Store args
         if (decl->is_arg) {
             array_push(unroll, tgen_decl_set_arg(alc, decl));
-        // } else {
-        //     // Set null
-        //     if (decl->offset > -1 && decl->is_gc) {
-        //         Value* vdecl = vgen_decl(alc, decl);
-        //         array_push(start->ast, tgen_assign(alc, vdecl, vgen_null(alc, b)));
-        //     }
+        } else {
+            // Set null
+            // if (decl->offset > -1 && decl->is_gc) {
+            //     Value* vdecl = vgen_decl(alc, decl);
+            //     array_push(unroll, tgen_assign(alc, vdecl, vgen_null(alc, b)));
+            // }
         }
     }
 }
