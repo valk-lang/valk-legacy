@@ -52,7 +52,7 @@ Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
         VFuncPtr* item = on->item;
         array_push(p->func->called_functions, item->func);
     } else {
-        p->func->can_create_objects = true;
+        // p->func->can_create_objects = true;
     }
     Build* b = p->b;
     VFuncCall *item = al(alc, sizeof(VFuncCall));

@@ -144,6 +144,14 @@ void stage_ast_func(Func *func) {
         Class* class = array_get_index(classes, i);
         stage_ast_class(class);
     }
+    Array* called = func->called_functions;
+    loop(called, i) {
+        Func* f = array_get_index(called, i);
+        if(f->can_create_objects) {
+            func->can_create_objects = true;
+            break;
+        }
+    }
 
     if (func->b->building_ast) {
         // Unroll AST

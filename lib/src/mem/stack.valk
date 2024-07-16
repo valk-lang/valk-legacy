@@ -14,6 +14,7 @@ global mem_marked : uint
 global mem_transfered : uint
 global mem_usage : uint
 global mem_gc_loop : bool
+global mem_mult : uint
 
 value mem_marked_default (8192)
 
@@ -108,6 +109,7 @@ cstruct Stack {
         stack = s
         run_gc = false
         mem_marked = mem_marked_default
+        mem_mult = 1
 
         pools_init()
 
@@ -184,6 +186,7 @@ cstruct Stack {
 
             this.force_full = false
 
+            let before = mem_marked
             mem_marked = mem_marked_default
             mem_transfered = 0
             // Mark
@@ -197,6 +200,13 @@ cstruct Stack {
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
             }
+
+            // mem_marked = mem_marked + mem_marked / 10 * mem_mult
+            // if mem_marked * 6 / 10 > before {
+            //     if mem_mult < 20 : mem_mult += 3
+            // } else {
+            //     if mem_mult > 1 : mem_mult--
+            // }
         }
         pools_reset()
 
