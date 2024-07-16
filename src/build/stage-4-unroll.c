@@ -31,7 +31,7 @@ void unroll_scope(Unroll* ur, Scope* scope) {
         array_push(unroll, t);
     }
 
-    if(!scope->did_return && scope->type == type_func) {
+    if(!scope->did_return && scope->type == sc_func) {
         unroll_func_defer(ur, scope, unroll);
     }
 
