@@ -59,7 +59,6 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
         }
     }
 
-    // Global* gs = get_valk_global(b, "mem", "stack");
     if(func->gc_decl_count > 0) {
         Global *gsp = get_valk_global(b, "mem", "stack_pos");
         Value *stack_pos = vgen_ir_cached(alc, vgen_class_pa(alc, vgen_global(alc, gsp), map_get(gsp->type->class->props, "adr")));
@@ -116,10 +115,7 @@ void unroll_func_defer(Unroll* ur, Scope* scope, Array* unroll) {
 
     if (func->gc_decl_count > 0) {
         // Stack reduce
-        Scope *end = scope_make(alc, sc_default, scope);
-        end->ast = array_make(alc, 1);
         func->t_stack_decr = tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos);
-        array_push(end->ast, func->t_stack_decr);
-        func->ast_end = end;
+        array_push(unroll, func->t_stack_decr);
     }
 }
