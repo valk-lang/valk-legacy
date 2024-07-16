@@ -1,8 +1,8 @@
 
 #include "../all.h"
 
-const int block_size = 1000000;
-const int block_private_size = 100000;
+const int block_size = 5096;
+const int block_private_size = 5096;
 
 Allocator *alc_make() {
     //

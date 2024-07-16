@@ -28,6 +28,25 @@ Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg) {
     return value_make(alc, v_func_ptr, item, type_gen_func(alc, func));
 }
 
+Value *vgen_func_call_unroll(Allocator *alc, Value *on, Array *args) {
+
+    VFuncCall *item = al(alc, sizeof(VFuncCall));
+    item->on = on;
+    item->args = args;
+    item->rett_refs = NULL;
+    TypeFuncInfo* fi = on->rett->func_info;
+
+    Type* rett = NULL;
+    Array *rett_types = rett_types_of(alc, fi->rett);
+    if(rett_types) {
+        rett = array_get_index(rett_types, 0);
+    }
+
+    Value* retv = value_make(alc, v_func_call, item, rett);
+
+    return retv;
+}
+
 Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args) {
     if (on->type == v_func_ptr) {
         VFuncPtr* item = on->item;

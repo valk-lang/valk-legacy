@@ -64,6 +64,17 @@ void parse_err(Parser *p, int start, char *msg, ...) {
 
     error_print_code(b->alc, chunk->content, line, col);
 
+    // Clean up memory
+    loop(b->units, i) {
+        Unit* u = array_get_index(b->units, i);
+        loop(u->funcs, o) {
+            Func* func = array_get_index(u->funcs, o);
+            if(func->ast_alc) {
+                alc_delete(func->ast_alc);
+            }
+        }
+    }
+
     loop(b->pkcs, i) {
         Pkc* pkc = array_get_index(b->pkcs, i);
         if(pkc->config) {

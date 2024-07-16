@@ -37,6 +37,7 @@ typedef struct IRFuncIR IRFuncIR;
 typedef struct Func Func;
 typedef struct FuncArg FuncArg;
 typedef struct Scope Scope;
+typedef struct Unroll Unroll;
 typedef struct Idf Idf;
 typedef struct Id Id;
 typedef struct Type Type;

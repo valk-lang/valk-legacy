@@ -20,6 +20,7 @@ Value *vgen_ptr_of(Allocator *alc, Build* b, Value* from);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args);
+Value *vgen_func_call_unroll(Allocator *alc, Value *on, Array *args);
 Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *type, Type *alt_type);
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type);
 Value *vgen_float(Allocator *alc, double value, Type *type);

@@ -225,9 +225,9 @@ void ir_func_return(IR* ir, Scope* scope, char* type, char* value) {
     IRFunc* func = ir->func;
     Func* vfunc = func->func;
 
-    if(vfunc->ast_end) {
-        ir_write_ast(ir, vfunc->ast_end);
-    }
+    // if(vfunc->ast_end) {
+    //     ir_write_ast(ir, vfunc->ast_end);
+    // }
     
     Str* code = ir->block->code;
     str_flat(code, "  ret ");

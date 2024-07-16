@@ -4,8 +4,7 @@
 
 #include "typedefs.h"
 
-void ast_func_start(Allocator* alc, Parser* p);
-void ast_func_end(Allocator* alc, Parser* p);
+void func_ast_finalize(Allocator* alc, Parser* p);
 
 
 #endif

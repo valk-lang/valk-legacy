@@ -13,10 +13,6 @@ void read_ast(Parser *p, bool single_line) {
         scope->ast = array_make(alc, 50);
 
     int scope_type = scope->type;
-    bool is_func_scope = scope_type == sc_func;
-    if (is_func_scope) {
-        ast_func_start(alc, p);
-    }
 
     bool first = false;
 
@@ -142,8 +138,8 @@ void read_ast(Parser *p, bool single_line) {
         loop_defer(alc, p);
     }
 
-    if (is_func_scope) {
-        ast_func_end(alc, p);
+    if (scope_type == sc_func) {
+        func_ast_finalize(alc, p);
     }
 }
 

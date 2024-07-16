@@ -6,6 +6,7 @@ Func* stage_generate_set_globals(Build *b);
 Func* stage_generate_tests(Build *b);
 void stage_generate_main(Build *b);
 
+void stage_unroll(Build *b, Func *func);
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
 void ir_vtable_define_extern(Unit* u);
@@ -39,8 +40,8 @@ void stage_ast(Build *b, void *payload) {
 
     // Generate main and then globals
     stage_generate_main(b);
-    stage_ast_func(b->func_main_gen);
     stage_generate_set_globals(b);
+    stage_ast_func(b->func_main_gen);
     stage_ast_func(b->func_set_globals);
 
     loop(units, i) {
@@ -105,6 +106,9 @@ void stage_ast_func(Func *func) {
         return;
     }
 
+    Allocator *alc = alc_make();
+    func->ast_alc = alc;
+
     if (u->b->verbose > 2)
         printf("Stage 4 | Parse AST: %s\n", func->export_name);
 
@@ -126,17 +130,6 @@ void stage_ast_func(Func *func) {
 
     b->time_parse += microtime() - start;
 
-    // Generate IR
-    if(func->b->building_ast) {
-        start = microtime();
-        ir_gen_ir_for_func(u->ir, func);
-        b->time_ir += microtime() - start;
-    }
-
-    // Clear AST allocator
-    Allocator *alc = func->b->alc_ast;
-    alc_wipe(alc);
-
     // Generate AST for sub functions
     if(func->class && !func->class->is_used) {
         stage_ast_class(func->class);
@@ -151,6 +144,20 @@ void stage_ast_func(Func *func) {
         Class* class = array_get_index(classes, i);
         stage_ast_class(class);
     }
+
+    if (func->b->building_ast) {
+        // Unroll AST
+        stage_unroll(b, func);
+
+        // Generate IR
+        start = microtime();
+        ir_gen_ir_for_func(u->ir, func);
+        b->time_ir += microtime() - start;
+    }
+
+    // 
+    func->ast_alc = NULL;
+    alc_delete(alc);
 }
 void stage_ast_class(Class *class) {
     if (class->is_used)
