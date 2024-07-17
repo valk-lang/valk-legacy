@@ -49,8 +49,6 @@ global main_stack_pos: @ignu(StackPos)
 cstruct StackPos {
     base: ptr
     adr: ptr
-    lowest: ptr
-    max: ptr
     size: uint
     fn free() {
         free(this.base)
@@ -62,8 +60,6 @@ fn create_stack() StackPos {
     return StackPos { 
         base: base
         adr: base
-        lowest: base
-        max: base
         size: stack_size
     }
 }
