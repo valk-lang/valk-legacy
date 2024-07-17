@@ -307,7 +307,7 @@ bool is_dir(char* path) {
     return is_dir;
 }
 
-int mod_time(char *path) {
+int get_mod_time(char *path) {
 #ifdef WIN32
     HANDLE hndl;
     FILETIME ftMod;

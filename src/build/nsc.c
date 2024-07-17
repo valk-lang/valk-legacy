@@ -46,6 +46,14 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     //
     u->pool_parsers = array_make(alc, 10);
 
+    // Cache
+    u->cache = NULL;
+    u->nsc_deps_hash = NULL;
+    u->nsc_deps = array_make(alc, 8);
+    u->c_modtime = 0;
+    u->c_filecount = 0;
+    u->changed = true;
+
     u->id = pkc->b->units->length;
 
     u->string_count = 0;
@@ -53,6 +61,8 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
 
     u->ir_changed = false;
     u->is_main = false;
+
+    unit_load_cache(u);
 
     nsc->unit = u;
 
@@ -98,11 +108,20 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
     nsc = nsc_make(b->alc, pkc, name, dir);
 
     Array* files = get_subfiles(b->alc, dir, false, true);
+    int mod_time = 0;
+    int file_count = 0;
     loop(files, i) {
         char* path = array_get_index(files, i);
-        if(ends_with(path, ".valk"))
-            fc_make(nsc, path, false);
+        if(ends_with(path, ".valk")) {
+            Fc* fc = fc_make(nsc, path, false);
+            int time = get_mod_time(fc->path);
+            if(time > mod_time)
+                mod_time = time;
+            file_count++;
+        }
     }
+    nsc->mod_time = mod_time;
+    nsc->file_count = file_count;
 
     map_set_force_new(pkc->namespaces, name, nsc);
     return nsc;

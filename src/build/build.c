@@ -488,7 +488,7 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
                 if (!ends_with(file, ".valk")) {
                     continue;
                 }
-                int mt = mod_time(file);
+                int mt = get_mod_time(file);
                 int pmt = map_get_i32(mod_times, file);
                 if (mt != pmt) {
                     build = true;

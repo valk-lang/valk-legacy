@@ -57,6 +57,9 @@ void str_append_chars(Str *str, char *add) {
     int add_len = strlen(add);
     str_append_from_ptr(str, add, add_len);
 }
+void str_append_int_bytes(Str *str, int v) {
+    str_append_from_ptr(str, &v, sizeof(int));
+}
 
 void str_increase_memsize(Str *str, int new_memsize) {
     void* data = al(str->alc, new_memsize);

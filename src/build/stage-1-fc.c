@@ -392,6 +392,7 @@ void stage_1_use(Parser *p, Unit *u){
     }
 
     Nsc* nsc = nsc_load(pkc, ns, true, p);
+    array_push_unique_adr(u->nsc_deps, nsc);
 
     Build *b = p->b;
     Idf* idf = idf_make(b->alc, idf_scope, nsc->scope);

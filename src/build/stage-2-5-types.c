@@ -36,7 +36,7 @@ void stage_types(Build *b, void *payload) {
     }
 
     b->time_parse += microtime() - start;
-    stage_ast(b, NULL);
+    stage_cache(b, NULL);
 }
 
 void stage_types_func(Parser* p, Func* func) {

@@ -35,6 +35,7 @@ void stage_pools(Build* b, void* payload);
 void stage_props(Build* b, void *payload);
 void stage_classes(Build* b, void* payload);
 void stage_types(Build* b, void *payload);
+void stage_cache(Build *b, void *payload);
 void stage_ast(Build *b, void* payload);
 //
 void stage_5_ir_final(Build* b);
@@ -142,6 +143,8 @@ struct Nsc {
     char *dir;
     Scope *scope;
     Unit *unit;
+    int mod_time;
+    int file_count;
 };
 struct Pkc {
     Build *b;

@@ -16,6 +16,7 @@ char* str_get_fake_chars(Str* str);
 void str_append(Str *, Str *);
 void str_append_char(Str *, char);
 void str_append_chars(Str *, char *);
+void str_append_int_bytes(Str *str, int v);
 void str_append_from_ptr(Str *str, void *ptr, int len);
 void str_add_x(Str *str, char *add, int len);
 void str_add(Str *str, char *add);

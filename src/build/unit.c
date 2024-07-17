@@ -1,6 +1,99 @@
 
 #include "../all.h"
 
+void unit_load_cache(Unit* u) {
+    if(!u->path_cache)
+        return;
+    Str* str_buf = u->b->str_buf;
+    Allocator* alc = u->b->alc;
+
+    file_get_contents(str_buf, u->path_cache);
+    char *content = str_to_chars(alc, str_buf);
+    cJSON *cache = cJSON_ParseWithLength(content, str_buf->length);
+    u->cache = cache;
+}
+
+int unit_mod_time(Unit* u) {
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "mod_time");
+    if(!item)
+        return 0;
+    return item->valueint;
+}
+void unit_set_mod_time(Unit* u, int time) {
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "mod_time");
+    if(!item) {
+        item = cJSON_CreateNumber(0);
+        cJSON_AddItemToObject(u->cache, "mod_time", item);
+    }
+    cJSON_SetIntValue(item, time);
+}
+int unit_filecount(Unit* u) {
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "file_count");
+    if(!item)
+        return 0;
+    return item->valueint;
+}
+void unit_set_filecount(Unit* u, int time) {
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "file_count");
+    if(!item) {
+        item = cJSON_CreateNumber(0);
+        cJSON_AddItemToObject(u->cache, "file_count", item);
+    }
+    cJSON_SetIntValue(item, time);
+}
+
+
+bool unit_intern_changed(Unit* u) {
+    if(u->b->is_clean)
+        return true;
+    if(!u->cache)
+        return true;
+    return unit_mod_time(u) != u->nsc->mod_time || u->c_filecount != u->nsc->file_count;
+}
+bool unit_extern_changed(Unit* u) {
+    if(u->b->is_clean)
+        return true;
+    if(!u->cache)
+        return true;
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "dependency_hash");
+    if(!item)
+        return true;
+
+    Str *buf = u->b->str_buf;
+    str_clear(buf);
+    loop(u->nsc_deps, i) {
+        Nsc* dep = array_get_index(u->nsc_deps, i);
+        str_append_chars(buf, dep->dir);
+        str_append_char(buf, ';');
+        str_append_int_bytes(buf, dep->mod_time);
+        str_append_char(buf, ';');
+        str_append_int_bytes(buf, dep->file_count);
+    }
+    char* hash = str_to_chars(u->b->alc, buf);
+    char* cmp = item->string;
+    return str_is(hash, cmp);
+}
+
+void unit_update_cache(Unit* u) {
+    cJSON* cache = u->cache;
+    if(!cache) {
+        cache = cJSON_CreateObject();
+        u->cache = cache;
+    }
+    cJSON *item_dh = cJSON_GetObjectItemCaseSensitive(u->cache, "dependency_hash");
+    if(!item_dh) {
+        item_dh = cJSON_CreateString(u->nsc_deps_hash);
+        cJSON_AddItemToObject(cache, "dependency_hash", item_dh);
+    }
+    unit_set_mod_time(u, u->nsc->mod_time);
+    unit_set_filecount(u, u->nsc->file_count);
+    //
+    char* content = cJSON_Print(cache);
+    write_file(u->path_cache, content, false);
+    free(content);
+}
+
+
 void unit_validate(Unit *u, Parser *p) {
 
     Build* b = u->b;
