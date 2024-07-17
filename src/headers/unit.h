@@ -15,6 +15,7 @@ void unit_set_filecount(Unit* u, int time);
 bool unit_intern_changed(Unit* u);
 bool unit_extern_changed(Unit* u);
 void unit_update_cache(Unit* u);
+void unit_gen_dep_hash(Unit* u);
 
 struct Unit {
     Build *b;

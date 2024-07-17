@@ -48,7 +48,7 @@ bool unit_intern_changed(Unit* u) {
         return true;
     if(!u->cache)
         return true;
-    return unit_mod_time(u) != u->nsc->mod_time || u->c_filecount != u->nsc->file_count;
+    return unit_mod_time(u) != u->nsc->mod_time || unit_filecount(u) != u->nsc->file_count;
 }
 bool unit_extern_changed(Unit* u) {
     if(u->b->is_clean)
@@ -59,36 +59,42 @@ bool unit_extern_changed(Unit* u) {
     if(!item)
         return true;
 
+    char* cmp = item->valuestring;
+    return !str_is(u->nsc_deps_hash, cmp);
+}
+void unit_gen_dep_hash(Unit* u) {
     Str *buf = u->b->str_buf;
     str_clear(buf);
     loop(u->nsc_deps, i) {
         Nsc* dep = array_get_index(u->nsc_deps, i);
         str_append_chars(buf, dep->dir);
         str_append_char(buf, ';');
-        str_append_int_bytes(buf, dep->mod_time);
+        str_append_int(buf, dep->mod_time);
         str_append_char(buf, ';');
-        str_append_int_bytes(buf, dep->file_count);
+        str_append_int(buf, dep->file_count);
     }
-    char* hash = str_to_chars(u->b->alc, buf);
-    char* cmp = item->string;
-    return str_is(hash, cmp);
+    u->nsc_deps_hash = str_to_chars(u->b->alc, buf);
 }
 
 void unit_update_cache(Unit* u) {
     cJSON* cache = u->cache;
-    if(!cache) {
+    if(!cache || !cJSON_IsObject(cache)) {
         cache = cJSON_CreateObject();
         u->cache = cache;
     }
-    cJSON *item_dh = cJSON_GetObjectItemCaseSensitive(u->cache, "dependency_hash");
+    cJSON *item_dh = cJSON_GetObjectItemCaseSensitive(cache, "dependency_hash");
     if(!item_dh) {
         item_dh = cJSON_CreateString(u->nsc_deps_hash);
         cJSON_AddItemToObject(cache, "dependency_hash", item_dh);
+    } else {
+        cJSON_SetValuestring(item_dh, u->nsc_deps_hash);
     }
     unit_set_mod_time(u, u->nsc->mod_time);
     unit_set_filecount(u, u->nsc->file_count);
     //
     char* content = cJSON_Print(cache);
+    // printf("write: %s\n", content);
+    // printf("write: %s\n", u->path_cache);
     write_file(u->path_cache, content, false);
     free(content);
 }

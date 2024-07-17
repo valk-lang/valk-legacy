@@ -15,6 +15,9 @@ void stage_5_ir_final(Build* b) {
     Array *units = b->units;
     loop(units, i) {
         Unit *u = array_get_index(units, i);
+        if (!u->changed)
+            continue;
+
         Array* func_irs = u->func_irs;
 
         // Bundle IR
@@ -38,25 +41,25 @@ void stage_5_ir_final(Build* b) {
 
         // Hash
         char *ir_code = str_get_fake_chars(code);
-        char *ir_hash = al(b->alc, 64);
-        ctxhash(ir_code, ir_hash);
+        // char *ir_hash = al(b->alc, 64);
+        // ctxhash(ir_code, ir_hash);
 
-        char *old_hash = "";
-        if (!b->is_clean && file_exists(u->path_cache)) {
-            usize start = microtime();
-            file_get_contents(hash_buf, u->path_cache);
-            b->time_io += microtime() - start;
-            old_hash = str_to_chars(b->alc, hash_buf);
-        }
-        if (!str_is(old_hash, ir_hash)) {
+        // char *old_hash = "";
+        // if (!b->is_clean && file_exists(u->path_cache)) {
+        //     usize start = microtime();
+        //     file_get_contents(hash_buf, u->path_cache);
+        //     b->time_io += microtime() - start;
+        //     old_hash = str_to_chars(b->alc, hash_buf);
+        // }
+        // if (!str_is(old_hash, ir_hash)) {
             usize start = microtime();
             u->ir_changed = true;
-            u->hash = ir_hash;
+            // u->hash = ir_hash;
             write_file(u->path_ir, ir_code, false);
             if (b->verbose > 2)
                 printf("> IR changed: %s\n", u->path_ir);
             b->time_io += microtime() - start;
-        }
+        // }
     }
 }
 

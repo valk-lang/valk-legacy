@@ -60,6 +60,11 @@ void str_append_chars(Str *str, char *add) {
 void str_append_int_bytes(Str *str, int v) {
     str_append_from_ptr(str, &v, sizeof(int));
 }
+void str_append_int(Str *str, int v) {
+    str_preserve(str, 20);
+    itos(v, str->data + str->length, 10);
+    str->length += 4;
+}
 
 void str_increase_memsize(Str *str, int new_memsize) {
     void* data = al(str->alc, new_memsize);

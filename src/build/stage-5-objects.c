@@ -44,6 +44,7 @@ void stage_5_objects(Build* b) {
         // Build o file if needed
         if(b->is_clean || u->ir_changed || !file_exists(u->path_o)) {
             stage_build_o_file(b, u, threads);
+            unit_update_cache(u);
         }
     }
 
@@ -55,13 +56,13 @@ void stage_5_objects(Build* b) {
     stage_6_link(b, o_files);
 
     // Update cache
-    usize io_start = microtime();
-    loop(units, i) {
-        Unit *u = array_get_index(units, i);
-        if (u->hash)
-            write_file(u->path_cache, u->hash, false);
-    }
-    b->time_io += microtime() - io_start;
+    // usize io_start = microtime();
+    // loop(units, i) {
+    //     Unit *u = array_get_index(units, i);
+    //     if (u->hash)
+    //         write_file(u->path_cache, u->hash, false);
+    // }
+    // b->time_io += microtime() - io_start;
 }
 
 void stage_build_o_file(Build* b, Unit* u, Array* threads) {
