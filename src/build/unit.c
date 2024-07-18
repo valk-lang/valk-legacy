@@ -4,6 +4,9 @@
 void unit_load_cache(Unit* u) {
     if(!u->path_cache)
         return;
+    if(!file_exists(u->path_cache)) {
+        return;
+    }
     Str* str_buf = u->b->str_buf;
     Allocator* alc = u->b->alc;
 
@@ -67,7 +70,7 @@ void unit_gen_dep_hash(Unit* u) {
     str_clear(buf);
     loop(u->nsc_deps, i) {
         Nsc* dep = array_get_index(u->nsc_deps, i);
-        str_append_chars(buf, dep->dir);
+        str_append_chars(buf, dep->dir ? dep->dir : "NO_DIR");
         str_append_char(buf, ';');
         str_append_int(buf, dep->mod_time);
         str_append_char(buf, ';');

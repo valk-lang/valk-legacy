@@ -14,6 +14,8 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
 
     char *path_o = al(alc, VALK_PATH_MAX);
     sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+    char *path_a = al(alc, VALK_PATH_MAX);
+    sprintf(path_a, "%s%s_%s.a", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
     char *path_ir = al(alc, VALK_PATH_MAX);
     sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
     char *path_cache = al(alc, VALK_PATH_MAX);
@@ -27,6 +29,7 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     u->nsc = nsc;
     //
     u->path_o = path_o;
+    u->path_a = path_a;
     u->path_ir = path_ir;
     u->path_cache = path_cache;
     u->unique_hash = dups(alc, uh);

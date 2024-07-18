@@ -33,13 +33,10 @@ void stage_5_objects(Build* b) {
     usize start = microtime();
 
     // Update cache
-    Array *o_files = array_make(b->alc, 100);
     Array *threads = array_make(b->alc, 32);
     Array *units = b->units;
     loop(units, i) {
-
         Unit *u = array_get_index(units, i);
-        array_push(o_files, u->path_o);
 
         // Build o file if needed
         if(b->is_clean || u->ir_changed || !file_exists(u->path_o)) {
@@ -53,7 +50,7 @@ void stage_5_objects(Build* b) {
     b->time_llvm += microtime() - start;
 
     // Link
-    stage_6_link(b, o_files);
+    stage_6_link(b);
 
     // Update cache
     // usize io_start = microtime();
@@ -73,7 +70,7 @@ void stage_build_o_file(Build* b, Unit* u, Array* threads) {
     struct CompileData *data = al(b->alc, sizeof(struct CompileData));
     data->b = b;
     data->ir_files = ir_files;
-    data->path_o = u->path_o;
+    data->unit = u;
     stage_set_target(b, data);
 
     thread_make(b->alc, llvm_build_o_file, data, threads, 16);
@@ -86,8 +83,10 @@ void* llvm_build_o_file(void* data_) {
 
     struct CompileData *data = (struct CompileData *)data_;
     Build *b = data->b;
+    Unit* u = data->unit;
     Array *ir_files = data->ir_files;
-    char *path_o = data->path_o;
+    char *path_o = u->path_o;
+    char *path_a = u->path_a;
     int ir_count = ir_files->length;
 
     LLVMContextRef ctx = LLVMContextCreate();
@@ -171,6 +170,25 @@ void* llvm_build_o_file(void* data_) {
     LLVMDisposeModule(nsc_mod);
     LLVMContextDispose(ctx);
 
+    // Convert to archive if needed
+// #ifndef WIN32
+//     if (path_a && u->nsc->pkc != b->pkc_main) {
+//         Str* str = b->str_buf;
+//         str_clear(str);
+//         str_append_chars(str, "ar rcs ");
+//         str_append_chars(str, path_a);
+//         str_append_chars(str, " ");
+//         str_append_chars(str, path_o);
+//         char* cmd = str_to_chars(b->alc, str);
+//         printf("cmd: %s\n", cmd);
+//         int res = system(cmd);
+//         if (res != 0) {
+//             build_err(b, "❌ Failed to create archive file");
+//         }
+//     }
+// #endif
+
+    // Exit thread
 #ifndef WIN32
     pthread_exit(NULL);
 #endif

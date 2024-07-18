@@ -4,7 +4,9 @@
 Array* get_link_dirs(Build* b);
 void stage_link_libs_all(Str *cmd, Build *b);
 
-void stage_6_link(Build* b, Array* o_files) {
+void stage_6_link(Build* b) {
+
+    Array *units = b->units;
 
     if (b->verbose > 2)
         printf("Stage 6 | Link .o files to executable\n");
@@ -80,6 +82,11 @@ void stage_6_link(Build* b, Array* o_files) {
     // }
     str_append_chars(cmd, "\" ");
 
+    //
+    str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
+    str_append_chars(cmd, b->cache_dir);
+    str_append_chars(cmd, "\" ");
+
     // Link dirs
     Array *link_dirs = get_link_dirs(b);
     loop(link_dirs, i) {
@@ -145,11 +152,23 @@ void stage_6_link(Build* b, Array* o_files) {
     }
 
     // Object files
-    loop(o_files, i) {
-        char *path = array_get_index(o_files, i);
-        str_append_chars(cmd, path);
+    loop(units, i) {
+        Unit *u = array_get_index(units, i);
+        // if(u->nsc->pkc != b->pkc_main)
+        //     continue;
+        str_append_chars(cmd, u->path_o);
         str_append_chars(cmd, " ");
     }
+
+    // Link archives
+    // loop(units, i) {
+        // Unit *u = array_get_index(units, i);
+        // if(u->nsc->pkc == b->pkc_main)
+        //     continue;
+        // str_append_chars(cmd, "-l:");
+        // str_append_chars(cmd, get_path_basename(b->alc, u->path_a));
+        // str_append_chars(cmd, " ");
+    // }
 
     // Link libs
     stage_link_libs_all(cmd, b);

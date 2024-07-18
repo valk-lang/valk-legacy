@@ -40,7 +40,7 @@ void stage_ast(Build *b, void* payload);
 //
 void stage_5_ir_final(Build* b);
 void stage_5_objects(Build *b);
-void stage_6_link(Build* b, Array* o_files);
+void stage_6_link(Build* b);
 // Sub stages
 void stage_props_class(Parser* p, Class *class, bool is_trait);
 void stage_types_func(Parser* p, Func *func);
@@ -159,7 +159,7 @@ struct Pkc {
 struct CompileData {
     Build* b;
     Array* ir_files;
-    char* path_o;
+    Unit* unit;
     //
     void* target_machine;
     void* target_data;

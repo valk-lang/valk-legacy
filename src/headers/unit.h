@@ -22,6 +22,7 @@ struct Unit {
     Nsc *nsc;
     //
     char *path_o;
+    char *path_a;
     char *path_ir;
     char *path_cache;
     char *hash;
