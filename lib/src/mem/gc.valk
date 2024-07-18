@@ -18,7 +18,7 @@ fn update_usage() {
     // Check mem usage
     mem_usage = mem_new * 100 / mem_marked
 
-    if mem_usage > 99 {
+    if mem_usage > 60 {
         gc()
     } else {
         mem_gc_loop = mem_usage > 20

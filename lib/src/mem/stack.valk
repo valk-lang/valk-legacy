@@ -176,10 +176,11 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 40 || this.force_full {
+        if transfer_percent > 20 || this.force_full {
 
             this.force_full = false
 
+            let before = mem_marked
             mem_marked = mem_marked_default
             mem_transfered = 0
             // Mark
@@ -192,6 +193,10 @@ cstruct Stack {
                 let age = gc_age
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
+            }
+            let cmp = before * 10 / 11
+            if cmp > mem_marked {
+                mem_marked = cmp
             }
         }
         pools_reset()
