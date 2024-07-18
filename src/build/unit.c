@@ -285,7 +285,6 @@ Unit* unit_make_for_generic(Build* b, char* hash, Class* base, Array* types) {
     }
 
     unit_check_cache(u);
-    u->changed = true;
 
     return u;
 }
