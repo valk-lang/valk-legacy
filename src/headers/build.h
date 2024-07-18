@@ -77,6 +77,7 @@ struct Build {
     Pkc *pkc_main;
     Pkc *pkc_valk;
     Nsc *nsc_main;
+    Nsc *nsc_generated;
     //
     Func *func_main;
     Func *func_main_gen;

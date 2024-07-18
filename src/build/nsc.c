@@ -12,64 +12,12 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
         array_push_unique_chars(watch_dirs, dir);
     }
 
-    char *path_o = al(alc, VALK_PATH_MAX);
-    sprintf(path_o, "%s%s_%s.o", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_a = al(alc, VALK_PATH_MAX);
-    sprintf(path_a, "%s%s_%s.a", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_ir = al(alc, VALK_PATH_MAX);
-    sprintf(path_ir, "%s%s_%s.ir", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
-    char *path_cache = al(alc, VALK_PATH_MAX);
-    sprintf(path_cache, "%s%s_%s.json", pkc->b->cache_dir, nsc->name, nsc->pkc->name);
+    char uname[512];
+    strcpy(uname, nsc->pkc->name);
+    strcat(uname, "_");
+    strcpy(uname, nsc->name);
 
-    char uh[64];
-    ctxhash(dir ? dir : path_o, uh);
-
-    Unit* u = al(alc, sizeof(Unit));
-    u->b = pkc->b;
-    u->nsc = nsc;
-    //
-    u->path_o = path_o;
-    u->path_a = path_a;
-    u->path_ir = path_ir;
-    u->path_cache = path_cache;
-    u->unique_hash = dups(alc, uh);
-    u->hash = NULL;
-    //
-    u->func_irs = array_make(alc, 50);
-    u->ir_start = NULL;
-    u->ir_end = NULL;
-    //
-    u->parser = parser_make(alc, u);
-    //
-    u->funcs = array_make(alc, 50);
-    u->classes = array_make(alc, 50);
-    u->aliasses = array_make(alc, 20);
-    u->globals = array_make(alc, 20);
-    u->tests = array_make(alc, 20);
-    //
-    u->pool_parsers = array_make(alc, 10);
-
-    // Cache
-    u->cache = NULL;
-    u->nsc_deps_hash = NULL;
-    u->nsc_deps = array_make(alc, 8);
-    u->c_modtime = 0;
-    u->c_filecount = 0;
-    u->changed = true;
-
-    u->id = pkc->b->units->length;
-
-    u->string_count = 0;
-    u->export_count = 0;
-
-    u->ir_changed = false;
-    u->is_main = false;
-
-    unit_load_cache(u);
-
-    nsc->unit = u;
-
-    array_push(pkc->b->units, u);
+    Unit *u = unit_make(pkc->b, nsc, uname);
 
     return nsc;
 }

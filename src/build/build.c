@@ -271,6 +271,9 @@ int cmd_build(int argc, char *argv[]) {
     b->nsc_main = nsc_main;
     nsc_main->unit->is_main = true;
 
+    Nsc* gen_nsc = nsc_make(alc, pkc_main, "generated", NULL);
+    b->nsc_generated = gen_nsc;
+
     // Load core dependencies
     Pkc *vlt = pkc_load_pkc(pkc_main, "valk", NULL);
     Nsc *core = nsc_load(vlt, "core", true, NULL);

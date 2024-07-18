@@ -102,6 +102,13 @@ void unit_update_cache(Unit* u) {
     free(content);
 }
 
+void unit_check_cache(Unit* u) {
+    if(u->nsc_deps_hash)
+        return;
+    unit_gen_dep_hash(u);
+    u->changed = unit_intern_changed(u) || unit_extern_changed(u);
+}
+
 
 void unit_validate(Unit *u, Parser *p) {
 
@@ -187,4 +194,98 @@ void validate_class(Parser *p, Class* class) {
         func_validate_arg_count(p, each, false, 2, 2);
         func_validate_rett_count(p, each, false, 2, 2);
     }
+}
+
+Unit* unit_make(Build* b, Nsc* nsc, char* name) {
+    Allocator* alc = b->alc;
+
+    char *path_o = al(alc, VALK_PATH_MAX);
+    sprintf(path_o, "%s%s.o", b->cache_dir, name);
+    char *path_a = al(alc, VALK_PATH_MAX);
+    sprintf(path_a, "%s%s.a", b->cache_dir, name);
+    char *path_ir = al(alc, VALK_PATH_MAX);
+    sprintf(path_ir, "%s%s.ir", b->cache_dir, name);
+    char *path_cache = al(alc, VALK_PATH_MAX);
+    sprintf(path_cache, "%s%s.json", b->cache_dir, name);
+
+    char uh[64];
+    ctxhash(path_o, uh);
+
+    Unit *u = al(alc, sizeof(Unit));
+    u->b = b;
+    u->nsc = nsc;
+    //
+    u->path_o = path_o;
+    u->path_a = path_a;
+    u->path_ir = path_ir;
+    u->path_cache = path_cache;
+    u->unique_hash = uh;
+    u->hash = NULL;
+    //
+    u->func_irs = array_make(alc, 50);
+    u->ir_start = NULL;
+    u->ir_end = NULL;
+    //
+    u->parser = parser_make(alc, u);
+    //
+    u->funcs = array_make(alc, 20);
+    u->classes = array_make(alc, 10);
+    u->aliasses = array_make(alc, 10);
+    u->globals = array_make(alc, 10);
+    u->tests = array_make(alc, 10);
+    //
+    u->pool_parsers = array_make(alc, 10);
+
+    // Cache
+    u->cache = NULL;
+    u->nsc_deps_hash = NULL;
+    u->nsc_deps = array_make(alc, 8);
+    u->c_modtime = 0;
+    u->c_filecount = 0;
+    u->changed = true;
+
+    u->id = b->units->length;
+
+    u->string_count = 0;
+    u->export_count = 0;
+
+    u->ir_changed = false;
+    u->is_main = false;
+
+    unit_load_cache(u);
+
+    if(nsc)
+        nsc->unit = u;
+
+    array_push(b->units, u);
+
+    return u;
+}
+
+Unit* unit_make_for_generic(Build* b, char* hash, Class* base, Array* types) {
+    Unit *u = unit_make(b, b->nsc_generated, hash);
+
+    // Namespace dependencies
+    array_push_unique_adr(u->nsc_deps, base->unit->nsc);
+    loop(types, i) {
+        Type* type = array_get_index(types, i);
+        if(!type->class)
+            continue;
+        Nsc* nsc = type->class->unit->nsc;
+        if(nsc) {
+            array_push_unique_adr(u->nsc_deps, nsc);
+        } else {
+            // Generic namespace
+            Unit* gu = type->class->unit;
+            loop(gu->nsc_deps, o) {
+                Nsc* nsc = array_get_index(gu->nsc_deps, o);
+                array_push_unique_adr(u->nsc_deps, nsc);
+            }
+        }
+    }
+
+    unit_check_cache(u);
+    u->changed = true;
+
+    return u;
 }

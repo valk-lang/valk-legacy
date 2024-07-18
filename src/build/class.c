@@ -532,7 +532,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_flat(hash, "__");
     loop(generic_types, i) {
         if(i > 0)
-            str_flat(hash, ", ");
+            str_flat(hash, "_S_");
         char buf[256];
         Type* type = array_get_index(generic_types, i);
         type_to_str_export(type, buf);
@@ -541,7 +541,11 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gclass = class_make(b->alc, b, p->unit, class->type);
+    // Unit
+    Unit* u = unit_make_for_generic(b, export_name, class, generic_types);
+
+    // Class
+    gclass = class_make(b->alc, b, u, class->type);
     gclass->body = chunk_clone(b->alc, class->body);
     gclass->scope = scope_sub_make(b->alc, sc_default, class->scope->parent);
     gclass->type = class->type;
@@ -607,6 +611,8 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
 
     //
     build_return_str_buf(b, hash);
+
+    //
     return gclass;
 }
 
