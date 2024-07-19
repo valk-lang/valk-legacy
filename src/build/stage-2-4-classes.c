@@ -14,6 +14,8 @@ void stage_classes(Build* b, void* payload) {
 
     loop(b->classes, i) {
         Class *class = array_get_index(b->classes, i);
+        if(class->generic_of)
+            continue;
         Unit* u = class->unit;
         Parser* p = u->parser;
         class_generate_internals(p, b, class);

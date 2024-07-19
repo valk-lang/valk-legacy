@@ -198,7 +198,6 @@ int cmd_build(int argc, char *argv[]) {
     b->verbose = verbose;
     b->LOC = 0;
     b->parser_started = false;
-    b->building_ast = true;
     b->parse_last = false;
     b->stage_1_done = false;
 

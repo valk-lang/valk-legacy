@@ -15,7 +15,7 @@ Parser* parser_make(Allocator* alc, Unit* u) {
     p->scope = NULL;
     p->loop_scope = NULL;
     p->vscope_values = NULL;
-    p->cc_loops = array_make(alc, 10);
+    p->cc_loops = array_make(alc, 20);
 
     p->line = 0;
     p->col = 0;

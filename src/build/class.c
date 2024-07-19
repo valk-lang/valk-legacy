@@ -560,11 +560,11 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
 
     generate_class_pool(p, gclass);
 
-    if (b->building_ast) {
-        array_push(b->classes, gclass);
-        if (gclass->type == ct_class) {
-            gclass->gc_vtable_index = ++b->gc_vtables;
-        }
+    array_push(b->classes, gclass);
+    array_push(u->classes, gclass);
+
+    if (gclass->type == ct_class) {
+        gclass->gc_vtable_index = ++b->gc_vtables;
     }
 
     map_set(class->generics, h, gclass);

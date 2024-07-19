@@ -2,6 +2,10 @@
 use io
 use os
 
+shared vtable_inited : bool (false)
+shared vtable_count : u32 (0)
+shared vtables : ptr (null @as ptr)
+
 fn gc_bump_alloc(size: uint) ptr {
     return stack.bump.alloc(size)
 }
@@ -92,6 +96,27 @@ fn gc_share(item: ptr) {
         func(item)
     }
 }
+
+// #parse_last
+// fn set_vtables() {
+//     if vtable_inited : return
+//     vtable_inited = true
+//     // Count tables
+//     #loop_structs as STRUCT 
+//     #if @type_is_gc(STRUCT)
+//     @vtable_index(STRUCT) = ++vtable_count
+//     #end
+//     #endloop
+//     // Gen table
+//     vtables = alloc(sizeof(ptr) * vtable_count)
+//     // Store
+//     let i = 0
+//     #loop_structs as STRUCT
+//     #if @type_is_gc(STRUCT)
+//     @ptrv(vtables, ptr, ++i) = @vtable_adr(STRUCT)
+//     #end
+//     #endloop
+// }
 
 #parse_last
 fn pools_init() {

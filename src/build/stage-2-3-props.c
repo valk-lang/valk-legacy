@@ -15,6 +15,8 @@ void stage_props(Build* b, void* payload) {
         Array *classes = u->classes;
         loop(classes, i) {
             Class *class = array_get_index(classes, i);
+            if(class->generic_of)
+                continue;
             p->scope = class->scope;
             *p->chunk = *class->body;
             stage_props_class(p, class, false);

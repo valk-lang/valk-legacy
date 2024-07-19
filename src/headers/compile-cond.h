@@ -9,6 +9,7 @@ void cc_parse(Parser* p);
 struct CCLoop {
     Array* items;
     Chunk* start;
+    Scope* scope;
     Idf* idf1;
     Idf* idf2;
     Idf* idf3;

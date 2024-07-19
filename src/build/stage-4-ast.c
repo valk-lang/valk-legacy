@@ -25,7 +25,6 @@ void stage_ast(Build *b, void *payload) {
     stage_generate_main(b);
     stage_generate_set_globals(b);
 
-    b->building_ast = true;
     b->parse_last = false;
 
     for (int i = 0; i < units->length; i++) {
@@ -143,15 +142,13 @@ void stage_ast_func(Func *func) {
     //     }
     // }
 
-    if (func->b->building_ast) {
-        // Unroll AST
-        stage_unroll(b, func);
+    // Unroll AST
+    stage_unroll(b, func);
 
-        // Generate IR
-        start = microtime();
-        ir_gen_ir_for_func(u->ir, func);
-        b->time_ir += microtime() - start;
-    }
+    // Generate IR
+    start = microtime();
+    ir_gen_ir_for_func(u->ir, func);
+    b->time_ir += microtime() - start;
 
     // 
     func->ast_alc = NULL;

@@ -107,6 +107,7 @@ struct Build {
     int string_count;
     int coro_count;
     int gc_vtables;
+    int vtable_cached_max;
     int verbose;
     int LOC;
     //
@@ -114,7 +115,6 @@ struct Build {
     bool is_test;
     bool is_clean;
     bool optimize;
-    bool building_ast;
     bool parse_last;
     bool stage_1_done;
 };

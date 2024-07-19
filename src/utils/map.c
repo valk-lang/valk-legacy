@@ -61,6 +61,7 @@ bool map_unset(Map *map, char *key) {
     if (i == -1) {
         return false;
     }
+    array_set_index(map->keys, i, NULL);
     array_set_index(map->values, i, NULL);
     return true;
 }

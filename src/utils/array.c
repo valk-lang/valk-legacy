@@ -101,7 +101,8 @@ unsigned int array_get_index_u32(Array *arr, int index) {
 
 void array_set_index(Array *arr, int index, void *item) {
     if (index > arr->max_length - 1) {
-        die("array set index out of range\n");
+        printf("Array set index out of range (compiler bug)\n");
+        raise(11);
     }
     if ((index + 1) > arr->length) {
         arr->length = index + 1;

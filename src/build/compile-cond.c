@@ -84,12 +84,13 @@ void cc_parse(Parser* p) {
 
     } else if(str_is(tkn, "loop_globals")) {
 
-        if(!b->used_globals) {
+        if(!p->func->parse_last) {
             parse_err(p, -1, "You can only use 'loop_globals' inside functions marked with '#parse_last'");
         }
 
         CCLoop* cl = cc_init_loop(b->alc, b->used_globals);
         cl->idf_type = idf_global;
+        cl->scope = p->scope;
         array_set_index(p->cc_loops, p->cc_loop_index++, cl);
         tok_expect(p, "as", true, false);
         // Global idf
@@ -125,6 +126,35 @@ void cc_parse(Parser* p) {
             scope_set_idf(p->scope, idf_name3, cl->idf3, p);
         }
 
+    } else if(str_is(tkn, "loop_structs")) {
+
+        if(!p->func->parse_last) {
+            parse_err(p, -1, "You can only use 'loop_structs' inside functions marked with '#parse_last'");
+        }
+
+        CCLoop* cl = cc_init_loop(b->alc, b->classes);
+        cl->idf_type = idf_class;
+        cl->scope = p->scope;
+        array_set_index(p->cc_loops, p->cc_loop_index++, cl);
+        tok_expect(p, "as", true, false);
+        // Global idf
+        char t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* idf_name1 = p->tkn;
+        tok_expect_newline(p);
+        //
+        cl->start = chunk_clone(b->alc_ast, p->chunk);
+        //
+        if(cl->index == cl->length) {
+            // No items, skip
+            cc_skip_loop(p);
+        } else {
+            Class* class = array_get_index(cl->items, cl->index++);
+            cl->idf1 = idf_make(b->alc_ast, idf_class, class);
+            scope_set_idf(p->scope, idf_name1, cl->idf1, p);
+        }
+
     } else if(str_is(tkn, "loop_macro_items")) {
 
         char t = tok(p, true, false, true);
@@ -138,6 +168,7 @@ void cc_parse(Parser* p) {
         Array* items = idf->item;
         CCLoop* cl = cc_init_loop(b->alc, items);
         cl->idf_type = idf_macro_item;
+        cl->scope = p->scope;
         array_set_index(p->cc_loops, p->cc_loop_index++, cl);
 
         tok_expect(p, "as", true, false);
@@ -170,6 +201,9 @@ void cc_parse(Parser* p) {
                 Global* g = array_get_index(cl->items, cl->index++);
                 cl->idf1->item = g;
                 cl->idf3->item = g->type;
+            } else if(cl->idf_type == idf_class) {
+                Class* class = array_get_index(cl->items, cl->index++);
+                cl->idf1->item = class;
             } else if(cl->idf_type == idf_macro_item) {
                 MacroItem* mi = array_get_index(cl->items, cl->index++);
                 cl->idf1->item = mi;
@@ -177,6 +211,29 @@ void cc_parse(Parser* p) {
                 parse_err(p, -1, "Unhandled '#endloop' type (compiler bug)");
             }
             *p->chunk = *cl->start;
+        } else {
+            Map* idfs = cl->scope->identifiers;
+            if(cl->idf1) {
+                int i = array_find(idfs->values, cl->idf1, arr_find_adr);
+                if(i > -1) {
+                    array_set_index(idfs->keys, i, "");
+                    array_set_index(idfs->values, i, NULL);
+                }
+            }
+            if(cl->idf2) {
+                int i = array_find(idfs->values, cl->idf2, arr_find_adr);
+                if(i > -1) {
+                    array_set_index(idfs->keys, i, "");
+                    array_set_index(idfs->values, i, NULL);
+                }
+            }
+            if(cl->idf3) {
+                int i = array_find(idfs->values, cl->idf3, arr_find_adr);
+                if(i > -1) {
+                    array_set_index(idfs->keys, i, "");
+                    array_set_index(idfs->values, i, NULL);
+                }
+            }
         }
 
     } else {
@@ -348,6 +405,8 @@ void cc_skip_loop(Parser* p) {
             tok(p, false, false, true);
             char* tkn = p->tkn;
             if(str_is(tkn, "loop_globals")) {
+                depth++;
+            } else if(str_is(tkn, "loop_structs")) {
                 depth++;
             } else if(str_is(tkn, "endloop")) {
                 if(depth == 0) {

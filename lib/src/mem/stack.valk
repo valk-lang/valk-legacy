@@ -105,6 +105,7 @@ cstruct Stack {
         run_gc = false
         mem_marked = mem_marked_default
 
+        // set_vtables()
         pools_init()
 
         s.scan_globals()

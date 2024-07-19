@@ -30,6 +30,7 @@ cstruct GcPool2[T] {
         @ptrv(b, uint, 2) = 0 // used
         @ptrv(b, uint, 3) = 0 // usage percent
         // Set indexes
+        let vi : u32 = @type_vtable_index(T)
         let data = b + GP_DATA_OFFSET
         let i : uint = 0
         while i < size {
@@ -37,7 +38,7 @@ cstruct GcPool2[T] {
             @ptrv(item, u8, 0) = state_new
             @ptrv(item, u8, 1) = i @as u8
             @ptrv(item, u16, 1) = 0
-            @ptrv(item, u32, 1) = @type_vtable_index(T)
+            @ptrv(item, u32, 1) = vi
             i++
         }
         return b
