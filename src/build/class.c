@@ -59,6 +59,25 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name) {
     return prop;
 }
 
+void class_set_vtable_index(Class* class, int index) {
+    class->gc_vtable_index = index;
+    array_push(class->b->used_vtable_indexes, (void*)(size_t)index);
+}
+void class_assign_vtable_index(Class* class) {
+    if(class->type != ct_class)
+        return;
+    if(class->gc_vtable_index > 0)
+        return;
+    Build* b = class->b;
+    while(true) {
+        int index = ++b->gc_vtables;
+        if(!array_contains(b->used_vtable_indexes, (void*)(size_t)index, arr_find_adr)) {
+            class->gc_vtable_index = index;
+            break;
+        }
+    }
+}
+
 void generate_class_pool(Parser* p, Class* class) {
     Build* b = p->b;
     if (b->stage_1_done && class->type == ct_class && !class->is_generic_base) {
@@ -563,10 +582,6 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     array_push(b->classes, gclass);
     array_push(u->classes, gclass);
 
-    if (gclass->type == ct_class) {
-        gclass->gc_vtable_index = ++b->gc_vtables;
-    }
-
     map_set(class->generics, h, gclass);
 
     // Set type identifiers
@@ -611,6 +626,10 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
 
     //
     build_return_str_buf(b, hash);
+
+    // Stage 3 : cache
+    unit_check_cache(u);
+    class_assign_vtable_index(gclass);
 
     //
     return gclass;

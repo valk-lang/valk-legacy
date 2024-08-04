@@ -283,12 +283,11 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     Idf* idf = idf_make(b->alc, idf_class, class);
     scope_set_idf(nsc_scope, name, idf, p);
     if(!class->is_generic_base) {
+
         scope_set_idf(class->scope, "SELF", idf, p);
+
         array_push(b->classes, class);
         array_push(u->classes, class);
-        if(class->type == ct_class) {
-            class->gc_vtable_index = ++b->gc_vtables;
-        }
     }
 
     //

@@ -91,6 +91,7 @@ struct Build {
     Array *links;
     Map *link_settings;
     Array *parse_later;
+    Array *used_vtable_indexes;
     //
     Map* cc_defs;
     //
@@ -107,7 +108,6 @@ struct Build {
     int string_count;
     int coro_count;
     int gc_vtables;
-    int vtable_cached_max;
     int verbose;
     int LOC;
     //
@@ -144,7 +144,7 @@ struct Nsc {
     char *dir;
     Scope *scope;
     Unit *unit;
-    int mod_time;
+    v_u64 mod_time;
     int file_count;
 };
 struct Pkc {

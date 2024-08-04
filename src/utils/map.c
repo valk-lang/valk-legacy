@@ -86,3 +86,13 @@ int map_get_i32(Map* map, char* key) {
 void map_set_i32(Map* map, char* key, int val) {
     map_set(map, key, (void*)(uintptr_t)val);
 }
+
+int map_get_u64(Map* map, char* key) {
+    void* val = map_get(map, key);
+    if(!val)
+        return -1;
+    return (v_u64)(uintptr_t)val;
+}
+void map_set_u64(Map* map, char* key, v_u64 val) {
+    map_set(map, key, (void*)(uintptr_t)val);
+}

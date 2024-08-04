@@ -22,5 +22,15 @@ void stage_cache(Build *b, void *payload) {
         }
     }
 
+    // Generate vtable indexes
+    loop(units, i) {
+        Unit* u = array_get_index(units, i);
+        Array* classes = u->classes;
+        loop(classes, o) {
+            Class* class = array_get_index(classes, o);
+            class_assign_vtable_index(class);
+        }
+    }
+
     stage_ast(b, NULL);
 }

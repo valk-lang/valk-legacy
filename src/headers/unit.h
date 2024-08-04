@@ -8,7 +8,7 @@ void unit_validate(Unit *u, Parser *p);
 void unit_load_cache(Unit* u);
 void validate_class(Parser *p, Class* class);
 // Cache
-int unit_mod_time(Unit* u);
+v_u64 unit_mod_time(Unit* u);
 void unit_set_mod_time(Unit* u, int time);
 int unit_filecount(Unit* u);
 void unit_set_filecount(Unit* u, int time);
@@ -17,6 +17,7 @@ bool unit_extern_changed(Unit* u);
 void unit_update_cache(Unit* u);
 void unit_check_cache(Unit* u);
 void unit_gen_dep_hash(Unit* u);
+void unit_read_vtable_indexes(Unit* u);
 
 Unit* unit_make(Build* b, Nsc* nsc, char* name);
 Unit* unit_make_for_generic(Build* b, char* hash, Class* base, Array* types);

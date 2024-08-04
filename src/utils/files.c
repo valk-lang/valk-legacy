@@ -307,7 +307,7 @@ bool is_dir(char* path) {
     return is_dir;
 }
 
-int get_mod_time(char *path) {
+v_u64 get_mod_time(char *path) {
 #ifdef WIN32
     HANDLE hndl;
     FILETIME ftMod;
@@ -318,7 +318,10 @@ int get_mod_time(char *path) {
     if (!GetFileTime(hndl, NULL, NULL, &ftMod)) {
         return 0;
     }
-    return ftMod.dwLowDateTime + ftMod.dwHighDateTime;
+    int ref[2];
+    ref[0] = ftMod.dwHighDateTime
+    ref[1] = ftMod.dwLowDateTime
+    return *((v_u64*)ref);
 #else
     struct stat attr;
     stat(path, &attr);

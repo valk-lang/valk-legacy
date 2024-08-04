@@ -175,6 +175,7 @@ int cmd_build(int argc, char *argv[]) {
     b->links = array_make(alc, 20);
     b->link_settings = map_make(alc);
     b->parse_later = array_make(alc, 20);
+    b->used_vtable_indexes = array_make(alc, 100);
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
@@ -490,11 +491,11 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
                 if (!ends_with(file, ".valk")) {
                     continue;
                 }
-                int mt = get_mod_time(file);
-                int pmt = map_get_i32(mod_times, file);
+                v_u64 mt = get_mod_time(file);
+                v_u64 pmt = map_get_u64(mod_times, file);
                 if (mt != pmt) {
                     build = true;
-                    map_set_i32(mod_times, file, mt);
+                    map_set_u64(mod_times, file, mt);
                 }
             }
         }

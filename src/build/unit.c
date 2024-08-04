@@ -16,7 +16,7 @@ void unit_load_cache(Unit* u) {
     u->cache = cache;
 }
 
-int unit_mod_time(Unit* u) {
+v_u64 unit_mod_time(Unit* u) {
     cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "mod_time");
     if(!item)
         return 0;
@@ -24,7 +24,7 @@ int unit_mod_time(Unit* u) {
 }
 void unit_set_mod_time(Unit* u, int time) {
     cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "mod_time");
-    if(!item) {
+    if(!item || !cJSON_IsNumber(item)) {
         item = cJSON_CreateNumber(0);
         cJSON_AddItemToObject(u->cache, "mod_time", item);
     }
@@ -38,11 +38,48 @@ int unit_filecount(Unit* u) {
 }
 void unit_set_filecount(Unit* u, int time) {
     cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "file_count");
-    if(!item) {
+    if(!item || !cJSON_IsNumber(item)) {
         item = cJSON_CreateNumber(0);
         cJSON_AddItemToObject(u->cache, "file_count", item);
     }
     cJSON_SetIntValue(item, time);
+}
+void unit_read_vtable_indexes(Unit* u) {
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(u->cache, "vtable_indexes");
+    if(!item || !cJSON_IsObject(item)) {
+        item = cJSON_CreateObject();
+        cJSON_AddItemToObject(u->cache, "vtable_indexes", item);
+    }
+
+    Array *classes = u->classes;
+    cJSON *entry = item->child;
+    while(entry) {
+        char* class_export_name = entry->string;
+        int index = entry->valueint;
+
+        Class* match = NULL;
+        loop(classes, i) {
+            Class* class = array_get_index(classes, i);
+            if(str_is(class->ir_name, class_export_name)) {
+                match = class;
+                break;
+            }
+        }
+
+        if(!match) {
+            u->changed = true;
+            break;
+        }
+
+        if(array_contains(u->b->used_vtable_indexes, (void*)(size_t)index, arr_find_adr)) {
+            u->changed = true;
+            break;
+        }
+
+        class_set_vtable_index(match, index);
+
+        entry = entry->next;
+    }
 }
 
 
@@ -71,9 +108,9 @@ void unit_gen_dep_hash(Unit* u) {
     loop(u->nsc_deps, i) {
         Nsc* dep = array_get_index(u->nsc_deps, i);
         str_append_chars(buf, dep->dir ? dep->dir : "NO_DIR");
-        str_append_char(buf, ';');
-        str_append_int(buf, dep->mod_time);
-        str_append_char(buf, ';');
+        str_append_chars(buf, ";modified_at:");
+        str_append_u64(buf, dep->mod_time);
+        str_append_chars(buf, ";files:");
         str_append_int(buf, dep->file_count);
     }
     u->nsc_deps_hash = str_to_chars(u->b->alc, buf);
@@ -94,7 +131,22 @@ void unit_update_cache(Unit* u) {
     }
     unit_set_mod_time(u, u->nsc->mod_time);
     unit_set_filecount(u, u->nsc->file_count);
-    //
+
+    // Vtable indexes
+    if(cJSON_HasObjectItem(cache, "vtable_indexes")) {
+        cJSON_DeleteItemFromObject(cache, "vtable_indexes");
+    }
+    cJSON* item_vi = cJSON_CreateObject();
+    cJSON_AddItemToObject(cache, "vtable_indexes", item_vi);
+
+    loop(u->classes, i) {
+        Class* class = array_get_index(u->classes, i);
+        if(class->gc_vtable_index > 0) {
+            cJSON_AddItemToObject(item_vi, class->ir_name, cJSON_CreateNumber(class->gc_vtable_index));
+        }
+    }
+
+    // Write json file
     char* content = cJSON_Print(cache);
     // printf("write: %s\n", content);
     // printf("write: %s\n", u->path_cache);
@@ -107,6 +159,7 @@ void unit_check_cache(Unit* u) {
         return;
     unit_gen_dep_hash(u);
     u->changed = unit_intern_changed(u) || unit_extern_changed(u);
+    unit_read_vtable_indexes(u);
 }
 
 

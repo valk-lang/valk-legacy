@@ -65,7 +65,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
         char* path = array_get_index(files, i);
         if(ends_with(path, ".valk")) {
             Fc* fc = fc_make(nsc, path, false);
-            int time = get_mod_time(fc->path);
+            v_u64 time = get_mod_time(fc->path);
             if(time > mod_time)
                 mod_time = time;
             file_count++;

@@ -21,5 +21,7 @@ void map_print_keys(Map *map);
 
 int map_get_i32(Map* map, char* key);
 void map_set_i32(Map* map, char* key, int val);
+int map_get_u64(Map* map, char* key);
+void map_set_u64(Map* map, char* key, v_u64 val);
 
 #endif

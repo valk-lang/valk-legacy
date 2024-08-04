@@ -62,8 +62,13 @@ void str_append_int_bytes(Str *str, int v) {
 }
 void str_append_int(Str *str, int v) {
     str_preserve(str, 20);
-    itos(v, str->data + str->length, 10);
-    str->length += 4;
+    char* part = itos(v, str->data + str->length, 10);
+    str->length += strlen(part);
+}
+void str_append_u64(Str *str, v_u64 v) {
+    str_preserve(str, 20);
+    char *part = itos(v, str->data + str->length, 10);
+    str->length += strlen(part);
 }
 
 void str_increase_memsize(Str *str, int new_memsize) {

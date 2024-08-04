@@ -12,6 +12,9 @@ int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
 
+void class_set_vtable_index(Class* class, int index);
+void class_assign_vtable_index(Class* class);
+
 struct Class {
     char* name;
     char* ir_name;
