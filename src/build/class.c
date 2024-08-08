@@ -67,7 +67,7 @@ void generate_class_pool(Parser* p, Class* class) {
         Unit* u = class->unit;
 
         char buf[512];
-        strcpy(buf, "CLASS_POOL_");
+        strcpy(buf, "STRUCT_POOL_");
         strcat(buf, class->ir_name);
 
         Global *g = al(alc, sizeof(Global));
@@ -83,6 +83,7 @@ void generate_class_pool(Parser* p, Class* class) {
         g->declared_scope = NULL;
         g->is_shared = false;
         g->is_mut = true;
+        g->is_used = true;
 
         array_push(u->globals, g);
         array_push(b->globals, g);
@@ -161,13 +162,13 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         if(b->verbose > 2)
             printf("Class: %s | vtable: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
         //
-        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_gen_number(b->alc, b, 4, false, false)));
+        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_cache_u32(b)));
         scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
         scope_set_idf(class->scope, "STACK", idf, p);
         //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_gen_number(b->alc, b, b->ptr_size, false, false)));
+        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_cache_uint(b)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));

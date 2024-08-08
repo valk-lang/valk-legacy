@@ -32,7 +32,7 @@ fn main() {
 ```
 
 ```sh
-valk build main.va -o ./main
+valk build main.valk -o ./main
 ./main
 ```
 

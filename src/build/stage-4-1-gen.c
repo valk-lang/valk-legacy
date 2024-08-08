@@ -1,43 +1,33 @@
 
 #include "../all.h"
 
-void stage_generate_main(Build *b);
-Func* stage_generate_tests(Build *b);
+void stage_init_start_functions(Build *b) {
 
-void stage_3_gen(Build* b) {
+    Unit* u = array_get_index(b->units, 0);
+    Scope* scope = scope_make(b->alc, sc_default, NULL);
 
-    if (b->verbose > 2)
-        printf("Stage 2 | Update class sizes\n");
+    // Main
+    Func* func = func_make(b->alc, u, scope, "main", "main");
+    b->func_main_gen = func;
+    func->init_thread = true;
 
-    usize start = microtime();
+    // Set globals
+    func = func_make(b->alc, u, scope, "valk_init_globals", "valk_init_globals");
+    b->func_set_globals = func;
+    func->scope->ast = array_make(b->alc, 20);
 
-    stage_generate_main(b);
-
-    b->time_parse += microtime() - start;
-
-    stage_add_item(b->stage_4_ast, b);
+    // Generate main function
+    func = func_make(b->alc, u, scope, "valk_tests", "valk_tests");
+    b->func_main_tests = func;
 }
 
 void stage_generate_main(Build *b) {
     //
-    Unit* u = array_get_index(b->units, 0);
-    Func* mainfunc = b->func_main;
-
-    bool main_has_return = false;
-    bool main_has_arg = false;
-    if(mainfunc) {
-        main_has_return = mainfunc->rett_types->length > 0;
-        main_has_arg = mainfunc->arg_types->length > 0;
-    }
-
-    // Generate test main
-    Func *test_main = b->is_test ? stage_generate_tests(b) : NULL;
 
     // Generate main function
-    Scope* scope = mainfunc ? mainfunc->scope->parent : scope_make(b->alc, sc_default, NULL);
-    Func* func = func_make(b->alc, u, scope, "main", "main");
-    b->func_main_gen = func;
-    func->init_thread = true;
+    Func* func = b->func_main_gen;
+    if(!func)
+        return;
 
     Idf *idf = idf_make(b->alc, idf_class, get_valk_class(b, "core", "Coro"));
     scope_set_idf(func->scope, "CORO_CLASS", idf, NULL);
@@ -45,20 +35,25 @@ void stage_generate_main(Build *b) {
     idf = idf_make(b->alc, idf_scope, get_valk_nsc(b, "mem")->scope);
     scope_set_idf(func->scope, "mem", idf, NULL);
 
+    idf = idf_make(b->alc, idf_func, b->func_set_globals);
+    scope_set_idf(func->scope, "VALK_INIT_GLOBALS", idf, NULL);
+
     // Generate main AST
     Str* code = b->str_buf;
     str_clear(code);
 
-    str_flat(code, "(argc: i32, argv: ptr) i32 {\n");
+    str_flat(code, "(argc: i32, argv: ptr) i32 {\n\n");
+
+    str_flat(code, "VALK_INIT_GLOBALS();\n\n");
 
     // CLI args
     str_flat(code, "let arr = Array[String].new(10);\n");
     str_flat(code, "let i = 0\n");
     str_flat(code, "while i < argc {\n");
-    str_flat(code, "let cstr = @ptrv(argv, cstring, i)\n");
-    str_flat(code, "arr.push(cstr)\n");
-    str_flat(code, "i++\n");
-    str_flat(code, "}\n");
+    str_flat(code, "  let cstr = @ptrv(argv, cstring, i)\n");
+    str_flat(code, "  arr.push(cstr)\n");
+    str_flat(code, "  i++\n");
+    str_flat(code, "}\n\n");
 
     Nsc* nsc_fs = map_get(b->pkc_valk->namespaces, "fs");
     if(b->target_os == os_macos && nsc_fs) {
@@ -71,22 +66,31 @@ void stage_generate_main(Build *b) {
         int count = 0;
         char* buf = b->char_buf;
 
-        Idf *idf = idf_make(b->alc, idf_func, test_main);
+        Idf *idf = idf_make(b->alc, idf_func, b->func_main_tests);
         scope_set_idf(func->scope, "VALK_TEST_MAIN", idf, NULL);
 
         str_flat(code, "co VALK_TEST_MAIN()\n");
         str_flat(code, "CORO_CLASS.loop()\n");
         str_flat(code, "return 0;\n");
+
     } else {
-        if (b->func_main) {
-            if (main_has_return)
-                str_flat(code, "let main_res = ");
-            str_flat(code, "co main(");
-            if (main_has_arg) {
-                str_flat(code, "arr");
-            }
-            str_flat(code, ");\n");
+        Func* mainfunc = b->func_main;
+        if(!mainfunc) {
+            build_err(b, "Missing 'main' function");
         }
+        bool main_has_return = mainfunc->rett_types->length > 0;
+        bool main_has_arg = mainfunc->rett_types->length > 0;
+
+        Idf *idf = idf_make(b->alc, idf_func, mainfunc);
+        scope_set_idf(func->scope, "CODE_MAIN", idf, NULL);
+
+        if (main_has_return)
+            str_flat(code, "let main_res = ");
+        str_flat(code, "co CODE_MAIN(");
+        if (main_has_arg) {
+            str_flat(code, "arr");
+        }
+        str_flat(code, ");\n");
 
         str_flat(code, "CORO_CLASS.loop()\n");
 
@@ -102,26 +106,66 @@ void stage_generate_main(Build *b) {
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
-    Parser *p = u->parser;
+    Parser *p = func->unit->parser;
     *p->chunk = *chunk;
-    p->scope = scope;
+    p->scope = func->scope->parent;
     parse_handle_func_args(p, func);
     stage_types_func(p, func);
 }
 
-Func* stage_generate_tests(Build *b) {
+Func* stage_generate_set_globals(Build *b) {
+    //
+    Array* all_globals = b->globals;
+    Array* globals = array_make(b->alc, all_globals->length + 2);
+    loop(all_globals, i) {
+        Global* g = array_get_index(all_globals, i);
+        if(g->is_used) {
+            array_push(globals, g);
+        }
+    }
+    b->used_globals = globals;
 
-    Unit* u = array_get_index(b->units, 0);
+    //
+    Func* func = b->func_set_globals;
 
-    // Generate main function
-    Scope* scope = scope_make(b->alc, sc_default, NULL);
-    Func* func = func_make(b->alc, u, scope, "valk_test_main_gen", "valk_test_main_gen");
+    int count = 0;
+    char* buf = b->char_buf;
 
     // Generate main AST
-    Str* code = b->str_buf;
-    str_clear(code);
+    Scope* scope = func->scope;
+    Parser* p = func->unit->parser;
+    p->func = func;
 
-    str_flat(code, "() {\n");
+    loop(globals, i) {
+        Global* g = array_get_index(globals, i);
+        if(!g->chunk_value) {
+            if(g->type->is_pointer && !g->type->nullable && !g->type->ignore_null) {
+                *p->chunk = *g->chunk_type;
+                parse_err(p, -1, "Missing global default value");
+            }
+            continue;
+        }
+
+        *p->chunk = *g->chunk_value;
+        p->scope = g->declared_scope;
+
+        Type *tcv_prev = p->try_conv;
+        p->try_conv = g->type;
+        Value* v = read_value(b->alc, p, true, 0);
+        p->try_conv = tcv_prev;
+
+        type_check(p, g->type, v->rett);
+
+        Token* t = tgen_assign(b->alc, vgen_global(b->alc, g), v);
+        array_push(scope->ast, t);
+    }
+
+    return func;
+}
+
+Func* stage_generate_tests(Build *b) {
+
+    Func* func = b->func_main_tests;
 
     int count = 0;
     char* buf = b->char_buf;
@@ -132,6 +176,12 @@ Func* stage_generate_tests(Build *b) {
     scope_set_idf(func->scope, "VALK_TEST_RESULT", idf, NULL);
     idf = idf_make(b->alc, idf_func, get_valk_func(b, "core", "test_final_result"));
     scope_set_idf(func->scope, "VALK_TEST_FINAL_RESULT", idf, NULL);
+
+    // Generate code
+    Str* code = b->str_buf;
+    str_clear(code);
+
+    str_flat(code, "() {\n");
 
     // Init test result
     str_flat(code, "let result = VALK_TEST_INIT()\n");
@@ -173,9 +223,9 @@ Func* stage_generate_tests(Build *b) {
     Chunk *chunk = chunk_make(b->alc, b, NULL);
     chunk_set_content(b, chunk, content, code->length);
 
-    Parser *p = u->parser;
+    Parser *p = func->unit->parser;
     *p->chunk = *chunk;
-    p->scope = scope;
+    p->scope = func->scope->parent;
     parse_handle_func_args(p, func);
     stage_types_func(p, func);
 

@@ -57,8 +57,13 @@
 #define UNIQUE_NAME(base) CONCAT(base, __LINE__)
 #define loop(arr, i) int UNIQUE_NAME(loop_len) = arr->length; for(int i = 0; i < UNIQUE_NAME(loop_len); i++)
 
+#ifdef _WIN32
 #define v_i64 long long int
 #define v_u64 unsigned long long int
+#else
+#define v_i64 long int
+#define v_u64 unsigned long int
+#endif
 
 // Base
 #include "headers/enums.h"
@@ -98,11 +103,13 @@ extern bool is_watching;
 #include "headers/unit.h"
 #include "headers/error.h"
 #include "headers/scope.h"
+#include "headers/unroll.h"
 #include "headers/pool.h"
 #include "headers/compile-cond.h"
 #include "headers/test.h"
 #include "headers/thread.h"
 #include "headers/macro.h"
 #include "headers/coro.h"
+#include "headers/numbers.h"
 
 #endif

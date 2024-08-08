@@ -1,32 +1,29 @@
 
 #include "../all.h"
 
-void stage_props(Unit *u);
-
-void stage_2_props(Unit* u) {
-    Build* b = u->b;
-
-    if (b->verbose > 2)
-        printf("Stage 2 | Scan properties: %s\n", u->nsc->name);
+void stage_props(Build* b, void* payload) {
 
     usize start = microtime();
-    stage_props(u);
+
+    loop(b->units, o) {
+        Unit *u = array_get_index(b->units, o);
+
+        if (b->verbose > 2)
+            printf("Stage 2 | Scan properties: %s\n", u->nsc->name);
+
+        Parser *p = u->parser;
+        Array *classes = u->classes;
+        loop(classes, i) {
+            Class *class = array_get_index(classes, i);
+            p->scope = class->scope;
+            *p->chunk = *class->body;
+            stage_props_class(p, class, false);
+        }
+    }
+
     b->time_parse += microtime() - start;
 
-    stage_add_item(b->stage_2_types, u);
-}
-
-void stage_props(Unit *u) {
-    Parser* p = u->parser;
-    //
-    Array* classes = u->classes;
-    loop(classes, i) {
-        Class* class = array_get_index(classes, i);
-        p->scope = class->scope;
-        *p->chunk = *class->body;
-        stage_props_class(p, class, false);
-    }
-    //
+    stage_classes(b, NULL);
 }
 
 void stage_props_class(Parser* p, Class *class, bool is_trait) {
@@ -177,6 +174,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->is_inline = is_inline;
         func->in_header = class->in_header;
         func->init_thread = p->init_thread;
+        func->parse_last = p->parse_last;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);

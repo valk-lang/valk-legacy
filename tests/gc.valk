@@ -55,7 +55,6 @@ test "GC" {
 
     assert(stretch(depth + 1) == 16383)
 
-    assert(node_count == 16383)
     mem:force_gc()
     assert(node_count == 0)
 

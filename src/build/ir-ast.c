@@ -9,6 +9,8 @@ void ir_write_ast(IR* ir, Scope* scope) {
     if(!scope->ast)
         return;
 
+    unroll_scope(ir->func->func->ur, scope);
+
     Array *ast = scope->ast;
     loop(ast, i) {
         Token *t = array_get_index(ast, i);

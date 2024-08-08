@@ -4,10 +4,10 @@ header "sys" as sys
 use mem
 
 #if OS == macos
-- global FIRST_ARG : ?String
+- global FIRST_ARG : ?String (null)
 #end
-- global EXE_PATH : ?String
-- global EXE_DIR : ?String
+- global EXE_PATH : ?String (null)
+- global EXE_DIR : ?String (null)
 
 value PATH_MAX (4096)
 

@@ -85,7 +85,7 @@ struct Coro {
     static fn yield_current() {
         let current = current_coro
         if current != null {
-            await_last_coro
+            await_last
         }
     }
 
@@ -115,7 +115,7 @@ struct Coro {
         this.block()
     }
 
-    fn await_last_coro() {
+    fn await_last() {
         let last = coro_run_last
         if isset(last) {
             last.next_resume = this

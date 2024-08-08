@@ -78,8 +78,17 @@ void cc_parse(Parser* p) {
 
         parse_err(p, -1, "Invalid token '#endif', use '#end' instead");
 
+    } else if(str_is(tkn, "stop")) {
+
+        parse_err(p, -1, "Compiler was stopped using '#stop'");
+
     } else if(str_is(tkn, "loop_globals")) {
-        CCLoop* cl = cc_init_loop(b->alc, b->globals);
+
+        if(!b->used_globals) {
+            parse_err(p, -1, "You can only use 'loop_globals' inside functions marked with '#parse_last'");
+        }
+
+        CCLoop* cl = cc_init_loop(b->alc, b->used_globals);
         cl->idf_type = idf_global;
         array_set_index(p->cc_loops, p->cc_loop_index++, cl);
         tok_expect(p, "as", true, false);

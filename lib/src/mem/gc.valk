@@ -13,6 +13,18 @@ fn force_gc() {
     stack.gc()
 }
 
+fn update_usage() {
+
+    // Check mem usage
+    mem_usage = mem_new * 100 / mem_marked
+
+    if mem_usage > 80 {
+        gc()
+    } else {
+        mem_gc_loop = mem_usage > 20
+    }
+}
+
 fn gc_transfer_item(item: ptr) {
     if item == null {return}
     let vtable = @ptrv(item, u32, -1) & 0xffffff

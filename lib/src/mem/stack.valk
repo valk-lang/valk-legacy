@@ -13,6 +13,7 @@ global mem_new : uint
 global mem_marked : uint
 global mem_transfered : uint
 global mem_usage : uint
+global mem_gc_loop : bool
 
 value mem_marked_default (8192)
 
@@ -48,7 +49,6 @@ global main_stack_pos: @ignu(StackPos)
 cstruct StackPos {
     base: ptr
     adr: ptr
-    lowest: ptr
     size: uint
     fn free() {
         free(this.base)
@@ -60,7 +60,6 @@ fn create_stack() StackPos {
     return StackPos { 
         base: base
         adr: base
-        lowest: base
         size: stack_size
     }
 }
@@ -167,6 +166,7 @@ cstruct Stack {
         mem_new = 0
         mem_usage = 0
         run_gc = false
+        mem_gc_loop = false
 
         this.mark_difference_down()
         this.handle_transfer_list()
@@ -176,10 +176,11 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 40 || this.force_full {
+        if transfer_percent > 20 || this.force_full {
 
             this.force_full = false
 
+            let before = mem_marked
             mem_marked = mem_marked_default
             mem_transfered = 0
             // Mark
@@ -192,6 +193,10 @@ cstruct Stack {
                 let age = gc_age
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
+            }
+            let cmp = before * 10 / 11
+            if cmp > mem_marked {
+                mem_marked = cmp
             }
         }
         pools_reset()

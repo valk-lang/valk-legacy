@@ -6,11 +6,9 @@
 
 Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio);
 bool value_is_assignable(Value *v);
-void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_);
 Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int op);
 void value_is_mutable(Value* v);
 Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* type);
-bool try_convert_number(Value* val, Type* type);
 bool value_needs_gc_buffer(Value* val);
 Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi);
 void value_enable_cached(VIRCached* v);
@@ -22,6 +20,8 @@ Value *vgen_ptr_of(Allocator *alc, Build* b, Value* from);
 Value* vgen_bool(Allocator *alc, Build* b, bool value);
 Value *vgen_func_ptr(Allocator *alc, Func *func, Value *first_arg);
 Value *vgen_func_call(Allocator *alc, Parser* p, Value *on, Array *args);
+Value *vgen_func_call_unroll(Allocator *alc, Value *on, Array *args);
+Value *vgen_int_parse(Allocator *alc, v_u64 value, bool negative, Type *type, Type *alt_type);
 Value *vgen_int(Allocator *alc, v_i64 value, Type *type);
 Value *vgen_float(Allocator *alc, double value, Type *type);
 Value *vgen_class_pa(Allocator *alc, Value *on, ClassProp *prop);
@@ -97,8 +97,9 @@ struct ErrorHandler {
     Array *phi_s;
 };
 struct VNumber {
-    v_i64 value_int;
+    v_u64 value_uint;
     double value_float;
+    bool negative;
 };
 struct VGcBuffer {
     VVar* result;

@@ -63,7 +63,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
                     parse_err(p, -1, "Third argument of '@ptr_offset' must an integer literal. e.g. 1 or sizeof(ptr)");
                 }
                 VNumber* vn = s->item;
-                size = vn->value_int;
+                size = (int)vn->value_uint;
                 if (size < 1) {
                     parse_err(p, -1, "Third argument of '@ptr_offset' must be larger than 0");
                 }
@@ -138,7 +138,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = vgen_int(alc, type->class->gc_vtable_index, type_gen_valk(alc, b, "int"));
+            v = vgen_int_parse(alc, type->class->gc_vtable_index, false, p->try_conv, type_gen_valk(alc, b, "uint"));
         } else if (str_is(tkn, "@class_of")) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
@@ -264,12 +264,7 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);
             tok_expect(p, ")", true, true);
-            v = vgen_int(alc, type->size, type_gen_valk(alc, b, "int"));
-
-            Type *tcv = p->try_conv;
-            bool tcv_int = tcv ? tcv->type == type_int : false;
-            if (tcv_int)
-                try_convert_number(v, tcv);
+            v = vgen_int_parse(alc, type->size, false, p->try_conv, type_gen_valk(alc, b, "int"));
 
         } else if (str_is(tkn, "true") || str_is(tkn, "false")) {
             v = vgen_bool(alc, b, str_is(tkn, "true"));
@@ -451,51 +446,46 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
         int before2 = p->chunk->i;
         char t2 = tok(p, false, false, true);
         //
+        bool is_float = false;
+        v_u64 uv = 0;
+        char value[64];
+        //
         if (t1 == tok_dot && t2 == tok_number) {
             // Float number
+            is_float = true;
             char *buf = b->char_buf;
             char* deci = p->tkn;
             sprintf(buf, "%s%s.%s", negative ? "-" : "", num, deci);
             double fv = atof(buf);
             v = vgen_float(alc, fv, type_gen_valk(alc, b, "float"));
-            if(tcv_float)
-                try_convert_number(v, tcv);
+
         } else if (t1 == tok_id && t1tkn[0] == 'x') {
             // Hex number
             p->chunk->i = before2;
-            char value[64];
             strcpy(value, t1tkn + 1);
             if(strlen(value) == 0 || !is_valid_hex_number(value)) {
                 parse_err(p, -1, "Invalid hex number syntax: '0x%s'", value);
             }
-            v_i64 hv = hex2int(value);
-            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            uv = hex2uint(value);
 
         } else if (t1 == tok_id && t1tkn[0] == 'c') {
             // Octal number
             p->chunk->i = before2;
-            char value[64];
             strcpy(value, t1tkn + 1);
             if(strlen(value) == 0 || !is_valid_octal_number(value)) {
                 parse_err(p, -1, "Invalid octal number syntax: '0c%s'", value);
             }
-            v_i64 hv = oct2int(value);
-            v = vgen_int(alc, hv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            uv = oct2uint(value);
 
         } else {
             // Decimal number
             p->chunk->i = before;
-            v_i64 iv = atoll(num);
-            if (negative) {
-                iv *= -1;
-            }
-            v = vgen_int(alc, iv, type_gen_valk(alc, b, "int"));
-            if(tcv_int)
-                try_convert_number(v, tcv);
+            strcpy(value, num);
+            uv = atoll(num);
+        }
+
+        if(!is_float) {
+            v = vgen_int_parse(alc, uv, negative, tcv, uv > 0x7FFFFFFFFFFFFFFF ? type_gen_valk(alc, b, "uint") : type_gen_valk(alc, b, "int"));
         }
 
     } else if(t == tok_plusplus || t == tok_subsub) {
@@ -871,10 +861,10 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         Chunk ch;
         ch = *p->chunk;
         *p->chunk = *va->chunk;
-        Scope *scope = p->scope;
-        p->scope = va->scope;
+        // Scope *scope = p->scope;
+        // p->scope = va->scope;
         Value* val = read_value(alc, p, true, 0);
-        p->scope = scope;
+        // p->scope = scope;
         *p->chunk = ch;
         return val;
     }
@@ -893,9 +883,6 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
         if(!sub)
             parse_err(p, -1, "Unknown macro item property: '%s'", p->tkn);
         return value_handle_idf(alc, p, sub);
-    }
-    if (type == idf_cached_value) {
-        return idf->item;
     }
     if (type == idf_value) {
         Value* v = al(alc, sizeof(Value));
@@ -1123,7 +1110,11 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
                 parse_err(p, -1, "Missing property value for: '%s'", name);
             }
 
+            Type *tcv_prev = p->try_conv;
+            Type *tcv = prop->type;
+            p->try_conv = tcv;
             Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope, prop->type);
+            p->try_conv = tcv_prev;
 
             map_set_force_new(values, name, val);
         }
@@ -1230,36 +1221,20 @@ Value* value_handle_op(Allocator *alc, Parser* p, Value *left, Value* right, int
     }
     bool is_ptr = false;
     bool is_signed = lt->is_signed || rt->is_signed;
-    if(lt->type == type_ptr) {
+    if(lt->is_pointer) {
         is_ptr = true;
         left = vgen_cast(alc, left, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
-    if(rt->type == type_ptr) {
+    if(rt->is_pointer) {
         is_ptr = true;
         right = vgen_cast(alc, right, type_gen_valk(alc, b, is_signed ? "int" : "uint"));
     }
 
-    bool has_number_suggestion = p->try_conv && (p->try_conv->type == type_int || p->try_conv->type == type_float);
-
-if(!has_number_suggestion) {
-    if (left->type == v_number && right->type != v_number) {
-        try_convert_number(left, right->rett);
-    } else if (right->type == v_number && left->type != v_number) {
-        try_convert_number(right, left->rett);
-    } else if (left->type == v_number && right->type == v_number) {
-        // Pre-calculate
-        bool is_float = left->rett->type == type_float || right->rett->type == type_float;
-        Value *combo;
-        if (is_float) {
-            // combo = pre_calc_float(alc, fc->b, left, right, op);
-        } else {
-            combo = pre_calc_int(alc, b, left, right, op);
-        }
-        if (combo)
-            return combo;
+    // Try convert left side number literal
+    if(left->type == v_number && op != op_shl && op != op_shr) {
+        left = try_convert_number(alc, b, left, right->rett);
     }
-}
-
+    
     // Try match types
     match_value_types(alc, b, &left, &right);
 
@@ -1284,8 +1259,8 @@ if(!has_number_suggestion) {
 Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
     VNumber* vn1 = n1->item;
     VNumber* vn2 = n2->item;
-    double v1 = n1->rett->type == type_int ? (double) vn1->value_int : vn1->value_float;
-    double v2 = n2->rett->type == type_int ? (double) vn2->value_int : vn2->value_float;
+    double v1 = n1->rett->type == type_int ? (double)vnumber_value_i64(vn1) : vn1->value_float;
+    double v2 = n2->rett->type == type_int ? (double)vnumber_value_i64(vn2) : vn2->value_float;
     if(op == op_add) {
         v1 = v1 + v2;
     } else if(op == op_sub) {
@@ -1303,8 +1278,8 @@ Value* pre_calc_float(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
 Value* pre_calc_int(Allocator* alc, Build* b, Value* n1, Value* n2, int op) {
     VNumber* vn1 = n1->item;
     VNumber* vn2 = n2->item;
-    int v1 = vn1->value_int;
-    int v2 = vn2->value_int;
+    v_i64 v1 = vnumber_value_i64(vn1);
+    v_i64 v2 = vnumber_value_i64(vn2);
     if(op == op_add) {
         v1 = v1 + v2;
     } else if(op == op_sub) {
@@ -1358,11 +1333,6 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
         // Numbers
         bool is_bool = lt->type == type_bool || rt->type == type_bool;
         if (!is_bool) {
-            if (left->type == v_number && right->type != v_number) {
-                try_convert_number(left, rt);
-            } else if (right->type == v_number && left->type != v_number) {
-                try_convert_number(right, lt);
-            }
             match_value_types(alc, b, &left, &right);
         }
     }
@@ -1388,26 +1358,6 @@ bool value_is_assignable(Value *v) {
     return vt == v_decl || vt == v_decl_overwrite || vt == v_class_pa || vt == v_ptrv || vt == v_global; 
 }
 
-void match_value_types(Allocator* alc, Build* b, Value** v1_, Value** v2_) {
-    //
-    Value* v1 = *v1_;
-    Value* v2 = *v2_;
-    Type* t1 = v1->rett;
-    Type* t2 = v2->rett;
-    bool is_signed = t1->is_signed || t2->is_signed;
-    bool is_float = t1->type == type_float || t2->type == type_float;
-    int size = is_float ? max_num(t1->size, t2->size) : (max_num(t1->is_signed != is_signed ? t1->size * 2 : t1->size, t2->is_signed != is_signed ? t2->size * 2 : t2->size));
-    Type* type = type_gen_number(alc, b, size, is_float, is_signed);
-    if(!type)
-        return;
-    if(t1->type != type->type || t1->is_signed != type->is_signed || t1->size != type->size) {
-        *v1_ = vgen_cast(alc, v1, type);
-    }
-    if(t2->type != type->type || t2->is_signed != type->is_signed || t2->size != type->size) {
-        *v2_ = vgen_cast(alc, v2, type);
-    }
-}
-
 void value_is_mutable(Value* v) {
     if (v->type == v_decl) {
         Decl *decl = v->item;
@@ -1425,41 +1375,37 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
     if(!val->rett || !type)
         return val;
 
+    // To string
     Class* str_class = get_valk_class(b, "type", "String");
     Class* from_class = val->rett->class;
-    if(type->class == str_class && from_class != str_class && from_class != NULL && !val->rett->nullable) {
-        // To string
-        Func *to_str = map_get(from_class->funcs, "_string");
-        if (to_str) {
-            func_mark_used(p->func, to_str);
-            Array *args = array_make(alc, 2);
-            array_push(args, val);
-            Value *on = vgen_func_ptr(alc, to_str, NULL);
-            return vgen_func_call(alc, p, on, args);
+    if(type->class == str_class) {
+        if (from_class != str_class && from_class != NULL && !val->rett->nullable) {
+            // To string
+            Func *to_str = map_get(from_class->funcs, "_string");
+            if (to_str) {
+                func_mark_used(p->func, to_str);
+                Array *args = array_make(alc, 2);
+                array_push(args, val);
+                Value *on = vgen_func_ptr(alc, to_str, NULL);
+                return vgen_func_call(alc, p, on, args);
+            }
         }
+        return val;
     }
 
-
-    // If number literal, change the type
-    if(val->type == v_number){
-        if (type->type == type_int || type->type == type_float) {
-            try_convert_number(val, type);
-        } else if (val->rett->type == type_int && type->type == type_ptr) {
-            val = vgen_cast(alc, val, type);
-        }
-    }
-
-    // If number value, cast if appropriate
-    if(val->type != v_number){
+    // If number -> number
+    if(!val->rett->is_pointer && !type->is_pointer){
         if (val->rett->type == type_int && type->type == type_float) {
-            // We can always convert to float
-            val->rett = type_clone(alc, type);
+            // int -> float
+            val = vgen_cast(alc, val, type);
         } else if (val->rett->type == type_float && type->type == type_float) {
-            // f32 -> f64
+            // float -> float
             if(val->rett->size < type->size) {
+                // f32 -> f64
                 val = vgen_cast(alc, val, type);
             }
         } else if (val->rett->type == type_int && type->type == type_int) {
+            // int -> int
             if(val->rett->is_signed && !type->is_signed) {
                 // Not possible
             } else {
@@ -1473,53 +1419,25 @@ Value* try_convert(Allocator* alc, Parser* p, Scope* scope, Value* val, Type* ty
                 }
             }
         }
+        return val;
     }
 
-    // If to ptr, just change value return type to ptr
+    // To ptr
     Class* ptr = get_valk_class(b, "type", "ptr");
-    if (val->rett->class != ptr && type->class == ptr) {
-        bool nullable = val->rett->nullable;
-        val->rett = type_gen_class(alc, ptr);
-        val->rett->nullable = nullable;
+    if(type->class == ptr) {
+        if (val->rett->is_pointer) {
+            // If pointer, just change type (if needed)
+            if(val->rett->class != ptr) {
+                bool nullable = val->rett->nullable;
+                val->rett = type_gen_class(alc, ptr);
+                val->rett->nullable = nullable;
+            }
+        } else if(val->rett->type == type_int) {
+            // If int, cast to ptr
+            val = vgen_cast(alc, val, type);
+        }
     }
     return val;
-}
-
-bool try_convert_number(Value* val, Type* to_type) {
-    int tto = to_type->type;
-    if(val->type != v_number || (tto != type_int && tto != type_float))
-        return false;
-
-    int bytes = to_type->size;
-    if(bytes > sizeof(intptr_t)) {
-        bytes = sizeof(intptr_t);
-    }
-
-    int bits = bytes * 8;
-    VNumber *number = val->item;
-    if (tto == type_int && val->rett->type != type_float) {
-        v_i64 one = 1;
-        v_i64 max = one << (bits - (bytes == sizeof(intptr_t) ? 2 : (to_type->is_signed ? 2 : 1)));
-        v_i64 min = 0;
-        if (to_type->is_signed) {
-            min = max * -1;
-        }
-        v_i64 value = number->value_int;
-        // printf("try:%ld\n", value);
-        if (value >= min && value <= max) {
-            // printf("conv:%ld\n", value);
-            val->rett = to_type;
-            return true;
-        }
-    } else if (tto == type_float) {
-        if(val->rett->type == type_int) {
-            // int -> float
-            number->value_float = (double) number->value_int;
-            val->rett = to_type;
-            return true;
-        }
-    }
-    return false;
 }
 
 bool value_needs_gc_buffer(Value* val) {
@@ -1584,7 +1502,7 @@ Value *read_err_value(Allocator* alc, Parser *p, Array *err_names, Array *err_va
         parse_err(p, -1, "Error can never be '%s', possible errors: %s", err_name, options);
     }
     unsigned int errv = array_get_index_u32(err_values, index);
-    return vgen_int(alc, (v_i64)errv, type_gen_number(alc, p->b, 4, false, false));
+    return vgen_int(alc, (v_i64)errv, type_cache_u32(p->b));
 }
 
 Value *read_err_handler(Allocator* alc, Parser *p, Value* on, TypeFuncInfo *fi) {

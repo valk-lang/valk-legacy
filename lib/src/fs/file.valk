@@ -136,6 +136,7 @@ fn is_dir(path: String) bool {
 }
 
 fn files_in(directory: String, files: bool (true), dirs: bool (true)) Array[String] {
+
     let result = Array[String].new()
 
     #if OS == win

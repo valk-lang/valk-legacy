@@ -3,37 +3,40 @@
 
 void stage_types_global(Parser* p, Global* g);
 
-void stage_2_types(Unit* u) {
-    Build* b = u->b;
-    Parser* p = u->parser;
-
-    if (b->verbose > 2)
-        printf("Stage 2 | Scan types: %s\n", u->nsc->name);
+void stage_types(Build *b, void *payload) {
 
     usize start = microtime();
 
-    Array* funcs = u->funcs;
-    loop(funcs, i) {
-        Func* func = array_get_index(funcs, i);
-        stage_types_func(p, func);
-    }
-    Array* classes = u->classes;
-    loop(classes, i) {
-        Class* class = array_get_index(classes, i);
-        stage_types_class(p, class);
-    }
-    Array* globals = u->globals;
-    loop(globals, i) {
-        Global* g = array_get_index(globals, i);
-        if(g->chunk_type)
-            stage_types_global(p, g);
-    }
+    loop(b->units, o) {
+        Unit *u = array_get_index(b->units, o);
 
-    unit_validate(u, p);
+        Parser *p = u->parser;
+
+        if (b->verbose > 2)
+            printf("Stage 2 | Scan types: %s\n", u->nsc->name);
+
+        Array *funcs = u->funcs;
+        loop(funcs, i) {
+            Func *func = array_get_index(funcs, i);
+            stage_types_func(p, func);
+        }
+        Array *classes = u->classes;
+        loop(classes, i) {
+            Class *class = array_get_index(classes, i);
+            stage_types_class(p, class);
+        }
+        Array *globals = u->globals;
+        loop(globals, i) {
+            Global *g = array_get_index(globals, i);
+            if (g->chunk_type)
+                stage_types_global(p, g);
+        }
+
+        unit_validate(u, p);
+    }
 
     b->time_parse += microtime() - start;
-
-    stage_add_item(b->stage_3_values, u);
+    stage_ast(b, NULL);
 }
 
 void stage_types_func(Parser* p, Func* func) {

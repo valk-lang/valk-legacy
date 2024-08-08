@@ -57,7 +57,6 @@ Nsc* nsc_make(Allocator* alc, Pkc* pkc, char* name, char* dir) {
     nsc->unit = u;
 
     array_push(pkc->b->units, u);
-    stage_add_item(pkc->b->stage_2_alias, u);
 
     return nsc;
 }
@@ -101,7 +100,7 @@ Nsc* nsc_load(Pkc* pkc, char* name, bool must_exist, Parser* p) {
     Array* files = get_subfiles(b->alc, dir, false, true);
     loop(files, i) {
         char* path = array_get_index(files, i);
-        if(ends_with(path, ".va"))
+        if(ends_with(path, ".valk"))
             fc_make(nsc, path, false);
     }
 

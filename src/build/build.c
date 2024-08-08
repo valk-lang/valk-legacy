@@ -29,7 +29,7 @@ int cmd_build(int argc, char *argv[]) {
     Array *vo_files = array_make(alc, 20);
     for (int i = 2; i < args->length; i++) {
         char *arg = array_get_index(args, i);
-        if (ends_with(arg, ".va")) {
+        if (ends_with(arg, ".valk")) {
             if (!file_exists(arg)) {
                 printf("File not found: '%s'\n", arg);
                 return 1;
@@ -155,6 +155,7 @@ int cmd_build(int argc, char *argv[]) {
     b->alc = alc;
     b->alc_ast = alc_make();
     b->used_pkc_names = array_make(alc, 20);
+    b->stages = array_make(alc, 100);
     b->char_buf = char_buf;
     b->str_buf = str_buf;
     b->path_out = path_out;
@@ -165,6 +166,7 @@ int cmd_build(int argc, char *argv[]) {
     b->pkcs = array_make(alc, 20);
 
     b->globals = array_make(alc, 40);
+    b->used_globals = NULL;
 
     b->units = array_make(alc, 100);
     b->classes = array_make(alc, 1000);
@@ -176,6 +178,8 @@ int cmd_build(int argc, char *argv[]) {
 
     b->func_main = NULL;
     b->func_main_gen = NULL;
+    b->func_main_tests = NULL;
+    b->func_set_globals = NULL;
 
     b->pkc_main = NULL;
     b->nsc_main = NULL;
@@ -481,7 +485,7 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
             Array *files = get_subfiles(walc, dir, false, true);
             loop(files, o) {
                 char *file = array_get_index(files, o);
-                if (!ends_with(file, ".va")) {
+                if (!ends_with(file, ".valk")) {
                     continue;
                 }
                 int mt = mod_time(file);
@@ -533,9 +537,9 @@ void watch_files(Allocator* alc, bool autorun, Array* vo_files, char* path_out, 
 
 
 void cmd_build_help() {
-    printf("\n# valk build {.va-file(s)} [{config-dir}] -o {outpath}\n");
+    printf("\n# valk build {.valk-file(s)} [{config-dir}] -o {outpath}\n");
     printf("or\n");
-    printf("# valk build {.va-file(s)} [{config-dir}] -r|--run\n\n");
+    printf("# valk build {.valk-file(s)} [{config-dir}] -r|--run\n\n");
 
     printf(" -o                  set outpath\n");
     printf(" --run -r            run program after compiling\n");

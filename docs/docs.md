@@ -68,16 +68,16 @@ fn main() {
 ```
 
 ```sh
-valk build main.va -o ./main
+valk build main.valk -o ./main
 ./main
 ```
 
 ## Multiple files
 
-To build multiple files into a program, you simply add them to the build command. However, we recommend to use only 1 file (e.g. main.va) and put all other files into a namespace. (See next chapter)
+To build multiple files into a program, you simply add them to the build command. However, we recommend to use only 1 file (e.g. main.valk) and put all other files into a namespace. (See next chapter)
 
 ```sh
-valk build file-1.va file-2.va -o ./main
+valk build file-1.valk file-2.valk -o ./main
 ./main
 ```
 
@@ -375,7 +375,7 @@ valk build src/*.v --test --run
 Or we can put our tests in a different directory.
 
 ```sh
-valk build src/*.v ./my-tests/*.va --test --run
+valk build src/*.v ./my-tests/*.valk --test --run
 ```
 
 ## Unsafe

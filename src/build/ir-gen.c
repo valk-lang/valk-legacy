@@ -42,12 +42,7 @@ void ir_cond_jump(IR* ir, char* cond, IRBlock* block_if, IRBlock* block_else) {
 
 char *ir_int(IR* ir, v_i64 value) {
     char *res = al(ir->alc, 32);
-    v_i64 v = value;
-    if (value < 0) {
-        res[0] = '-';
-        v = v * -1;
-    }
-    itos(v, res + (value < 0 ? 1 : 0), 10);
+    itos(value, res, 10);
     return res;
 }
 char *ir_float(IR* ir, double value) {
@@ -390,6 +385,11 @@ char *ir_i1_cast(IR *ir, char *val) {
 }
 
 char* ir_op(IR* ir, int op, char* left, char* right, Type* rett) {
+
+    if(rett->is_pointer) {
+        printf("Compiler bug: IR operation on pointer types\n");
+        raise(11);
+    }
 
     bool is_float = rett->type == type_float;
     char *ltype = ir_type(ir, rett);
