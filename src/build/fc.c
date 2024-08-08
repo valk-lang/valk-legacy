@@ -6,7 +6,7 @@ Fc *fc_make(Nsc *nsc, char *path, bool is_sub_header) {
     Build *b = pkc->b;
     Allocator *alc = b->alc;
 
-    bool is_header = ends_with(path, ".vh");
+    bool is_header = ends_with(path, ".valk.h");
 
     Fc *fc = al(alc, sizeof(Fc));
     fc->b = b;

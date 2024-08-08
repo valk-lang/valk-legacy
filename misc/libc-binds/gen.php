@@ -165,12 +165,12 @@ foreach($targets as $valk_target => $target) {
     file_put_contents($path_enums, implode("\n", $defines));
     $enums = gen_enums_($defines, $ast_data);
     // $enums = gen_enums($defines, $target);
-    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-enums.vh';
+    $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-enums.valk.h';
     file_put_contents($hpath, $enums);
 
     // Gen valk structs / api
     $code = gen_valk_structs_ast($ast_data, $target);
 
-    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.vh';
+    // $hpath = $header_dir . '/' . $target['header_dir'] . '/libc-gen.valk.h';
     // file_put_contents($hpath, $code);
 }

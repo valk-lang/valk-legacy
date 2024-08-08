@@ -110,7 +110,7 @@ Fc* pkc_load_header(Pkc* pkc, char* fn, Parser* p, bool is_sub_header) {
     char path[VALK_PATH_MAX];
     loop(dirs, i) {
         char* dir = array_get_index(dirs, i);
-        sprintf(path, "%s%s.vh", dir, fn);
+        sprintf(path, "%s%s.valk.h", dir, fn);
         if(file_exists(path)) {
             Fc* hfc = fc_make(b->nsc_main, dups(b->alc, path), is_sub_header);
             hfc->header_pkc = pkc;
