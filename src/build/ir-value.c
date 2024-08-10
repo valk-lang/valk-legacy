@@ -67,12 +67,6 @@ char* ir_value(IR* ir, Value* v) {
         char* type = ir_type(ir, val->rett);
         r = ir_alloca_by_size(ir, ir->func, type, size);
     }
-    else if (vt == v_gc_get_table) {
-        Value* index = v->item;
-        char* i = ir_value(ir, index);
-        char* mul = ir_op(ir, op_mul, i, "5", index->rett);
-        r = ir_ptrv_dyn(ir, "@valk_gc_vtable", "ptr", mul, ir_type(ir, index->rett));
-    }
     else if (vt == v_gc_link) {
         VPair* pair = v->item;
         Value* on = pair->left;

@@ -146,7 +146,7 @@ enum VALUES {
     v_gc_link, // 20
     v_bufferd,
     v_ir_value, 
-    v_gc_get_table,
+    v_UNUSED_1,
     v_value_scope,
     v_var, // 25
     v_isset,

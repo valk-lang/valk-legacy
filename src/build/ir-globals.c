@@ -15,7 +15,6 @@ void ir_gen_globals(IR* ir) {
         str_preserve(code, 500);
         str_flat(code, "@valk_err_code = external thread_local(initialexec) global i32, align 4\n");
         str_flat(code, "@valk_err_msg = external thread_local(initialexec) global i8*, align 8\n");
-        str_flat(code, "@valk_gc_vtable = external constant ptr, align 8\n");
     }
 
     loop(u->globals, i) {

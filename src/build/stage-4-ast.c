@@ -9,7 +9,6 @@ void stage_generate_main(Build *b);
 void stage_unroll(Build *b, Func *func);
 void stage_ast_func(Func *func);
 void stage_ast_class(Class *class);
-void ir_vtable_define_extern(Unit* u);
 
 void stage_ast(Build *b, void *payload) {
 
@@ -63,10 +62,6 @@ void stage_ast(Build *b, void *payload) {
 
     b->building_ast = false;
     b->parse_last = false;
-
-    // Define extern vtable
-    Unit *um = b->nsc_main->unit;
-    ir_vtable_define_extern(um);
 
     // Gen IR
     loop(units, i) {
