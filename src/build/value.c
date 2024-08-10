@@ -134,11 +134,11 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             Value* index = read_value(alc, p, true, 0);
             tok_expect(p, ")", true, true);
             v = value_make(alc, v_gc_get_table, index, type_gen_valk(alc, b, "ptr"));
-        } else if (str_is(tkn, "@type_vtable_index")) {
-            tok_expect(p, "(", false, false);
-            Type *type = read_type(p, alc, true);
-            tok_expect(p, ")", true, true);
-            v = vgen_int_parse(alc, type->class->gc_vtable_index, false, p->try_conv, type_gen_valk(alc, b, "uint"));
+        // } else if (str_is(tkn, "@type_vtable_index")) {
+        //     tok_expect(p, "(", false, false);
+        //     Type *type = read_type(p, alc, true);
+        //     tok_expect(p, ")", true, true);
+        //     v = vgen_int_parse(alc, type->class->gc_vtable_index, false, p->try_conv, type_gen_valk(alc, b, "uint"));
         } else if (str_is(tkn, "@class_of")) {
             tok_expect(p, "(", false, false);
             Type *type = read_type(p, alc, true);

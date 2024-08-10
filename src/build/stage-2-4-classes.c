@@ -12,12 +12,12 @@ void stage_classes(Build* b, void* payload) {
 
     stage_determine_class_sizes(b, b->classes);
 
-    loop(b->classes, i) {
-        Class *class = array_get_index(b->classes, i);
-        Unit* u = class->unit;
-        Parser* p = u->parser;
-        class_generate_internals(p, b, class);
-    }
+    // loop(b->classes, i) {
+    //     Class *class = array_get_index(b->classes, i);
+    //     Unit* u = class->unit;
+    //     Parser* p = u->parser;
+    //     class_generate_internals(p, b, class);
+    // }
 
     b->time_parse += microtime() - start;
     stage_types(b, NULL);

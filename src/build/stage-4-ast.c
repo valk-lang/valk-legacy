@@ -52,7 +52,7 @@ void stage_ast(Build *b, void *payload) {
     // Parse all parse-last functions
     b->parse_last = true;
 
-    stage_ast_func(get_valk_func(b, "mem", "pools_init"));
+    stage_ast_func(get_valk_func(b, "mem", "init_pools"));
 
     Array *funcs = b->parse_later;
     loop(funcs, i) {

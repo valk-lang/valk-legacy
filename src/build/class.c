@@ -22,7 +22,7 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     //
     c->size = -1;
     c->gc_fields = 0;
-    c->gc_vtable_index = 0;
+    c->pool_index = 0;
     //
     c->packed = false;
     c->is_signed = true;
@@ -35,8 +35,7 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     c->in_header = false;
     c->is_used = false;
     c->use_gc_alloc = false;
-
-    c->pool = NULL;
+    c->has_vtable = false;
     //
     return c;
 }
@@ -59,37 +58,22 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name) {
     return prop;
 }
 
-void generate_class_pool(Parser* p, Class* class) {
-    Build* b = p->b;
-    if (b->stage_1_done && class->type == ct_class && !class->is_generic_base) {
-        // Generate pool global
-        Allocator* alc = b->alc;
-        Unit* u = class->unit;
-
-        char buf[512];
-        strcpy(buf, "STRUCT_POOL_");
-        strcat(buf, class->ir_name);
-
-        Global *g = al(alc, sizeof(Global));
-        g->act = act_public;
-        g->fc = NULL;
-        g->unit = class->unit;
-        g->name = NULL;
-        g->export_name = gen_export_name(class->unit->nsc, buf);
-        g->type = class_pool_type(p, class);
-        g->value = NULL;
-        g->chunk_type = NULL;
-        g->chunk_value = NULL;
-        g->declared_scope = NULL;
-        g->is_shared = false;
-        g->is_mut = true;
-        g->is_used = true;
-
-        array_push(u->globals, g);
-        array_push(b->globals, g);
-
-        class->pool = g;
+int class_pool_index(Class* class) {
+    int size = class->size;
+    int offset = map_contains(class->funcs, "_gc_free") ? 1 : 0;
+    if(size <= sizeof(void *) * 2) {
+        return 0 + offset;
     }
+    if(size <= 128) {
+        return (size / sizeof(void *) - 2) * 2 + offset;
+    }
+    int index = 34;
+    int alc_size = 256;
+    while(alc_size < size) {
+        index += 2;
+        alc_size *= 2;
+    }
+    return index + offset;
 }
 
 int class_determine_size(Build* b, Class* class) {
@@ -147,345 +131,346 @@ int class_determine_size(Build* b, Class* class) {
         size = 8;
     }
     class->size = size;
+    class->pool_index = class_pool_index(class);
 
     return size;
 }
 
-void class_generate_internals(Parser* p, Build* b, Class* class) {
+// void class_generate_internals(Parser* p, Build* b, Class* class) {
 
-    Allocator *alc = b->alc;
+//     Allocator *alc = b->alc;
 
-    if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
-        char* buf = b->char_buf;
+//     if (class->type == ct_class && map_get(class->funcs, "_v_transfer") == NULL) {
+//         char* buf = b->char_buf;
 
-        // VTABLE_INDEX
-        if(b->verbose > 2)
-            printf("Class: %s | vtable: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
-        //
-        Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_cache_u32(b)));
-        scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
-        //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
-        scope_set_idf(class->scope, "STACK", idf, p);
-        //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_cache_uint(b)));
-        scope_set_idf(class->scope, "SIZE", idf, p);
-        //
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));
-        scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_marked"));
-        scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
-        idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "gc_age"));
-        scope_set_idf(class->scope, "GC_AGE", idf, p);
-        idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_transfer_item"));
-        scope_set_idf(class->scope, "GC_TRANSFER_FUNC", idf, p);
-        idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_item"));
-        scope_set_idf(class->scope, "GC_MARK_FUNC", idf, p);
-        idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_shared_item"));
-        scope_set_idf(class->scope, "GC_MARK_SHARED_FUNC", idf, p);
-        idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_share"));
-        scope_set_idf(class->scope, "GC_SHARE_FUNC", idf, p);
+//         // VTABLE_INDEX
+//         if(b->verbose > 2)
+//             printf("Class: %s | vtable: %d | size: %d\n", class->name, class->gc_vtable_index, class->size);
+//         //
+//         Idf* idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->gc_vtable_index, type_cache_u32(b)));
+//         scope_set_idf(class->scope, "VTABLE_INDEX", idf, p);
+//         //
+//         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "stack"));
+//         scope_set_idf(class->scope, "STACK", idf, p);
+//         //
+//         idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_cache_uint(b)));
+//         scope_set_idf(class->scope, "SIZE", idf, p);
+//         //
+//         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_transfered"));
+//         scope_set_idf(class->scope, "GC_TRANSFER_SIZE", idf, p);
+//         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_marked"));
+//         scope_set_idf(class->scope, "GC_MARK_SIZE", idf, p);
+//         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "shared_age"));
+//         scope_set_idf(class->scope, "GC_AGE", idf, p);
+//         idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_transfer_item"));
+//         scope_set_idf(class->scope, "GC_TRANSFER_FUNC", idf, p);
+//         idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_item"));
+//         scope_set_idf(class->scope, "GC_MARK_FUNC", idf, p);
+//         idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_mark_shared_item"));
+//         scope_set_idf(class->scope, "GC_MARK_SHARED_FUNC", idf, p);
+//         idf = idf_make(b->alc, idf_func, get_valk_func(b, "mem", "gc_share"));
+//         scope_set_idf(class->scope, "GC_SHARE_FUNC", idf, p);
 
-        // Transfer
-        strcpy(buf, class->name);
-        strcat(buf, "__v_transfer");
-        char* name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_transfer");
-        char* export_name = dups(alc, buf);
-        Func *transfer = func_make(b->alc, class->unit, class->scope, name, export_name);
-        transfer->class = class;
-        transfer->is_static = false;
-        transfer->use_if_class_is_used = true;
-        map_set_force_new(class->funcs, "_v_transfer", transfer);
+//         // Transfer
+//         strcpy(buf, class->name);
+//         strcat(buf, "__v_transfer");
+//         char* name = dups(alc, buf);
+//         strcpy(buf, class->ir_name);
+//         strcat(buf, "__v_transfer");
+//         char* export_name = dups(alc, buf);
+//         Func *transfer = func_make(b->alc, class->unit, class->scope, name, export_name);
+//         transfer->class = class;
+//         transfer->is_static = false;
+//         transfer->use_if_class_is_used = true;
+//         map_set_force_new(class->funcs, "_v_transfer", transfer);
 
-        // Mark
-        strcpy(buf, class->name);
-        strcat(buf, "__v_mark");
-        name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_mark");
-        export_name = dups(alc, buf);
-        Func *mark = func_make(b->alc, class->unit, class->scope, name, export_name);
-        mark->class = class;
-        mark->is_static = false;
-        mark->use_if_class_is_used = true;
-        map_set_force_new(class->funcs, "_v_mark", mark);
+//         // Mark
+//         strcpy(buf, class->name);
+//         strcat(buf, "__v_mark");
+//         name = dups(alc, buf);
+//         strcpy(buf, class->ir_name);
+//         strcat(buf, "__v_mark");
+//         export_name = dups(alc, buf);
+//         Func *mark = func_make(b->alc, class->unit, class->scope, name, export_name);
+//         mark->class = class;
+//         mark->is_static = false;
+//         mark->use_if_class_is_used = true;
+//         map_set_force_new(class->funcs, "_v_mark", mark);
 
-        // Mark GC
-        strcpy(buf, class->name);
-        strcat(buf, "__v_mark_shared");
-        name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_mark_shared");
-        export_name = dups(alc, buf);
-        Func *mark_shared = func_make(b->alc, class->unit, class->scope, name, export_name);
-        mark_shared->class = class;
-        mark_shared->is_static = false;
-        mark_shared->use_if_class_is_used = true;
-        map_set_force_new(class->funcs, "_v_mark_shared", mark_shared);
+//         // Mark GC
+//         strcpy(buf, class->name);
+//         strcat(buf, "__v_mark_shared");
+//         name = dups(alc, buf);
+//         strcpy(buf, class->ir_name);
+//         strcat(buf, "__v_mark_shared");
+//         export_name = dups(alc, buf);
+//         Func *mark_shared = func_make(b->alc, class->unit, class->scope, name, export_name);
+//         mark_shared->class = class;
+//         mark_shared->is_static = false;
+//         mark_shared->use_if_class_is_used = true;
+//         map_set_force_new(class->funcs, "_v_mark_shared", mark_shared);
 
-        // Share
-        strcpy(buf, class->name);
-        strcat(buf, "__v_share");
-        name = dups(alc, buf);
-        strcpy(buf, class->ir_name);
-        strcat(buf, "__v_share");
-        export_name = dups(alc, buf);
-        Func *share = func_make(b->alc, class->unit, class->scope, name, export_name);
-        share->class = class;
-        share->is_static = false;
-        share->use_if_class_is_used = true;
-        map_set_force_new(class->funcs, "_v_share", share);
+//         // Share
+//         strcpy(buf, class->name);
+//         strcat(buf, "__v_share");
+//         name = dups(alc, buf);
+//         strcpy(buf, class->ir_name);
+//         strcat(buf, "__v_share");
+//         export_name = dups(alc, buf);
+//         Func *share = func_make(b->alc, class->unit, class->scope, name, export_name);
+//         share->class = class;
+//         share->is_static = false;
+//         share->use_if_class_is_used = true;
+//         map_set_force_new(class->funcs, "_v_share", share);
 
-        // AST
-        class_generate_transfer(p, b, class, transfer);
-        class_generate_mark(p, b, class, mark);
-        class_generate_mark_shared(p, b, class, mark_shared);
-        class_generate_share(p, b, class, share);
-    }
-}
+//         // AST
+//         class_generate_transfer(p, b, class, transfer);
+//         class_generate_mark(p, b, class, mark);
+//         class_generate_mark_shared(p, b, class, mark_shared);
+//         class_generate_share(p, b, class, share);
+//     }
+// }
 
-void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
+// void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
 
-    Map* props = class->props;
+//     Map* props = class->props;
 
-    Str* code = b->str_buf;
-    str_clear(code);
+//     Str* code = b->str_buf;
+//     str_clear(code);
 
-    str_flat(code, "() void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
-    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
+//     str_flat(code, "() void {\n");
+//     str_flat(code, "  if @ptrv(this, u8, -8) > 2 { return }\n");
+//     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
+//     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
-    str_flat(code, "  @ptrv(data, uint, -2)++\n");
+//     str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+//     str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+//     str_flat(code, "  @ptrv(data, uint, -2)++\n");
 
-    // Props
-    loop(props->values, i) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        Class* subclass = p->type->class;
-        char var[32];
-        strcpy(var, "prop_");
-        itos(i, var + 5, 10);
+//     // Props
+//     loop(props->values, i) {
+//         ClassProp* p = array_get_index(props->values, i);
+//         char* pn = array_get_index(props->keys, i);
+//         if(!type_is_gc(p->type))
+//             continue;
+//         Class* subclass = p->type->class;
+//         char var[32];
+//         strcpy(var, "prop_");
+//         itos(i, var + 5, 10);
 
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if isset(");
-            str_add(code, var);
-            str_flat(code, ") : ");
-        }
-        if(subclass->use_gc_alloc) {
-            str_flat(code, "GC_TRANSFER_FUNC(");
-            str_add(code, var);
-            str_flat(code, ")\n");
-        } else {
-            str_add(code, var);
-            str_flat(code, "._v_transfer()\n");
-        }
-    }
+//         str_flat(code, "let ");
+//         str_add(code, var);
+//         str_flat(code, " = this.");
+//         str_add(code, pn);
+//         str_flat(code, "\n");
+//         if(p->type->nullable) {
+//             str_flat(code, "if isset(");
+//             str_add(code, var);
+//             str_flat(code, ") : ");
+//         }
+//         if(subclass->use_gc_alloc) {
+//             str_flat(code, "GC_TRANSFER_FUNC(");
+//             str_add(code, var);
+//             str_flat(code, ")\n");
+//         } else {
+//             str_add(code, var);
+//             str_flat(code, "._v_transfer()\n");
+//         }
+//     }
 
-    Func* hook = map_get(class->funcs, "_gc_transfer");
-    if(hook) {
-        str_flat(code, "  this._gc_transfer()\n");
-    }
+//     Func* hook = map_get(class->funcs, "_gc_transfer");
+//     if(hook) {
+//         str_flat(code, "  this._gc_transfer()\n");
+//     }
 
-    str_flat(code, "}\n");
+//     str_flat(code, "}\n");
 
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(b, chunk, content, code->length);
+//     char* content = str_to_chars(b->alc, code);
+//     Chunk *chunk = chunk_make(b->alc, b, NULL);
+//     chunk_set_content(b, chunk, content, code->length);
 
-    *p->chunk = *chunk;
-    parse_handle_func_args(p, func);
-}
-void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
+//     *p->chunk = *chunk;
+//     parse_handle_func_args(p, func);
+// }
+// void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
 
-    Map* props = class->props;
+//     Map* props = class->props;
 
-    Str* code = b->str_buf;
-    str_clear(code);
+//     Str* code = b->str_buf;
+//     str_clear(code);
 
-    str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-    str_flat(code, "  if state > 8 { return }\n");
-    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
-    str_flat(code, "  GC_MARK_SIZE += SIZE\n");
+//     str_flat(code, "(age: u8) void {\n");
+//     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
+//     str_flat(code, "  if state > 8 { return }\n");
+//     str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
+//     str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+//     str_flat(code, "  GC_MARK_SIZE += SIZE\n");
 
-    // Props
-    loop(props->values, i) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        char var[32];
-        strcpy(var, "prop_");
-        itos(i, var + 5, 10);
+//     // Props
+//     loop(props->values, i) {
+//         ClassProp* p = array_get_index(props->values, i);
+//         char* pn = array_get_index(props->keys, i);
+//         if(!type_is_gc(p->type))
+//             continue;
+//         char var[32];
+//         strcpy(var, "prop_");
+//         itos(i, var + 5, 10);
 
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if isset(");
-            str_add(code, var);
-            str_flat(code, ") : ");
-        }
-        if(p->type->class->use_gc_alloc) {
-            str_flat(code, "GC_MARK_FUNC(");
-            str_add(code, var);
-            str_flat(code, ")\n");
-        } else {
-            str_add(code, var);
-            str_flat(code, "._v_mark(age)\n");
-        }
-    }
+//         str_flat(code, "let ");
+//         str_add(code, var);
+//         str_flat(code, " = this.");
+//         str_add(code, pn);
+//         str_flat(code, "\n");
+//         if(p->type->nullable) {
+//             str_flat(code, "if isset(");
+//             str_add(code, var);
+//             str_flat(code, ") : ");
+//         }
+//         if(p->type->class->use_gc_alloc) {
+//             str_flat(code, "GC_MARK_FUNC(");
+//             str_add(code, var);
+//             str_flat(code, ")\n");
+//         } else {
+//             str_add(code, var);
+//             str_flat(code, "._v_mark(age)\n");
+//         }
+//     }
 
-    if (map_get(class->funcs, "_gc_mark")) {
-        str_flat(code, "  this._gc_mark()\n");
-    }
+//     if (map_get(class->funcs, "_gc_mark")) {
+//         str_flat(code, "  this._gc_mark()\n");
+//     }
 
-    str_flat(code, "}\n");
+//     str_flat(code, "}\n");
 
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(b, chunk, content, code->length);
+//     char* content = str_to_chars(b->alc, code);
+//     Chunk *chunk = chunk_make(b->alc, b, NULL);
+//     chunk_set_content(b, chunk, content, code->length);
 
-    *p->chunk = *chunk;
-    parse_handle_func_args(p, func);
-}
+//     *p->chunk = *chunk;
+//     parse_handle_func_args(p, func);
+// }
 
-void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
+// void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
 
-    Map* props = class->props;
+//     Map* props = class->props;
 
-    Str* code = b->str_buf;
-    str_clear(code);
+//     Str* code = b->str_buf;
+//     str_clear(code);
 
-    str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -5) = age\n");
+//     str_flat(code, "(age: u8) void {\n");
+//     str_flat(code, "  if @ptrv(this, u8, -5) == age { return }\n");
+//     str_flat(code, "  @ptrv(this, u8, -5) = age\n");
 
-    // Props
-    loop(props->values, i) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        char var[32];
-        strcpy(var, "prop_");
-        itos(i, var + 5, 10);
+//     // Props
+//     loop(props->values, i) {
+//         ClassProp* p = array_get_index(props->values, i);
+//         char* pn = array_get_index(props->keys, i);
+//         if(!type_is_gc(p->type))
+//             continue;
+//         char var[32];
+//         strcpy(var, "prop_");
+//         itos(i, var + 5, 10);
 
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if isset(");
-            str_add(code, var);
-            str_flat(code, ") : ");
-        }
-        if(p->type->class->use_gc_alloc) {
-            str_flat(code, "GC_MARK_SHARED_FUNC(");
-            str_add(code, var);
-            str_flat(code, ")\n");
-        } else {
-            str_add(code, var);
-            str_flat(code, "._v_mark_shared(age)\n");
-        }
-    }
+//         str_flat(code, "let ");
+//         str_add(code, var);
+//         str_flat(code, " = this.");
+//         str_add(code, pn);
+//         str_flat(code, "\n");
+//         if(p->type->nullable) {
+//             str_flat(code, "if isset(");
+//             str_add(code, var);
+//             str_flat(code, ") : ");
+//         }
+//         if(p->type->class->use_gc_alloc) {
+//             str_flat(code, "GC_MARK_SHARED_FUNC(");
+//             str_add(code, var);
+//             str_flat(code, ")\n");
+//         } else {
+//             str_add(code, var);
+//             str_flat(code, "._v_mark_shared(age)\n");
+//         }
+//     }
 
-    if (map_get(class->funcs, "_gc_mark_shared")) {
-        str_flat(code, "  this._gc_mark_shared()\n");
-    }
+//     if (map_get(class->funcs, "_gc_mark_shared")) {
+//         str_flat(code, "  this._gc_mark_shared()\n");
+//     }
 
-    str_flat(code, "}\n");
+//     str_flat(code, "}\n");
 
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(b, chunk, content, code->length);
+//     char* content = str_to_chars(b->alc, code);
+//     Chunk *chunk = chunk_make(b->alc, b, NULL);
+//     chunk_set_content(b, chunk, content, code->length);
 
-    *p->chunk = *chunk;
-    parse_handle_func_args(p, func);
-}
+//     *p->chunk = *chunk;
+//     parse_handle_func_args(p, func);
+// }
 
-void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
+// void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
 
-    Map* props = class->props;
+//     Map* props = class->props;
 
-    Str* code = b->str_buf;
-    str_clear(code);
+//     Str* code = b->str_buf;
+//     str_clear(code);
 
-    str_flat(code, "() void {\n");
-    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
-    str_flat(code, "  if state > 4 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
-    str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
+//     str_flat(code, "() void {\n");
+//     str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
+//     str_flat(code, "  if state > 4 { return }\n");
+//     str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
+//     str_flat(code, "  @ptrv(this, u8, -5) = GC_AGE\n");
 
-    str_flat(code, "  if state < 4 {\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
-    str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
-    str_flat(code, "  @ptrv(data, uint, -2)++\n");
-    str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
-    str_flat(code, "  }\n");
+//     str_flat(code, "  if state < 4 {\n");
+//     str_flat(code, "  let index = @ptrv(this, u8, -7) @as uint\n");
+//     str_flat(code, "  let data = (this @as ptr) - index * (SIZE + 8) - 8\n");
+//     str_flat(code, "  @ptrv(data, uint, -2)++\n");
+//     str_flat(code, "  GC_TRANSFER_SIZE += SIZE\n");
+//     str_flat(code, "  }\n");
 
-    str_flat(code, "  STACK.add_shared(this)\n");
+//     str_flat(code, "  STACK.add_shared(this)\n");
 
-    // Props
-    loop(props->values, i) {
-        ClassProp* p = array_get_index(props->values, i);
-        char* pn = array_get_index(props->keys, i);
-        if(!type_is_gc(p->type))
-            continue;
-        char var[32];
-        strcpy(var, "prop_");
-        itos(i, var + 5, 10);
+//     // Props
+//     loop(props->values, i) {
+//         ClassProp* p = array_get_index(props->values, i);
+//         char* pn = array_get_index(props->keys, i);
+//         if(!type_is_gc(p->type))
+//             continue;
+//         char var[32];
+//         strcpy(var, "prop_");
+//         itos(i, var + 5, 10);
 
-        str_flat(code, "let ");
-        str_add(code, var);
-        str_flat(code, " = this.");
-        str_add(code, pn);
-        str_flat(code, "\n");
-        if(p->type->nullable) {
-            str_flat(code, "if isset(");
-            str_add(code, var);
-            str_flat(code, ") : ");
-        }
-        if(p->type->class->use_gc_alloc) {
-            str_flat(code, "GC_SHARE_FUNC(");
-            str_add(code, var);
-            str_flat(code, ")\n");
-        } else {
-            str_add(code, var);
-            str_flat(code, "._v_share()\n");
-        }
-    }
+//         str_flat(code, "let ");
+//         str_add(code, var);
+//         str_flat(code, " = this.");
+//         str_add(code, pn);
+//         str_flat(code, "\n");
+//         if(p->type->nullable) {
+//             str_flat(code, "if isset(");
+//             str_add(code, var);
+//             str_flat(code, ") : ");
+//         }
+//         if(p->type->class->use_gc_alloc) {
+//             str_flat(code, "GC_SHARE_FUNC(");
+//             str_add(code, var);
+//             str_flat(code, ")\n");
+//         } else {
+//             str_add(code, var);
+//             str_flat(code, "._v_share()\n");
+//         }
+//     }
 
-    Func* hook = map_get(class->funcs, "_gc_share");
-    if(hook) {
-        str_flat(code, "  this._gc_share()\n");
-    }
+//     Func* hook = map_get(class->funcs, "_gc_share");
+//     if(hook) {
+//         str_flat(code, "  this._gc_share()\n");
+//     }
 
-    str_flat(code, "}\n");
+//     str_flat(code, "}\n");
 
-    char* content = str_to_chars(b->alc, code);
-    Chunk *chunk = chunk_make(b->alc, b, NULL);
-    chunk_set_content(b, chunk, content, code->length);
+//     char* content = str_to_chars(b->alc, code);
+//     Chunk *chunk = chunk_make(b->alc, b, NULL);
+//     chunk_set_content(b, chunk, content, code->length);
 
-    *p->chunk = *chunk;
-    parse_handle_func_args(p, func);
-}
+//     *p->chunk = *chunk;
+//     parse_handle_func_args(p, func);
+// }
 
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     Build* b = p->b;
@@ -554,13 +539,11 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
     gclass->name = name;
     gclass->ir_name = export_name;
 
-    generate_class_pool(p, gclass);
-
     if (b->building_ast) {
         array_push(b->classes, gclass);
-        if (gclass->type == ct_class) {
-            gclass->gc_vtable_index = ++b->gc_vtables;
-        }
+        // if (gclass->type == ct_class) {
+        //     gclass->gc_vtable_index = ++b->gc_vtables;
+        // }
     }
 
     map_set(class->generics, h, gclass);
@@ -591,7 +574,7 @@ Class* get_generic_class(Parser* p, Class* class, Array* generic_types) {
         parse_err(p, -1, "Cannot determine size of class: '%s'", gclass->name);
     }
     // Internals
-    class_generate_internals(p, b, gclass);
+    // class_generate_internals(p, b, gclass);
 
     // Types
     stage_types_class(p, gclass);

@@ -110,12 +110,6 @@ char *ir_string(IR *ir, VString *str) {
 
     Type* stype = type_gen_valk(ir->alc, ir->b, "String");
 
-    char vt[32];
-    itos(stype->class->gc_vtable_index, vt, 10);
-
-    char gcpt[32];
-    itos(get_valk_class(ir->b, "mem", "GcPtr")->gc_vtable_index, gcpt, 10);
-
     char body_type[512];
     strcpy(body_type, body_name);
     body_type[0] = '%';
@@ -123,7 +117,7 @@ char *ir_string(IR *ir, VString *str) {
     bool external = false;
 
     str_add(code, body_type);
-    str_flat(code, " = type <{ i8, i8, i8, i8, i32, i64, [");
+    str_flat(code, " = type <{ i8, i8, i8, i8, i8, i8, i8, i8, i64, [");
     str_add(code, blen_str);
     str_flat(code, " x i8] }>\n");
 
@@ -135,14 +129,13 @@ char *ir_string(IR *ir, VString *str) {
     str_flat(code, " global ");
     str_add(code, body_type);
     if (!external) {
-        str_flat(code, " <{ i8 8, i8 0, i8 0, i8 0, i32 ");
-        str_add(code, vt);
-        str_flat(code, ", ");
+        str_flat(code, " <{ i8 8, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, ");
+        // String length property
         str_add(code, ir_type_int(ir, ir->b->ptr_size));
         str_flat(code, " ");
         str_add(code, len_str);
         str_flat(code, ", ");
-        // Body
+        // Body bytes
 
         str_flat(code, "[");
         str_add(code, blen_str);

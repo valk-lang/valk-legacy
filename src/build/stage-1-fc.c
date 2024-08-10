@@ -286,9 +286,9 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
         scope_set_idf(class->scope, "SELF", idf, p);
         array_push(b->classes, class);
         array_push(u->classes, class);
-        if(class->type == ct_class) {
-            class->gc_vtable_index = ++b->gc_vtables;
-        }
+        // if(class->type == ct_class) {
+        //     class->gc_vtable_index = ++b->gc_vtables;
+        // }
     }
 
     //

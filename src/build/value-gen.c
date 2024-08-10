@@ -189,16 +189,18 @@ Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
 }
 
 Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
-    Global* pool = class->pool;
-    Class* pc = pool->type->class;
-    Value* pv = value_make(alc, v_global, pool, pool->type);
 
-    Func *func = map_get(pc->funcs, "get");
+    Global* pools = get_valk_global(b, "mem", "pools");
+    Value* v_pools = value_make(alc, v_global, pools, pools->type);
+    Value* v_pool = vgen_ptrv(alc, b, v_pools, type_cache_ptr(b), vgen_int(alc, class->pool_index, type_cache_uint(b)));
+
+    Class* pool_class = get_valk_class(b, "mem", "GcPool");
+    Func *func = map_get(pool_class->funcs, "get");
     func_mark_used(p->func, func);
 
     Value *fptr = vgen_func_ptr(alc, func, NULL);
     Array *alloc_values = array_make(alc, func->args->values->length);
-    array_push(alloc_values, pv);
+    array_push(alloc_values, v_pool);
     Value *res = vgen_func_call(alc, p, fptr, alloc_values);
     return res;
 }

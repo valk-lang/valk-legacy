@@ -269,7 +269,8 @@ struct Coro {
                 let adr = coro.gc_stack.adr
                 while adr > base {
                     adr -= sizeof(ptr)
-                    mem:gc_transfer_item(@ptrv(adr, ptr, 0))
+                    let item = @ptrv(adr, ptr, 0)
+                    if item != null : mem:gc_transfer(item)
                 }
             }
         }
@@ -280,7 +281,8 @@ struct Coro {
         let adr = this.gc_stack.adr
         while adr > base {
             adr -= sizeof(ptr)
-            mem:gc_mark_item(@ptrv(adr, ptr, 0))
+            let item = @ptrv(adr, ptr, 0)
+            if item != null : mem:gc_mark(item)
         }
     }
     fn _gc_mark_shared() {
@@ -288,7 +290,8 @@ struct Coro {
         let adr = this.gc_stack.adr
         while adr > base {
             adr -= sizeof(ptr)
-            mem:gc_mark_shared_item(@ptrv(adr, ptr, 0))
+            let item = @ptrv(adr, ptr, 0)
+            if item != null : mem:gc_mark_shared(item)
         }
     }
 

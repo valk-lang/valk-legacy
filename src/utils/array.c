@@ -109,6 +109,13 @@ void array_set_index(Array *arr, int index, void *item) {
     uintptr_t *adr = arr->data + (index * sizeof(void *));
     *adr = (uintptr_t)item;
 }
+void array_swap(Array *arr, int index1, int index2) {
+    uintptr_t *adr1 = arr->data + (index1 * sizeof(void *));
+    uintptr_t *adr2 = arr->data + (index2 * sizeof(void *));
+    uintptr_t v1 = *adr1;
+    *adr1 = *adr2;
+    *adr2 = v1;
+}
 
 bool array_contains(Array *arr, void *item, int type) {
     int index = array_find(arr, item, type);

@@ -183,4 +183,25 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
     if(p->cc_index > 0) {
         parse_err(p, -1, "Missing #end token");
     }
+
+    if(!is_trait && class->type == ct_class) {
+        // Count & sort gc fields
+        int last = 0;
+        Map* props = class->props;
+        loop(props->keys, i) {
+            char* name = array_get_index(props->keys, i);
+            ClassProp* prop = array_get_index(props->values, i);
+            if(type_is_gc(prop->type)) {
+                array_swap(props->keys, i, last);
+                array_swap(props->values, i, last);
+                last++;
+                class->gc_fields++;
+            }
+        }
+
+        // Has vtable
+        if(map_contains(class->funcs, "_gc_free")) {
+            class->has_vtable = true;
+        }
+    }
 }

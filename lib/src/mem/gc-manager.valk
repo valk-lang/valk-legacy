@@ -4,7 +4,7 @@ use os
 use io
 
 shared gc_manager_instance : @ignu(GcManager)
-shared gc_age : u8
+shared shared_age : u8
 
 fn gc_manager() GcManager {
     let gc = gc_manager_instance
@@ -24,7 +24,7 @@ cstruct GcManager {
     stopped : bool (false)
 
     static fn init() {
-        gc_age = 128
+        shared_age = 128
         if gc_manager_instance != null {
             return
         }
@@ -78,9 +78,9 @@ cstruct GcManager {
             //
             let sc = gm.stack_count
             let up_to_date_count : uint = 0
-            let age = gc_age
+            let age = shared_age
 
-            if gcm_stack.gc_age != age {
+            if gcm_stack.shared_age != age {
                 force_gc()
             }
 
@@ -97,7 +97,7 @@ cstruct GcManager {
                 //     }
                 //     continue
                 // }
-                if s.gc_age == age {
+                if s.shared_age == age {
                     up_to_date_count++
                 }
                 // if s.stopped {
@@ -110,7 +110,7 @@ cstruct GcManager {
             // If all up-to-date
             if up_to_date_count == sc {
                 gm.clean_unused()
-                gc_age = (gc_age == 128) ? 64 : 128
+                shared_age = (shared_age == 128) ? 64 : 128
                 timeout_count = 0
             } else {
                 timeout_count++
@@ -119,7 +119,7 @@ cstruct GcManager {
                     while si-- > 0 {
                         let s = @ptrv(stacks, ?Stack, si)
                         if isset(s) {
-                            if s.gc_age == age {
+                            if s.shared_age == age {
                                 continue
                             }
                             s.force_full = true
@@ -138,25 +138,23 @@ cstruct GcManager {
 
     #parse_last
     fn clean_unused() {
-        let age = gc_age
+        let age = shared_age
         // Mark shared globals
         #loop_globals as G, T
         #if @type_is_gc(T) && @global_is_shared(G)
         {
             let item = G @as ptr
+            #if @type_is_nullable(T)
             if item != null {
-                if @ptrv(item, u8, byte_gc_age_rel) != age {
-                    let vtable = @ptrv(item, u32, -1) & 0xffffff
-                    if vtable == 0 {
-                        if @ptrv(item, u8, byte_gc_age_rel) != age :
-                            @ptrv(item, u8, byte_gc_age_rel) = age
-                    } else {
-                        let table = @gc_get_vtable(vtable)
-                        let func = @ptrv(table, fn(ptr, u8)(void), vt_mark_shared)
-                        func(item, age)
-                    }
+                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                    gc_mark_shared(item)
                 }
             }
+            #else
+            if @ptrv(item, u8, byte_shared_age_rel) != age {
+                gc_mark_shared(item)
+            }
+            #end
         }
         #end
         #endloop
