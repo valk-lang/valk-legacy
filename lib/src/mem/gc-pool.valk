@@ -7,24 +7,25 @@ global pools: @ignu(ptr)
 global pool_count: uint
 
 fn init_pools() {
-    let alcs = alloc(50 * sizeof(ptr))
+    let list = alloc(50 * sizeof(ptr))
     let isize : uint = sizeof(ptr)
     let i : u8 = 0
     // 16 - 128
     while isize < 128 {
         isize += sizeof(ptr)
-        @ptrv(alcs, ptr, i++) = GcPool.init(isize, false, i)
-        @ptrv(alcs, ptr, i++) = GcPool.init(isize, true, i)
+        @ptrv(list, ptr, i++) = GcPool.init(isize, false, i)
+        @ptrv(list, ptr, i++) = GcPool.init(isize, true, i)
     }
     // 256 - max
     let pow : uint = 8
     let maxbits : uint = sizeof(ptr) * 8
     while pow < maxbits {
         let isize : uint = 2 << pow++
-        @ptrv(alcs, ptr, i++) = GcPool.init(isize, false, i)
-        @ptrv(alcs, ptr, i++) = GcPool.init(isize, true, i)
+        @ptrv(list, ptr, i++) = GcPool.init(isize, false, i)
+        @ptrv(list, ptr, i++) = GcPool.init(isize, true, i)
     }
     pool_count = i
+    pools = list
 }
 
 cstruct GcPool {
@@ -74,6 +75,7 @@ cstruct GcPool {
     }
 
     fn get() ptr {
+        print(".")
         if mem_usage > 70 {
             gc()
         }

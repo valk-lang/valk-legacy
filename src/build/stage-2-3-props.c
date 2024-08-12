@@ -90,7 +90,6 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             prop->act = act;
             prop->chunk_type = chunk_clone(b->alc, p->chunk);
             prop->chunk_value = NULL;
-            prop->index = class->props->values->length;
             prop->skip_default_value = false;
             map_set_force_new(class->props, name, prop);
 
@@ -184,24 +183,47 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         parse_err(p, -1, "Missing #end token");
     }
 
-    if(!is_trait && class->type == ct_class) {
-        // Count & sort gc fields
-        int last = 0;
-        Map* props = class->props;
-        loop(props->keys, i) {
-            char* name = array_get_index(props->keys, i);
-            ClassProp* prop = array_get_index(props->values, i);
-            if(type_is_gc(prop->type)) {
-                array_swap(props->keys, i, last);
-                array_swap(props->values, i, last);
-                last++;
-                class->gc_fields++;
+    Map *props = class->props;
+
+    if (!is_trait) {
+        if (class->type == ct_class) {
+            // Has vtable
+            if (map_contains(class->funcs, "_gc_free")) {
+                class->has_vtable = true;
+
+                ClassProp *prop = al(b->alc, sizeof(ClassProp));
+                prop->act = act_private_fc;
+                prop->chunk_type = NULL;
+                prop->chunk_value = NULL;
+                prop->type = type_cache_ptr(b);
+                prop->skip_default_value = true;
+
+                map_set(class->props, "_VTABLE", prop);
+
+                int last = props->values->length - 1;
+                array_swap(props->keys, last, 0);
+                array_swap(props->values, last, 0);
+            }
+
+            // Count & sort gc fields
+            int last = class->has_vtable ? 1 : 0;
+            loop(props->keys, i) {
+                char *name = array_get_index(props->keys, i);
+                ClassProp *prop = array_get_index(props->values, i);
+                if (type_is_gc(prop->type)) {
+                    array_swap(props->keys, i, last);
+                    array_swap(props->values, i, last);
+                    last++;
+                    class->gc_fields++;
+                }
             }
         }
 
-        // Has vtable
-        if(map_contains(class->funcs, "_gc_free")) {
-            class->has_vtable = true;
+        // Set property indexes for LLVM IR
+        int propc = props->values->length;
+        loop(props->values, i) {
+            ClassProp *prop = array_get_index(props->values, i);
+            prop->index = i;
         }
     }
 }

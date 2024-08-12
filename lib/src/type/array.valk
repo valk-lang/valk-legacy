@@ -11,10 +11,13 @@ struct Array[T] {
         if start_size < 2 {
             start_size = 2
         }
-        return SELF {
+        print("2")
+        let a = SELF {
             size: start_size
             data: mem:alloc(start_size * sizeof(T))
         }
+        print("3")
+        return a
     }
 
     fn push(item: T) uint {

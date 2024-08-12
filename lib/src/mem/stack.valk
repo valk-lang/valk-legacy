@@ -120,6 +120,7 @@ cstruct Stack {
         let gcm = gc_manager()
         gcm.add_stack(s)
 
+        print("1")
         core:g_coros = Array[?core:Coro].new()
         core:g_coro_indexes = Pool[uint].new()
     }
