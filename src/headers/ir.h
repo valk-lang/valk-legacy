@@ -30,6 +30,8 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable);
 // Global
 void ir_gen_globals(IR* ir);
 void *ir_global(IR *ir, Global *g);
+void ir_vtable(IR *ir, Class *class);
+void ir_vtable_entry(IR *ir, Func *func);
 // Value
 char* ir_value(IR* ir, Value* v);
 char* ir_assign_value(IR* ir, Value* v);

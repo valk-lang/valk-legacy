@@ -23,6 +23,8 @@ void ir_gen_globals(IR* ir) {
             continue;
         if (g->fc && g->fc->is_header)
             continue;
+        if (g->is_const)
+            continue;
 
         char *name = g->export_name;
         Type *type = g->type;
@@ -52,6 +54,68 @@ void ir_gen_globals(IR* ir) {
         strcat(val, name);
 
         array_push(ir->declared_globals, g);
+    }
+
+    loop(u->classes, i) {
+        Class* class = array_get_index(u->classes, i);
+        if (!class->vtable)
+            continue;
+        ir_vtable(ir, class);
+    }
+}
+
+void ir_vtable(IR *ir, Class *class) {
+
+    Unit *u = ir->unit;
+    Build *b = ir->b;
+    Str *code = ir->code_global;
+    Global *g = class->vtable;
+
+    char *name = g->export_name;
+    Type *type = g->type;
+
+    Map* funcs = class->funcs;
+    Func* hook_transfer = map_get(funcs, "_gc_transfer");
+    Func* hook_mark = map_get(funcs, "_gc_mark");
+    Func* hook_mark_shared = map_get(funcs, "_gc_mark_shared");
+    Func* hook_free = map_get(funcs, "_gc_free");
+    ir_define_ext_func(ir, hook_transfer);
+    ir_define_ext_func(ir, hook_mark);
+    ir_define_ext_func(ir, hook_mark_shared);
+    ir_define_ext_func(ir, hook_free);
+
+    char *ltype = ir_type(ir, type);
+    str_flat(code, "@");
+    str_add(code, name);
+    str_flat(code, " = dso_local constant [");
+    str_flat(code, "4 x ptr] ");
+    // Vtable functions
+    str_flat(code, "[");
+    ir_vtable_entry(ir, hook_transfer);
+    str_flat(code, ", ");
+    ir_vtable_entry(ir, hook_mark);
+    str_flat(code, ", ");
+    ir_vtable_entry(ir, hook_mark_shared);
+    str_flat(code, ", ");
+    ir_vtable_entry(ir, hook_free);
+    str_flat(code, "]");
+
+    char bytes[20];
+
+    str_flat(code, ", align ");
+    str_add(code, ir_type_align(ir, type, bytes));
+    str_flat(code, "\n");
+
+    array_push(ir->declared_globals, g);
+}
+void ir_vtable_entry(IR *ir, Func *func) {
+    Str *code = ir->code_global;
+    str_flat(code, "ptr ");
+    if(func) {
+        str_flat(code, "@");
+        str_flat(code, func->export_name);
+    } else {
+        str_flat(code, "null");
     }
 }
 

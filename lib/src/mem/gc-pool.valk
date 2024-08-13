@@ -7,23 +7,29 @@ global pools: @ignu(ptr)
 global pool_count: uint
 
 fn init_pools() {
-    let list = alloc(50 * sizeof(ptr))
+    let list = alloc(150 * sizeof(ptr))
+    pools = list
     let isize : uint = sizeof(ptr)
     let i : u8 = 0
     // 16 - 128
     while isize < 128 {
         isize += sizeof(ptr)
-        @ptrv(list, ptr, i++) = GcPool.init(isize, false, i)
-        @ptrv(list, ptr, i++) = GcPool.init(isize, true, i)
+        @ptrv(list, ptr, i) = GcPool.init(isize, false, i)
+        i++
+        @ptrv(list, ptr, i) = GcPool.init(isize, true, i)
+        i++
     }
     // 256 - max
-    let pow : uint = 8
-    let maxbits : uint = sizeof(ptr) * 8
+    let pow : uint = 7
+    let maxbits : uint = sizeof(ptr) * 8 - 24
     while pow < maxbits {
         let isize : uint = 2 << pow++
-        @ptrv(list, ptr, i++) = GcPool.init(isize, false, i)
-        @ptrv(list, ptr, i++) = GcPool.init(isize, true, i)
+        @ptrv(list, ptr, i) = GcPool.init(isize, false, i)
+        i++
+        @ptrv(list, ptr, i) = GcPool.init(isize, true, i)
+        i++
     }
+
     pool_count = i
     pools = list
 }
@@ -41,7 +47,7 @@ cstruct GcPool {
         let isize = size + 8
         let blockc : uint = 1
         let block = null @as ptr
-        return SELF{
+        let res = SELF{
             blockc: blockc
             first: block
             block: block
@@ -49,6 +55,7 @@ cstruct GcPool {
             pool_index: pool_index
             has_free_hook: has_free_hook
         }
+        return res
     }
 
     static fn create_block(size: uint, isize: uint, pool_index: u8) ptr {
@@ -75,7 +82,6 @@ cstruct GcPool {
     }
 
     fn get() ptr {
-        print(".")
         if mem_usage > 70 {
             gc()
         }
@@ -141,11 +147,15 @@ cstruct GcPool {
     }
 
     fn swap_transfers() {
+        print("1")
         if !this.has_free_hook : return
+        print("2")
         //
         let current = this.block
         let block = this.first
         let isize = this.isize
+        if block == null : return
+        print("3")
 
         while block != current {
             let b = block

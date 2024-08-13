@@ -45,6 +45,23 @@ void stage_ast(Build *b, void *payload) {
 
     loop(units, i) {
         Unit *u = array_get_index(units, i);
+        loop(u->classes, o) {
+            Class* class = array_get_index(u->classes, o);
+            Map *funcs = class->funcs;
+            Func *hook_transfer = map_get(funcs, "_gc_transfer");
+            Func *hook_mark = map_get(funcs, "_gc_mark");
+            Func *hook_mark_shared = map_get(funcs, "_gc_mark_shared");
+            Func *hook_free = map_get(funcs, "_gc_free");
+            if (hook_transfer)
+                stage_ast_func(hook_transfer);
+            if (hook_mark)
+                stage_ast_func(hook_mark);
+            if (hook_mark_shared)
+                stage_ast_func(hook_mark_shared);
+            if (hook_free)
+                stage_ast_func(hook_free);
+        }
+
         ir_gen_globals(u->ir);
     }
 

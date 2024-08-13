@@ -1110,7 +1110,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         }
     }
     if(class->has_vtable) {
-        map_set_force_new(values, "_VTABLE", vgen_null(alc, b));
+        map_set_force_new(values, "_VTABLE", vgen_global(alc, class->vtable));
     }
 
     VClassInit* ci = al(alc, sizeof(VClassInit));

@@ -279,19 +279,21 @@ struct Coro {
     fn _gc_mark() {
         let base = this.gc_stack.base
         let adr = this.gc_stack.adr
+        let age = mem:stack.age
         while adr > base {
             adr -= sizeof(ptr)
             let item = @ptrv(adr, ptr, 0)
-            if item != null : mem:gc_mark(item)
+            if item != null : mem:gc_mark(item, age)
         }
     }
     fn _gc_mark_shared() {
         let base = this.gc_stack.base
         let adr = this.gc_stack.adr
+        let age = mem:shared_age
         while adr > base {
             adr -= sizeof(ptr)
             let item = @ptrv(adr, ptr, 0)
-            if item != null : mem:gc_mark_shared(item)
+            if item != null : mem:gc_mark_shared(item, age)
         }
     }
 

@@ -23,6 +23,7 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     c->size = -1;
     c->gc_fields = 0;
     c->pool_index = 0;
+    c->vtable = NULL;
     //
     c->packed = false;
     c->is_signed = true;
@@ -56,6 +57,31 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name) {
         build_err(b, b->char_buf);
     }
     return prop;
+}
+
+void class_create_vtable(Build* b, Class* class) {
+    char tmp[1024];
+    strcpy(tmp, class->ir_name);
+    strcat(tmp, "_VTABLE");
+    
+    char* name = dups(b->alc, tmp);
+
+    Global *g = global_make(b->alc, class->unit, class->fc, act_private_fc, name, false, true);
+    g->type = type_cache_ptr(b);
+
+    class->vtable = g;
+    class->has_vtable = true;
+
+    // Map* funcs = class->funcs;
+    // Func* hook_transfer = map_get(funcs, "_gc_transfer");
+    // Func* hook_mark = map_get(funcs, "_gc_mark");
+    // Func* hook_mark_shared = map_get(funcs, "_gc_mark_shared");
+    // Func* hook_free = map_get(funcs, "_gc_free");
+    // if (hook_transfer)
+    //     func_mark_used(hook_transfer);
+
+    array_push(class->unit->globals, g);
+    array_push(b->globals, g);
 }
 
 int class_pool_index(Class* class) {

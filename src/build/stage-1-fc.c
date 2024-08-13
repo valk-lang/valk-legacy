@@ -404,20 +404,8 @@ void stage_1_global(Parser *p, Unit *u, bool shared, int act, Fc *fc) {
     char t = tok(p, true, false, true);
     char* name = p->tkn;
 
-    Global* g = al(b->alc, sizeof(Global));
-    g->act = act;
-    g->fc = fc;
-    g->unit = u;
-    g->name = name;
-    g->export_name = gen_export_name(u->nsc, name);
-    g->type = NULL;
-    g->value = NULL;
-    g->chunk_type = NULL;
-    g->chunk_value = NULL;
+    Global* g = global_make(b->alc, u, fc, act, name, shared, false);
     g->declared_scope = p->scope;
-    g->is_shared = shared;
-    g->is_mut = true;
-    g->is_used = true;
 
     Idf* idf = idf_make(b->alc, idf_global, g);
     scope_set_idf(u->nsc->scope, name, idf, p);

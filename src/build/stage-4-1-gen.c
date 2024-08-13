@@ -139,7 +139,7 @@ Func* stage_generate_set_globals(Build *b) {
     loop(globals, i) {
         Global* g = array_get_index(globals, i);
         if(!g->chunk_value) {
-            if(g->type->is_pointer && !g->type->nullable && !g->type->ignore_null) {
+            if(g->type->is_pointer && !g->type->nullable && !g->type->ignore_null && g->chunk_type) {
                 *p->chunk = *g->chunk_type;
                 parse_err(p, -1, "Missing global default value");
             }

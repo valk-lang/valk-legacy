@@ -34,21 +34,6 @@ struct DeclOverwrite {
     Decl* decl;
     Type* type;
 };
-struct Global {
-    char* name;
-    char* export_name;
-    Type* type;
-    Value* value;
-    Chunk *chunk_type;
-    Chunk *chunk_value;
-    Scope *declared_scope;
-    Fc* fc;
-    Unit* unit;
-    int act;
-    bool is_shared;
-    bool is_mut;
-    bool is_used;
-};
 struct ValueAlias {
     Chunk* chunk;
     Scope* scope;

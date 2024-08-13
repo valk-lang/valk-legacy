@@ -189,7 +189,8 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         if (class->type == ct_class) {
             // Has vtable
             if (map_contains(class->funcs, "_gc_free")) {
-                class->has_vtable = true;
+
+                class_create_vtable(b, class);
 
                 ClassProp *prop = al(b->alc, sizeof(ClassProp));
                 prop->act = act_private_fc;

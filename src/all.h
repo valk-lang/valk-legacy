@@ -103,6 +103,7 @@ extern bool is_watching;
 #include "headers/unit.h"
 #include "headers/error.h"
 #include "headers/scope.h"
+#include "headers/global.h"
 #include "headers/unroll.h"
 #include "headers/pool.h"
 #include "headers/compile-cond.h"

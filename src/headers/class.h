@@ -11,6 +11,7 @@ int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
 int class_pool_index(Class* class);
+void class_create_vtable(Build* b, Class* class);
 
 struct Class {
     char* name;
@@ -26,6 +27,7 @@ struct Class {
     Map* generic_types;
     Map* generics;
     Class* generic_of;
+    Global* vtable;
     int act;
     int type;
     int size;
