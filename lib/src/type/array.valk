@@ -226,21 +226,23 @@ struct Array[T] {
             let data = this.data
             let x = this.length
             while x-- > 0 {
-                mem:gc_transfer_item(@ptrv(data, ptr, x))
+                mem:gc_transfer(@ptrv(data, ptr, x))
             }
         }
-        fn _gc_mark() {
+        fn _gc_mark(age: u8) {
             let data = this.data
             let x = this.length
+            let a = age
             while x-- > 0 {
-                mem:gc_mark_item(@ptrv(data, ptr, x))
+                mem:gc_mark(@ptrv(data, ptr, x), a)
             }
         }
-        fn _gc_mark_shared() {
+        fn _gc_mark_shared(age: u8) {
             let data = this.data
             let x = this.length
+            let a = age
             while x-- > 0 {
-                mem:gc_mark_shared_item(@ptrv(data, ptr, x))
+                mem:gc_mark_shared(@ptrv(data, ptr, x), a)
             }
         }
         fn _gc_share() {

@@ -47,6 +47,9 @@ void stage_ast(Build *b, void *payload) {
         Unit *u = array_get_index(units, i);
         loop(u->classes, o) {
             Class* class = array_get_index(u->classes, o);
+            if(!class->has_vtable)
+                continue;
+
             Map *funcs = class->funcs;
             Func *hook_transfer = map_get(funcs, "_gc_transfer");
             Func *hook_mark = map_get(funcs, "_gc_mark");

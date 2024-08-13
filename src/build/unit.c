@@ -64,13 +64,13 @@ void validate_class(Parser *p, Class* class) {
 
     Func *gc_mark = map_get(funcs, "_gc_mark");
     if (gc_mark) {
-        func_validate_arg_count(p, gc_mark, false, 1, 1);
+        func_validate_arg_count(p, gc_mark, false, 2, 2);
         func_validate_rett_void(p, gc_mark);
     }
 
     Func *gc_mark_shared = map_get(funcs, "_gc_mark_shared");
     if (gc_mark_shared) {
-        func_validate_arg_count(p, gc_mark_shared, false, 1, 1);
+        func_validate_arg_count(p, gc_mark_shared, false, 2, 2);
         func_validate_rett_void(p, gc_mark_shared);
     }
 
