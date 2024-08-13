@@ -147,15 +147,12 @@ cstruct GcPool {
     }
 
     fn swap_transfers() {
-        print("1")
         if !this.has_free_hook : return
-        print("2")
         //
         let current = this.block
         let block = this.first
         let isize = this.isize
         if block == null : return
-        print("3")
 
         while block != current {
             let b = block
@@ -166,9 +163,12 @@ cstruct GcPool {
             while i < count {
                 let item = data + i * isize
                 if @ptrv(item, u8, byte_state) == state_used {
-                    let vtable = @ptrv(item, ptr)
+                    let ob = item + 8
+                    let vtable = @ptrv(ob, ptr)
+                    vtable.print()
+                    print("<\n")
                     let hook = @ptrv(vtable, fn(ptr)(), 3)
-                    hook(item + 8)
+                    hook(ob)
 
                     @ptrv(item, u8, byte_state) = state_new
                 }
@@ -184,9 +184,10 @@ cstruct GcPool {
         while i < index {
             let item = data + i * isize
             if @ptrv(item, u8, byte_state) == state_used {
-                let vtable = @ptrv(item, ptr)
+                let ob = item + 8
+                let vtable = @ptrv(ob, ptr)
                 let hook = @ptrv(vtable, fn(ptr)(), 3)
-                hook(item + 8)
+                hook(ob)
 
                 @ptrv(item, u8, byte_state) = state_new
             }
@@ -213,9 +214,10 @@ cstruct GcPool {
                     let iage = @ptrv(item, u8, byte_age)
                     if iage != age && @ptrv(item, u8, byte_state) == state_solid {
                         if this.has_free_hook {
-                            let vtable = @ptrv(item, ptr)
+                            let ob = item + 8
+                            let vtable = @ptrv(ob, ptr)
                             let hook = @ptrv(vtable, fn(ptr)(), 3)
-                            hook(item + 8)
+                            hook(ob)
                         }
                         @ptrv(item, u8, byte_state) = state_new
                         @ptrv(item, u16, 1) = 0

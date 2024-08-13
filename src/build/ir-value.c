@@ -94,7 +94,11 @@ char* ir_value(IR* ir, Value* v) {
     else if (vt == v_global) {
         Global* g = v->item;
         char* var = ir_global(ir, g);
-        r = ir_load(ir, g->type, var);
+        if(g->is_const) {
+            return var;
+        } else {
+            r = ir_load(ir, g->type, var);
+        }
     }
     else if (vt == v_isset) {
         Value *on = v->item;
