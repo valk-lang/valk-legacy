@@ -181,23 +181,29 @@ cstruct Stack {
             this.force_full = false
 
             let before = mem_marked
+            let total_before = before + mem_transfered
+            // Reset counters
             mem_marked = mem_marked_default
             mem_transfered = 0
             // Mark
             this.update_age()
             this.mark_stack_age()
-            // Clean
-            pools_clean_unmarked(this.age)
+
+            let freed = total_before - mem_marked
+            if freed > mem_marked / 10 || this.force_full {
+                // Clean
+                pools_clean_unmarked(this.age)
+            }
             // Mark shared
             if gc_age != this.gc_age {
                 let age = gc_age
                 this.mark_stack_gc_age(age)
                 this.gc_age = age
             }
-            let cmp = before * 10 / 11
-            if cmp > mem_marked {
-                mem_marked = cmp
-            }
+            // let cmp = before * 10 / 11
+            // if cmp > mem_marked {
+            //     mem_marked = cmp
+            // }
         }
         pools_reset()
 
