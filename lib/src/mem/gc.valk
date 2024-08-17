@@ -30,7 +30,7 @@ fn gc_transfer(item: ptr) {
     if @ptrv(item, u8, byte_state_rel) > state_transfer : return
     @ptrv(item, u8, byte_state_rel) = state_solid
 
-    let pool_index = @ptrv(item, u8, byte_pool_index)
+    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
     let pool = @ptrv(pools, GcPool, pool_index)
     let size = pool.isize
 

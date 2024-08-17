@@ -226,8 +226,10 @@ char* ir_value(IR* ir, Value* v) {
         char* obj = ir_value(ir, ob);
 
         // Set vtable bool
-        char *vt = ir_ptrv(ir, obj, "i8", -2);
-        ir_store(ir, vt, ir_int(ir, class->has_vtable ? 1 : 0), "i8", 1);
+        if (class->type == ct_class) {
+            char *vt = ir_ptrv(ir, obj, "i8", -2);
+            ir_store(ir, vt, ir_int(ir, class->has_vtable ? 1 : 0), "i8", 1);
+        }
 
         // Set props
         loop(ir_props, i) {

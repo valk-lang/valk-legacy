@@ -169,7 +169,7 @@ cstruct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        this.lock.lock()
+        // this.lock.lock()
 
         mem_new = 0
         mem_usage = 0
@@ -177,11 +177,12 @@ cstruct Stack {
         mem_gc_loop = false
 
         this.mark_difference_down()
-        this.handle_transfer_list()
-        pools_swap_transfers()
-        this.bump.wipe()
+        // this.handle_transfer_list()
+        // pools_swap_transfers()
+        // this.bump.wipe()
 
         let transfer_percent = mem_transfered * 100 / mem_marked
+        transfer_percent = 0
 
         // Full clear
         if transfer_percent > 20 || this.force_full {
@@ -209,7 +210,11 @@ cstruct Stack {
         }
         pools_reset()
 
-        this.lock.unlock()
+        mem_new = 0
+        return
+
+        // this.lock.unlock()
+        // print("LO\n")
     }
 
     #parse_last
