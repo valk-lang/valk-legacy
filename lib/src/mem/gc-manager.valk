@@ -55,6 +55,7 @@ cstruct GcManager {
     }
 
     static fn loop() {
+        return
 
         os:sleep_ms(500)
         Stack.init()

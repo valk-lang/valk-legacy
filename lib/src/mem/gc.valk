@@ -65,7 +65,7 @@ fn gc_mark(item: ptr, age: u8) {
     if @ptrv(item, u8, byte_age_rel) == age : return
     @ptrv(item, u8, byte_age_rel) = age
 
-    let pool_index = @ptrv(item, u8, byte_pool_index)
+    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
     let pool = @ptrv(pools, GcPool, pool_index)
     let size = pool.isize
 

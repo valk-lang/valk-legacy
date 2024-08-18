@@ -169,7 +169,7 @@ cstruct Stack {
     // Gc
     ///////////////////////
     fn gc() {
-        // this.lock.lock()
+        this.lock.lock()
 
         mem_new = 0
         mem_usage = 0
@@ -177,12 +177,11 @@ cstruct Stack {
         mem_gc_loop = false
 
         this.mark_difference_down()
-        // this.handle_transfer_list()
-        // pools_swap_transfers()
-        // this.bump.wipe()
+        this.handle_transfer_list()
+        pools_swap_transfers()
+        this.bump.wipe()
 
         let transfer_percent = mem_transfered * 100 / mem_marked
-        transfer_percent = 0
 
         // Full clear
         if transfer_percent > 20 || this.force_full {
@@ -197,24 +196,17 @@ cstruct Stack {
             this.mark_stack_age()
             // Clean
             pools_clean_unmarked(this.age)
+
             // Mark shared
             if shared_age != this.shared_age {
                 let age = shared_age
                 this.mark_stack_shared_age(age)
                 this.shared_age = age
             }
-            let cmp = before * 10 / 11
-            if cmp > mem_marked {
-                mem_marked = cmp
-            }
         }
         pools_reset()
 
-        mem_new = 0
-        return
-
-        // this.lock.unlock()
-        // print("LO\n")
+        this.lock.unlock()
     }
 
     #parse_last
@@ -321,7 +313,7 @@ cstruct Stack {
         {
             let item = G @as ptr
             if item != null {
-                if @ptrv(item, u8, -8) < state_const {
+                if @ptrv(item, u8, byte_state_rel) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         gc_mark(item, age)
                     }
@@ -338,7 +330,7 @@ cstruct Stack {
             let item = @ptrv(item_adr, ptr)
             item_adr += sizeof(ptr)
             if item != null {
-                if @ptrv(item, u8, -8) < state_const {
+                if @ptrv(item, u8, byte_state_rel) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
                         gc_mark(item, age)
                     }

@@ -222,12 +222,12 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
 
         // Set property indexes for LLVM IR
         int propc = props->values->length;
-        printf("CLASS: %s\n", class->ir_name);
+        // printf("CLASS: %s\n", class->ir_name);
         loop(props->values, i) {
             char *name = array_get_index(props->keys, i);
             ClassProp *prop = array_get_index(props->values, i);
             prop->index = i;
-            printf("PROP: %s | %d\n", name, i);
+            // printf("PROP: %s | %d\n", name, i);
         }
     }
 }
