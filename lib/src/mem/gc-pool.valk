@@ -166,8 +166,6 @@ cstruct GcPool {
                 if @ptrv(item, u8, byte_state) == state_used {
                     let ob = item + 8
                     let vtable = @ptrv(ob, ptr)
-                    vtable.print()
-                    print("<\n")
                     let hook = @ptrv(vtable, fn(ptr)(), 3)
                     hook(ob)
 
@@ -197,11 +195,20 @@ cstruct GcPool {
     }
 
     fn clean_unmarked(age: u8) {
+        // if this.pool_index == 0 {
+        //     let c = this.blockc
+        //     c.print(10)
+        //     print("_\n")
+        // }
+
         let current = this.block
         let block = this.first
         let isize = this.isize
 
         while block != null {
+        // if this.pool_index == 0 {
+        //     print("x")
+        // }
             let b = block
             let count = @ptrv(b, uint, 1)
             if count > 0 {
@@ -261,6 +268,7 @@ cstruct GcPool {
             let next = @ptrv(b, ptr, 0)
 
             if used == 0 {
+                // print("F.")
                 @ptrv(prev, ptr, 0) = next
                 free(b)
                 block = next

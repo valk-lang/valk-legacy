@@ -184,12 +184,11 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 20 || this.force_full {
+        if transfer_percent > 5 || this.force_full {
 
             this.force_full = false
 
-            let before = mem_marked
-            let total_before = before + mem_transfered
+            let total_before = mem_marked + mem_transfered
             // Reset counters
             mem_marked = mem_marked_default
             mem_transfered = 0
@@ -197,10 +196,14 @@ cstruct Stack {
             this.update_age()
             this.mark_stack_age()
             // Clean
-            let freed = total_before - mem_marked
-            if freed > mem_marked / 10 || this.force_full {
+            let free_able = total_before - mem_marked
+            if free_able > mem_marked / 6 || this.force_full {
                 // Clean
+                print("a.")
                 pools_clean_unmarked(this.age)
+            // } else {
+            //     print("b.")
+            //     mem_marked = mem_marked / 10 * 12
             }
 
             // Mark shared
@@ -209,6 +212,8 @@ cstruct Stack {
                 this.mark_stack_shared_age(age)
                 this.shared_age = age
             }
+        } else {
+            print("-")
         }
         pools_reset()
 
