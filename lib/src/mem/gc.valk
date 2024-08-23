@@ -14,15 +14,39 @@ fn force_gc() {
 }
 
 fn update_usage() {
+    // 
+    let pos = stack_pos
+    let diff : uint = (pos.adr - pos.base) @as uint
+    //
+    if mem_min <= diff : 
+        diff -= mem_min
 
-    // Check mem usage
+    // Calculate mem usage
     mem_usage = mem_new * 100 / mem_marked
+    // Scale mem_usage trigger point based on stack position
+    let cap : uint = 5 * (diff * 30 / mem_max + 1)
 
-    if mem_usage > 70 {
-        gc()
+    if mem_usage > cap {
+        // if diff <= mem_trigger {
+            gc()
+            // mem_trigger = diff
+        // } else {
+        //     mem_trigger = (mem_trigger + diff) / 2
+        // }
+        mem_gc_loop = false
     } else {
         mem_gc_loop = mem_usage > 10
+        // if max > 128 {
+        //     mem_max -= sizeof(ptr)
+        // }
     }
+
+    // Update min/max
+    mem_min += sizeof(ptr)
+    if mem_max > 128 :
+    mem_max -= sizeof(ptr)
+    // mem_min = (mem_min * 9 + mem_max) / 10
+    // mem_max = (mem_max * 9 + mem_min) / 10
 }
 
 fn gc_transfer(item: ptr) {

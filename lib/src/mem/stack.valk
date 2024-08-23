@@ -13,6 +13,10 @@ global mem_new : uint
 global mem_marked : uint
 global mem_transfered : uint
 global mem_usage : uint
+global mem_free_able : uint
+global mem_trigger : uint
+global mem_max : uint
+global mem_min : uint
 global mem_gc_loop : bool
 
 value mem_marked_default (8192)
@@ -57,6 +61,7 @@ global main_stack_pos: @ignu(StackPos)
 cstruct StackPos {
     base: ptr
     adr: ptr
+    // min: uint (0)
     size: uint
     fn free() {
         free(this.base)
@@ -112,6 +117,7 @@ cstruct Stack {
         stack = s
         run_gc = false
         mem_marked = mem_marked_default
+        mem_max = 128
 
         init_pools()
 
@@ -184,38 +190,46 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 5 || this.force_full {
+        if transfer_percent > 15 || this.force_full {
 
             this.force_full = false
 
-            let total_before = mem_marked + mem_transfered
+            let before = mem_marked
+            let total_before = before + mem_transfered
             // Reset counters
             mem_marked = mem_marked_default
             mem_transfered = 0
             // Mark
             this.update_age()
             this.mark_stack_age()
+
             // Clean
             let free_able = total_before - mem_marked
-            if free_able > mem_marked / 6 || this.force_full {
+            let total_free_able = free_able + mem_free_able
+            if total_free_able > mem_marked / 10 || this.force_full {
                 // Clean
                 print("a.")
                 pools_clean_unmarked(this.age)
-            // } else {
-            //     print("b.")
-            //     mem_marked = mem_marked / 10 * 12
-            }
+                mem_free_able = 0
 
-            // Mark shared
-            if shared_age != this.shared_age {
-                let age = shared_age
-                this.mark_stack_shared_age(age)
-                this.shared_age = age
+                // if before > mem_marked :
+                // mem_marked = (mem_marked + before) / 2
+            } else {
+                print("b.")
+                mem_free_able += free_able
+                // mem_marked = mem_marked / 10 * 14
             }
         } else {
             print("-")
         }
         pools_reset()
+
+        // Mark shared
+        if shared_age != this.shared_age {
+            let age = shared_age
+            this.mark_stack_shared_age(age)
+            this.shared_age = age
+        }
 
         this.lock.unlock()
     }

@@ -83,9 +83,18 @@ cstruct GcPool {
     }
 
     fn get() ptr {
-        if mem_usage > 70 {
-            gc()
+        // if mem_usage > 70 {
+        //     gc()
+        // }
+        let pos = stack_pos
+        let diff : uint = (pos.adr - pos.base) @as uint
+        if diff < mem_min {
+            mem_min = diff
         }
+        if diff > mem_max {
+            mem_max = diff
+        }
+
 
         let isize = this.isize
         if this.block == null {
@@ -95,7 +104,7 @@ cstruct GcPool {
 
         while true {
             let block = this.block
-            if @ptrv(block, uint, 3) > 40 {
+            if @ptrv(block, uint, 3) > 80 {
                 this.set_next_block(block)
                 continue
             }
@@ -140,6 +149,9 @@ cstruct GcPool {
 
         // Check mem usage
         update_usage()
+        if mem_usage > 70 {
+            gc()
+        }
     }
 
     fn set_block(block: ptr) {
@@ -268,7 +280,6 @@ cstruct GcPool {
             let next = @ptrv(b, ptr, 0)
 
             if used == 0 {
-                // print("F.")
                 @ptrv(prev, ptr, 0) = next
                 free(b)
                 block = next

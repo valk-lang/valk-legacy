@@ -79,9 +79,6 @@ cstruct GcAlloc {
     }
 
     fn get() ptr {
-        if mem_usage > 70 {
-            gc()
-        }
 
         let isize = this.isize
         if this.block == null {
