@@ -190,7 +190,7 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 15 || this.force_full {
+        if transfer_percent > 50 || this.force_full {
 
             this.force_full = false
 

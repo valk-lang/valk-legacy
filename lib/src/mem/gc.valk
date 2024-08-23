@@ -24,7 +24,7 @@ fn update_usage() {
     // Calculate mem usage
     mem_usage = mem_new * 100 / mem_marked
     // Scale mem_usage trigger point based on stack position
-    let cap : uint = 5 * (diff * 30 / mem_max + 1)
+    let cap : uint = 15 * (diff * 20 / mem_max + 1)
 
     if mem_usage > cap {
         // if diff <= mem_trigger {
@@ -35,7 +35,7 @@ fn update_usage() {
         // }
         mem_gc_loop = false
     } else {
-        mem_gc_loop = mem_usage > 10
+        mem_gc_loop = mem_usage > 15
         // if max > 128 {
         //     mem_max -= sizeof(ptr)
         // }
