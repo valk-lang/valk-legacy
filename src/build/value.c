@@ -108,6 +108,16 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             } else {
                 v = to;
             }
+        } else if (str_is(tkn, "@vtable")){
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, alc, true);
+            tok_expect(p, ")", true, true);
+            if(!type || !type->class || !type->class->vtable) {
+                v = vgen_null(alc, b);
+            } else {
+                v = vgen_global(alc, type->class->vtable);
+            }
+
         } else if (str_is(tkn, "@frameptr")) {
             v = value_make(alc, v_frameptr, NULL, type_cache_ptr(b));
         } else if (str_is(tkn, "@stackptr")) {
@@ -1109,7 +1119,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
             map_set_force_new(values, name, val);
         }
     }
-    if(class->has_vtable) {
+    if(class->vtable) {
         map_set_force_new(values, "_VTABLE", vgen_global(alc, class->vtable));
     }
 

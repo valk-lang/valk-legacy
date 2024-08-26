@@ -269,10 +269,28 @@ struct Coro {
                 let adr = coro.gc_stack.adr
                 while adr > base {
                     adr -= sizeof(ptr)
-                    // adr.print()
-                    // print("\n")
                     let item = @ptrv(adr, ptr, 0)
-                    if item != null : mem:gc_transfer(item)
+                    if item == null : continue
+                    mem:gc_transfer(item)
+                    // RC UP
+                    @ptrv(item, uint, 1)++
+                }
+            }
+        }
+    }
+
+    -pkg static fn deref_stack() {
+        let coros = g_coros
+
+        each coros as coro {
+            if isset(coro) {
+                let base = coro.gc_stack.base
+                let adr = coro.gc_stack.adr
+                while adr > base {
+                    adr -= sizeof(ptr)
+                    let item = @ptrv(adr, ptr, 0)
+                    if item == null : continue
+                    @ptrv(item, uint, 1)--
                 }
             }
         }

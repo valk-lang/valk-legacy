@@ -64,22 +64,16 @@ fn gc_transfer(item: ptr) {
     let block_start = item - 8 - block_index * size
     @ptrv(block_start, uint, -2)++ // Increase used items count
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        let i = 0
-        if has_vtable {
-            i++
-            // Hook
-            let vtable = @ptrv(item, ptr, 0)
-            let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_transfer)
-            if isset(hook) : hook(item)
-        }
-        while propc-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            gc_transfer(sub)
-        }
+    // Hook
+    let vtable = @ptrv(item, ptr, 0)
+    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_transfer)
+    if isset(hook) : hook(item)
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    while propc-- > 2 {
+        let sub = @ptrv(item, ptr, propc)
+        if sub == null : continue
+        gc_transfer(sub)
     }
 }
 
@@ -95,22 +89,16 @@ fn gc_mark(item: ptr, age: u8) {
 
     mem_marked += size
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        let i = 0
-        if has_vtable {
-            i++
-            // Hook
-            let vtable = @ptrv(item, ptr, 0)
-            let hook = @ptrv(vtable, ?fn(ptr, u8)(), vt_hook_mark)
-            if isset(hook) : hook(item, age)
-        }
-        while propc-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            gc_mark(sub, age)
-        }
+    // Hook
+    let vtable = @ptrv(item, ptr, 0)
+    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark)
+    if isset(hook) : hook(item)
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    while propc-- > 2 {
+        let sub = @ptrv(item, ptr, propc)
+        if sub == null : continue
+        gc_mark(sub, age)
     }
 }
 
@@ -120,22 +108,16 @@ fn gc_mark_shared(item: ptr, age: u8) {
     if @ptrv(item, u8, byte_shared_age_rel) == age : return
     @ptrv(item, u8, byte_shared_age_rel) = age
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        let i = 0
-        if has_vtable {
-            i++
-            // Hook
-            let vtable = @ptrv(item, ptr, 0)
-            let hook = @ptrv(vtable, ?fn(ptr, u8)(), vt_hook_mark_shared)
-            if isset(hook) : hook(item, age)
-        }
-        while propc-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            gc_mark_shared(sub, age)
-        }
+    // Hook
+    let vtable = @ptrv(item, ptr, 0)
+    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark_shared)
+    if isset(hook) : hook(item)
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    while propc-- > 2 {
+        let sub = @ptrv(item, ptr, propc)
+        if sub == null : continue
+        gc_mark_shared(sub, age)
     }
 }
 
@@ -160,22 +142,16 @@ fn gc_share(item: ptr) {
     @ptrv(item, u8, byte_shared_age_rel) = shared_age
     stack.add_shared(item)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        let i = 0
-        if has_vtable {
-            i++
-            // Hook
-            let vtable = @ptrv(item, ptr, 0)
-            let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_share)
-            if isset(hook) : hook(item)
-        }
-        while propc-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : return
-            gc_share(sub)
-        }
+    // Hook
+    let vtable = @ptrv(item, ptr, 0)
+    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_share)
+    if isset(hook) : hook(item)
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    while propc-- > 2 {
+        let sub = @ptrv(item, ptr, propc)
+        if sub == null : continue
+        gc_share(sub)
     }
 }
 

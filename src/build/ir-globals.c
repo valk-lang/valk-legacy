@@ -172,6 +172,8 @@ char *ir_string(IR *ir, VString *str) {
     itos(len, len_str, 10);
 
     Type* stype = type_gen_valk(ir->alc, ir->b, "String");
+    Class* class = stype->class;
+    char* vtable = ir_global(ir, class->vtable);
 
     char body_type[512];
     strcpy(body_type, body_name);
@@ -180,7 +182,7 @@ char *ir_string(IR *ir, VString *str) {
     bool external = false;
 
     str_add(code, body_type);
-    str_flat(code, " = type <{ i8, i8, i8, i8, i8, i8, i8, i8, i64, [");
+    str_flat(code, " = type <{ i8, i8, i8, i8, i8, i8, i8, i8, ptr, i64, i64, [");
     str_add(code, blen_str);
     str_flat(code, " x i8] }>\n");
 
@@ -192,7 +194,9 @@ char *ir_string(IR *ir, VString *str) {
     str_flat(code, " global ");
     str_add(code, body_type);
     if (!external) {
-        str_flat(code, " <{ i8 8, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, ");
+        str_flat(code, " <{ i8 8, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, ptr ");
+        str_add(code, vtable);
+        str_flat(code, ", i64 9001, ");
         // String length property
         str_add(code, ir_type_int(ir, ir->b->ptr_size));
         str_flat(code, " ");

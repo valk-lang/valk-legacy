@@ -81,6 +81,7 @@ cstruct Stack {
     // id: uint
 
     transfer : ObjectChain
+    rc_checks : ObjectChain
     shared : GcRing
     lock : GcLock
     bump: GcBumper (GcBumper.new())
@@ -109,6 +110,7 @@ cstruct Stack {
         let s = Stack {
             // id: id
             transfer: ObjectChain.new()
+            rc_checks: ObjectChain.new()
             shared: GcRing.new()
             lock: GcLock.new()
             run_gc_ref: @ptr_of(run_gc)
@@ -171,6 +173,11 @@ cstruct Stack {
         }
     }
 
+    // If on.state >= solid && item.rc == 0
+    static fn rc_check(item: ptr) {
+        stack.rc_checks.add_item(item)
+    }
+
     ///////////////////////
     // Gc
     ///////////////////////
@@ -185,7 +192,8 @@ cstruct Stack {
         this.mark_difference_down()
         this.handle_transfer_list()
         pools_swap_transfers()
-        this.bump.wipe()
+        // this.bump.wipe()
+        this.rc_down_stack()
 
         let transfer_percent = mem_transfered * 100 / mem_marked
 
@@ -251,6 +259,8 @@ cstruct Stack {
                     transfer.add_item(g)
                     @ptrv(g, u8, -8) = state_transfer
                 } 
+
+                @ptrv(g, uint, 1)++
             }
         }
         #end
@@ -275,11 +285,48 @@ cstruct Stack {
                     transfer.add_item(item)
                     @ptrv(item, u8, -8) = state_transfer
                 } 
+
+                // RC UP
+                @ptrv(item, uint, 1)++
             }
         }
 
         // Coroutines
         core:Coro.transfer_check()
+    }
+
+    #parse_last
+    fn rc_down_stack() {
+        // Globals
+        #loop_globals as G, T
+        #if @type_is_gc(T) && !@global_is_shared(G)
+        {
+            let g = G @as ptr
+            if g != null {
+                @ptrv(g, uint, 1)++
+            }
+        }
+        #end
+        #endloop
+
+        // Stack
+        let pos = main_stack_pos
+        let stack_base = pos.base
+        let stack_adr = pos.adr
+
+        // Mark new items as transfer
+        let adr = stack_adr
+        while adr > stack_base {
+            let item_adr = adr - sizeof(ptr)
+            adr = item_adr
+            let item = @ptrv(item_adr, ptr, 0)
+            if item != null {
+                @ptrv(item, uint, 1)--
+            }
+        }
+
+        // Coroutines
+        core:Coro.deref_stack()
     }
 
     fn handle_transfer_list() {
