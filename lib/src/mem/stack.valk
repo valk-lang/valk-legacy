@@ -274,7 +274,7 @@ cstruct Stack {
         // Mark new items as transfer
         let adr = stack_adr
         while adr > stack_base {
-            let item_adr = adr - sizeof(ptr)
+            let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item = @ptrv(item_adr, ptr, 0)
             if item != null {
@@ -317,7 +317,7 @@ cstruct Stack {
         // Mark new items as transfer
         let adr = stack_adr
         while adr > stack_base {
-            let item_adr = adr - sizeof(ptr)
+            let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
             let item = @ptrv(item_adr, ptr, 0)
             if item != null {
@@ -400,7 +400,7 @@ cstruct Stack {
         let stack_adr = pos.adr
         while item_adr < stack_adr {
             let item = @ptrv(item_adr, ptr)
-            item_adr += sizeof(ptr)
+            item_adr += sizeof(ptr) * 2
             if item != null {
                 if @ptrv(item, u8, byte_state_rel) < state_const {
                     if @ptrv(item, u8, byte_age_rel) != age {
@@ -434,7 +434,7 @@ cstruct Stack {
                     gc_mark_shared(item, age)
                 }
             }
-            item_adr = item_adr + sizeof(ptr)
+            item_adr += sizeof(ptr) * 2
         }
     }
 
@@ -495,7 +495,7 @@ cstruct Stack {
             let item = @ptrv(item_adr, ptr)
             item.print()
             print("\n")
-            item_adr = item_adr + sizeof(ptr)
+            item_adr += sizeof(ptr) * 2
         }
         print("---------\n")
     }
