@@ -24,7 +24,7 @@ fn update_usage() {
     // Calculate mem usage
     mem_usage = mem_new * 100 / mem_marked
     // Scale mem_usage trigger point based on stack position
-    let cap : uint = 15 * (diff * 20 / mem_max + 1)
+    let cap : uint = 5 * (diff * 30 / mem_max + 1)
 
     if mem_usage > cap {
         // if diff <= mem_trigger {
@@ -35,7 +35,7 @@ fn update_usage() {
         // }
         mem_gc_loop = false
     } else {
-        mem_gc_loop = mem_usage > 15
+        // mem_gc_loop = mem_usage > 15
         // if max > 128 {
         //     mem_max -= sizeof(ptr)
         // }
@@ -73,7 +73,32 @@ fn gc_transfer(item: ptr) {
     while propc-- > 2 {
         let sub = @ptrv(item, ptr, propc)
         if sub == null : continue
+        @ptrv(sub, uint, 1)++
         gc_transfer(sub)
+    }
+}
+
+fn gc_free(item: ptr) {
+    print("_F_")
+    if @ptrv(item, u8, byte_state_rel) != state_solid : return
+    @ptrv(item, u8, byte_state_rel) = state_new
+    @ptrv(item, u8, byte_age_rel) = 0
+    @ptrv(item, u8, byte_shared_age_rel) = 0
+
+    // Hook
+    let vtable = @ptrv(item, ptr, 0)
+    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_free)
+    if isset(hook) : hook(item)
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    while propc-- > 2 {
+        let sub = @ptrv(item, ptr, propc)
+        if sub == null : continue
+        let rc = @ptrv(sub, uint, 1)
+        @ptrv(sub, uint, 1) = rc - 1
+        if rc == 1 {
+            gc_free(sub)
+        }
     }
 }
 

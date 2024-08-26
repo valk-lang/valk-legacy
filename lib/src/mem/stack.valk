@@ -27,6 +27,7 @@ value state_transfer (2)
 value state_solid (4)
 value state_const (8)
 value state_shared (10)
+value state_delete (12)
 value stack_size (10000)
 
 value vt_hook_transfer (0)
@@ -69,7 +70,7 @@ cstruct StackPos {
     }
 }
 fn create_stack() StackPos {
-    let base = alloc(stack_size)
+    let base = calloc(stack_size)
     return StackPos { 
         base: base
         adr: base
@@ -198,7 +199,7 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 50 || this.force_full {
+        if transfer_percent > 80 || this.force_full {
 
             this.force_full = false
 
@@ -303,7 +304,7 @@ cstruct Stack {
         {
             let g = G @as ptr
             if g != null {
-                @ptrv(g, uint, 1)++
+                @ptrv(g, uint, 1)--
             }
         }
         #end
@@ -314,8 +315,24 @@ cstruct Stack {
         let stack_base = pos.base
         let stack_adr = pos.adr
 
-        // Mark new items as transfer
+        // Check & update previous items
         let adr = stack_adr
+        while adr > stack_base {
+            let item_adr = adr - sizeof(ptr) * 2
+            adr = item_adr
+            let prev = @ptrv(item_adr, ptr, 1)
+            if prev != null {
+                let rc = @ptrv(prev, uint, 1)
+                if rc == 0 {
+                    gc_free(prev)
+                }
+            }
+
+            @ptrv(item_adr, ptr, 1) = @ptrv(item_adr, ptr, 0)
+        }
+
+        // Deref stack items
+        adr = stack_adr
         while adr > stack_base {
             let item_adr = adr - sizeof(ptr) * 2
             adr = item_adr
