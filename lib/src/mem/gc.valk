@@ -16,39 +16,30 @@ fn force_gc() {
 fn update_usage() {
     // 
     let pos = stack_pos
-    let diff : uint = (pos.adr - pos.base) @as uint
+    let stack_size : uint = (pos.adr - pos.base) @as uint
+    stack_size -= mem_min
     //
-    if mem_min <= diff : 
-        diff -= mem_min
+    if mem_max < mem_min + 128 {
+        mem_max = mem_min + 128
+    }
+    let max_stack_size = mem_max - mem_min
 
     // Calculate mem usage
-    mem_usage = mem_new * 100 / mem_marked
-    // Scale mem_usage trigger point based on stack position
-    let cap : uint = 5 * (diff * 40 / mem_max + 1)
+    mem_usage = mem_new / (mem_trigger / 100)
 
-    if mem_usage > cap {
-        // cap.print(10)
-        // print(".\n")
-        // if diff <= mem_trigger {
-            gc()
-            // mem_trigger = diff
-        // } else {
-        //     mem_trigger = (mem_trigger + diff) / 2
-        // }
-        mem_gc_loop = false
-    } else {
-        mem_gc_loop = mem_usage > 15
-        // if max > 128 {
-        //     mem_max -= sizeof(ptr)
-        // }
+    // Scale mem_usage trigger point based on stack position
+    // 12 * (number between: 1 - 21)
+    let trigger : uint = 12 * (stack_size * 20 / max_stack_size + 1)
+
+    if mem_usage > trigger {
+        gc()
+    // } else {
+        // mem_gc_loop = mem_usage > 10
     }
 
     // Update min/max
     mem_min += sizeof(ptr)
-    if mem_max > 128 :
     mem_max -= sizeof(ptr)
-    // mem_min = (mem_min * 9 + mem_max) / 10
-    // mem_max = (mem_max * 9 + mem_min) / 10
 }
 
 fn gc_transfer(item: ptr) {
@@ -238,7 +229,7 @@ fn pools_clean_unmarked(age: u8) {
         if pool.first == null : continue
         pool.clean_unmarked(age)
     }
-    gc_alloc_clean_unmarked(age)
+    // gc_alloc_clean_unmarked(age)
 }
 
 fn pools_reset() {
@@ -250,5 +241,5 @@ fn pools_reset() {
         if pool.first == null : continue
         pool.reset()
     }
-    gc_alloc_reset()
+    // gc_alloc_reset()
 }

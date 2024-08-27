@@ -408,7 +408,8 @@ struct String {
         str._VTABLE = @vtable(String)
         // str._VTABLE.print()
         // print("<__\n")
-        str._RC = 0 
+        @ptrv(str, u32, -1) = 0
+        // str._RC = 0 
         str.bytes = length
         // let str = String {
         //     // data: d

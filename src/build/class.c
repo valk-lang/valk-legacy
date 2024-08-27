@@ -286,7 +286,7 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
     str_flat(code, "  GC_ACTIVE_SIZE += SIZE\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -4) @as uint\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
     str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
     str_flat(code, "  @ptrv(data, uint, -2)++\n");
 
@@ -320,8 +320,9 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
             str_flat(code, "._v_transfer()\n");
         // }
 
+        str_flat(code, "@ptrv(\n");
         str_add(code, var);
-        str_flat(code, "._RC++\n");
+        str_flat(code, ", u32, -1)++\n");
 
         if(p->type->nullable) {
             str_flat(code, "}\n");
@@ -468,7 +469,7 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  @ptrv(this, u8, -6) = GC_AGE\n");
 
     str_flat(code, "  if state < 4 {\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -4) @as uint\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
     str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
     str_flat(code, "  @ptrv(data, uint, -2)++\n");
     // str_flat(code, "  GC_ACTIVE_SIZE += SIZE\n");
@@ -536,7 +537,7 @@ void class_generate_free(Parser* p, Build* b, Class* class, Func* func) {
 
     str_flat(code, "  GC_ACTIVE_SIZE -= SIZE\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -4) @as uint\n");
+    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
     str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
     str_flat(code, "  @ptrv(data, uint, -2)--\n");
 
@@ -560,18 +561,16 @@ void class_generate_free(Parser* p, Build* b, Class* class, Func* func) {
             str_add(code, var);
             str_flat(code, ") {\n");
         }
-        // if(p->type->class->use_gc_alloc) {
-        //     str_flat(code, "GC_FREE_FUNC(");
-        //     str_add(code, var);
-        //     str_flat(code, ")\n");
-        // } else {
-            // str_add(code, var);
-            // str_flat(code, "._v_free()\n");
-        // }
 
-        str_flat(code, "if atomic(");
+        // str_flat(code, "if atomic(");
+        // str_add(code, var);
+        // str_flat(code, "._RC - 1) == 1 : ");
+        // str_add(code, var);
+        // str_flat(code, "._v_free()\n");
+
+        str_flat(code, "if @ptrv(\n");
         str_add(code, var);
-        str_flat(code, "._RC - 1) == 1 : ");
+        str_flat(code, ", u32, -1)-- == 1 : ");
         str_add(code, var);
         str_flat(code, "._v_free()\n");
 

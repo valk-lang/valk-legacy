@@ -53,15 +53,15 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
 
         map_set(class->props, "_VTABLE", prop);
 
-        // RC
-        prop = al(b->alc, sizeof(ClassProp));
-        prop->act = act_readonly_fc;
-        prop->chunk_type = NULL;
-        prop->chunk_value = NULL;
-        prop->type = type_cache_uint(b);
-        prop->skip_default_value = true;
+        // // RC
+        // prop = al(b->alc, sizeof(ClassProp));
+        // prop->act = act_readonly_fc;
+        // prop->chunk_type = NULL;
+        // prop->chunk_value = NULL;
+        // prop->type = type_cache_uint(b);
+        // prop->skip_default_value = true;
 
-        map_set(class->props, "_RC", prop);
+        // map_set(class->props, "_RC", prop);
     }
 
     while(true) {
@@ -212,7 +212,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
     if (!is_trait) {
         if (class->type == ct_class) {
             // Count & sort gc fields
-            int swap = 2;
+            int swap = 1;
             loop(props->keys, i) {
                 char *name = array_get_index(props->keys, i);
                 ClassProp *prop = array_get_index(props->values, i);

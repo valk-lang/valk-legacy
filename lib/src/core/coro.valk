@@ -273,7 +273,7 @@ struct Coro {
                     if item == null : continue
                     mem:gc_transfer(item)
                     // RC UP
-                    @ptrv(item, uint, 1)++
+                    @ptrv(item, u32, -1)++
                 }
             }
         }
@@ -291,7 +291,8 @@ struct Coro {
                     adr -= sizeof(ptr) * 2
                     let prev = @ptrv(adr, ptr, 1)
                     if prev != null {
-                        let rc = @ptrv(prev, uint, 1)
+                        // RC check
+                        let rc = @ptrv(prev, u32, -1)
                         if rc == 0 {
                             mem:gc_free(prev)
                         }
@@ -304,7 +305,8 @@ struct Coro {
                     adr -= sizeof(ptr) * 2
                     let item = @ptrv(adr, ptr, 0)
                     if item == null : continue
-                    @ptrv(item, uint, 1)--
+                    // RC DOWN
+                    @ptrv(item, u32, -1)--
                 }
             }
         }

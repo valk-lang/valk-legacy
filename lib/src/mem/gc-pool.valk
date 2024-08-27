@@ -73,10 +73,7 @@ cstruct GcPool {
             let item : ptr = data + i * isize
             @ptrv(item, u64, 0) = 0 // clear data
             @ptrv(item, u8, 0) = state_new
-            @ptrv(item, u8, 1) = 0
-            @ptrv(item, u8, 2) = 0
-            @ptrv(item, u8, 3) = pool_index
-            @ptrv(item, u8, 4) = i
+            @ptrv(item, u8, 3) = i
             i++
         }
         return b
@@ -86,13 +83,16 @@ cstruct GcPool {
         // if mem_usage > 70 {
         //     gc()
         // }
-        let pos = stack_pos
-        let diff : uint = (pos.adr - pos.base) @as uint
-        if diff < mem_min {
-            mem_min = diff
-        }
-        if diff > mem_max {
-            mem_max = diff
+        if (mem_cc++ % 11) == 0 {
+            let pos = stack_pos
+            let stack_size : uint = (pos.adr - pos.base) @as uint
+            if stack_size < mem_min {
+                mem_min = stack_size
+            }
+            if stack_size > mem_max {
+                mem_max = stack_size
+            }
+            update_usage()
         }
 
 
@@ -123,6 +123,8 @@ cstruct GcPool {
             // Increase mem usage
             mem_new += isize
 
+            @ptrv(item, u32, 1) = 0
+
             return (item + 8)
         }
         print("Failed to allocate memory")
@@ -134,7 +136,8 @@ cstruct GcPool {
         while true {
             let next = @ptrv(block, ?ptr, 0)
             if isset(next) {
-                if @ptrv(next, uint, 3) > 80 {
+                // if @ptrv(next, uint, 3) > 90 {
+                if @ptrv(next, uint, 2) * 100 / @ptrv(next, uint, 1) > 90 {
                     block = next
                     continue
                 }
@@ -151,10 +154,10 @@ cstruct GcPool {
         }
 
         // Check mem usage
-        update_usage()
-        if mem_usage > 70 {
-            gc()
-        }
+        // update_usage()
+        // if mem_usage > 70 {
+        //     gc()
+        // }
     }
 
     fn set_block(block: ptr) {
@@ -164,6 +167,7 @@ cstruct GcPool {
 
     fn swap_transfers() {
         if !this.has_free_hook : return
+        return
         //
         let current = this.block
         let block = this.first
@@ -236,12 +240,12 @@ cstruct GcPool {
                     let item = data + i * isize
                     let iage = @ptrv(item, u8, byte_age)
                     if iage != age && @ptrv(item, u8, byte_state) == state_solid {
-                        if this.has_free_hook {
-                            let ob = item + 8
-                            let vtable = @ptrv(ob, ptr)
-                            let hook = @ptrv(vtable, fn(ptr)(), 3)
-                            hook(ob)
-                        }
+                        // if this.has_free_hook {
+                            // let ob = item + 8
+                            // let vtable = @ptrv(ob, ptr)
+                            // let hook = @ptrv(vtable, fn(ptr)(), 3)
+                            // hook(ob)
+                        // }
                         @ptrv(item, u8, byte_state) = state_new
                         @ptrv(item, u8, byte_age) = 0
                         @ptrv(item, u8, byte_shared_age) = 0
