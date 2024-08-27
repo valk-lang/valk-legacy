@@ -24,7 +24,7 @@ fn update_usage() {
     // Calculate mem usage
     mem_usage = mem_new * 100 / mem_marked
     // Scale mem_usage trigger point based on stack position
-    let cap : uint = 5 * (diff * 30 / mem_max + 1)
+    let cap : uint = 15 * (diff * 20 / mem_max + 1)
 
     if mem_usage > cap {
         // if diff <= mem_trigger {
@@ -35,7 +35,7 @@ fn update_usage() {
         // }
         mem_gc_loop = false
     } else {
-        // mem_gc_loop = mem_usage > 15
+        mem_gc_loop = mem_usage > 15
         // if max > 128 {
         //     mem_max -= sizeof(ptr)
         // }
@@ -58,7 +58,7 @@ fn gc_transfer(item: ptr) {
     let pool = @ptrv(pools, GcPool, pool_index)
     let size = pool.isize
 
-    mem_transfered += size
+    mem_active += size
 
     let block_index = @ptrv(item, u8, byte_block_index_rel)
     let block_start = item - 8 - block_index * size
@@ -88,6 +88,8 @@ fn gc_free(item: ptr) {
     let pool = @ptrv(pools, GcPool, pool_index)
     let size = pool.isize
 
+    mem_active -= size
+
     let block_index = @ptrv(item, u8, byte_block_index_rel)
     let block_start = item - 8 - block_index * size
     @ptrv(block_start, uint, -2)-- // Decrease used items count
@@ -101,8 +103,7 @@ fn gc_free(item: ptr) {
     while propc-- > 2 {
         let sub = @ptrv(item, ptr, propc)
         if sub == null : continue
-        // let rc = @ptrv(sub, uint, 1)
-        // @ptrv(sub, uint, 1) = rc - 1
+        // if @ptrv(sub, u8, byte_state_rel) != state_solid : continue
         let rc = atomic(@ptrv(sub, uint, 1) - 1)
         if rc == 1 {
             gc_free(sub)
@@ -164,11 +165,17 @@ fn gc_share(item: ptr) {
         let pool = @ptrv(pools, GcPool, pool_index)
         let size = pool.isize
 
-        mem_transfered += size
+        // mem_transfered += size
 
         let block_index = @ptrv(item, u8, byte_block_index_rel)
         let block_start = item - 8 - block_index * size
         @ptrv(block_start, uint, -2)++ // Increase used items count
+    } else {
+        let pool_index = @ptrv(item, u8, byte_pool_index)
+        let pool = @ptrv(pools, GcPool, pool_index)
+        let size = pool.isize
+
+        mem_active -= size
     }
 
     @ptrv(item, u8, byte_state_rel) = state_shared

@@ -224,10 +224,10 @@ cstruct GcPool {
             let b = block
             let count = @ptrv(b, uint, 1)
             if count > 0 {
-                let used = @ptrv(b, uint, 2)
                 // Loop items
                 let i : uint = 0
                 let data = b + GP_DATA_OFFSET
+                let removed : uint = 0
 
                 while i < count {
                     let item = data + i * isize
@@ -242,13 +242,15 @@ cstruct GcPool {
                         @ptrv(item, u8, byte_state) = state_new
                         @ptrv(item, u8, byte_age) = 0
                         @ptrv(item, u8, byte_shared_age) = 0
-                        used--
+                        removed++
+
                     }
                     i++
                 }
 
-                @ptrv(b, uint, 2) = used
-                @ptrv(b, uint, 3) = used * 100 / count
+                mem_active -= removed * isize
+                @ptrv(b, uint, 2) -= removed
+                @ptrv(b, uint, 3) = @ptrv(b, uint, 2) * 100 / count
             }
 
             block = @ptrv(b, ptr, 0) // next block
