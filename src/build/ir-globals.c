@@ -75,20 +75,22 @@ void ir_vtable(IR *ir, Class *class) {
     Type *type = g->type;
 
     Map* funcs = class->funcs;
-    Func* hook_transfer = map_get(funcs, "_gc_transfer");
-    Func* hook_mark = map_get(funcs, "_gc_mark");
-    Func* hook_mark_shared = map_get(funcs, "_gc_mark_shared");
-    Func* hook_free = map_get(funcs, "_gc_free");
+    Func* hook_transfer = map_get(funcs, "_v_transfer");
+    Func* hook_mark = map_get(funcs, "_v_mark");
+    Func* hook_mark_shared = map_get(funcs, "_v_mark_shared");
+    Func* hook_share = map_get(funcs, "_v_share");
+    Func* hook_free = map_get(funcs, "_v_free");
     ir_define_ext_func(ir, hook_transfer);
     ir_define_ext_func(ir, hook_mark);
     ir_define_ext_func(ir, hook_mark_shared);
+    ir_define_ext_func(ir, hook_share);
     ir_define_ext_func(ir, hook_free);
 
     char *ltype = ir_type(ir, type);
     str_flat(code, "@");
     str_add(code, name);
     str_flat(code, " = dso_local constant [");
-    str_flat(code, "4 x ptr] ");
+    str_flat(code, "5 x ptr] ");
     // Vtable functions
     str_flat(code, "[");
     ir_vtable_entry(ir, hook_transfer);
@@ -96,6 +98,8 @@ void ir_vtable(IR *ir, Class *class) {
     ir_vtable_entry(ir, hook_mark);
     str_flat(code, ", ");
     ir_vtable_entry(ir, hook_mark_shared);
+    str_flat(code, ", ");
+    ir_vtable_entry(ir, hook_share);
     str_flat(code, ", ");
     ir_vtable_entry(ir, hook_free);
     str_flat(code, "]");

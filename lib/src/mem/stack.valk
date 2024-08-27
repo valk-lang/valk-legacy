@@ -11,11 +11,9 @@ global run_gc : bool
 
 global mem_new : uint
 global mem_marked : uint
-global mem_transfered : uint
 global mem_active : uint
 global mem_usage : uint
 global mem_free_able : uint
-global mem_trigger : uint
 global mem_max : uint
 global mem_min : uint
 global mem_gc_loop : bool
@@ -194,41 +192,33 @@ cstruct Stack {
         this.mark_difference_down()
         this.handle_transfer_list()
         pools_swap_transfers()
-        // this.bump.wipe()
         this.rc_down_stack()
 
         let transfer_percent = mem_active / (mem_marked / 100)
 
         // Full clear
-        if transfer_percent > 200 || this.force_full {
+        if transfer_percent > 180 || this.force_full {
 
-            this.force_full = false
-
-            let before = mem_marked
-            let total_before = before + mem_transfered
             // Reset counters
             mem_marked = mem_marked_default
-            // mem_transfered = 0
             // Mark
             this.update_age()
             this.mark_stack_age()
 
             // Clean
-            let free_able = total_before - mem_marked
+            let free_able = mem_active - (mem_marked - mem_marked_default)
             let total_free_able = free_able + mem_free_able
             if total_free_able > mem_marked / 10 || this.force_full {
                 // Clean
                 print("a.")
                 pools_clean_unmarked(this.age)
                 mem_free_able = 0
-
-                // if before > mem_marked :
-                // mem_marked = (mem_marked + before) / 2
             } else {
                 print("b.")
                 mem_free_able += free_able
-                // mem_marked = mem_marked / 10 * 14
             }
+            
+            this.force_full = false
         } else {
             print("-")
         }

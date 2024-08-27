@@ -24,9 +24,11 @@ fn update_usage() {
     // Calculate mem usage
     mem_usage = mem_new * 100 / mem_marked
     // Scale mem_usage trigger point based on stack position
-    let cap : uint = 15 * (diff * 20 / mem_max + 1)
+    let cap : uint = 5 * (diff * 40 / mem_max + 1)
 
     if mem_usage > cap {
+        // cap.print(10)
+        // print(".\n")
         // if diff <= mem_trigger {
             gc()
             // mem_trigger = diff
@@ -51,148 +53,169 @@ fn update_usage() {
 
 fn gc_transfer(item: ptr) {
 
-    if @ptrv(item, u8, byte_state_rel) > state_transfer : return
-    @ptrv(item, u8, byte_state_rel) = state_solid
-
-    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-    let pool = @ptrv(pools, GcPool, pool_index)
-    let size = pool.isize
-
-    mem_active += size
-
-    let block_index = @ptrv(item, u8, byte_block_index_rel)
-    let block_start = item - 8 - block_index * size
-    @ptrv(block_start, uint, -2)++ // Increase used items count
-
-    // Hook
     let vtable = @ptrv(item, ptr, 0)
-    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_transfer)
-    if isset(hook) : hook(item)
+    let hook = @ptrv(vtable, fn(ptr)(), vt_hook_transfer)
+    hook(item)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
-    while propc-- > 2 {
-        let sub = @ptrv(item, ptr, propc)
-        if sub == null : continue
-        @ptrv(sub, uint, 1)++
-        gc_transfer(sub)
-    }
+    // if @ptrv(item, u8, byte_state_rel) > state_transfer : return
+    // @ptrv(item, u8, byte_state_rel) = state_solid
+
+    // let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+    // let pool = @ptrv(pools, GcPool, pool_index)
+    // let size = pool.isize
+
+    // mem_active += size
+
+    // let block_index = @ptrv(item, u8, byte_block_index_rel)
+    // let block_start = item - 8 - block_index * size
+    // @ptrv(block_start, uint, -2)++ // Increase used items count
+
+    // // Hook
+    // let vtable = @ptrv(item, ptr, 0)
+    // let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_transfer)
+    // if isset(hook) : hook(item)
+
+    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    // while propc-- > 2 {
+    //     let sub = @ptrv(item, ptr, propc)
+    //     if sub == null : continue
+    //     @ptrv(sub, uint, 1)++
+    //     gc_transfer(sub)
+    // }
 }
 
 fn gc_free(item: ptr) {
-    if @ptrv(item, u8, byte_state_rel) != state_solid : return
-    @ptrv(item, u8, byte_state_rel) = state_new
-    @ptrv(item, u8, byte_age_rel) = 0
-    @ptrv(item, u8, byte_shared_age_rel) = 0
 
-    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-    let pool = @ptrv(pools, GcPool, pool_index)
-    let size = pool.isize
-
-    mem_active -= size
-
-    let block_index = @ptrv(item, u8, byte_block_index_rel)
-    let block_start = item - 8 - block_index * size
-    @ptrv(block_start, uint, -2)-- // Decrease used items count
-
-    // Hook
     let vtable = @ptrv(item, ptr, 0)
-    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_free)
-    if isset(hook) : hook(item)
+    let hook = @ptrv(vtable, fn(ptr)(), vt_hook_free)
+    hook(item)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
-    while propc-- > 2 {
-        let sub = @ptrv(item, ptr, propc)
-        if sub == null : continue
-        // if @ptrv(sub, u8, byte_state_rel) != state_solid : continue
-        let rc = atomic(@ptrv(sub, uint, 1) - 1)
-        if rc == 1 {
-            gc_free(sub)
-        }
-    }
+    // if @ptrv(item, u8, byte_state_rel) != state_solid : return
+    // @ptrv(item, u8, byte_state_rel) = state_new
+    // @ptrv(item, u8, byte_age_rel) = 0
+    // @ptrv(item, u8, byte_shared_age_rel) = 0
+
+    // let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+    // let pool = @ptrv(pools, GcPool, pool_index)
+    // let size = pool.isize
+
+    // mem_active -= size
+
+    // let block_index = @ptrv(item, u8, byte_block_index_rel)
+    // let block_start = item - 8 - block_index * size
+    // @ptrv(block_start, uint, -2)-- // Decrease used items count
+
+    // // Hook
+    // let vtable = @ptrv(item, ptr, 0)
+    // let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_free)
+    // if isset(hook) : hook(item)
+
+    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    // while propc-- > 2 {
+    //     let sub = @ptrv(item, ptr, propc)
+    //     if sub == null : continue
+    //     // if @ptrv(sub, u8, byte_state_rel) != state_solid : continue
+    //     let rc = atomic(@ptrv(sub, uint, 1) - 1)
+    //     if rc == 1 {
+    //         gc_free(sub)
+    //     }
+    // }
 }
 
 fn gc_mark(item: ptr, age: u8) {
 
-    if @ptrv(item, u8, byte_state_rel) > state_const : return
-    if @ptrv(item, u8, byte_age_rel) == age : return
-    @ptrv(item, u8, byte_age_rel) = age
-
-    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-    let pool = @ptrv(pools, GcPool, pool_index)
-    let size = pool.isize
-
-    mem_marked += size
-
-    // Hook
     let vtable = @ptrv(item, ptr, 0)
-    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark)
-    if isset(hook) : hook(item)
+    let hook = @ptrv(vtable, fn(ptr, u8)(), vt_hook_mark)
+    hook(item, age)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
-    while propc-- > 2 {
-        let sub = @ptrv(item, ptr, propc)
-        if sub == null : continue
-        gc_mark(sub, age)
-    }
+    // if @ptrv(item, u8, byte_state_rel) > state_const : return
+    // if @ptrv(item, u8, byte_age_rel) == age : return
+    // @ptrv(item, u8, byte_age_rel) = age
+
+    // let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+    // let pool = @ptrv(pools, GcPool, pool_index)
+    // let size = pool.isize
+
+    // mem_marked += size
+
+    // // Hook
+    // let vtable = @ptrv(item, ptr, 0)
+    // let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark)
+    // if isset(hook) : hook(item)
+
+    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    // while propc-- > 2 {
+    //     let sub = @ptrv(item, ptr, propc)
+    //     if sub == null : continue
+    //     gc_mark(sub, age)
+    // }
 }
 
 fn gc_mark_shared(item: ptr, age: u8) {
 
-    if @ptrv(item, u8, byte_state_rel) > state_const : return
-    if @ptrv(item, u8, byte_shared_age_rel) == age : return
-    @ptrv(item, u8, byte_shared_age_rel) = age
-
-    // Hook
     let vtable = @ptrv(item, ptr, 0)
-    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark_shared)
-    if isset(hook) : hook(item)
+    let hook = @ptrv(vtable, fn(ptr, u8)(), vt_hook_mark_shared)
+    hook(item, age)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
-    while propc-- > 2 {
-        let sub = @ptrv(item, ptr, propc)
-        if sub == null : continue
-        gc_mark_shared(sub, age)
-    }
+    // if @ptrv(item, u8, byte_state_rel) > state_const : return
+    // if @ptrv(item, u8, byte_shared_age_rel) == age : return
+    // @ptrv(item, u8, byte_shared_age_rel) = age
+
+    // // Hook
+    // let vtable = @ptrv(item, ptr, 0)
+    // let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_mark_shared)
+    // if isset(hook) : hook(item)
+
+    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    // while propc-- > 2 {
+    //     let sub = @ptrv(item, ptr, propc)
+    //     if sub == null : continue
+    //     gc_mark_shared(sub, age)
+    // }
 }
 
 fn gc_share(item: ptr) {
 
-    if @ptrv(item, u8, byte_state_rel) > state_solid : return
-
-    let state = @ptrv(item, u8, byte_state_rel)
-    if state < state_solid {
-        let pool_index = @ptrv(item, u8, byte_pool_index)
-        let pool = @ptrv(pools, GcPool, pool_index)
-        let size = pool.isize
-
-        // mem_transfered += size
-
-        let block_index = @ptrv(item, u8, byte_block_index_rel)
-        let block_start = item - 8 - block_index * size
-        @ptrv(block_start, uint, -2)++ // Increase used items count
-    } else {
-        let pool_index = @ptrv(item, u8, byte_pool_index)
-        let pool = @ptrv(pools, GcPool, pool_index)
-        let size = pool.isize
-
-        mem_active -= size
-    }
-
-    @ptrv(item, u8, byte_state_rel) = state_shared
-    @ptrv(item, u8, byte_shared_age_rel) = shared_age
-    stack.add_shared(item)
-
-    // Hook
     let vtable = @ptrv(item, ptr, 0)
-    let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_share)
-    if isset(hook) : hook(item)
+    let hook = @ptrv(vtable, fn(ptr)(), vt_hook_share)
+    hook(item)
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
-    while propc-- > 2 {
-        let sub = @ptrv(item, ptr, propc)
-        if sub == null : continue
-        gc_share(sub)
-    }
+    // if @ptrv(item, u8, byte_state_rel) > state_solid : return
+
+    // let state = @ptrv(item, u8, byte_state_rel)
+    // if state < state_solid {
+    //     let pool_index = @ptrv(item, u8, byte_pool_index)
+    //     let pool = @ptrv(pools, GcPool, pool_index)
+    //     let size = pool.isize
+
+    //     // mem_transfered += size
+
+    //     let block_index = @ptrv(item, u8, byte_block_index_rel)
+    //     let block_start = item - 8 - block_index * size
+    //     @ptrv(block_start, uint, -2)++ // Increase used items count
+    // } else {
+    //     let pool_index = @ptrv(item, u8, byte_pool_index)
+    //     let pool = @ptrv(pools, GcPool, pool_index)
+    //     let size = pool.isize
+
+    //     mem_active -= size
+    // }
+
+    // @ptrv(item, u8, byte_state_rel) = state_shared
+    // @ptrv(item, u8, byte_shared_age_rel) = shared_age
+    // stack.add_shared(item)
+
+    // // Hook
+    // let vtable = @ptrv(item, ptr, 0)
+    // let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_share)
+    // if isset(hook) : hook(item)
+
+    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel) + 2
+    // while propc-- > 2 {
+    //     let sub = @ptrv(item, ptr, propc)
+    //     if sub == null : continue
+    //     gc_share(sub)
+    // }
 }
 
 fn pools_swap_transfers() {
@@ -201,6 +224,7 @@ fn pools_swap_transfers() {
     let i : uint = 0
     while i < count {
         let pool = @ptrv(alcs, GcPool, i++)
+        if pool.first == null : continue
         pool.swap_transfers()
     }
 }
@@ -211,6 +235,7 @@ fn pools_clean_unmarked(age: u8) {
     let i : uint = 0
     while i < count {
         let pool = @ptrv(alcs, GcPool, i++)
+        if pool.first == null : continue
         pool.clean_unmarked(age)
     }
     gc_alloc_clean_unmarked(age)
@@ -222,6 +247,7 @@ fn pools_reset() {
     let i : uint = 0
     while i < count {
         let pool = @ptrv(alcs, GcPool, i++)
+        if pool.first == null : continue
         pool.reset()
     }
     gc_alloc_reset()
