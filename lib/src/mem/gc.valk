@@ -79,11 +79,18 @@ fn gc_transfer(item: ptr) {
 }
 
 fn gc_free(item: ptr) {
-    print("_F_")
     if @ptrv(item, u8, byte_state_rel) != state_solid : return
     @ptrv(item, u8, byte_state_rel) = state_new
     @ptrv(item, u8, byte_age_rel) = 0
     @ptrv(item, u8, byte_shared_age_rel) = 0
+
+    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+    let pool = @ptrv(pools, GcPool, pool_index)
+    let size = pool.isize
+
+    let block_index = @ptrv(item, u8, byte_block_index_rel)
+    let block_start = item - 8 - block_index * size
+    @ptrv(block_start, uint, -2)-- // Decrease used items count
 
     // Hook
     let vtable = @ptrv(item, ptr, 0)
@@ -94,8 +101,9 @@ fn gc_free(item: ptr) {
     while propc-- > 2 {
         let sub = @ptrv(item, ptr, propc)
         if sub == null : continue
-        let rc = @ptrv(sub, uint, 1)
-        @ptrv(sub, uint, 1) = rc - 1
+        // let rc = @ptrv(sub, uint, 1)
+        // @ptrv(sub, uint, 1) = rc - 1
+        let rc = atomic(@ptrv(sub, uint, 1) - 1)
         if rc == 1 {
             gc_free(sub)
         }

@@ -268,7 +268,7 @@ struct Coro {
                 let base = coro.gc_stack.base
                 let adr = coro.gc_stack.adr
                 while adr > base {
-                    adr -= sizeof(ptr)
+                    adr -= sizeof(ptr) * 2
                     let item = @ptrv(adr, ptr, 0)
                     if item == null : continue
                     mem:gc_transfer(item)
@@ -286,8 +286,22 @@ struct Coro {
             if isset(coro) {
                 let base = coro.gc_stack.base
                 let adr = coro.gc_stack.adr
+
                 while adr > base {
-                    adr -= sizeof(ptr)
+                    adr -= sizeof(ptr) * 2
+                    let prev = @ptrv(adr, ptr, 1)
+                    if prev != null {
+                        let rc = @ptrv(prev, uint, 1)
+                        if rc == 0 {
+                            mem:gc_free(prev)
+                        }
+                    }
+                    @ptrv(adr, ptr, 1) = @ptrv(adr, ptr, 0)
+                }
+
+                adr = coro.gc_stack.adr
+                while adr > base {
+                    adr -= sizeof(ptr) * 2
                     let item = @ptrv(adr, ptr, 0)
                     if item == null : continue
                     @ptrv(item, uint, 1)--

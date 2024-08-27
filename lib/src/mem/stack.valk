@@ -199,7 +199,8 @@ cstruct Stack {
         let transfer_percent = mem_transfered * 100 / mem_marked
 
         // Full clear
-        if transfer_percent > 80 || this.force_full {
+        // if transfer_percent > 80 || this.force_full {
+        if false {
 
             this.force_full = false
 
@@ -229,6 +230,7 @@ cstruct Stack {
                 // mem_marked = mem_marked / 10 * 14
             }
         } else {
+            mem_marked = mem_transfered
             print("-")
         }
         pools_reset()
