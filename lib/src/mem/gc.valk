@@ -25,16 +25,17 @@ fn update_usage() {
     let max_stack_size = mem_max - mem_min
 
     // Calculate mem usage
-    mem_usage = mem_new / (mem_trigger / 100)
+    let usage = mem_new / (mem_trigger / 100)
+    if usage > mem_usage {
+        mem_usage = usage
+    }
 
     // Scale mem_usage trigger point based on stack position
     // 12 * (number between: 1 - 21)
     let trigger : uint = 12 * (stack_size * 20 / max_stack_size + 1)
 
-    if mem_usage > trigger {
+    if usage > trigger {
         gc()
-    // } else {
-        // mem_gc_loop = mem_usage > 10
     }
 
     // Update min/max

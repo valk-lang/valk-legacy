@@ -562,17 +562,26 @@ void class_generate_free(Parser* p, Build* b, Class* class, Func* func) {
             str_flat(code, ") {\n");
         }
 
-        // str_flat(code, "if atomic(");
-        // str_add(code, var);
-        // str_flat(code, "._RC - 1) == 1 : ");
-        // str_add(code, var);
-        // str_flat(code, "._v_free()\n");
-
-        str_flat(code, "if @ptrv(\n");
+        str_flat(code, "if @ptrv(");
         str_add(code, var);
         str_flat(code, ", u32, -1)-- == 1 : ");
         str_add(code, var);
         str_flat(code, "._v_free()\n");
+
+        // str_flat(code, "let ");
+        // str_add(code, var);
+        // str_flat(code, "_rc = @ptrv(");
+        // str_add(code, var);
+        // str_flat(code, ", u32, -1)\n");
+        // str_flat(code, "if ");
+        // str_add(code, var);
+        // str_flat(code, "_rc == 1 : ");
+        // str_add(code, var);
+        // str_flat(code, "._v_free() else: @ptrv(");
+        // str_add(code, var);
+        // str_flat(code, ", u32, -1) = ");
+        // str_add(code, var);
+        // str_flat(code, "_rc - 1\n");
 
         if(p->type->nullable) {
             str_flat(code, "}\n");

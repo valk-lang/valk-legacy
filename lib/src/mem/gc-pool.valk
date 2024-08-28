@@ -35,9 +35,10 @@ fn init_pools() {
 }
 
 cstruct GcPool {
-    blockc: uint
-    first: ptr
-    block: ptr
+    blockc: uint (0) // blocks count
+    blocku: uint (0) // blocks usage
+    first: ptr (null @as ptr)
+    block: ptr (null @as ptr)
     index: uint (0)
     isize: uint (0)
     pool_index: u8
@@ -45,12 +46,7 @@ cstruct GcPool {
 
     static fn init(size: uint, has_free_hook: bool, pool_index: u8) SELF {
         let isize = size + 8
-        let blockc : uint = 1
-        let block = null @as ptr
         let res = SELF{
-            blockc: blockc
-            first: block
-            block: block
             isize: isize
             pool_index: pool_index
             has_free_hook: has_free_hook
@@ -80,27 +76,25 @@ cstruct GcPool {
     }
 
     fn get() ptr {
-        // if mem_usage > 70 {
-        //     gc()
-        // }
-        if (mem_cc++ % 11) == 0 {
-            let pos = stack_pos
-            let stack_size : uint = (pos.adr - pos.base) @as uint
-            if stack_size < mem_min {
-                mem_min = stack_size
-            }
-            if stack_size > mem_max {
-                mem_max = stack_size
-            }
-            update_usage()
-        }
-
 
         let isize = this.isize
         if this.block == null {
+            this.blockc++
+            this.blocku++
             this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
             this.first = this.block
         }
+
+        let pos = stack_pos
+        let stack_size : uint = (pos.adr - pos.base) @as uint
+        if stack_size < mem_min {
+            mem_min = stack_size
+        }
+        if stack_size > mem_max {
+            mem_max = stack_size
+        }
+        let block_usage = this.blocku * 100 / this.blockc
+        if block_usage > 95 : update_usage()
 
         while true {
             let block = this.block
@@ -134,6 +128,8 @@ cstruct GcPool {
 
     fn set_next_block(block: ptr) {
         while true {
+            this.blocku++
+
             let next = @ptrv(block, ?ptr, 0)
             if isset(next) {
                 // if @ptrv(next, uint, 3) > 90 {
@@ -152,12 +148,6 @@ cstruct GcPool {
             }
             break
         }
-
-        // Check mem usage
-        // update_usage()
-        // if mem_usage > 70 {
-        //     gc()
-        // }
     }
 
     fn set_block(block: ptr) {
@@ -300,5 +290,6 @@ cstruct GcPool {
         }
         //
         this.set_block(this.first)
+        this.blocku = 1
     }
 }

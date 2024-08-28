@@ -158,7 +158,7 @@ void loop_defer(Allocator *alc, Parser *p) {
         array_push(ast_scope->ast, tgen_assign(alc, vgen_decl(alc, decl), vgen_null(alc, b)));
     }
 
-    Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), ast_scope);
-    Token *t = token_make(alc, t_ast_scope, gcscope);
-    array_push(ast_scope->ast, t);
+    // Scope *gcscope = gen_snippet_ast(alc, p, get_valk_snippet(b, "mem", "run_gc_check"), map_make(alc), ast_scope);
+    // Token *t = token_make(alc, t_ast_scope, gcscope);
+    // array_push(ast_scope->ast, t);
 }

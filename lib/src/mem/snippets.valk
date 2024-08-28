@@ -1,9 +1,0 @@
-
-use io
-use os
-
-snippet run_gc_check() {
-    // if mem_gc_loop {
-    //     gc()
-    // }
-}
