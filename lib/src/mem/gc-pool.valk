@@ -171,10 +171,12 @@ cstruct GcPool {
                 // Set next
                 @ptrv(block, ptr, 0) = new
                 this.set_block(new)
-                this.count_new = true
+                // this.count_new = true
             }
             break
         }
+
+        if @ptrv(this.block, ptr, 2) == 0 : this.count_new = true
     }
 
     fn set_block(block: ptr) {
@@ -274,17 +276,19 @@ cstruct GcPool {
     }
 
     fn reset() {
-        // Update usage percentage
         let block = this.first
         let current = this.block
+
         let reached_current = false
         let last : ?ptr = null
         let first_empty_block : ?ptr = null
         let last_empty_block : ?ptr = null
+
         while block != null {
             let b = block
             let used = @ptrv(b, uint, 2)
             let next = @ptrv(b, ptr, 0)
+            @ptrv(b, ?ptr, 0) = null // clear next
             //
             if used == 0 {
                 if reached_current == false {
@@ -297,12 +301,6 @@ cstruct GcPool {
                         last_empty_block = b
                     }
                 } else {
-                    // Free block
-                    if isset(last) {
-                        @ptrv(last, ptr, 0) = next
-                    } else {
-                        this.first = next
-                    }
                     free(b)
                     this.blockc--
                 }
@@ -311,6 +309,8 @@ cstruct GcPool {
                 let count = @ptrv(b, uint, 1)
                 @ptrv(b, uint, 3) = used * 100 / count
                 //
+                if isset(last) : @ptrv(last, ptr, 0) = b
+                else : this.first = b
                 last = b
             }
             if b == current : reached_current = true

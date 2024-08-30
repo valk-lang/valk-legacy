@@ -230,7 +230,7 @@ cstruct Stack {
             //     mem_trigger = (mem_marked + marked_before * 3) / 4
             // }
             // mem_trigger += mem_trigger_default
-            mem_trigger = mem_active
+            mem_trigger = mem_active + mem_trigger_default
 
             this.force_full = false
         } else {
