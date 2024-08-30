@@ -171,7 +171,6 @@ cstruct GcPool {
                 // Set next
                 @ptrv(block, ptr, 0) = new
                 this.set_block(new)
-                // this.count_new = true
             }
             break
         }
