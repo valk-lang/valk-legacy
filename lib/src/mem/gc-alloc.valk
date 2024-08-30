@@ -130,7 +130,7 @@ cstruct GcAlloc {
         }
 
         // Check mem usage
-        update_usage()
+        // update_usage()
     }
 
     fn set_block(block: ptr) {

@@ -3,6 +3,7 @@
 
 void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll);
 void unroll_func_defer(Unroll* ur, Scope* scope, Array* unroll);
+void unroll_scope_that_creates_objects(Unroll* ur, Scope* scope, Array* unroll);
 
 void stage_unroll(Build *b, Func *func) {
     Scope* scope = func->scope;
@@ -20,6 +21,10 @@ void unroll_scope(Unroll* ur, Scope* scope) {
 
     if(scope->type == sc_func) {
         unroll_func_start(ur, scope, unroll);
+    }
+
+    if(scope->creates_objects) {
+        unroll_scope_that_creates_objects(ur, scope, unroll);
     }
 
     Array* scope_ast = scope->ast;
@@ -121,6 +126,15 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
         }
     }
 }
+
+void unroll_scope_that_creates_objects(Unroll* ur, Scope* scope, Array* unroll) {
+    Parser *p = ur->func->unit->parser;
+    char* snip = scope->type == sc_loop ? "gc_check_loop" : "gc_check_func";
+    Scope *gcscope = gen_snippet_ast(ur->alc, p, get_valk_snippet(ur->b, "mem", snip), map_make(ur->alc), scope);
+    Token *tgc = token_make(ur->alc, t_ast_scope, gcscope);
+    array_push(unroll, tgc);
+}
+
 void unroll_func_defer(Unroll* ur, Scope* scope, Array* unroll) {
 
     Func* func = ur->func;

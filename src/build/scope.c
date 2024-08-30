@@ -18,6 +18,7 @@ Scope* scope_make(Allocator* alc, int type, Scope* parent) {
     sc->did_return = false;
     sc->gc_check = false;
     sc->has_gc_decls = false;
+    sc->creates_objects = false;
 
     return sc;
 }
@@ -34,6 +35,13 @@ void scope_set_idf(Scope* scope, char*name, Idf* idf, Parser* p) {
             die("Name already taken (compiler bug)");
     }
     map_set_force_new(scope->identifiers, name, idf);
+}
+
+Scope* scope_get_loop_or_func_scope(Scope* scope) {
+    while (scope && scope->type != sc_loop && scope->type != sc_func) {
+        scope = scope->parent;
+    }
+    return scope;
 }
 
 void scope_add_decl(Allocator* alc, Scope* scope, Decl* decl) {

@@ -43,6 +43,7 @@ cstruct GcPool {
     isize: uint (0)
     pool_index: u8
     has_free_hook: bool
+    count_new: bool (false)
 
     static fn init(size: uint, has_free_hook: bool, pool_index: u8) SELF {
         let isize = size + 8
@@ -83,21 +84,44 @@ cstruct GcPool {
             this.blocku++
             this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
             this.first = this.block
+            this.count_new = true
         }
 
-        let pos = stack_pos
-        let stack_size : uint = (pos.adr - pos.base) @as uint
-        if stack_size < mem_min {
-            mem_min = stack_size
-        }
-        if stack_size > mem_max {
-            mem_max = stack_size
-        }
-        let block_usage = this.blocku * 100 / this.blockc
-        if block_usage > 95 : update_usage()
+        // let pos = stack_pos
+        // let stack_size : uint = (pos.adr - pos.base) @as uint
+        // if stack_size < mem_min {
+        //     mem_min = stack_size
+        // }
+        // if stack_size > mem_max {
+        //     mem_max = stack_size
+        // }
+        // let block_usage = this.blocku * 100 / this.blockc
+        // if block_usage > 95 : update_usage()
 
         while true {
             let block = this.block
+            // let slots = @ptrv(block, uint, 1)
+            // let data = block + GP_DATA_OFFSET
+
+            // // Find open slot
+            // let index = this.index
+            // let found = false
+            // while index < slots {
+            //     let item = data + index * isize
+            //     if @ptrv(item, u8, byte_state) == state_new {
+            //         break
+            //     }
+            //     index++
+            // }
+            // if index == slots {
+            //     this.set_next_block(block)
+            //     continue
+            // }
+
+            // // Found open slot
+            // this.index = index + 1
+            // let item = data + index * isize
+
             let index = this.index
             if index == @ptrv(block, uint, 1) {
                 this.set_next_block(block)
@@ -115,7 +139,10 @@ cstruct GcPool {
             }
 
             // Increase mem usage
-            mem_new += isize
+            if this.count_new {
+                mem_new += isize
+                mem_usage = mem_new / (mem_trigger / 100)
+            }
 
             @ptrv(item, u32, 1) = 0
 
@@ -132,8 +159,7 @@ cstruct GcPool {
 
             let next = @ptrv(block, ?ptr, 0)
             if isset(next) {
-                // if @ptrv(next, uint, 3) > 90 {
-                if @ptrv(next, uint, 2) * 100 / @ptrv(next, uint, 1) > 90 {
+                if @ptrv(next, uint, 3) > 90 {
                     block = next
                     continue
                 }
@@ -145,6 +171,7 @@ cstruct GcPool {
                 // Set next
                 @ptrv(block, ptr, 0) = new
                 this.set_block(new)
+                this.count_new = true
             }
             break
         }
@@ -204,20 +231,12 @@ cstruct GcPool {
     }
 
     fn clean_unmarked(age: u8) {
-        // if this.pool_index == 0 {
-        //     let c = this.blockc
-        //     c.print(10)
-        //     print("_\n")
-        // }
 
         let current = this.block
         let block = this.first
         let isize = this.isize
 
         while block != null {
-        // if this.pool_index == 0 {
-        //     print("x")
-        // }
             let b = block
             let count = @ptrv(b, uint, 1)
             if count > 0 {
@@ -256,40 +275,58 @@ cstruct GcPool {
 
     fn reset() {
         // Update usage percentage
+        let block = this.first
         let current = this.block
-        if current == null : return
-        let first = this.first
-        let block = first
-        let prev = first
-        while true {
-            let b = block
-            let count = @ptrv(b, uint, 1)
-            let used = @ptrv(b, uint, 2)
-            @ptrv(b, uint, 3) = used * 100 / count
-            if b == current : break
-            block = @ptrv(b, ptr, 0)
-        }
-
-        // Free unused blocks after current
-        block = @ptrv(current, ptr, 0)
-        prev = current
+        let reached_current = false
+        let last : ?ptr = null
+        let first_empty_block : ?ptr = null
+        let last_empty_block : ?ptr = null
         while block != null {
             let b = block
             let used = @ptrv(b, uint, 2)
             let next = @ptrv(b, ptr, 0)
-
+            //
             if used == 0 {
-                @ptrv(prev, ptr, 0) = next
-                free(b)
-                block = next
-                this.blockc--
-                continue
+                if reached_current == false {
+                    @ptrv(b, uint, 3) = 0
+                    if isset(last_empty_block) {
+                        @ptrv(last_empty_block, ptr, 0) = b
+                        last_empty_block = b
+                    } else {
+                        first_empty_block = b
+                        last_empty_block = b
+                    }
+                } else {
+                    // Free block
+                    if isset(last) {
+                        @ptrv(last, ptr, 0) = next
+                    } else {
+                        this.first = next
+                    }
+                    free(b)
+                    this.blockc--
+                }
+            } else {
+                // Update usage percent
+                let count = @ptrv(b, uint, 1)
+                @ptrv(b, uint, 3) = used * 100 / count
+                //
+                last = b
             }
-            prev = b
+            if b == current : reached_current = true
             block = next
         }
-        //
+
+        if isset(first_empty_block) {
+            if isset(last)  {
+                @ptrv(last, ptr, 0) = first_empty_block
+            } else {
+                this.first = first_empty_block
+            }
+        }
+
         this.set_block(this.first)
-        this.blocku = 1
+        this.blocku = this.first == null ? 0 : 1
+        this.count_new = false
     }
 }

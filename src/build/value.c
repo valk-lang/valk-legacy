@@ -1137,6 +1137,11 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));
     buffer_values(alc, p, values->values, false);
 
+    if (class->type == ct_class) {
+        Scope *sc = scope_get_loop_or_func_scope(p->scope);
+        sc->creates_objects = true;
+    }
+
     if(class->type == ct_class && p->scope->ast) {
         p->scope->gc_check = true;
     }

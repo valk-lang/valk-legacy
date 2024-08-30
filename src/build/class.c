@@ -354,7 +354,7 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
     str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
     str_flat(code, "  if @ptrv(this, u8, -7) == age { return }\n");
     str_flat(code, "  @ptrv(this, u8, -7) = age\n");
-    str_flat(code, "  GC_MARK_SIZE += SIZE\n");
+    // str_flat(code, "  GC_MARK_SIZE += SIZE\n");
 
     // Props
     loop(props->values, i) {

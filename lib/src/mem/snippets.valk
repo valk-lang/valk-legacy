@@ -1,0 +1,25 @@
+
+snippet gc_check_func() {
+    {
+        if mem_usage > 12 {
+            let pos = stack_pos
+            let stack_size : uint = (pos.adr - pos.base) @as uint
+            if stack_size < mem_min {
+                mem_min = stack_size
+            }
+            if stack_size > mem_max {
+                mem_max = stack_size
+            }
+            update_usage()
+        }
+    }
+}
+snippet gc_check_loop() {
+    {
+        let usage = mem_new / (mem_trigger / 100)
+        if usage > 10 {
+            mem_usage = usage
+            update_usage()
+        }
+    }
+}

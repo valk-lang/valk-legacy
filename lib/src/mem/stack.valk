@@ -102,6 +102,8 @@ cstruct Stack {
 
     static fn init() {
 
+        mem_min = 1000
+
         gc_alloc_init()
         // let id = atomic(stack_count + 1)
 
@@ -202,33 +204,33 @@ cstruct Stack {
         if transfer_percent > 160 || this.force_full {
 
             // Reset counters
-            let marked_before = mem_marked
+            // let marked_before = mem_marked
             mem_marked = 0
             // Mark
             this.update_age()
             this.mark_stack_age()
 
             // Clean
-            let free_able = mem_active - mem_marked
-            let total_free_able = free_able + mem_free_able
-            if total_free_able > mem_marked / 10 || this.force_full {
+            // let free_able = mem_active - mem_marked
+            // let total_free_able = free_able + mem_free_able
+            // if total_free_able > mem_marked / 10 || this.force_full {
                 // Clean
                 print("a.")
                 pools_clean_unmarked(this.age)
                 mem_free_able = 0
-            } else {
-                print("b.")
-                mem_free_able += free_able
-            }
+            // } else {
+            //     print("b.")
+            //     mem_free_able += free_able
+            // }
             
-            let largest = mem_marked
-            if mem_marked >= marked_before {
-                mem_trigger = mem_marked
-            } else {
-                mem_trigger = (mem_marked + marked_before * 3) / 4
-            }
-            mem_trigger += mem_trigger_default
-            // mem_trigger = mem_trigger * 20 / 10
+            // let largest = mem_marked
+            // if mem_marked >= marked_before {
+                // mem_trigger = mem_marked
+            // } else {
+            //     mem_trigger = (mem_marked + marked_before * 3) / 4
+            // }
+            // mem_trigger += mem_trigger_default
+            mem_trigger = mem_active
 
             this.force_full = false
         } else {
