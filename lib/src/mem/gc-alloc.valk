@@ -43,7 +43,7 @@ cstruct GcAlloc {
     pow: u8
 
     static fn init(pow: u8) SELF {
-        let isize : uint = (1 << pow) + 8
+        let isize : uint = (1 << pow)
         let blockc : uint = 1
         let block = null @as ptr
         return SELF{
@@ -109,7 +109,7 @@ cstruct GcAlloc {
             // Increase mem usage
             mem_new += isize
 
-            return (item + 8)
+            return item
         }
         print("Failed to allocate memory")
         print("\n")

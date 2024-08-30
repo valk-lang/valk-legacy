@@ -238,5 +238,5 @@ char *ir_string(IR *ir, VString *str) {
     }
     str_flat(code, ", align 8\n");
 
-    return ir_ptrv(ir, object_name, "ptr", 1);
+    return object_name;
 }

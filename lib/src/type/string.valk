@@ -402,19 +402,11 @@ struct String {
 
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
-        // let d = mem:alloc(length + 1)
         let str = mem:gc_alloc(sizeof(inline String) + length + 1) @as String
         @ptrv(@ptr_offset(str, sizeof(inline String)), u8, length) = 0 // trailing 0 byte
         str._VTABLE = @vtable(String)
-        // str._VTABLE.print()
-        // print("<__\n")
-        @ptrv(str, u32, -1) = 0
-        // str._RC = 0 
+        str._RC = 0
         str.bytes = length
-        // let str = String {
-        //     // data: d
-        //     bytes: length
-        // }
         return str
     }
 

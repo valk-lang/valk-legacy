@@ -43,7 +43,7 @@ fn update_usage() {
 
 fn gc_transfer(item: ptr) {
 
-    let vtable = @ptrv(item, ptr, 0)
+    let vtable = @ptrv(item, ptr, 1)
     let hook = @ptrv(vtable, fn(ptr)(), vt_hook_transfer)
     hook(item)
 
@@ -76,7 +76,7 @@ fn gc_transfer(item: ptr) {
 
 fn gc_free(item: ptr) {
 
-    let vtable = @ptrv(item, ptr, 0)
+    let vtable = @ptrv(item, ptr, 1)
     let hook = @ptrv(vtable, fn(ptr)(), vt_hook_free)
     hook(item)
 
@@ -114,7 +114,7 @@ fn gc_free(item: ptr) {
 
 fn gc_mark(item: ptr, age: u8) {
 
-    let vtable = @ptrv(item, ptr, 0)
+    let vtable = @ptrv(item, ptr, 1)
     let hook = @ptrv(vtable, fn(ptr, u8)(), vt_hook_mark)
     hook(item, age)
 
@@ -143,7 +143,7 @@ fn gc_mark(item: ptr, age: u8) {
 
 fn gc_mark_shared(item: ptr, age: u8) {
 
-    let vtable = @ptrv(item, ptr, 0)
+    let vtable = @ptrv(item, ptr, 1)
     let hook = @ptrv(vtable, fn(ptr, u8)(), vt_hook_mark_shared)
     hook(item, age)
 
@@ -166,7 +166,7 @@ fn gc_mark_shared(item: ptr, age: u8) {
 
 fn gc_share(item: ptr) {
 
-    let vtable = @ptrv(item, ptr, 0)
+    let vtable = @ptrv(item, ptr, 1)
     let hook = @ptrv(vtable, fn(ptr)(), vt_hook_share)
     hook(item)
 

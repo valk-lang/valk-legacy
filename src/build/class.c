@@ -41,8 +41,9 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     //
     return c;
 }
-ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value) {
+ClassProp* class_prop_make(Build* b, Type* type, int act, bool skip_default_value) {
     ClassProp* prop = al(b->alc, sizeof(ClassProp));
+    prop->act = act;
     prop->chunk_type = NULL;
     prop->chunk_value = NULL;
     prop->index = -1;
@@ -182,7 +183,7 @@ void class_generate_internals(Parser* p, Build* b, Class* class) {
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "shared_age"));
         scope_set_idf(class->scope, "GC_AGE", idf, p);
         //
-        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size + 8, type_cache_uint(b)));
+        idf = idf_make(b->alc, idf_value, vgen_int(b->alc, class->size, type_cache_uint(b)));
         scope_set_idf(class->scope, "SIZE", idf, p);
         //
         idf = idf_make(b->alc, idf_global, get_valk_global(b, "mem", "mem_active"));
@@ -282,12 +283,12 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "() void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 2 : return\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 4\n");
+    str_flat(code, "  if this._STATE > 2 : return\n");
+    str_flat(code, "  this._STATE = 4\n");
     str_flat(code, "  GC_ACTIVE_SIZE += SIZE\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
+    str_flat(code, "  let index = this._INDEX @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * SIZE\n");
     str_flat(code, "  @ptrv(data, uint, -2)++\n");
 
     // Props
@@ -320,9 +321,8 @@ void class_generate_transfer(Parser* p, Build* b, Class* class, Func* func) {
             str_flat(code, "._v_transfer()\n");
         // }
 
-        str_flat(code, "@ptrv(\n");
         str_add(code, var);
-        str_flat(code, ", u32, -1)++\n");
+        str_flat(code, "._RC++\n");
 
         if(p->type->nullable) {
             str_flat(code, "}\n");
@@ -351,9 +351,9 @@ void class_generate_mark(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) > 8 { return }\n");
-    str_flat(code, "  if @ptrv(this, u8, -7) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -7) = age\n");
+    str_flat(code, "  if this._STATE > 8 { return }\n");
+    str_flat(code, "  if this._AGE == age { return }\n");
+    str_flat(code, "  this._AGE = age\n");
     // str_flat(code, "  GC_MARK_SIZE += SIZE\n");
 
     // Props
@@ -408,8 +408,8 @@ void class_generate_mark_shared(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "(age: u8) void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -6) == age { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = age\n");
+    str_flat(code, "  if this._AGE_SHARED == age { return }\n");
+    str_flat(code, "  this._AGE_SHARED = age\n");
 
     // Props
     loop(props->values, i) {
@@ -463,14 +463,14 @@ void class_generate_share(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "() void {\n");
-    str_flat(code, "  let state = @ptrv(this, u8, -8)\n");
+    str_flat(code, "  let state = this._STATE\n");
     str_flat(code, "  if state > 4 { return }\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 10\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = GC_AGE\n");
+    str_flat(code, "  this._STATE = 10\n");
+    str_flat(code, "  this._AGE_SHARED = GC_AGE\n");
 
     str_flat(code, "  if state < 4 {\n");
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
+    str_flat(code, "  let index = this._INDEX @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * SIZE\n");
     str_flat(code, "  @ptrv(data, uint, -2)++\n");
     // str_flat(code, "  GC_ACTIVE_SIZE += SIZE\n");
     str_flat(code, "  }\n");
@@ -530,15 +530,15 @@ void class_generate_free(Parser* p, Build* b, Class* class, Func* func) {
     str_clear(code);
 
     str_flat(code, "() void {\n");
-    str_flat(code, "  if @ptrv(this, u8, -8) != 4 : return\n");
-    str_flat(code, "  @ptrv(this, u8, -8) = 0\n");
-    str_flat(code, "  @ptrv(this, u8, -7) = 0\n");
-    str_flat(code, "  @ptrv(this, u8, -6) = 0\n");
+    str_flat(code, "  if this._STATE != 4 : return\n");
+    str_flat(code, "  this._STATE = 0\n");
+    str_flat(code, "  this._AGE = 0\n");
+    str_flat(code, "  this._AGE_SHARED = 0\n");
 
     str_flat(code, "  GC_ACTIVE_SIZE -= SIZE\n");
 
-    str_flat(code, "  let index = @ptrv(this, u8, -5) @as uint\n");
-    str_flat(code, "  let data = (this @as ptr) - index * SIZE - 8\n");
+    str_flat(code, "  let index = this._INDEX @as uint\n");
+    str_flat(code, "  let data = (this @as ptr) - index * SIZE\n");
     str_flat(code, "  @ptrv(data, uint, -2)--\n");
 
     // Props
@@ -562,9 +562,9 @@ void class_generate_free(Parser* p, Build* b, Class* class, Func* func) {
             str_flat(code, ") {\n");
         }
 
-        str_flat(code, "if @ptrv(");
+        str_flat(code, "if ");
         str_add(code, var);
-        str_flat(code, ", u32, -1)-- == 1 : ");
+        str_flat(code, "._RC-- == 1 : ");
         str_add(code, var);
         str_flat(code, "._v_free()\n");
 

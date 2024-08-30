@@ -225,14 +225,6 @@ char* ir_value(IR* ir, Value* v) {
         // Init object
         char* obj = ir_value(ir, ob);
 
-        // Set vtable bool & gc prop count
-        // if (class->type == ct_class) {
-            // char *propc = ir_ptrv(ir, obj, "i8", -3);
-            // ir_store(ir, propc, ir_int(ir, class->gc_fields), "i8", 1);
-            // char *vt = ir_ptrv(ir, obj, "i8", -2);
-            // ir_store(ir, vt, ir_int(ir, class->has_vtable ? 1 : 0), "i8", 1);
-        // }
-
         // Set props
         loop(ir_props, i) {
             char* lval = array_get_index(ir_props, i);

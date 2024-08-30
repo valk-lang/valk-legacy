@@ -148,12 +148,12 @@ cstruct GcManager {
             let item = G @as ptr
             #if @type_is_nullable(T)
             if item != null {
-                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                if @ptrv(item, u8, byte_shared_age) != age {
                     gc_mark_shared(item)
                 }
             }
             #else
-            if @ptrv(item, u8, byte_shared_age_rel) != age {
+            if @ptrv(item, u8, byte_shared_age) != age {
                 gc_mark_shared(item)
             }
             #end

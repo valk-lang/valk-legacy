@@ -41,27 +41,14 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
     }
 
     if (!is_trait && class->type == ct_class) {
-        // VTABLE
+        map_set(class->props, "_STATE", class_prop_make(b, type_cache_u8(b), act_readonly_fc, true));
+        map_set(class->props, "_AGE", class_prop_make(b, type_cache_u8(b), act_readonly_fc, true));
+        map_set(class->props, "_AGE_SHARED", class_prop_make(b, type_cache_u8(b), act_readonly_fc, true));
+        map_set(class->props, "_INDEX", class_prop_make(b, type_cache_u8(b), act_readonly_fc, true));
+        map_set(class->props, "_RC", class_prop_make(b, type_cache_u32(b), act_readonly_fc, true));
+        map_set(class->props, "_VTABLE", class_prop_make(b, type_cache_ptr(b), act_readonly_fc, true));
+
         class_create_vtable(b, class);
-
-        ClassProp *prop = al(b->alc, sizeof(ClassProp));
-        prop->act = act_readonly_fc;
-        prop->chunk_type = NULL;
-        prop->chunk_value = NULL;
-        prop->type = type_cache_ptr(b);
-        prop->skip_default_value = true;
-
-        map_set(class->props, "_VTABLE", prop);
-
-        // // RC
-        // prop = al(b->alc, sizeof(ClassProp));
-        // prop->act = act_readonly_fc;
-        // prop->chunk_type = NULL;
-        // prop->chunk_value = NULL;
-        // prop->type = type_cache_uint(b);
-        // prop->skip_default_value = true;
-
-        // map_set(class->props, "_RC", prop);
     }
 
     while(true) {
@@ -212,8 +199,10 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
     if (!is_trait) {
         if (class->type == ct_class) {
             // Count & sort gc fields
-            int swap = 1;
+            int swap = 6;
             loop(props->keys, i) {
+                if (i < 6)
+                    continue;
                 char *name = array_get_index(props->keys, i);
                 ClassProp *prop = array_get_index(props->values, i);
                 if (type_is_gc(prop->type)) {
@@ -224,6 +213,8 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             }
 
             loop(props->keys, i) {
+                if (i < 6)
+                    continue;
                 char *name = array_get_index(props->keys, i);
                 ClassProp *prop = array_get_index(props->values, i);
                 if (type_is_gc(prop->type)) {

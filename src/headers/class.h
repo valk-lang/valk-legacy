@@ -5,7 +5,7 @@
 #include "typedefs.h"
 
 Class* class_make(Allocator* alc, Build* b, Unit* u, int type);
-ClassProp* class_prop_make(Build* b, Type* type, bool skip_default_value);
+ClassProp* class_prop_make(Build* b, Type* type, int act, bool skip_default_value);
 ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);

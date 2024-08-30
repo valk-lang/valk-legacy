@@ -46,7 +46,7 @@ cstruct GcPool {
     count_new: bool (false)
 
     static fn init(size: uint, has_free_hook: bool, pool_index: u8) SELF {
-        let isize = size + 8
+        let isize = size
         let res = SELF{
             isize: isize
             pool_index: pool_index
@@ -146,7 +146,7 @@ cstruct GcPool {
 
             @ptrv(item, u32, 1) = 0
 
-            return (item + 8)
+            return item
         }
         print("Failed to allocate memory")
         print("\n")
