@@ -84,19 +84,6 @@ cstruct GcPool {
 
     fn get() ptr {
 
-        // if mem_usage > 70 {
-        //     gc()
-        // }
-        // let pos = stack_pos
-        // let diff : uint = (pos.adr - pos.base) @as uint
-        // if diff < mem_min {
-        //     mem_min = diff
-        // }
-        // if diff > mem_max {
-        //     mem_max = diff
-        // }
-
-
         let isize = this.isize
         if this.block == null {
             this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
@@ -150,9 +137,6 @@ cstruct GcPool {
 
         // Check mem usage
         update_usage()
-        // if mem_usage > 70 {
-        //     gc()
-        // }
     }
 
     fn set_block(block: ptr) {
