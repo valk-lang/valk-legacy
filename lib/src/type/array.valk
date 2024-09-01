@@ -222,21 +222,21 @@ struct Array[T] {
     ////////////////
 
     #if @type_is_gc(T)
-        fn _gc_transfer() {
-            let data = this.data
-            let x = this.length
-            while x-- > 0 {
-                mem:gc_transfer(@ptrv(data, ptr, x))
-            }
-        }
-        fn _gc_mark(age: u8) {
-            let data = this.data
-            let x = this.length
-            let a = age
-            while x-- > 0 {
-                mem:gc_mark(@ptrv(data, ptr, x), a)
-            }
-        }
+        // fn _gc_transfer() {
+        //     let data = this.data
+        //     let x = this.length
+        //     while x-- > 0 {
+        //         mem:gc_transfer(@ptrv(data, ptr, x))
+        //     }
+        // }
+        // fn _gc_mark(age: u8) {
+        //     let data = this.data
+        //     let x = this.length
+        //     let a = age
+        //     while x-- > 0 {
+        //         mem:gc_mark(@ptrv(data, ptr, x), a)
+        //     }
+        // }
         fn _gc_mark_shared(age: u8) {
             let data = this.data
             let x = this.length

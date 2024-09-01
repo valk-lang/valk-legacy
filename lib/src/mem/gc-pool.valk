@@ -120,9 +120,9 @@ cstruct GcPool {
                 continue
             }
 
-            if this.has_free_hook {
-                @ptrv(item, u8, byte_state) = state_used
-            }
+            // if this.has_free_hook {
+            //     @ptrv(item, u8, byte_state) = state_used
+            // }
 
             // Increase mem usage
             mem_new += isize
@@ -149,9 +149,9 @@ cstruct GcPool {
 
         // Check mem usage
         update_usage()
-        if mem_usage > 70 {
-            gc()
-        }
+        // if mem_usage > 70 {
+        //     gc()
+        // }
     }
 
     fn set_block(block: ptr) {
@@ -161,6 +161,7 @@ cstruct GcPool {
 
     fn swap_transfers() {
         if !this.has_free_hook : return
+        return
         //
         let current = this.block
         let block = this.first

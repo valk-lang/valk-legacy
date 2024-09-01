@@ -260,33 +260,94 @@ struct Coro {
     // GC
     ///////////////////
 
-    -pkg static fn transfer_check() {
+    // -pkg static fn transfer_check() {
+    //     let coros = g_coros
+
+    //     each coros as coro {
+    //         if isset(coro) {
+    //             let base = coro.gc_stack.base
+    //             let adr = coro.gc_stack.adr
+    //             while adr > base {
+    //                 adr -= sizeof(ptr)
+    //                 // adr.print()
+    //                 // print("\n")
+    //                 let item = @ptrv(adr, ptr, 0)
+    //                 if item != null : mem:gc_transfer(item)
+    //             }
+    //         }
+    //     }
+    // }
+
+    -pkg static fn mark_on_stack(val: u8) {
         let coros = g_coros
 
         each coros as coro {
             if isset(coro) {
-                let base = coro.gc_stack.base
-                let adr = coro.gc_stack.adr
-                while adr > base {
-                    adr -= sizeof(ptr)
-                    // adr.print()
-                    // print("\n")
+                let adr = coro.gc_stack.base
+                let top = coro.gc_stack.adr
+                while adr < top {
                     let item = @ptrv(adr, ptr, 0)
-                    if item != null : mem:gc_transfer(item)
+                    if item != null : @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                    adr += sizeof(ptr) * 2
                 }
             }
         }
     }
 
-    fn _gc_mark(age: u8) {
-        let base = this.gc_stack.base
-        let adr = this.gc_stack.adr
-        while adr > base {
-            adr -= sizeof(ptr)
-            let item = @ptrv(adr, ptr, 0)
-            if item != null : mem:gc_mark(item, age)
+    -pkg static fn demark_previous() {
+        let coros = g_coros
+
+        each coros as coro {
+            if isset(coro) {
+                let pos = coro.gc_stack
+                let adr = pos.base
+                let top = pos.last_adr
+                pos.last_adr = pos.adr
+                while adr < top {
+                    let prev = @ptrv(adr, ptr, 1)
+                    if prev != null {
+                        let on_stack = @ptrv(prev, u8, mem:byte_on_stack_rel)
+                        if on_stack == 0 : mem:gc_demark(prev)
+                        @ptrv(adr, ?ptr, 1) = null
+                    }
+                    adr += sizeof(ptr) * 2
+                }
+            }
         }
     }
+
+    -pkg static fn mark_stack_items() {
+        let coros = g_coros
+
+        each coros as coro {
+            if isset(coro) {
+                let adr = coro.gc_stack.base
+                let top = coro.gc_stack.adr
+                while adr < top {
+                    let item = @ptrv(adr, ptr, 0)
+                    if item != null {
+                        let state = @ptrv(item, u8, mem:byte_state_rel)
+                        if state == mem:state_new {
+                            mem:gc_mark(item)
+                            // Set previous
+                            @ptrv(adr, ptr, 1) = item
+                        }
+                    }
+                    adr += sizeof(ptr) * 2
+                }
+            }
+        }
+    }
+
+    // fn _gc_mark(age: u8) {
+    //     let base = this.gc_stack.base
+    //     let adr = this.gc_stack.adr
+    //     while adr > base {
+    //         adr -= sizeof(ptr)
+    //         let item = @ptrv(adr, ptr, 0)
+    //         if item != null : mem:gc_mark(item, age)
+    //     }
+    // }
     fn _gc_mark_shared(age: u8) {
         let base = this.gc_stack.base
         let adr = this.gc_stack.adr
