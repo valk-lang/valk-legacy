@@ -64,7 +64,6 @@ cstruct StackPos {
     base: ptr
     adr: ptr
     last_adr: ptr
-    // min: uint (0)
     size: uint
     fn free() {
         free(this.base)
