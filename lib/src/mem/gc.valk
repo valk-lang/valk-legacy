@@ -14,15 +14,7 @@ fn force_gc() {
 }
 
 fn update_usage() {
-    // 
-    // let pos = stack_pos
-    // let size : uint = (pos.adr - pos.base) @as uint
-    // if size > pos.max {
-    //     pos.max = size
-    // }
-    // let cap = 15 + size * 100 / (pos.max + 1)
-
-    // // Calculate mem usage
+    // Calculate mem usage
     mem_usage = mem_new * 100 / mem_trigger
     if mem_usage > 20 {
         gc()
