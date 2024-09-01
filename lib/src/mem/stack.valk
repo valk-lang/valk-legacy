@@ -66,6 +66,7 @@ cstruct StackPos {
     last_adr: ptr
     // min: uint (0)
     size: uint
+    max: uint
     fn free() {
         free(this.base)
         free(this)
@@ -78,6 +79,7 @@ fn create_stack() StackPos {
         adr: base
         last_adr: base
         size: stack_size
+        max: 0
     }
 }
 
@@ -186,22 +188,27 @@ cstruct Stack {
         run_gc = false
         mem_gc_loop = false
 
-        print("1.")
+        // print("1.")
         this.mark_on_stack(1)
-        print("2.")
+        // print("2.")
         this.demark_previous_stack_items()
-        print("3.")
-        this.mark_on_stack(0)
+        // print("3.")
 
-        print("4.")
+        // print("4.")
         this.mark_on_stack(0)
-        print("5.")
+        // print("5.")
         this.handle_remark_list()
-        print("6.")
+        // print("6.")
         this.mark_stack_items()
+
+        this.mark_on_stack(0)
         print("-")
 
-        mem_trigger = mem_marked + mem_marked_default
+        let max = mem_marked + mem_marked_default
+        if max > mem_trigger {
+            mem_trigger = max
+        }
+
 
         pools_reset()
 
