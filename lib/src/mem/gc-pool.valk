@@ -36,7 +36,6 @@ fn init_pools() {
 
 cstruct GcPool {
     blockc: uint (0) // blocks count
-    blocku: uint (0) // blocks usage
     first: ptr (null @as ptr)
     block: ptr (null @as ptr)
     index: uint (0)
@@ -81,22 +80,10 @@ cstruct GcPool {
         let isize = this.isize
         if this.block == null {
             this.blockc++
-            this.blocku++
             this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
             this.first = this.block
             this.count_new = true
         }
-
-        // let pos = stack_pos
-        // let stack_size : uint = (pos.adr - pos.base) @as uint
-        // if stack_size < mem_min {
-        //     mem_min = stack_size
-        // }
-        // if stack_size > mem_max {
-        //     mem_max = stack_size
-        // }
-        // let block_usage = this.blocku * 100 / this.blockc
-        // if block_usage > 95 : update_usage()
 
         while true {
             let block = this.block
@@ -141,10 +128,7 @@ cstruct GcPool {
             // Increase mem usage
             if this.count_new {
                 mem_new += isize
-                mem_usage = mem_new / (mem_trigger / 100)
             }
-
-            @ptrv(item, u32, 1) = 0
 
             return item
         }
@@ -155,11 +139,10 @@ cstruct GcPool {
 
     fn set_next_block(block: ptr) {
         while true {
-            this.blocku++
 
             let next = @ptrv(block, ?ptr, 0)
             if isset(next) {
-                if @ptrv(next, uint, 3) > 90 {
+                if @ptrv(next, uint, 3) > 80 {
                     block = next
                     continue
                 }
@@ -176,6 +159,7 @@ cstruct GcPool {
         }
 
         if @ptrv(this.block, ptr, 2) == 0 : this.count_new = true
+        mem_usage = mem_new / (mem_trigger / 100)
     }
 
     fn set_block(block: ptr) {
@@ -325,7 +309,6 @@ cstruct GcPool {
         }
 
         this.set_block(this.first)
-        this.blocku = this.first == null ? 0 : 1
         this.count_new = false
     }
 }

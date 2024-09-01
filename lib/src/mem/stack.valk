@@ -15,12 +15,17 @@ global mem_trigger : uint
 global mem_active : uint
 global mem_usage : uint
 global mem_free_able : uint
+
 global mem_max : uint
 global mem_min : uint
+
+global mem_depth : uint
+global mem_skip : uint
+
 global mem_gc_loop : bool
 global mem_cc : uint
 
-value mem_trigger_default (8192)
+value mem_trigger_default (10000)
 
 value state_new (0)
 value state_used (1)
@@ -191,6 +196,9 @@ cstruct Stack {
         this.rc_down_stack()
 
         let transfer_percent = mem_active / (mem_trigger / 100)
+        // print("M")
+            // this.update_age()
+            // this.mark_stack_age()
 
         // Full clear
         if transfer_percent > 160 || this.force_full {

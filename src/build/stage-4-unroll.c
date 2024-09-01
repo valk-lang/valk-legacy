@@ -125,6 +125,13 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
             }
         }
     }
+
+    if(func->gc_decl_count > 0) {
+        Parser *p = ur->func->unit->parser;
+        Scope *gcscope = gen_snippet_ast(ur->alc, p, get_valk_snippet(ur->b, "mem", "func_entry"), map_make(ur->alc), scope);
+        Token *tgc = token_make(ur->alc, t_ast_scope, gcscope);
+        array_push(unroll, tgc);
+    }
 }
 
 void unroll_scope_that_creates_objects(Unroll* ur, Scope* scope, Array* unroll) {
@@ -145,5 +152,10 @@ void unroll_func_defer(Unroll* ur, Scope* scope, Array* unroll) {
         // Stack reduce
         func->t_stack_decr = tgen_assign(alc, func->v_cache_stack_pos, func->v_cache_stack_pos);
         array_push(unroll, func->t_stack_decr);
+
+        Parser *p = ur->func->unit->parser;
+        Scope *gcscope = gen_snippet_ast(ur->alc, p, get_valk_snippet(ur->b, "mem", "func_exit"), map_make(ur->alc), scope);
+        Token *tgc = token_make(ur->alc, t_ast_scope, gcscope);
+        array_push(unroll, tgc);
     }
 }
