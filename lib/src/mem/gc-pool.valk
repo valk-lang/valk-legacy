@@ -42,7 +42,7 @@ cstruct GcPool {
     isize: uint (0)
     pool_index: u8
     has_free_hook: bool
-    count_new: bool (false)
+    // count_new: bool (false)
 
     static fn init(size: uint, has_free_hook: bool, pool_index: u8) SELF {
         let isize = size + 8
@@ -89,7 +89,7 @@ cstruct GcPool {
         if this.block == null {
             this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
             this.first = this.block
-            this.count_new = true
+            // this.count_new = true
         }
 
         while true {
@@ -138,9 +138,9 @@ cstruct GcPool {
             this.set_block(new)
         }
 
-        if(@ptrv(this.block, ptr, 2) == 0) {
-            this.count_new = true
-        }
+        // if(@ptrv(this.block, ptr, 2) == 0) {
+        //     this.count_new = true
+        // }
 
         // Check mem usage
         update_usage()
@@ -294,11 +294,14 @@ cstruct GcPool {
         let first_empty_block : ?ptr = null
         let last_empty_block : ?ptr = null
 
+        let t : uint = 0
+
         while block != null {
             let b = block
             let used = @ptrv(b, uint, 2)
             let next = @ptrv(b, ptr, 0)
             @ptrv(b, ?ptr, 0) = null // clear next
+            t += @ptrv(b, uint, 1)
             //
             if used == 0 {
                 if reached_current == false {
@@ -333,9 +336,16 @@ cstruct GcPool {
             } else {
                 this.first = first_empty_block
             }
+        } else {
+            if isset(last)  {
+                @ptrv(last, ?ptr, 0) = null
+            }
         }
 
+        // t.print(10)
+        // print("<")
+
         this.set_block(this.first)
-        this.count_new = false
+        // this.count_new = false
     }
 }

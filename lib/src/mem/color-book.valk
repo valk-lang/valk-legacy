@@ -4,13 +4,13 @@ cstruct ColorBook {
     valid: ptr
     size: uint
     count: u16 (0)
-    next: u16 (1)
+    next: u16 (2)
 
     static fn new() SELF {
         let size: uint = 256 
         return SELF {
             pool: alloc(size * sizeof(ptr))
-            valid: alloc(size + 1)
+            valid: calloc(size + 2)
             size: size
         }
     }

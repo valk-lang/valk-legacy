@@ -182,18 +182,23 @@ cstruct Stack {
     fn gc() {
         this.lock.lock()
 
-        mem_new = 0
-        mem_usage = 0
-        run_gc = false
-        mem_gc_loop = false
+        // mem_new = 0
+        // mem_usage = 0
+        // run_gc = false
+        // mem_gc_loop = false
+        print("-")
 
         let remark = this.remark.copy()
         let remark_count = this.remark.index
         this.remark.reset()
+
         // Swap prev color lists
         let pc = prev_colors
         prev_colors = prev_colors_b
         prev_colors_b = pc
+
+        // pc.size.print(10)
+        // print("<.")
 
         this.mark_on_stack(1)
         this.disable_previous_colors()
@@ -201,17 +206,19 @@ cstruct Stack {
         this.handle_remark_list()
         this.mark_stack_items()
 
+        let marked = mem_marked
+
         this.demark_previous_stack_items()
         this.mark_on_stack(0)
 
-        print("-")
-
         let max = mem_trigger / 20 * 19 // reduce 5%
-        let max_marked = (mem_marked + mem_marked_default) / 10 * 11 // increase 10%
+        let max_marked = (marked + mem_marked_default) / 10 * 11 // increase 10%
         if max_marked > max {
             max = max_marked
         }
         mem_trigger = max
+        mem_new = mem_marked
+        mem_new = 0
 
         pools_reset()
         free(remark)
