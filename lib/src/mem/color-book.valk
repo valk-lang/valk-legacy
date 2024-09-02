@@ -6,7 +6,7 @@ cstruct ColorBook {
     next: u16 (1)
 
     static fn new() SELF {
-        let size: uint = 128 
+        let size: uint = 256 
         return SELF {
             pool: alloc(size * sizeof(ptr))
             size: size

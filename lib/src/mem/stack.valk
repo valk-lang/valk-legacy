@@ -184,20 +184,14 @@ cstruct Stack {
         run_gc = false
         mem_gc_loop = false
 
-        // print("1.")
         this.mark_on_stack(1)
-        // print("2.")
         this.demark_previous_stack_items()
-        // print("3.")
-
-        // print("4.")
         this.mark_on_stack(0)
-        // print("5.")
+
+        this.mark_on_stack(0)
         this.handle_remark_list()
-        // print("6.")
         this.mark_stack_items()
 
-        this.mark_on_stack(0)
         print("-")
 
         let max = mem_marked + mem_marked_default
@@ -286,7 +280,9 @@ cstruct Stack {
             if prev != null {
                 let on_stack = @ptrv(prev, u8, byte_on_stack_rel)
                 if on_stack == 0 {
+                    // TODO: cache the color on stack
                     let color = @ptrv(prev, u16, byte_color_rel)
+
                     this.colors.giveback(color)
                     gc_demark(prev, color)
                 }
@@ -313,6 +309,7 @@ cstruct Stack {
                     let c = this.colors.get()
                     gc_mark(item, c)
                     // Set previous
+                    // TODO: also store color on stack (for previous item)
                     @ptrv(adr, ptr, 1) = item
                 }
             }
