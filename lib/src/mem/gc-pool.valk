@@ -115,7 +115,8 @@ cstruct GcPool {
             // }
 
             // Increase mem usage
-            if this.count_new : mem_new += isize
+            // if this.count_new : mem_new += isize
+            mem_new += isize
 
             return (item + 8)
         }

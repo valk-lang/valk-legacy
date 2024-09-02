@@ -15,10 +15,11 @@ fn force_gc() {
 
 fn update_usage() {
     // Calculate mem usage
-    mem_usage = mem_new * 100 / mem_trigger
-    if mem_usage > 20 {
-        gc()
-    }
+    if mem_new > mem_trigger : gc()
+    // mem_usage = mem_new * 100 / mem_trigger
+    // if mem_usage > 20 {
+    //     gc()
+    // }
 }
 
 fn gc_mark(item: ptr, color: u16) {

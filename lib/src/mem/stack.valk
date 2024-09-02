@@ -206,10 +206,12 @@ cstruct Stack {
 
         print("-")
 
-        let max = mem_marked + mem_marked_default
-        if max > mem_trigger {
-            mem_trigger = max
+        let max = mem_trigger / 20 * 19 // reduce 5%
+        let max_marked = (mem_marked + mem_marked_default) / 10 * 11 // increase 10%
+        if max_marked > max {
+            max = max_marked
         }
+        mem_trigger = max
 
         pools_reset()
         free(remark)
