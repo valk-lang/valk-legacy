@@ -57,11 +57,12 @@ shared stack_count: uint
 
 global stack_pos: @ignu(StackPos)
 global main_stack_pos: @ignu(StackPos)
+global colors: ColorBook (ColorBook.new())
+global prev_colors: Bump (Bump.new())
 
 cstruct StackPos {
     base: ptr
     adr: ptr
-    last_adr: ptr
     size: uint
     fn free() {
         free(this.base)
@@ -73,19 +74,17 @@ fn create_stack() StackPos {
     return StackPos { 
         base: base
         adr: base
-        last_adr: base
         size: stack_size
     }
 }
 
 cstruct Stack {
     // id: uint
-
     transfer : ObjectChain
     shared : GcRing
     lock : GcLock
     bump: GcBumper (GcBumper.new())
-    colors : ColorBook (ColorBook.new())
+    remark: PtrList (PtrList.new())
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
@@ -184,6 +183,10 @@ cstruct Stack {
         run_gc = false
         mem_gc_loop = false
 
+        let remark = this.remark.copy()
+        let remark_count = this.remark.index
+        this.remark.reset()
+
         this.mark_on_stack(1)
         this.demark_previous_stack_items()
         this.mark_on_stack(0)
@@ -199,50 +202,8 @@ cstruct Stack {
             mem_trigger = max
         }
 
-
         pools_reset()
-
-        // this.mark_difference_down()
-        // this.handle_transfer_list()
-        // pools_swap_transfers()
-        // this.bump.wipe()
-
-        // let transfer_percent = mem_transfered * 100 / mem_marked
-
-        // // Full clear
-        // if transfer_percent > 50 || this.force_full {
-
-        //     this.force_full = false
-
-        //     let before = mem_marked
-        //     let total_before = before + mem_transfered
-        //     // Reset counters
-        //     mem_marked = mem_marked_default
-        //     mem_transfered = 0
-        //     // Mark
-        //     this.update_age()
-        //     this.mark_stack_age()
-
-        //     // Clean
-        //     let free_able = total_before - mem_marked
-        //     let total_free_able = free_able + mem_free_able
-        //     if total_free_able > mem_marked / 10 || this.force_full {
-        //         // Clean
-        //         print("a.")
-        //         pools_clean_unmarked(this.age)
-        //         mem_free_able = 0
-
-        //         // if before > mem_marked :
-        //         // mem_marked = (mem_marked + before) / 2
-        //     } else {
-        //         print("b.")
-        //         mem_free_able += free_able
-        //         // mem_marked = mem_marked / 10 * 14
-        //     }
-        // } else {
-        //     print("-")
-        // }
-        // pools_reset()
+        free(remark)
 
         // Mark shared
         // if shared_age != this.shared_age {
@@ -271,33 +232,53 @@ cstruct Stack {
     }
 
     fn demark_previous_stack_items() {
-        let pos = main_stack_pos
-        let adr = pos.base
-        let top = pos.last_adr
-        pos.last_adr = pos.adr
-        while adr < top {
-            let prev = @ptrv(adr, ptr, 1)
-            if prev != null {
-                let on_stack = @ptrv(prev, u8, byte_on_stack_rel)
-                if on_stack == 0 {
-                    // TODO: cache the color on stack
-                    let color = @ptrv(prev, u16, byte_color_rel)
+        let list = prev_colors
+        let adr = list.data
+        let end_adr = adr + list.index
+        while adr < end_adr {
+            let item = @ptrv(adr, ptr)
+            let color = @ptrv(adr, uint, 1) @as u16
 
-                    this.colors.giveback(color)
-                    gc_demark(prev, color)
-                }
-                // Clear previous item
-                @ptrv(adr, ?ptr, 1) = null
+            let on_stack = @ptrv(item, u8, byte_on_stack_rel)
+            if on_stack == 0 {
+                gc_demark(item, color)
+                colors.giveback(color)
             }
+
             adr += sizeof(ptr) * 2
         }
 
-        core:Coro.demark_previous()
+        prev_colors.reset()
+
+        // let pos = main_stack_pos
+        // let adr = pos.base
+        // let top = pos.last_adr
+        // pos.last_adr = pos.adr
+        // while adr < top {
+        //     let prev = @ptrv(adr, ptr, 1)
+        //     if prev != null {
+        //         let on_stack = @ptrv(prev, u8, byte_on_stack_rel)
+        //         if on_stack == 0 {
+        //             // TODO: cache the color on stack
+        //             let color = @ptrv(prev, u16, byte_color_rel)
+
+        //             colors.giveback(color)
+        //             gc_demark(prev, color)
+        //         }
+        //         // Clear previous item
+        //         @ptrv(adr, ?ptr, 1) = null
+        //     }
+        //     adr += sizeof(ptr) * 2
+        // }
+
+        // core:Coro.demark_previous()
     }
 
     fn handle_remark_list() {
     }
     fn mark_stack_items() {
+        let pc = prev_colors
+
         let pos = main_stack_pos
         let adr = pos.base
         let top = pos.adr
@@ -306,11 +287,12 @@ cstruct Stack {
             if item != null {
                 let color = @ptrv(item, u16, byte_color_rel)
                 if color == state_new {
-                    let c = this.colors.get()
+                    let c = colors.get()
                     gc_mark(item, c)
                     // Set previous
-                    // TODO: also store color on stack (for previous item)
-                    @ptrv(adr, ptr, 1) = item
+                    let prev = pc.get(sizeof(ptr) * 2)
+                    @ptrv(prev, ptr) = item
+                    @ptrv(prev, uint, 1) = c
                 }
             }
             adr += sizeof(ptr) * 2

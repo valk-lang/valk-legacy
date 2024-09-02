@@ -23,7 +23,13 @@ fn update_usage() {
 
 fn gc_mark(item: ptr, color: u16) {
 
-    if @ptrv(item, u16, byte_color_rel) != state_new : return
+    let ic = @ptrv(item, u16, byte_color_rel)
+    if ic != state_new { 
+        if ic != color {
+            stack.remark.add(item)
+        }
+        return
+    }
     @ptrv(item, u16, byte_color_rel) = color
 
     let pool_index = @ptrv(item, u8, byte_pool_index_rel)

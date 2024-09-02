@@ -1,0 +1,42 @@
+
+cstruct PtrList {
+    pool: ptr
+    size: uint
+    index: uint (0)
+
+    static fn new() SELF {
+        let size: uint = 256 
+        return SELF {
+            pool: alloc(size * sizeof(ptr))
+            size: size
+        }
+    }
+
+    fn add(adr: ptr) {
+        let i = this.index++
+        if i == this.size {
+            let size = this.size
+            this.size = size * 2
+            let old_bytes = size * sizeof(ptr)
+            let old = this.pool
+            let new = alloc(old_bytes * 2)
+            copy(old, new, old_bytes)
+            this.pool = new
+            free(old)
+        }
+        @ptrv(this.pool, ptr, i) = adr
+    }
+
+    fn reset() {
+        this.index = 0
+    }
+
+    fn copy() ptr {
+        let count = this.index
+        if count == 0 : return null @as ptr
+        let bytes = count * sizeof(ptr)
+        let list = alloc(bytes)
+        copy(this.pool, list, bytes)
+        return list
+    }
+}

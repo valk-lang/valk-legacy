@@ -309,7 +309,7 @@ struct Coro {
                         let on_stack = @ptrv(prev, u8, mem:byte_on_stack_rel)
                         if on_stack == 0 {
                             let color = @ptrv(prev, u16, mem:byte_color_rel)
-                            mem:stack.colors.giveback(color)
+                            mem:colors.giveback(color)
                             mem:gc_demark(prev, color)
                         }
                         @ptrv(adr, ?ptr, 1) = null
@@ -322,6 +322,7 @@ struct Coro {
 
     -pkg static fn mark_stack_items() {
         let coros = g_coros
+        let pc = mem:prev_colors
 
         each coros as coro {
             if isset(coro) {
@@ -332,10 +333,12 @@ struct Coro {
                     if item != null {
                         let color = @ptrv(item, u16, mem:byte_color_rel)
                         if color == mem:state_new {
-                            let c = mem:stack.colors.get()
+                            let c = mem:colors.get()
                             mem:gc_mark(item, c)
                             // Set previous
-                            @ptrv(adr, ptr, 1) = item
+                            let prev = pc.get(sizeof(ptr) * 2)
+                            @ptrv(prev, ptr) = item
+                            @ptrv(prev, uint, 1) = c
                         }
                     }
                     adr += sizeof(ptr) * 2
