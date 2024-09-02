@@ -53,12 +53,16 @@ value byte_gc_prop_count_rel (-3)
 value byte_has_vtable_rel (-2)
 value byte_on_stack_rel (-1)
 
+value color_invalid (0)
+value color_valid (1)
+
 shared stack_count: uint
 
 global stack_pos: @ignu(StackPos)
 global main_stack_pos: @ignu(StackPos)
 global colors: ColorBook (ColorBook.new())
 global prev_colors: Bump (Bump.new())
+global prev_colors_b: Bump (Bump.new())
 
 cstruct StackPos {
     base: ptr
@@ -186,14 +190,19 @@ cstruct Stack {
         let remark = this.remark.copy()
         let remark_count = this.remark.index
         this.remark.reset()
+        // Swap prev color lists
+        let pc = prev_colors
+        prev_colors = prev_colors_b
+        prev_colors_b = pc
 
         this.mark_on_stack(1)
-        this.demark_previous_stack_items()
-        this.mark_on_stack(0)
+        this.disable_previous_colors()
 
-        this.mark_on_stack(0)
         this.handle_remark_list()
         this.mark_stack_items()
+
+        this.demark_previous_stack_items()
+        this.mark_on_stack(0)
 
         print("-")
 
@@ -231,8 +240,24 @@ cstruct Stack {
         core:Coro.mark_on_stack(val)
     }
 
+    fn disable_previous_colors() {
+        let list = prev_colors_b
+        let adr = list.data
+        let end_adr = adr + list.index
+        while adr < end_adr {
+            let item = @ptrv(adr, ptr)
+            let on_stack = @ptrv(item, u8, byte_on_stack_rel)
+            if on_stack == 0 {
+                let color = @ptrv(adr, uint, 1) @as u16
+                @ptrv(colors.valid, u8, color) = 0
+            }
+
+            adr += sizeof(ptr) * 2
+        }
+    }
+
     fn demark_previous_stack_items() {
-        let list = prev_colors
+        let list = prev_colors_b
         let adr = list.data
         let end_adr = adr + list.index
         while adr < end_adr {
@@ -248,7 +273,7 @@ cstruct Stack {
             adr += sizeof(ptr) * 2
         }
 
-        prev_colors.reset()
+        prev_colors_b.reset()
     }
 
     fn handle_remark_list() {

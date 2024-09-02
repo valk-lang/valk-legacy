@@ -23,24 +23,26 @@ fn update_usage() {
 
 fn gc_mark(item: ptr, color: u16) {
 
-    let ic = @ptrv(item, u16, byte_color_rel)
-    if ic != state_new { 
-        if ic != color {
-            stack.remark.add(item)
+    let item_color = @ptrv(item, u16, byte_color_rel)
+    if @ptrv(colors.valid, u8, item_color) == color_valid { 
+        if item_color != color {
+            // stack.remark.add(item)
         }
         return
     }
     @ptrv(item, u16, byte_color_rel) = color
 
-    let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-    let pool = @ptrv(pools, GcPool, pool_index)
-    let size = pool.isize
+    if item_color == 0 {
+        let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+        let pool = @ptrv(pools, GcPool, pool_index)
+        let size = pool.isize
 
-    mem_marked += size
+        mem_marked += size
 
-    let block_index = @ptrv(item, u8, byte_block_index_rel)
-    let block_start = item - 8 - block_index * size
-    @ptrv(block_start, uint, -2)++ // Increase used items count
+        let block_index = @ptrv(item, u8, byte_block_index_rel)
+        let block_start = item - 8 - block_index * size
+        @ptrv(block_start, uint, -2)++ // Increase used items count
+    }
 
     let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
     if propc > 0 {
@@ -82,73 +84,6 @@ fn gc_demark(item: ptr, color: u16) {
         }
     }
 }
-
-
-
-// fn gc_transfer(item: ptr) {
-
-//     if @ptrv(item, u8, byte_state_rel) > state_transfer : return
-//     @ptrv(item, u8, byte_state_rel) = state_solid
-
-//     let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-//     let pool = @ptrv(pools, GcPool, pool_index)
-//     let size = pool.isize
-
-//     mem_transfered += size
-
-//     let block_index = @ptrv(item, u8, byte_block_index_rel)
-//     let block_start = item - 8 - block_index * size
-//     @ptrv(block_start, uint, -2)++ // Increase used items count
-
-//     let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-//     if propc > 0 {
-//         let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-//         let i = 0
-//         if has_vtable {
-//             i++
-//             // Hook
-//             let vtable = @ptrv(item, ptr, 0)
-//             let hook = @ptrv(vtable, ?fn(ptr)(), vt_hook_transfer)
-//             if isset(hook) : hook(item)
-//         }
-//         while propc-- > 0 {
-//             let sub = @ptrv(item, ptr, i++)
-//             if sub == null : continue
-//             gc_transfer(sub)
-//         }
-//     }
-// }
-
-// fn gc_mark(item: ptr, age: u8) {
-
-//     if @ptrv(item, u8, byte_state_rel) > state_const : return
-//     if @ptrv(item, u8, byte_age_rel) == age : return
-//     @ptrv(item, u8, byte_age_rel) = age
-
-//     let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-//     let pool = @ptrv(pools, GcPool, pool_index)
-//     let size = pool.isize
-
-//     mem_marked += size
-
-//     let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-//     if propc > 0 {
-//         let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-//         let i = 0
-//         if has_vtable {
-//             i++
-//             // Hook
-//             let vtable = @ptrv(item, ptr, 0)
-//             let hook = @ptrv(vtable, ?fn(ptr, u8)(), vt_hook_mark)
-//             if isset(hook) : hook(item, age)
-//         }
-//         while propc-- > 0 {
-//             let sub = @ptrv(item, ptr, i++)
-//             if sub == null : continue
-//             gc_mark(sub, age)
-//         }
-//     }
-// }
 
 fn gc_mark_shared(item: ptr, age: u8) {
 
