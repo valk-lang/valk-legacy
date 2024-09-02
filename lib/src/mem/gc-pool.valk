@@ -106,7 +106,7 @@ cstruct GcPool {
             this.index++
             let data = block + GP_DATA_OFFSET
             let item = data + index * isize
-            if @ptrv(item, u8, byte_state) != state_new {
+            if @ptrv(item, u16, byte_color) != state_new {
                 continue
             }
 

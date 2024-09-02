@@ -1,0 +1,29 @@
+
+cstruct ColorBook {
+    pool: ptr
+    size: uint
+    count: u16 (0)
+    next: u16 (1)
+
+    static fn new() SELF {
+        let size: uint = 128 
+        return SELF {
+            pool: alloc(size * sizeof(ptr))
+            size: size
+        }
+    }
+
+    fn get() u16 {
+        if this.count > 0 {
+            let i = this.count - 1
+            this.count = i
+            return @ptrv(this.pool, u16, i)
+        }
+        return this.next++
+    }
+
+    fn giveback(color: u16) {
+        let i = this.count++
+        @ptrv(this.pool, u16, i) = color
+    }
+}

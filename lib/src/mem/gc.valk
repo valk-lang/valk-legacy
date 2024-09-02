@@ -21,10 +21,10 @@ fn update_usage() {
     }
 }
 
-fn gc_mark(item: ptr) {
+fn gc_mark(item: ptr, color: u16) {
 
-    if @ptrv(item, u8, byte_state_rel) != state_new : return
-    @ptrv(item, u8, byte_state_rel) = state_marked
+    if @ptrv(item, u16, byte_color_rel) != state_new : return
+    @ptrv(item, u16, byte_color_rel) = color
 
     let pool_index = @ptrv(item, u8, byte_pool_index_rel)
     let pool = @ptrv(pools, GcPool, pool_index)
@@ -44,15 +44,15 @@ fn gc_mark(item: ptr) {
         while propc-- > 0 {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
-            gc_mark(sub)
+            gc_mark(sub, color)
         }
     }
 }
 
-fn gc_demark(item: ptr) {
+fn gc_demark(item: ptr, color: u16) {
 
-    if @ptrv(item, u8, byte_state_rel) != state_marked : return
-    @ptrv(item, u8, byte_state_rel) = state_new
+    if @ptrv(item, u16, byte_color_rel) != color : return
+    @ptrv(item, u16, byte_color_rel) = state_new
 
     let pool_index = @ptrv(item, u8, byte_pool_index_rel)
     let pool = @ptrv(pools, GcPool, pool_index)
@@ -72,7 +72,7 @@ fn gc_demark(item: ptr) {
         while propc-- > 0 {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
-            gc_demark(sub)
+            gc_demark(sub, color)
         }
     }
 }
@@ -146,7 +146,7 @@ fn gc_demark(item: ptr) {
 
 fn gc_mark_shared(item: ptr, age: u8) {
 
-    if @ptrv(item, u8, byte_state_rel) > state_const : return
+    if @ptrv(item, u16, byte_color_rel) > state_const : return
     if @ptrv(item, u8, byte_shared_age_rel) == age : return
     @ptrv(item, u8, byte_shared_age_rel) = age
 

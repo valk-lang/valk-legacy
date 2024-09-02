@@ -25,10 +25,10 @@ value state_new (0)
 // value state_used (1)
 // value state_transfer (2)
 // value state_solid (4)
-value state_marked (4)
+// value state_marked (4)
+value state_const (9001)
+value state_shared (9002)
 
-value state_const (8)
-value state_shared (10)
 value stack_size (10000)
 
 value vt_hook_transfer (0)
@@ -37,8 +37,7 @@ value vt_hook_mark_shared (2)
 value vt_hook_share (3)
 value vt_hook_free (4)
 
-value byte_state (0)
-value byte_uu (1)
+value byte_color (0)
 value byte_shared_age (2)
 value byte_pool_index (3)
 value byte_block_index (4)
@@ -46,8 +45,7 @@ value byte_gc_prop_count (5)
 value byte_has_vtable (6)
 value byte_on_stack (7)
 
-value byte_state_rel (-8)
-value byte_uu_rel (-7)
+value byte_color_rel (-4)
 value byte_shared_age_rel (-6)
 value byte_pool_index_rel (-5)
 value byte_block_index_rel (-4)
@@ -87,6 +85,7 @@ cstruct Stack {
     shared : GcRing
     lock : GcLock
     bump: GcBumper (GcBumper.new())
+    colors : ColorBook (ColorBook.new())
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
@@ -286,7 +285,11 @@ cstruct Stack {
             let prev = @ptrv(adr, ptr, 1)
             if prev != null {
                 let on_stack = @ptrv(prev, u8, byte_on_stack_rel)
-                if on_stack == 0 : gc_demark(prev)
+                if on_stack == 0 {
+                    let color = @ptrv(prev, u16, byte_color_rel)
+                    this.colors.giveback(color)
+                    gc_demark(prev, color)
+                }
                 // Clear previous item
                 @ptrv(adr, ?ptr, 1) = null
             }
@@ -305,9 +308,10 @@ cstruct Stack {
         while adr < top {
             let item = @ptrv(adr, ptr, 0)
             if item != null {
-                let state = @ptrv(item, u8, byte_state_rel)
-                if state == state_new {
-                    gc_mark(item)
+                let color = @ptrv(item, u16, byte_color_rel)
+                if color == state_new {
+                    let c = this.colors.get()
+                    gc_mark(item, c)
                     // Set previous
                     @ptrv(adr, ptr, 1) = item
                 }
