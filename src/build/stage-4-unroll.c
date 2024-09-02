@@ -80,11 +80,11 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
         func->v_cache_stack_pos = stack_pos;
         array_push(unroll, token_make(alc, t_statement, stack_pos));
 
-        // Value *ms = vgen_memset(alc, func->v_cache_stack_pos, vgen_int(alc, func->gc_decl_count * b->ptr_size, type_cache_uint(b)), vgen_int(alc, 0, type_cache_u8(b)));
-        // array_push(unroll, token_make(alc, t_statement, ms));
+        Value *ms = vgen_memset(alc, func->v_cache_stack_pos, vgen_int(alc, func->gc_decl_count * b->ptr_size, type_cache_uint(b)), vgen_int(alc, 0, type_cache_u8(b)));
+        array_push(unroll, token_make(alc, t_statement, ms));
 
         // Stack reserve
-        Value *amount = vgen_int(alc, func->gc_decl_count * b->ptr_size * 2, type_cache_uint(b));
+        Value *amount = vgen_int(alc, func->gc_decl_count * b->ptr_size, type_cache_uint(b));
         Value *offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, amount, 1);
         func->t_stack_incr = tgen_assign(alc, func->v_cache_stack_pos, offset);
         array_push(unroll, func->t_stack_incr);
@@ -103,7 +103,7 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
         // Set stack offset for variables
         if (decl->offset > -1) {
             if (decl->is_gc) {
-                Value* offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, vgen_int(alc, decl->offset * 2, type_cache_u32(b)), b->ptr_size);
+                Value* offset = vgen_ptr_offset(alc, b, func->v_cache_stack_pos, vgen_int(alc, decl->offset, type_cache_u32(b)), b->ptr_size);
                 array_push(unroll, tgen_decl_set_store(alc, decl, offset));
             } else {
                 Value* offset = vgen_ptr_offset(alc, b, func->v_cache_alloca, vgen_int(alc, decl->offset, type_cache_u32(b)), 1);
@@ -115,10 +115,10 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
             array_push(unroll, tgen_decl_set_arg(alc, decl));
         } else {
             // Set null
-            if (decl->offset > -1 && decl->is_gc) {
-                Value* vdecl = vgen_decl(alc, decl);
-                array_push(unroll, tgen_assign(alc, vdecl, vgen_null(alc, b)));
-            }
+            // if (decl->offset > -1 && decl->is_gc) {
+            //     Value* vdecl = vgen_decl(alc, decl);
+            //     array_push(unroll, tgen_assign(alc, vdecl, vgen_null(alc, b)));
+            // }
         }
     }
 }

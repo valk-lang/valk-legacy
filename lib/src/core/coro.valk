@@ -260,24 +260,6 @@ struct Coro {
     // GC
     ///////////////////
 
-    // -pkg static fn transfer_check() {
-    //     let coros = g_coros
-
-    //     each coros as coro {
-    //         if isset(coro) {
-    //             let base = coro.gc_stack.base
-    //             let adr = coro.gc_stack.adr
-    //             while adr > base {
-    //                 adr -= sizeof(ptr)
-    //                 // adr.print()
-    //                 // print("\n")
-    //                 let item = @ptrv(adr, ptr, 0)
-    //                 if item != null : mem:gc_transfer(item)
-    //             }
-    //         }
-    //     }
-    // }
-
     -pkg static fn mark_on_stack(val: u8) {
         let coros = g_coros
 
@@ -288,7 +270,7 @@ struct Coro {
                 while adr < top {
                     let item = @ptrv(adr, ptr, 0)
                     if item != null : @ptrv(item, u8, mem:byte_on_stack_rel) = val
-                    adr += sizeof(ptr) * 2
+                    adr += sizeof(ptr)
                 }
             }
         }
@@ -314,7 +296,7 @@ struct Coro {
                         }
                         @ptrv(adr, ?ptr, 1) = null
                     }
-                    adr += sizeof(ptr) * 2
+                    adr += sizeof(ptr)
                 }
             }
         }
@@ -341,21 +323,12 @@ struct Coro {
                             @ptrv(prev, uint, 1) = c
                         }
                     }
-                    adr += sizeof(ptr) * 2
+                    adr += sizeof(ptr)
                 }
             }
         }
     }
 
-    // fn _gc_mark(age: u8) {
-    //     let base = this.gc_stack.base
-    //     let adr = this.gc_stack.adr
-    //     while adr > base {
-    //         adr -= sizeof(ptr)
-    //         let item = @ptrv(adr, ptr, 0)
-    //         if item != null : mem:gc_mark(item, age)
-    //     }
-    // }
     fn _gc_mark_shared(age: u8) {
         let base = this.gc_stack.base
         let adr = this.gc_stack.adr

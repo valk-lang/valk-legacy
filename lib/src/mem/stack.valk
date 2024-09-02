@@ -225,7 +225,7 @@ cstruct Stack {
             if item != null {
                 @ptrv(item, u8, byte_on_stack_rel) = val
             }
-            adr += sizeof(ptr) * 2
+            adr += sizeof(ptr)
         }
 
         core:Coro.mark_on_stack(val)
@@ -249,29 +249,6 @@ cstruct Stack {
         }
 
         prev_colors.reset()
-
-        // let pos = main_stack_pos
-        // let adr = pos.base
-        // let top = pos.last_adr
-        // pos.last_adr = pos.adr
-        // while adr < top {
-        //     let prev = @ptrv(adr, ptr, 1)
-        //     if prev != null {
-        //         let on_stack = @ptrv(prev, u8, byte_on_stack_rel)
-        //         if on_stack == 0 {
-        //             // TODO: cache the color on stack
-        //             let color = @ptrv(prev, u16, byte_color_rel)
-
-        //             colors.giveback(color)
-        //             gc_demark(prev, color)
-        //         }
-        //         // Clear previous item
-        //         @ptrv(adr, ?ptr, 1) = null
-        //     }
-        //     adr += sizeof(ptr) * 2
-        // }
-
-        // core:Coro.demark_previous()
     }
 
     fn handle_remark_list() {
@@ -295,141 +272,12 @@ cstruct Stack {
                     @ptrv(prev, uint, 1) = c
                 }
             }
-            adr += sizeof(ptr) * 2
+            adr += sizeof(ptr)
         }
 
         core:Coro.mark_stack_items()
     }
 
-    // #parse_last
-    // fn mark_difference_down() {
-    //     //
-    //     let transfer = this.transfer
-
-    //     // Globals
-    //     #loop_globals as G, T
-    //     #if @type_is_gc(T) && !@global_is_shared(G)
-    //     {
-    //         let g = G @as ptr
-    //         if g != null {
-    //             let state = @ptrv(g, u8, -8)
-    //             if state < state_transfer {
-    //                 // Transfer new items
-    //                 transfer.add_item(g)
-    //                 @ptrv(g, u8, -8) = state_transfer
-    //             } 
-    //         }
-    //     }
-    //     #end
-    //     #endloop
-
-    //     // Stack
-    //     let pos = main_stack_pos
-    //     let stack_base = pos.base
-    //     let stack_adr = pos.adr
-
-    //     // Mark new items as transfer
-    //     let adr = stack_adr
-    //     while adr > stack_base {
-    //         let item_adr = adr - sizeof(ptr)
-    //         adr = item_adr
-    //         let item = @ptrv(item_adr, ptr, 0)
-    //         if item != null {
-    //             //
-    //             let state = @ptrv(item, u8, -8)
-    //             if state < state_transfer {
-    //                 // Transfer new items
-    //                 transfer.add_item(item)
-    //                 @ptrv(item, u8, -8) = state_transfer
-    //             } 
-    //         }
-    //     }
-
-    //     // Coroutines
-    //     core:Coro.transfer_check()
-    // }
-
-    // fn handle_transfer_list() {
-    //     let chain = this.transfer
-    //     let last_list = chain.olist_last
-    //     let last_index = chain.index
-    //     let first_list = chain.olist_first
-    //     let next_list = first_list
-
-    //     // Mark solid
-    //     while true {
-    //         let list = next_list
-    //         let index : uint = 0
-    //         let is_last = list == last_list
-    //         let until_ : uint = chain_size
-    //         if is_last {
-    //             until_ = last_index
-    //         }
-    //         let until = until_
-    //         while index < until {
-    //             let item = @ptrv(list, ptr, index)
-    //             index++
-    //             // Item logic
-    //             if @ptrv(item, u8, byte_state_rel) != state_transfer {
-    //                 continue
-    //             }
-
-    //             gc_transfer(item)
-    //         }
-    //         if is_last {
-    //             break
-    //         }
-    //         next_list = @ptrv(list, ptr, chain_size)
-    //         if next_list == null {
-    //             break
-    //         }
-    //     }
-
-    //     chain.wipe()
-    // }
-
-    // fn update_age() {
-    //     let age : u8 = 64
-    //     if this.age == 64 {
-    //         age = 66
-    //     }
-    //     this.age = age
-    // }
-
-    // #parse_last
-    // fn mark_stack_age() {
-    //     let age = this.age
-    //     // Globals
-    //     #loop_globals as G, T
-    //     #if @type_is_gc(T) && !@global_is_shared(G)
-    //     {
-    //         let item = G @as ptr
-    //         if item != null {
-    //             if @ptrv(item, u8, byte_state_rel) < state_const {
-    //                 if @ptrv(item, u8, byte_age_rel) != age {
-    //                     gc_mark(item, age)
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     #end
-    //     #endloop
-    //     // Stack
-    //     let pos = main_stack_pos
-    //     let item_adr = pos.base
-    //     let stack_adr = pos.adr
-    //     while item_adr < stack_adr {
-    //         let item = @ptrv(item_adr, ptr)
-    //         item_adr += sizeof(ptr)
-    //         if item != null {
-    //             if @ptrv(item, u8, byte_state_rel) < state_const {
-    //                 if @ptrv(item, u8, byte_age_rel) != age {
-    //                     gc_mark(item, age)
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
     fn mark_stack_shared_age(age: u8) {
         // Globals
         let globals = this.globals
