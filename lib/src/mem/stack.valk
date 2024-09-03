@@ -31,6 +31,10 @@ value color_unlink (1)
 value state_const (9001)
 value state_shared (9002)
 
+value color_state_unused (0)
+value color_state_used (1)
+value color_state_unlinked (2)
+
 value stack_size (10000)
 
 value vt_hook_transfer (0)
@@ -55,9 +59,6 @@ value byte_gc_prop_count_rel (-3)
 value byte_has_vtable_rel (-2)
 value byte_on_stack_rel (-1)
 
-value color_invalid (0)
-value color_valid (1)
-
 shared stack_count: uint
 
 global stack_pos: @ignu(StackPos)
@@ -65,6 +66,7 @@ global main_stack_pos: @ignu(StackPos)
 global colors: ColorBook (ColorBook.new())
 global prev_colors: Bump (Bump.new())
 global prev_colors_b: Bump (Bump.new())
+global check_still_used: Bump (Bump.new())
 global remark: PtrList (PtrList.new())
 
 cstruct StackPos {
@@ -186,13 +188,14 @@ cstruct Stack {
     }
     static fn unlink(from: ptr, item: ptr) {
         let from_color = @ptrv(from, u16, mem:byte_color_rel)
-        if from_color <= color_unlink : return
-
         let item_color = @ptrv(to, u16, mem:byte_color_rel)
         if from_color == item_color {
-            @ptrv(colors.valid, u8, item_color) = 0
-            // TODO, ADD item TO check valid list
-            // TODO, ADD color to giveback-after list
+            @ptrv(colors.state, u8, item_color) = color_state_unlinked
+
+            let list = check_still_used
+            let adr = list.get(sizeof(ptr) * 2)
+            @ptrv(adr, ptr) = item
+            @ptrv(adr, uint, 1) = item_color
         }
     }
 
@@ -229,6 +232,8 @@ cstruct Stack {
         let marked = mem_marked
 
         this.demark_previous_stack_items()
+        this.check_still_used()
+
         this.mark_on_stack(0)
 
         let max = mem_trigger / 100 * 95 // reduce 5%
@@ -278,7 +283,7 @@ cstruct Stack {
             let on_stack = @ptrv(item, u8, byte_on_stack_rel)
             if on_stack == 0 {
                 let color = @ptrv(adr, uint, 1) @as u16
-                @ptrv(colors.valid, u8, color) = 0
+                @ptrv(colors.state, u8, color) = color_state_unlinked
             }
 
             adr += sizeof(ptr) * 2
@@ -296,6 +301,10 @@ cstruct Stack {
             let on_stack = @ptrv(item, u8, byte_on_stack_rel)
             if on_stack == 0 {
                 gc_demark(item, color)
+            }
+
+            if @ptrv(colors.state, u8, color) == color_state_unlinked {
+                @ptrv(colors.state, u8, color) = color_state_unused
                 colors.giveback(color)
             }
 
@@ -303,6 +312,27 @@ cstruct Stack {
         }
 
         prev_colors_b.reset()
+    }
+
+    fn check_still_used() {
+        let list = check_still_used
+        let data = list.data
+        let end = data + list.index
+
+        while data < end {
+            let item = @ptrv(data, ptr)
+            let color = @ptrv(data, uint, 1) @as u16
+            data += sizeof(ptr) * 2
+
+            gc_demark(item, color)
+
+            if @ptrv(colors.state, u8, color) == color_state_unlinked {
+                @ptrv(colors.state, u8, color) = color_state_unused
+                colors.giveback(color)
+            }
+        }
+
+        list.reset()
     }
 
     fn handle_remark_list() {
@@ -318,7 +348,7 @@ cstruct Stack {
             if item != null {
                 let color = @ptrv(item, u16, byte_color_rel)
                 // if color == state_new {
-                if @ptrv(colors.valid, u8, color) != color_valid {
+                if @ptrv(colors.state, u8, color) != color_state_used {
                     let c = colors.get()
                     gc_mark(item, c)
                     // Set previous

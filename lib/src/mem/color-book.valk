@@ -1,7 +1,7 @@
 
 cstruct ColorBook {
     pool: ptr
-    valid: ptr
+    state: ptr
     size: uint
     count: u16 (0)
     next: u16 (2)
@@ -10,7 +10,7 @@ cstruct ColorBook {
         let size: uint = 256 
         return SELF {
             pool: alloc(size * sizeof(ptr))
-            valid: calloc(size + 2)
+            state: calloc(size + 2)
             size: size
         }
     }
@@ -20,18 +20,18 @@ cstruct ColorBook {
             let i = this.count - 1
             this.count = i
             let c = @ptrv(this.pool, u16, i)
-            @ptrv(this.valid, u8, c) = 1
+            @ptrv(this.state, u8, c) = 1
             return c
         }
         let c = this.next++
         // Enable color
-        @ptrv(this.valid, u8, c) = 1
+        @ptrv(this.state, u8, c) = 1
         // Allocate more colors if needed
         if c == this.size {
             let size = this.size
             let new_size = size * 2
             this.pool = resized_clone_and_free(this.pool, size * sizeof(ptr), new_size * sizeof(ptr))
-            this.valid = resized_clone_and_free(this.valid, size, new_size)
+            this.state = resized_clone_and_free(this.state, size, new_size)
             this.size = new_size
         }
         //

@@ -25,7 +25,7 @@ fn update_usage() {
 fn gc_mark(item: ptr, color: u16) {
 
     let item_color = @ptrv(item, u16, byte_color_rel)
-    if @ptrv(colors.valid, u8, item_color) == color_valid { 
+    if @ptrv(colors.state, u8, item_color) == color_state_used { 
         return
     }
 
