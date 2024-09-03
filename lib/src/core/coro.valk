@@ -314,7 +314,8 @@ struct Coro {
                     let item = @ptrv(adr, ptr, 0)
                     if item != null {
                         let color = @ptrv(item, u16, mem:byte_color_rel)
-                        if color == mem:state_new {
+                        // if color == mem:state_new {
+                        if @ptrv(mem:colors.valid, u8, color) != mem:color_valid {
                             let c = mem:colors.get()
                             mem:gc_mark(item, c, true)
                             // Set previous

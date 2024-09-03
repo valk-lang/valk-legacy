@@ -29,30 +29,6 @@ fn gc_mark(item: ptr, color: u16, on_stack: bool) {
         return
     }
 
-    // Check if we need a new color
-    let has_new_color = false
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 && !on_stack {
-        let count = propc
-        let i = 0
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        if has_vtable : i++
-        while count-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            let sub_color = @ptrv(sub, u16, byte_color_rel)
-            if sub_color == color {
-                // Get new color
-                has_new_color = true
-                color = colors.get()
-                let prev = prev_colors.get(sizeof(ptr) * 2)
-                @ptrv(prev, ptr) = item
-                @ptrv(prev, uint, 1) = color
-                break
-            }
-        }
-    }
-
     //
     @ptrv(item, u16, byte_color_rel) = color
 
@@ -68,7 +44,9 @@ fn gc_mark(item: ptr, color: u16, on_stack: bool) {
         @ptrv(block_start, uint, -2)++ // Increase used items count
     }
 
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
     if propc > 0 {
+        let added = false
         let count = propc
         let i = 0
         let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
@@ -78,9 +56,10 @@ fn gc_mark(item: ptr, color: u16, on_stack: bool) {
             if sub == null : continue
             gc_mark(sub, color, false)
             let sub_color = @ptrv(item, u16, byte_color_rel)
-            if sub_color != color {
+            if sub_color != color && !added {
                 // Add to remark
                 remark.add(item)
+                added = true
             }
         }
     }
@@ -89,7 +68,7 @@ fn gc_mark(item: ptr, color: u16, on_stack: bool) {
 fn gc_demark(item: ptr, color: u16) {
 
     if @ptrv(item, u16, byte_color_rel) != color : return
-    @ptrv(item, u16, byte_color_rel) = state_new
+    @ptrv(item, u16, byte_color_rel) = color_blank
 
     let pool_index = @ptrv(item, u8, byte_pool_index_rel)
     let pool = @ptrv(pools, GcPool, pool_index)
@@ -110,6 +89,23 @@ fn gc_demark(item: ptr, color: u16) {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
             gc_demark(sub, color)
+        }
+    }
+}
+
+fn gc_unlink_item(item: ptr, color: u16) {
+    if @ptrv(item, u16, byte_color_rel) != color : return
+    @ptrv(item, u16, byte_color_rel) = color_unlink
+
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
+    if propc > 0 {
+        let i = 0
+        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
+        if has_vtable : i++
+        while propc-- > 0 {
+            let sub = @ptrv(item, ptr, i++)
+            if sub == null : continue
+            gc_unlink_item(sub, color)
         }
     }
 }

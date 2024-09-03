@@ -21,7 +21,9 @@ global mem_gc_loop : bool
 
 value mem_marked_default (8192)
 
-value state_new (0)
+value color_blank (0)
+value color_unlink (1)
+
 // value state_used (1)
 // value state_transfer (2)
 // value state_solid (4)
@@ -159,6 +161,13 @@ cstruct Stack {
     // Runtime functions
     ///////////////////////
     static fn link(on: ptr, to: ptr) {
+        let on_color = @ptrv(on, u16, mem:byte_color_rel)
+        let to_color = @ptrv(to, u16, mem:byte_color_rel)
+
+        if on_color != to_color {
+            // Add on-item to remark list
+        }
+
         // let to_state = @ptrv(to, u8, -8)
         // let on_state = @ptrv(on, u8, -8)
         // if on_state == state_shared {
@@ -174,6 +183,17 @@ cstruct Stack {
         //     stack.transfer.add_item(to)
         //     @ptrv(to, u8, -8) = state_transfer
         // }
+    }
+    static fn unlink(from: ptr, item: ptr) {
+        let from_color = @ptrv(from, u16, mem:byte_color_rel)
+        if from_color <= color_unlink : return
+
+        let item_color = @ptrv(to, u16, mem:byte_color_rel)
+        if from_color == item_color {
+            @ptrv(colors.valid, u8, item_color) = 0
+            // TODO, ADD item TO check valid list
+            // TODO, ADD color to giveback-after list
+        }
     }
 
     ///////////////////////
@@ -211,14 +231,14 @@ cstruct Stack {
         this.demark_previous_stack_items()
         this.mark_on_stack(0)
 
-        let max = mem_trigger / 20 * 19 // reduce 5%
-        let max_marked = (marked + mem_marked_default) / 10 * 11 // increase 10%
+        let max = mem_trigger / 100 * 95 // reduce 5%
+        let max_marked = (mem_marked + mem_marked_default) / 100 * 120 // increase 20%
         if max_marked > max {
             max = max_marked
         }
         mem_trigger = max
         mem_new = mem_marked
-        mem_new = 0
+        // mem_new = 0
 
         pools_reset()
         free(rem)
@@ -297,7 +317,8 @@ cstruct Stack {
             let item = @ptrv(adr, ptr, 0)
             if item != null {
                 let color = @ptrv(item, u16, byte_color_rel)
-                if color == state_new {
+                // if color == state_new {
+                if @ptrv(colors.valid, u8, color) != color_valid {
                     let c = colors.get()
                     gc_mark(item, c, true)
                     // Set previous

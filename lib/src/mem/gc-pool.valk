@@ -73,11 +73,9 @@ cstruct GcPool {
         while i < size {
             let item : ptr = data + i * isize
             @ptrv(item, u64, 0) = 0 // clear data
-            @ptrv(item, u8, 0) = state_new
-            @ptrv(item, u8, 1) = 0
-            @ptrv(item, u8, 2) = 0
-            @ptrv(item, u8, 3) = pool_index
-            @ptrv(item, u8, 4) = i
+            @ptrv(item, u16, byte_color) = color_blank
+            @ptrv(item, u8, byte_pool_index) = pool_index
+            @ptrv(item, u8, byte_block_index) = i
             i++
         }
         return b
@@ -106,7 +104,7 @@ cstruct GcPool {
             this.index++
             let data = block + GP_DATA_OFFSET
             let item = data + index * isize
-            if @ptrv(item, u16, byte_color) != state_new {
+            if @ptrv(item, u16, byte_color) != color_blank {
                 continue
             }
 
@@ -174,7 +172,7 @@ cstruct GcPool {
                     let hook = @ptrv(vtable, fn(ptr)(), 3)
                     hook(ob)
 
-                    @ptrv(item, u8, byte_state) = state_new
+                    @ptrv(item, u16, byte_state) = color_blank
                 }
                 i++
             }
@@ -193,7 +191,7 @@ cstruct GcPool {
                 let hook = @ptrv(vtable, fn(ptr)(), 3)
                 hook(ob)
 
-                @ptrv(item, u8, byte_state) = state_new
+                @ptrv(item, u16, byte_state) = color_blank
             }
             i++
         }
@@ -232,8 +230,7 @@ cstruct GcPool {
                             let hook = @ptrv(vtable, fn(ptr)(), 3)
                             hook(ob)
                         }
-                        @ptrv(item, u8, byte_state) = state_new
-                        @ptrv(item, u8, byte_age) = 0
+                        @ptrv(item, u16, byte_state) = color_blank
                         @ptrv(item, u8, byte_shared_age) = 0
                         used--
                     }
@@ -287,6 +284,8 @@ cstruct GcPool {
     // }
     fn reset() {
         let block = this.first
+        if block == null : return
+
         let current = this.block
 
         let reached_current = false
@@ -342,8 +341,10 @@ cstruct GcPool {
             }
         }
 
+        // if t > 0 {
         // t.print(10)
         // print("<")
+        // }
 
         this.set_block(this.first)
         // this.count_new = false
