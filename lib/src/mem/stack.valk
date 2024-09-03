@@ -63,6 +63,7 @@ global main_stack_pos: @ignu(StackPos)
 global colors: ColorBook (ColorBook.new())
 global prev_colors: Bump (Bump.new())
 global prev_colors_b: Bump (Bump.new())
+global remark: PtrList (PtrList.new())
 
 cstruct StackPos {
     base: ptr
@@ -88,7 +89,6 @@ cstruct Stack {
     shared : GcRing
     lock : GcLock
     bump: GcBumper (GcBumper.new())
-    remark: PtrList (PtrList.new())
 
     globals: ptr (null @as ptr)
     globalc: uint (0)
@@ -188,9 +188,9 @@ cstruct Stack {
         // mem_gc_loop = false
         print("-")
 
-        let remark = this.remark.copy()
-        let remark_count = this.remark.index
-        this.remark.reset()
+        let rem = remark.copy()
+        let rem_count = remark.index
+        remark.reset()
 
         // Swap prev color lists
         let pc = prev_colors
@@ -221,7 +221,7 @@ cstruct Stack {
         mem_new = 0
 
         pools_reset()
-        free(remark)
+        free(rem)
 
         // Mark shared
         // if shared_age != this.shared_age {
@@ -299,7 +299,7 @@ cstruct Stack {
                 let color = @ptrv(item, u16, byte_color_rel)
                 if color == state_new {
                     let c = colors.get()
-                    gc_mark(item, c)
+                    gc_mark(item, c, true)
                     // Set previous
                     let prev = pc.get(sizeof(ptr) * 2)
                     @ptrv(prev, ptr) = item

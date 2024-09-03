@@ -22,15 +22,38 @@ fn update_usage() {
     // }
 }
 
-fn gc_mark(item: ptr, color: u16) {
+fn gc_mark(item: ptr, color: u16, on_stack: bool) {
 
     let item_color = @ptrv(item, u16, byte_color_rel)
     if @ptrv(colors.valid, u8, item_color) == color_valid { 
-        if item_color != color {
-            // stack.remark.add(item)
-        }
         return
     }
+
+    // Check if we need a new color
+    let has_new_color = false
+    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
+    if propc > 0 && !on_stack {
+        let count = propc
+        let i = 0
+        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
+        if has_vtable : i++
+        while count-- > 0 {
+            let sub = @ptrv(item, ptr, i++)
+            if sub == null : continue
+            let sub_color = @ptrv(sub, u16, byte_color_rel)
+            if sub_color == color {
+                // Get new color
+                has_new_color = true
+                color = colors.get()
+                let prev = prev_colors.get(sizeof(ptr) * 2)
+                @ptrv(prev, ptr) = item
+                @ptrv(prev, uint, 1) = color
+                break
+            }
+        }
+    }
+
+    //
     @ptrv(item, u16, byte_color_rel) = color
 
     if item_color == 0 {
@@ -45,15 +68,20 @@ fn gc_mark(item: ptr, color: u16) {
         @ptrv(block_start, uint, -2)++ // Increase used items count
     }
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
     if propc > 0 {
+        let count = propc
         let i = 0
         let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
         if has_vtable : i++
-        while propc-- > 0 {
+        while count-- > 0 {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
-            gc_mark(sub, color)
+            gc_mark(sub, color, false)
+            let sub_color = @ptrv(item, u16, byte_color_rel)
+            if sub_color != color {
+                // Add to remark
+                remark.add(item)
+            }
         }
     }
 }

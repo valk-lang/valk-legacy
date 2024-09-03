@@ -316,7 +316,7 @@ struct Coro {
                         let color = @ptrv(item, u16, mem:byte_color_rel)
                         if color == mem:state_new {
                             let c = mem:colors.get()
-                            mem:gc_mark(item, c)
+                            mem:gc_mark(item, c, true)
                             // Set previous
                             let prev = pc.get(sizeof(ptr) * 2)
                             @ptrv(prev, ptr) = item
