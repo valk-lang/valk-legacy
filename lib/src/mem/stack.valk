@@ -320,7 +320,7 @@ cstruct Stack {
                 // if color == state_new {
                 if @ptrv(colors.valid, u8, color) != color_valid {
                     let c = colors.get()
-                    gc_mark(item, c, true)
+                    gc_mark(item, c)
                     // Set previous
                     let prev = pc.get(sizeof(ptr) * 2)
                     @ptrv(prev, ptr) = item

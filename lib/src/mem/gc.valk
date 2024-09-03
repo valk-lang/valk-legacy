@@ -22,7 +22,7 @@ fn update_usage() {
     // }
 }
 
-fn gc_mark(item: ptr, color: u16, on_stack: bool) {
+fn gc_mark(item: ptr, color: u16) {
 
     let item_color = @ptrv(item, u16, byte_color_rel)
     if @ptrv(colors.valid, u8, item_color) == color_valid { 
@@ -54,7 +54,7 @@ fn gc_mark(item: ptr, color: u16, on_stack: bool) {
         while count-- > 0 {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
-            gc_mark(sub, color, false)
+            gc_mark(sub, color)
             let sub_color = @ptrv(item, u16, byte_color_rel)
             if sub_color != color && !added {
                 // Add to remark
