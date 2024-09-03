@@ -304,7 +304,7 @@ struct Coro {
 
     -pkg static fn mark_stack_items() {
         let coros = g_coros
-        let pc = mem:prev_colors
+        let pc = mem:prev_stack_items
 
         each coros as coro {
             if isset(coro) {
