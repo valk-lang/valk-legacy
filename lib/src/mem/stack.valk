@@ -187,6 +187,7 @@ cstruct Stack {
         // }
     }
     static fn unlink(from: ptr, item: ptr) {
+        println("UNLINK")
         let from_color = @ptrv(from, u16, mem:byte_color_rel)
         let item_color = @ptrv(to, u16, mem:byte_color_rel)
         if from_color == item_color && item_color != color_unlink {

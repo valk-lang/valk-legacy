@@ -1,5 +1,5 @@
 
-struct Bump {
+cstruct Bump {
     data: ptr
     size: uint
     index: uint (0)
