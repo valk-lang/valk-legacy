@@ -269,7 +269,9 @@ struct Coro {
                 let top = coro.gc_stack.adr
                 while adr < top {
                     let item = @ptrv(adr, ptr, 0)
-                    if item != null : @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                    if item != null {
+                        @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                    }
                     adr += sizeof(ptr)
                 }
             }

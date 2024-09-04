@@ -301,7 +301,7 @@ cstruct Stack {
         let adr = pos.base
         let top = pos.adr
         while adr < top {
-            let item = @ptrv(adr, ptr, 0)
+            let item = @ptrv(adr, ptr)
             if item != null {
                 let color = @ptrv(item, u16, byte_color_rel)
                 if @ptrv(colors.state, u8, color) != color_state_used {
@@ -319,53 +319,33 @@ cstruct Stack {
         core:Coro.mark_stack_items()
     }
 
-    fn mark_stack_shared_age(age: u8) {
-        // Globals
-        let globals = this.globals
-        let globalc = this.globalc
-        while globalc-- > 0 {
-            let ref = @ptrv(globals, ptr, globalc)
-            let item = @ptrv(ref, ptr)
-            if item != null {
-                if @ptrv(item, u8, byte_shared_age_rel) != age {
-                    gc_mark_shared(item, age)
-                }
-            }
-        }
-        // Stack
-        let pos = main_stack_pos
-        let item_adr = pos.base
-        let stack_adr = pos.adr
-        while item_adr < stack_adr {
-            let item = @ptrv(item_adr, ptr)
-            if item != null {
-                if @ptrv(item, u8, byte_shared_age_rel) != age {
-                    gc_mark_shared(item, age)
-                }
-            }
-            item_adr = item_adr + sizeof(ptr)
-        }
-    }
-
     fn demark_previous_stack_items() {
+        let pc = prev_stack_items
         let list = prev_stack_items_alt
         let adr = list.data
         let end_adr = adr + list.index
         while adr < end_adr {
             let item = @ptrv(adr, ptr)
             let color = @ptrv(adr, uint, 1) @as u16
+            adr += sizeof(ptr) * 2
 
-            let on_stack = @ptrv(item, u8, byte_on_stack_rel)
-            if on_stack == 0 {
-                gc_demark(item, color)
+            if @ptrv(colors.state, u8, color) == color_state_used {
+                // Re-add
+                let prev = pc.get(sizeof(ptr) * 2)
+                @ptrv(prev, ptr) = item
+                @ptrv(prev, uint, 1) = color
+                continue;
             }
 
-            if @ptrv(colors.state, u8, color) == color_state_unlinked {
+            // let on_stack = @ptrv(item, u8, byte_on_stack_rel)
+            // if on_stack == 0 {
+                gc_demark(item, color)
+            // }
+
+            // if @ptrv(colors.state, u8, color) == color_state_unlinked {
                 @ptrv(colors.state, u8, color) = color_state_unused
                 colors.giveback(color)
-            }
-
-            adr += sizeof(ptr) * 2
+            // }
         }
 
         prev_stack_items_alt.reset()
@@ -394,6 +374,34 @@ cstruct Stack {
         }
 
         list.reset()
+    }
+
+    fn mark_stack_shared_age(age: u8) {
+        // Globals
+        let globals = this.globals
+        let globalc = this.globalc
+        while globalc-- > 0 {
+            let ref = @ptrv(globals, ptr, globalc)
+            let item = @ptrv(ref, ptr)
+            if item != null {
+                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                    gc_mark_shared(item, age)
+                }
+            }
+        }
+        // Stack
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
+        while item_adr < stack_adr {
+            let item = @ptrv(item_adr, ptr)
+            if item != null {
+                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                    gc_mark_shared(item, age)
+                }
+            }
+            item_adr = item_adr + sizeof(ptr)
+        }
     }
 
     fn add_shared(item: ptr) {
