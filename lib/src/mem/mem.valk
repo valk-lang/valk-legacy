@@ -1,8 +1,6 @@
 
 header "sys" as sys
 
-use io
-
 fn alloc(size: uint) ptr {
     return sys:malloc(size)
 }
@@ -20,6 +18,7 @@ fn calloc(size: uint) ptr {
 fn copy(from: ptr, to: ptr, length: uint) {
     @memcpy(from, to, length)
 }
+
 fn resized_clone_and_free(from: ptr, size: uint, new_size: uint) ptr {
     if new_size < size : size = new_size
     let new = alloc(new_size)

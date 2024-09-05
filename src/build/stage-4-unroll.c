@@ -67,7 +67,7 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
             array_push(unroll, token_make(alc, t_statement, v));
         }
         if (func->init_thread) {
-            Func *f1 = get_valk_class_func(b, "mem", "Stack", "init");
+            Func *f1 = get_valk_class_func(b, "mem", "GcLocal", "init");
             Array* args = array_make(alc, 1);
             Value *v = vgen_func_call_unroll(alc, vgen_func_ptr(alc, f1, NULL), args);
             array_push(unroll, token_make(alc, t_statement, v));

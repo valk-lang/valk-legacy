@@ -16,7 +16,7 @@ use io
 
 struct Coro {
     args: ptr
-    gc_stack: mem:StackPos
+    gc_stack: mem:Stack
     start_func: fn(Coro)()
     handler: fn()()
     follow_up: ?Coro (null)
@@ -250,7 +250,7 @@ struct Coro {
                     coro.resume()
                 }
             }
-            if mem:mem_usage > 10 || mem:run_gc {
+            if mem:mem_usage > 10 {
                 mem:gc()
             }
         }

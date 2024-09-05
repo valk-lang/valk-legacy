@@ -34,7 +34,7 @@ cstruct GcManager {
         os:Thread.start_without_gc(GcManager.loop @as ptr)
     }
 
-    fn add_stack(s: Stack) {
+    fn add_stack(s: GcLocal) {
         let index : uint = 0
         let has_index = false
         // if(this.has_free_index) {
@@ -51,14 +51,14 @@ cstruct GcManager {
         if has_index == false {
             index = atomic(this.stack_count + 1)
         }
-        @ptrv(this.stacks, Stack, index) = s
+        @ptrv(this.stacks, GcLocal, index) = s
     }
 
     static fn loop() {
         return
 
         os:sleep_ms(500)
-        Stack.init()
+        GcLocal.init()
         let gcm_stack = stack
 
         let gm = gc_manager_instance
@@ -68,9 +68,9 @@ cstruct GcManager {
         // Remove GCman stack
         // let si = gm.stack_count
         // while si-- > 0 {
-        //     let s = @ptrv(stacks, ?Stack, si)
+        //     let s = @ptrv(stacks, ?GcLocal, si)
         //     if s == gcm_stack {
-        //         @ptrv(stacks, ?Stack, si) = null
+        //         @ptrv(stacks, ?GcLocal, si) = null
         //         break
         //     }
         // }
@@ -89,8 +89,8 @@ cstruct GcManager {
             // Loop stacks
             let si = sc
             while si-- > 0 {
-                let s = @ptrv(stacks, Stack, si)
-                // if s @as ?Stack == null {
+                let s = @ptrv(stacks, GcLocal, si)
+                // if s @as ?GcLocal == null {
                 //     up_to_date_count++
                 //     if gm.has_free_index == false {
                 //         gm.free_index = si
@@ -103,7 +103,7 @@ cstruct GcManager {
                     up_to_date_count++
                 }
                 // if s.stopped {
-                //     @ptrv(stacks, ?Stack, si) = null
+                //     @ptrv(stacks, ?GcLocal, si) = null
                 //     free(s @as ptr)
                 //     continue
                 // }
@@ -119,13 +119,14 @@ cstruct GcManager {
                 if timeout_count > 4 {
                     let si = sc
                     while si-- > 0 {
-                        let s = @ptrv(stacks, ?Stack, si)
+                        let s = @ptrv(stacks, ?GcLocal, si)
                         if isset(s) {
                             if s.shared_age == age {
                                 continue
                             }
                             s.force_full = true
-                            @ptrv(s.run_gc_ref, bool) = true
+                            // TODO: use @ptrv(s.mem_usage_ref, uint) = 100
+                            // @ptrv(s.run_gc_ref, bool) = true
                         }
                     }
 
@@ -165,7 +166,7 @@ cstruct GcManager {
         let stacks = this.stacks
         let si = this.stack_count
         while si-- > 0 {
-            let s = @ptrv(stacks, ?Stack, si)
+            let s = @ptrv(stacks, ?GcLocal, si)
             if isset(s) {
                 s.clean_shared()
             }

@@ -27,4 +27,9 @@ cstruct Bump {
     fn reset() {
         this.index = 0
     }
+
+    fn free() {
+        free(this.data)
+        free(this)
+    }
 }

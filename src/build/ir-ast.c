@@ -258,7 +258,7 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     ir_cond_jump(ir, comp_on, block_if, after);
 
     ir->block = block_if;
-    Func *func = get_valk_class_func(b, "mem", "Stack", "link");
+    Func *func = get_valk_class_func(b, "mem", "GcLocal", "link");
     Value *fptr = vgen_func_ptr(ir->alc, func, NULL);
     //
     Array* types = array_make(ir->alc, 2);

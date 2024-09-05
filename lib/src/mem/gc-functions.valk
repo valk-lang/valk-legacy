@@ -2,9 +2,6 @@
 use io
 use os
 
-fn gc_bump_alloc(size: uint) ptr {
-    return stack.bump.alloc(size)
-}
 fn gc() {
     stack.gc()
 }
@@ -22,48 +19,91 @@ fn update_usage() {
     // }
 }
 
-fn gc_mark(item: ptr, color: u16) {
+fn gc_mark[T](item: T, color: u16) {
 
-    let item_color = @ptrv(item, u16, byte_color_rel)
+    let item_ptr = item @as ptr
+    let item_color = @ptrv(item_ptr, u16, byte_color_rel)
     if @ptrv(colors.state, u8, item_color) == color_state_used { 
         return
     }
 
-    //
-    @ptrv(item, u16, byte_color_rel) = color
+    @ptrv(item_ptr, u16, byte_color_rel) = color
 
     if item_color == 0 {
-        let pool_index = @ptrv(item, u8, byte_pool_index_rel)
-        let pool = @ptrv(pools, GcPool, pool_index)
-        let size = pool.isize
-
+        let size = sizeof(T) + 8
         mem_marked += size
 
-        let block_index = @ptrv(item, u8, byte_block_index_rel)
-        let block_start = item - 8 - block_index * size
+        let block_index = @ptrv(item_ptr, u8, byte_block_index_rel)
+        let block_start = item_ptr - 8 - block_index * size
         @ptrv(block_start, uint, -2)++ // Increase used items count
     }
 
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let added = false
-        let count = propc
-        let i = 0
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        if has_vtable : i++
-        while count-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            gc_mark(sub, color)
-            let sub_color = @ptrv(item, u16, byte_color_rel)
-            if sub_color != color && !added {
-                // Add to remark
-                remark.add(item)
-                added = true
+    let added = false
+    #loop_object_properties(item) as prop, type
+    #if @type_is_gc(type)
+    {
+        let p = prop
+        #if @type_is_nullable(type)
+        if isset(p) {
+            gc_mark[type](p, color)
+            // Check if linked to another color
+            if !added {
+                let prop_ptr = p @as ptr
+                let prop_color = @ptrv(prop_ptr, u16, byte_color_rel)
+                if prop_color != color {
+                    remark.add(item)
+                    added = true
+                }
             }
         }
+        #end
     }
+    #end
+    #endloop
 }
+
+// fn gc_mark(item: ptr, color: u16) {
+
+//     let item_color = @ptrv(item, u16, byte_color_rel)
+//     if @ptrv(colors.state, u8, item_color) == color_state_used { 
+//         return
+//     }
+
+//     //
+//     @ptrv(item, u16, byte_color_rel) = color
+
+//     if item_color == 0 {
+//         let pool_index = @ptrv(item, u8, byte_pool_index_rel)
+//         let pool = @ptrv(pools, GcPool, pool_index)
+//         let size = pool.isize
+
+//         mem_marked += size
+
+//         let block_index = @ptrv(item, u8, byte_block_index_rel)
+//         let block_start = item - 8 - block_index * size
+//         @ptrv(block_start, uint, -2)++ // Increase used items count
+//     }
+
+//     let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
+//     if propc > 0 {
+//         let added = false
+//         let count = propc
+//         let i = 0
+//         let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
+//         if has_vtable : i++
+//         while count-- > 0 {
+//             let sub = @ptrv(item, ptr, i++)
+//             if sub == null : continue
+//             gc_mark(sub, color)
+//             let sub_color = @ptrv(item, u16, byte_color_rel)
+//             if sub_color != color && !added {
+//                 // Add to remark
+//                 remark.add(item)
+//                 added = true
+//             }
+//         }
+//     }
+// }
 
 fn gc_demark(item: ptr, color: u16) {
 
@@ -89,23 +129,6 @@ fn gc_demark(item: ptr, color: u16) {
             let sub = @ptrv(item, ptr, i++)
             if sub == null : continue
             gc_demark(sub, color)
-        }
-    }
-}
-
-fn gc_unlink_item(item: ptr, color: u16) {
-    if @ptrv(item, u16, byte_color_rel) != color : return
-    @ptrv(item, u16, byte_color_rel) = color_unlink
-
-    let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    if propc > 0 {
-        let i = 0
-        let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-        if has_vtable : i++
-        while propc-- > 0 {
-            let sub = @ptrv(item, ptr, i++)
-            if sub == null : continue
-            gc_unlink_item(sub, color)
         }
     }
 }

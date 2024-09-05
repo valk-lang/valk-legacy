@@ -1,0 +1,413 @@
+
+use core
+
+global gc_local: GcLocal (@undefined)
+
+global mem_new: uint
+global mem_marked: uint
+global mem_trigger: uint
+global mem_transfered: uint
+global mem_usage: uint
+global mem_free_able: uint
+global mem_max: uint
+global mem_min: uint
+global mem_gc_loop: bool
+
+value mem_marked_default (8192)
+
+value color_blank (0)
+value color_unlink (1)
+
+// value state_used (1)
+// value state_transfer (2)
+// value state_solid (4)
+// value state_marked (4)
+value state_const (9001)
+value state_shared (9002)
+
+value color_state_unused (0)
+value color_state_used (1)
+value color_state_unlinked (2)
+
+value stack_size (10000)
+
+value vt_hook_transfer (0)
+value vt_hook_mark (1)
+value vt_hook_mark_shared (2)
+value vt_hook_share (3)
+value vt_hook_free (4)
+
+value byte_color (0)
+value byte_shared_age (2)
+value byte_block_index (3)
+//
+value byte_color_rel (-4)
+value byte_shared_age_rel (-6)
+value byte_block_index_rel (-5)
+
+global colors: ColorBook (ColorBook.new())
+global prev_stack_items: Bump (Bump.new())
+global prev_stack_items_alt: Bump (Bump.new())
+global check_still_used: Bump (Bump.new())
+// TODO: move remark to Bump
+global remark: PtrList (PtrList.new())
+
+
+cstruct GcLocal {
+    shared : GcRing
+    lock : GcLock
+
+    globals: ptr (null @as ptr)
+    globalc: uint (0)
+
+    age: u8 (33)
+    shared_age: u8 (0)
+
+    force_full: bool (false)
+    stopped: bool (false)
+
+    static fn init() {
+
+        gc_alloc_init()
+
+        let pos = create_stack()
+        stack_pos = pos
+        main_stack_pos = pos
+
+        let s = SELF {
+            shared: GcRing.new()
+            lock: GcLock.new()
+        }
+
+        stack = s
+        mem_trigger = mem_marked_default
+        mem_max = 128
+
+        init_pools()
+
+        s.scan_globals()
+
+        let gcm = gc_manager()
+        gcm.add_stack(s)
+
+        core:g_coros = Array[?core:Coro].new()
+        core:g_coro_indexes = Pool[uint].new()
+    }
+
+    #parse_last
+    fn scan_globals() {
+        let count : uint = 0
+        #loop_globals as G, T
+        #if @type_is_gc(T) && !@global_is_shared(G)
+        count++
+        #end
+        #endloop
+
+        let globals = calloc(sizeof(ptr) * count)
+        let globalc = count
+        count = 0
+    
+        #loop_globals as G2, T2
+        #if @type_is_gc(T2) && !@global_is_shared(G2)
+        @ptrv(globals, ptr, count++) = @ptr_of(G2)
+        #end
+        #endloop
+    }
+
+    ///////////////////////
+    // Runtime functions
+    ///////////////////////
+    static fn link(on: ptr, to: ptr) {
+        let on_color = @ptrv(on, u16, byte_color_rel)
+        let to_color = @ptrv(to, u16, byte_color_rel)
+
+        if on_color != to_color {
+            // Add on-item to remark list
+        }
+
+        // let to_state = @ptrv(to, u8, -8)
+        // let on_state = @ptrv(on, u8, -8)
+        // if on_state == state_shared {
+        //     if to_state != state_shared {
+        //         gc_share(to)
+        //     } else {
+        //         gc_mark_shared(to, shared_age)
+        //     }
+        //     return
+        // }
+        // if to_state < state_transfer {
+        //     // Transfer
+        //     stack.transfer.add_item(to)
+        //     @ptrv(to, u8, -8) = state_transfer
+        // }
+    }
+    static fn unlink(from: ptr, item: ptr) {
+        println("UNLINK")
+        let from_color = @ptrv(from, u16, byte_color_rel)
+        let item_color = @ptrv(to, u16, byte_color_rel)
+        if from_color == item_color && item_color != color_unlink {
+            @ptrv(colors.state, u8, item_color) = color_state_unlinked
+            @ptrv(to, u16, byte_color_rel) = color_unlink
+
+            let list = check_still_used
+            let adr = list.get(sizeof(ptr) * 2)
+            @ptrv(adr, ptr) = item
+            @ptrv(adr, uint, 1) = item_color
+        }
+    }
+
+    ///////////////////////
+    // Gc
+    ///////////////////////
+    fn gc() {
+        this.lock.lock()
+
+        print("-")
+
+        let rem = remark.copy()
+        let rem_count = remark.index
+        remark.reset()
+
+        // Swap prev color lists
+        let pc = prev_stack_items
+        prev_stack_items = prev_stack_items_alt
+        prev_stack_items_alt = pc
+
+        // pc.size.print(10)
+        // print("<.")
+
+        this.mark_on_stack(1)
+        this.disable_previous_colors()
+
+        this.handle_remark_list()
+        this.mark_stack_items()
+
+        let marked = mem_marked
+
+        this.demark_previous_stack_items()
+        this.check_still_used()
+
+        this.mark_on_stack(0)
+
+        let max = mem_trigger / 100 * 95 // reduce 5%
+        let max_marked = (mem_marked + mem_marked_default) / 100 * 120 // increase 20%
+        if max_marked > max {
+            max = max_marked
+        }
+        mem_trigger = max
+        mem_new = mem_marked
+        // mem_new = 0
+
+        pools_reset()
+        free(rem)
+
+        // Mark shared
+        // if shared_age != this.shared_age {
+        //     let age = shared_age
+        //     this.mark_stack_shared_age(age)
+        //     this.shared_age = age
+        // }
+
+        this.lock.unlock()
+    }
+
+    #parse_last
+    fn mark_on_stack(val: u8) {
+        let pos = main_stack_pos
+        let adr = pos.base
+        let top = pos.adr
+        while adr < top {
+            let item = @ptrv(adr, ptr, 0)
+            if item != null {
+                // Mark on/off stack
+                @ptrv(item, u8, byte_block_index_rel) = @ptrv(item, u8, byte_block_index_rel) & (val > 0 ? 255 : 127)
+            }
+            adr += sizeof(ptr)
+        }
+
+        core:Coro.mark_on_stack(val)
+    }
+
+    fn disable_previous_colors() {
+        let list = prev_stack_items_alt
+        let adr = list.data
+        let end_adr = adr + list.index
+        while adr < end_adr {
+            let item = @ptrv(adr, ptr)
+            let on_stack = @ptrv(item, u8, byte_block_index_rel) & 128
+            if on_stack == 0 {
+                let color = @ptrv(adr, uint, 1) @as u16
+                @ptrv(colors.state, u8, color) = color_state_unlinked
+            }
+
+            adr += sizeof(ptr) * 2
+        }
+    }
+
+    fn handle_remark_list() {
+    }
+
+    fn mark_stack_items() {
+        let pc = prev_stack_items
+        // Loop stack items
+        let pos = main_stack_pos
+        let adr = pos.base
+        let top = pos.adr
+        while adr < top {
+            let item = @ptrv(adr, ptr)
+            if item != null {
+                let color = @ptrv(item, u16, byte_color_rel)
+                if @ptrv(colors.state, u8, color) != color_state_used {
+                    let c = colors.get()
+                    gc_mark(item, c)
+                    // Set previous
+                    let prev = pc.get(sizeof(ptr) * 2)
+                    @ptrv(prev, ptr) = item
+                    @ptrv(prev, uint, 1) = c
+                }
+            }
+            adr += sizeof(ptr)
+        }
+
+        core:Coro.mark_stack_items()
+    }
+
+    fn demark_previous_stack_items() {
+        let pc = prev_stack_items
+        let list = prev_stack_items_alt
+        let adr = list.data
+        let end_adr = adr + list.index
+        while adr < end_adr {
+            let item = @ptrv(adr, ptr)
+            let color = @ptrv(adr, uint, 1) @as u16
+            adr += sizeof(ptr) * 2
+
+            if @ptrv(colors.state, u8, color) == color_state_used {
+                // Re-add
+                let prev = pc.get(sizeof(ptr) * 2)
+                @ptrv(prev, ptr) = item
+                @ptrv(prev, uint, 1) = color
+                continue;
+            }
+
+            gc_demark(item, color)
+
+            @ptrv(colors.state, u8, color) = color_state_unused
+            colors.giveback(color)
+        }
+
+        prev_stack_items_alt.reset()
+    }
+
+    fn check_still_used() {
+        let list = check_still_used
+        let data = list.data
+        let end = data + list.index
+
+        while data < end {
+            let item = @ptrv(data, ptr)
+            let color = @ptrv(data, uint, 1) @as u16
+            data += sizeof(ptr) * 2
+
+            let item_color = @ptrv(item, u16, byte_color_rel)
+            if item_color != color_unlink : continue
+
+            @ptrv(item, u16, byte_color_rel) = color
+            gc_demark(item, color)
+
+            if @ptrv(colors.state, u8, color) == color_state_unlinked {
+                @ptrv(colors.state, u8, color) = color_state_unused
+                colors.giveback(color)
+            }
+        }
+
+        list.reset()
+    }
+
+    fn mark_stack_shared_age(age: u8) {
+        // Globals
+        let globals = this.globals
+        let globalc = this.globalc
+        while globalc-- > 0 {
+            let ref = @ptrv(globals, ptr, globalc)
+            let item = @ptrv(ref, ptr)
+            if item != null {
+                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                    gc_mark_shared(item, age)
+                }
+            }
+        }
+        // Stack
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
+        while item_adr < stack_adr {
+            let item = @ptrv(item_adr, ptr)
+            if item != null {
+                if @ptrv(item, u8, byte_shared_age_rel) != age {
+                    gc_mark_shared(item, age)
+                }
+            }
+            item_adr = item_adr + sizeof(ptr)
+        }
+    }
+
+    fn add_shared(item: ptr) {
+        let ring = this.shared
+        ring.lock.lock()
+        ring.add(item)
+        ring.lock.unlock()
+    }
+    fn clean_shared() {
+        let ring = this.shared
+        ring.lock.lock()
+        let tail = ring.tail
+        let head = ring.head
+        let size = ring.size
+        let data = ring.data
+        let age = shared_age
+        while tail != head {
+            let item = @ptrv(data, ptr, tail)
+            let item_age = @ptrv(item, u8, byte_shared_age_rel)
+            if item_age != age {
+                // Free item
+                @ptrv(item, u8, byte_state_rel) = state_solid
+                ring.remove(tail)
+            }
+
+            tail++
+            if tail == size {
+                tail = 0
+            }
+        }
+        ring.lock.unlock()
+    }
+
+    fn shutdown() {
+        //
+        this.force_full = true
+        let pos = main_stack_pos
+        pos.adr = pos.base
+        this.gc()
+
+        // TODO
+        // Free bump allocators
+        // Delete pools
+
+        this.stopped = true
+    }
+
+    fn print() {
+        print("---------\n")
+        let pos = main_stack_pos
+        let item_adr = pos.base
+        let stack_adr = pos.adr
+        while item_adr < stack_adr {
+            let item = @ptrv(item_adr, ptr)
+            item.print()
+            print("\n")
+            item_adr = item_adr + sizeof(ptr)
+        }
+        print("---------\n")
+    }
+}

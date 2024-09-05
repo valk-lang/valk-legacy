@@ -24,7 +24,7 @@ cstruct Thread {
             co func()
         }
         core:Coro.loop()
-        mem:stack.shutdown()
+        // mem:stack.shutdown()
     }
 
     static fn start(start_func: ptr) {

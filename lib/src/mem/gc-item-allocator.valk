@@ -1,0 +1,172 @@
+
+
+global gc_item_allocators: ptr (@undefined)
+global gc_item_allocator_count: uint
+
+value POOL_DATA_OFFSET (sizeof(ptr) * 4)
+
+cstruct GcItemAllocator[T] {
+    size: uint
+    mark_func: fn(ptr, u16)
+    demark_func: fn(ptr, u16)
+    allocator_index: uint
+    //
+    blockc: uint (1)
+    first: ptr (@undefined)
+    block: ptr (@undefined)
+    index: uint (0)
+    isize: uint (0)
+
+    static fn init() SELF {
+        let index = gc_item_allocator_count++
+        return SELF {
+            size: sizeof(T) + 8
+            mark_func: gc_mark[T]
+            demark_func: gc_demark[T]
+            allocator_index: index
+        }
+    }
+
+    static fn create_block(size: uint, isize: uint, pool_index: u8) ptr {
+        if size > 124 : size = 124
+        let b = alloc(size * isize + POOL_DATA_OFFSET)
+        // Settings
+        @ptrv(b, ?ptr, 0) = null // next block
+        @ptrv(b, uint, 1) = size // count
+        @ptrv(b, uint, 2) = 0 // used
+        @ptrv(b, uint, 3) = 0 // usage percent
+        // Set indexes
+        let data = b + POOL_DATA_OFFSET
+        let i : u8 = 0
+        while i < size {
+            let item : ptr = data + i * isize
+            @ptrv(item, u16, byte_color) = color_blank
+            @ptrv(item, u8, byte_block_index) = i
+            @ptrv(item, u8, byte_shared_age) = 0
+            @ptrv(item, u32, 1) = this.allocator_index
+            i++
+        }
+        return b
+    }
+
+    fn get() ptr {
+
+        let isize = this.isize
+        if this.block == null {
+            this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
+            this.first = this.block
+        }
+
+        while true {
+            let block = this.block
+            if @ptrv(block, uint, 3) > 90 {
+                this.set_next_block(block)
+                continue
+            }
+            let index = this.index
+            if index == @ptrv(block, uint, 1) {
+                this.set_next_block(block)
+                continue
+            }
+            this.index++
+            let data = block + POOL_DATA_OFFSET
+            let item = data + index * isize
+            if @ptrv(item, u16, byte_color) != color_blank {
+                continue
+            }
+
+            // Increase mem usage
+            mem_new += isize
+
+            return (item + 8)
+        }
+        print("Failed to allocate memory")
+        print("\n")
+        exit(1)
+    }
+
+    fn set_next_block(block: ptr) {
+        let next = @ptrv(block, ?ptr, 0)
+        if isset(next) {
+            this.set_block(next)
+        } else {
+            // Create new block
+            let blockc = ++this.blockc
+            let new = SELF.create_block(blockc * blockc, this.isize, this.pool_index)
+            // Set next
+            @ptrv(block, ptr, 0) = new
+            this.set_block(new)
+        }
+
+        // Check mem usage
+        update_usage()
+    }
+
+    fn set_block(block: ptr) {
+        this.block = block
+        this.index = 0
+    }
+
+    fn reset() {
+        let block = this.first
+        if block == null : return
+
+        let current = this.block
+
+        let reached_current = false
+        let last : ?ptr = null
+        let first_empty_block : ?ptr = null
+        let last_empty_block : ?ptr = null
+
+        let t : uint = 0
+
+        while block != null {
+            let b = block
+            let used = @ptrv(b, uint, 2)
+            let next = @ptrv(b, ptr, 0)
+            @ptrv(b, ?ptr, 0) = null // clear next
+            t += @ptrv(b, uint, 1)
+            //
+            if used == 0 {
+                if reached_current == false {
+                    @ptrv(b, uint, 3) = 0
+                    if isset(last_empty_block) {
+                        @ptrv(last_empty_block, ptr, 0) = b
+                        last_empty_block = b
+                    } else {
+                        first_empty_block = b
+                        last_empty_block = b
+                    }
+                } else {
+                    free(b)
+                    this.blockc--
+                }
+            } else {
+                // Update usage percent
+                let count = @ptrv(b, uint, 1)
+                @ptrv(b, uint, 3) = used * 100 / count
+                //
+                if isset(last) : @ptrv(last, ptr, 0) = b
+                else : this.first = b
+                last = b
+            }
+            if b == current : reached_current = true
+            block = next
+        }
+
+        if isset(first_empty_block) {
+            if isset(last)  {
+                @ptrv(last, ptr, 0) = first_empty_block
+            } else {
+                this.first = first_empty_block
+            }
+        } else {
+            if isset(last)  {
+                @ptrv(last, ?ptr, 0) = null
+            }
+        }
+
+        this.set_block(this.first)
+    }
+
+}
