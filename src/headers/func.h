@@ -13,6 +13,7 @@ void func_validate_rett_count(Parser* p, Func* func, bool is_static, int rett_co
 void func_validate_arg_type(Parser* p, Func* func, int index, Array* allowed_types);
 void func_validate_rett(Parser* p, Func* func, Array* allowed_types);
 void func_validate_rett_void(Parser *p, Func *func);
+Func* get_generic_func(Parser* p, Func* func, Array* generic_types);
 
 struct Func {
     char* name;
@@ -61,6 +62,9 @@ struct Func {
     int gc_decl_count;
     int arg_nr;
     int rett_count;
+    // Generic
+    Array* generic_names;
+    Map* generics;
     //
     bool is_static;
     bool is_inline;
@@ -78,6 +82,7 @@ struct Func {
     bool init_thread;
     bool can_create_objects;
     bool inf_args;
+    bool is_generic_base;
 };
 struct FuncArg {
     Type* type;

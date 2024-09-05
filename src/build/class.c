@@ -30,7 +30,6 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     //
     c->generics = NULL;
     c->generic_names = NULL;
-    c->generic_types = NULL;
     c->generic_of = NULL;
     c->is_generic_base = false;
     c->in_header = false;

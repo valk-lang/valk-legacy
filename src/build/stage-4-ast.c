@@ -107,8 +107,9 @@ void stage_ast(Build *b, void *payload) {
 
 void stage_ast_func(Func *func) {
 
-    if (func->parsed || func->in_header)
+    if (func->parsed || func->in_header || func->is_generic_base)
         return;
+
     func->parsed = true;
     func->is_used = func->b->building_ast;
 

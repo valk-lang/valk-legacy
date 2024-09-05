@@ -53,6 +53,9 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->arg_nr = 0;
     f->rett_count = 0;
 
+    f->generic_names = NULL;
+    f->generics = NULL;
+
     f->is_inline = false;
     f->is_static = false;
     f->can_error = false;
@@ -69,6 +72,7 @@ Func* func_make(Allocator* alc, Unit* u, Scope* parent, char* name, char* export
     f->init_thread = false;
     f->can_create_objects = false;
     f->inf_args = false;
+    f->is_generic_base = false;
 
     if (!export_name)
         f->export_name = gen_export_name(u->nsc, name);
@@ -391,3 +395,85 @@ void func_check_error_dupe(Parser* p, Func* func, Map* errors, char* str_v, unsi
     }
 }
 
+
+Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
+    Build* b = p->b;
+    if(b->parse_last) {
+        parse_err(p, -1, "You cannot generate a new generic function inside a #parse_last function");
+    }
+    //
+    Str* hash = build_get_str_buf(b);
+    loop(generic_types, i) {
+        Type* type = array_get_index(generic_types, i);
+        type_to_str_buf_append(type, hash);
+        str_flat(hash, "|");
+    }
+    char* h = str_temp_chars(hash);
+    Func *gfunc = map_get(func->generics, h);
+    if (gfunc) {
+        build_return_str_buf(b, hash);
+        return gfunc;
+    }
+    if(b->verbose > 2)
+        printf("Create new generic function for: %s\n", h);
+    
+    // Generate new
+    h = str_to_chars(b->alc, hash);
+
+    // Name
+    str_clear(hash);
+    str_add(hash, func->name);
+    str_flat(hash, "[");
+    loop(generic_types, i) {
+        if(i > 0)
+            str_flat(hash, ", ");
+        char buf[256];
+        Type* type = array_get_index(generic_types, i);
+        type_to_str(type, buf);
+        str_add(hash, buf);
+    }
+    str_flat(hash, "]");
+    char* name = str_to_chars(b->alc, hash);
+
+    // Export name
+    str_clear(hash);
+    str_add(hash, func->export_name);
+    str_flat(hash, "__");
+    loop(generic_types, i) {
+        if(i > 0)
+            str_flat(hash, ", ");
+        char buf[256];
+        Type* type = array_get_index(generic_types, i);
+        type_to_str_export(type, buf);
+        str_add(hash, buf);
+    }
+    str_flat(hash, "__");
+    char* export_name = str_to_chars(b->alc, hash);
+
+    gfunc = func_make(b->alc, func->unit, p->scope, name, export_name);
+    gfunc->act = func->act;
+    gfunc->fc = func->fc;
+    gfunc->in_header = p->in_header;
+    gfunc->exits = func->exits;
+    gfunc->parse_last = func->parse_last;
+    gfunc->init_thread = func->init_thread;
+
+    if (p->in_header) {
+        gfunc->export_name = name;
+    }
+
+    // Set type identifiers
+    loop(generic_types, i) {
+        char* name = array_get_index(func->generic_names, i);
+        Type* type_ = array_get_index(generic_types, i);
+        Type* type = type_clone(b->alc, type_);
+        Idf* idf = idf_make(b->alc, idf_type, type);
+        scope_set_idf(gfunc->scope, name, idf, p);
+    }
+
+    parse_handle_func_args(p, gfunc);
+
+    stage_types_func(p, gfunc);
+
+    return gfunc;
+}

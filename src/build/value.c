@@ -840,6 +840,14 @@ Value* value_handle_idf(Allocator *alc, Parser* p, Idf *idf) {
     }
     if (type == idf_func) {
         Func* func = idf->item;
+        if (func->is_generic_base) {
+            tok_expect(p, "[", false, false);
+            int count = func->generic_names->length;
+            Array *generic_types = array_make(alc, count + 1);
+            read_generic_types(p, generic_types, count);
+            func = get_generic_func(p, func, generic_types);
+        }
+
         func_mark_used(p->func, func);
         value_check_act(func->act, func->fc, p, "function");
         return vgen_func_ptr(alc, func, NULL);
@@ -1026,16 +1034,7 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         tok_expect(p, "[", false, false);
         int count = class->generic_names->length;
         Array* generic_types = array_make(alc, count + 1);
-        for (int i = 0; i < count; i++) {
-            Type* type = read_type(p, alc, false);
-            array_push(generic_types, type);
-            if(i + 1 < count) {
-                tok_expect(p, ",", true, false);
-            } else {
-                tok_expect(p, "]", true, false);
-                break;
-            }
-        }
+        read_generic_types(p, generic_types, count);
         class = get_generic_class(p, class, generic_types);
     }
     if (p->func)

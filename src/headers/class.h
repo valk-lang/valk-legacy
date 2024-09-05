@@ -24,7 +24,6 @@ struct Class {
     Map* props;
     Map* funcs;
     Array* generic_names;
-    Map* generic_types;
     Map* generics;
     Class* generic_of;
     Global* vtable;

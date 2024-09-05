@@ -194,6 +194,18 @@ void stage_1_func(Parser *p, Unit *u, int act, Fc* fc, bool exits) {
     func->parse_last = p->parse_last;
     func->init_thread = p->init_thread;
 
+    t = tok(p, false, false, false);
+    if(t == tok_sq_bracket_open) {
+        tok(p, false, false, true);
+
+        Array* generic_names = array_make(b->alc, 2);
+        read_generic_names(p, generic_names);
+
+        func->generics = map_make(b->alc);
+        func->generic_names = generic_names;
+        func->is_generic_base = true;
+    }
+
     Idf* idf = idf_make(b->alc, idf_func, func);
     scope_set_idf(p->scope->parent, name, idf, p);
 
@@ -261,19 +273,10 @@ void stage_1_class(Parser* p, Unit* u, int type, int act, Fc* fc) {
     t = tok(p, false, false, false);
     if(t == tok_sq_bracket_open) {
         tok(p, false, false, true);
+
         Array* generic_names = array_make(b->alc, 2);
-        while (true) {
-            t = tok(p, true, false, true);
-            if(t != tok_id){
-                parse_err(p, -1, "Invalid generic type name: '%s'", p->tkn);
-            }
-            if (array_contains(generic_names, p->tkn, arr_find_str)) {
-                parse_err(p, -1, "Duplicate generic type name: '%s'", p->tkn);
-            }
-            array_push(generic_names, p->tkn);
-            if (tok_expect_two(p, ",", "]", true, false) == tok_sq_bracket_close)
-                break;
-        }
+        read_generic_names(p, generic_names);
+
         class->generics = map_make(b->alc);
         class->generic_names = generic_names;
         class->is_generic_base = true;

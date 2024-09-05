@@ -43,6 +43,9 @@ void stage_types_func(Parser* p, Func* func) {
 
     if(func->types_parsed)
         return;
+    if(func->is_generic_base)
+        return;
+
     func->types_parsed = true;
 
     Build* b = p->b;

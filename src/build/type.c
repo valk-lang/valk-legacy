@@ -169,16 +169,7 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
                 tok_expect(p, "[", false, false);
                 int count = class->generic_names->length;
                 Array *generic_types = array_make(alc, count + 1);
-                for (int i = 0; i < count; i++) {
-                    Type *type = read_type(p, alc, false);
-                    array_push(generic_types, type);
-                    if (i + 1 < count) {
-                        tok_expect(p, ",", true, false);
-                    } else {
-                        tok_expect(p, "]", true, false);
-                        break;
-                    }
-                }
+                read_generic_types(p, generic_types, count);
                 class = get_generic_class(p, class, generic_types);
             }
 
