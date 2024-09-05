@@ -1,15 +1,23 @@
 
 
 global gc_item_allocators: ptr (@undefined)
-global gc_item_allocator_count: uint
+global gc_item_allocator_count: u32
+
+global gc_vtable: Bump (@undefined)
+global gc_vtable_data: ptr (@undefined)
+
+value GC_VTABLE_SIZE (3)
+value GC_VTABLE_MARK (0)
+value GC_VTABLE_DEMARK (1)
+value GC_VTABLE_HOOK_FREE (2)
 
 value POOL_DATA_OFFSET (sizeof(ptr) * 4)
 
 cstruct GcItemAllocator[T] {
     size: uint
-    mark_func: fn(ptr, u16)
-    demark_func: fn(ptr, u16)
-    allocator_index: uint
+    // mark_func: fn(ptr, u16)()
+    // demark_func: fn(ptr, u16)()
+    allocator_index: u32
     //
     blockc: uint (1)
     first: ptr (@undefined)
@@ -19,15 +27,28 @@ cstruct GcItemAllocator[T] {
 
     static fn init() SELF {
         let index = gc_item_allocator_count++
-        return SELF {
+        let alc = SELF {
             size: sizeof(T) + 8
-            mark_func: gc_mark[T]
-            demark_func: gc_demark[T]
+            // mark_func: gc_mark[T]
+            // demark_func: gc_demark[T]
             allocator_index: index
         }
+        @ptrv(gc_item_allocators, SELF, index * 2) = alc
+        @ptrv(gc_item_allocators, ptr, index * 2 + 1) = alc.reset @as ptr
+
+        let vtable = gc_vtable
+        vtable.minimum_size((index + 1) * GC_VTABLE_SIZE * sizeof(ptr))
+        gc_vtable_data = vtable.data
+
+        let vt = @ptr_offset(vtable.data, index * GC_VTABLE_SIZE * sizeof(ptr))
+        @ptrv(vt, ptr, GC_VTABLE_MARK) = gc_mark[T] @as ptr
+        @ptrv(vt, ptr, GC_VTABLE_DEMARK) = gc_demark[T] @as ptr
+        @ptrv(vt, ptr, GC_VTABLE_HOOK_FREE) = null @as ptr
+
+        return alc
     }
 
-    static fn create_block(size: uint, isize: uint, pool_index: u8) ptr {
+    static fn create_block(size: uint, isize: uint, alc_index: u32) ptr {
         if size > 124 : size = 124
         let b = alloc(size * isize + POOL_DATA_OFFSET)
         // Settings
@@ -43,7 +64,7 @@ cstruct GcItemAllocator[T] {
             @ptrv(item, u16, byte_color) = color_blank
             @ptrv(item, u8, byte_block_index) = i
             @ptrv(item, u8, byte_shared_age) = 0
-            @ptrv(item, u32, 1) = this.allocator_index
+            @ptrv(item, u32, 1) = alc_index
             i++
         }
         return b
@@ -53,7 +74,7 @@ cstruct GcItemAllocator[T] {
 
         let isize = this.isize
         if this.block == null {
-            this.block = SELF.create_block(this.blockc * 2, isize, this.pool_index)
+            this.block = SELF.create_block(this.blockc * 2, isize, this.allocator_index)
             this.first = this.block
         }
 
@@ -92,7 +113,7 @@ cstruct GcItemAllocator[T] {
         } else {
             // Create new block
             let blockc = ++this.blockc
-            let new = SELF.create_block(blockc * blockc, this.isize, this.pool_index)
+            let new = SELF.create_block(blockc * blockc, this.isize, this.allocator_index)
             // Set next
             @ptrv(block, ptr, 0) = new
             this.set_block(new)

@@ -487,6 +487,9 @@ void type_to_str_append(Type* t, char* res, bool use_export_name) {
     } else if (t->type == type_null) {
         strcat(res, "null");
         return;
+    } else if (t->type == type_undefined) {
+        strcat(res, "@undefined");
+        return;
     }
     if (t->nullable) {
         strcat(res, use_export_name ? "NULL_" : "?");

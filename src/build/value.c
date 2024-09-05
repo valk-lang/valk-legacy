@@ -1078,12 +1078,14 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
         Type *tcv = prop->type;
         p->try_conv = tcv;
         Value *val = read_value(alc, p, true, 0);
-        p->try_conv = tcv_prev;
 
-        val = try_convert(alc, p, p->scope, val, prop->type);
+        if (val->type != v_undefined) {
+            p->try_conv = tcv_prev;
+            val = try_convert(alc, p, p->scope, val, prop->type);
+            type_check(p, prop->type, val->rett);
+            map_set_force_new(values, name, val);
+        }
 
-        type_check(p, prop->type, val->rett);
-        map_set_force_new(values, name, val);
         t = tok(p, true, true, true);
         if(t == tok_comma) {
             t = tok(p, true, true, true);
@@ -1122,10 +1124,10 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
     ci->prop_values = values;
 
     if (class->type == ct_class) {
-        ci->item = vgen_call_pool_alloc(alc, p, b, class);
+        ci->item = vgen_class_alloc(alc, p, b, class);
         p->func->can_create_objects = true;
     } else {
-        ci->item = vgen_call_alloc(alc, p, class->size, class);
+        ci->item = vgen_mem_alloc(alc, p, class->size, class);
     }
 
     Value* init = value_make(alc, v_class_init, ci, type_gen_class(alc, class));

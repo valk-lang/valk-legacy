@@ -10,7 +10,7 @@ ClassProp* class_get_prop(Build* b, Class* class, char* name);
 int class_determine_size(Build* b, Class* class);
 Class* get_generic_class(Parser* p, Class* class, Array* generic_types);
 void class_generate_internals(Parser* p, Build* b, Class* class);
-int class_pool_index(Class* class);
+void class_gen_allocator_global(Build* b, Class* class);
 void class_create_vtable(Build* b, Class* class);
 
 struct Class {
@@ -27,18 +27,17 @@ struct Class {
     Map* generics;
     Class* generic_of;
     Global* vtable;
+    Global* allocator;
     int act;
     int type;
     int size;
     int gc_fields;
-    int pool_index;
     bool packed;
     bool is_signed;
     bool allow_math;
     bool is_generic_base;
     bool in_header;
     bool is_used;
-    bool use_gc_alloc;
     bool has_vtable;
 };
 struct ClassProp {

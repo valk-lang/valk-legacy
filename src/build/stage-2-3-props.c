@@ -104,11 +104,6 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             continue;
         }
 
-        if(str_is(name, "@use_gc_alloc")) {
-            class->use_gc_alloc = true;
-            continue;
-        }
-
         if(str_is(name, "use")) {
             // Trait
             if(is_trait) {

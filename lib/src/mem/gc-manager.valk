@@ -7,11 +7,7 @@ shared gc_manager_instance : GcShared (@undefined)
 shared shared_age : u8
 
 fn gc_manager() GcShared {
-    let gc = gc_manager_instance
-    while gc == null {
-        gc = gc_manager_instance
-    }
-    return gc @as GcShared
+    return gc_manager_instance
 }
 
 cstruct GcShared {
@@ -25,9 +21,6 @@ cstruct GcShared {
 
     static fn init() {
         shared_age = 128
-        if gc_manager_instance != null {
-            return
-        }
         gc_manager_instance = GcShared {
             stacks: mem:alloc(2000 * sizeof(ptr))
         }

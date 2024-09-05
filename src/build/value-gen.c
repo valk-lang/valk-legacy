@@ -175,7 +175,7 @@ Value *vgen_cast(Allocator *alc, Value *val, Type *to_type) {
     return value_make(alc, v_cast, val, to_type);
 }
 
-Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
+Value* vgen_mem_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
     Build* b = p->b;
     Func *func = get_valk_func(b, "mem", "alloc");
     Value *fptr = vgen_func_ptr(alc, func, NULL);
@@ -188,21 +188,29 @@ Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
     return res;
 }
 
-Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
+Value* vgen_class_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
 
-    Global* pools = get_valk_global(b, "mem", "pools");
-    Value* v_pools = value_make(alc, v_global, pools, pools->type);
-    Value* v_pool = vgen_ptrv(alc, b, v_pools, type_cache_ptr(b), vgen_int(alc, class->pool_index, type_cache_uint(b)));
+    Func *func = map_get(class->allocator->type->class->funcs, "get");
+    Value *fptr = vgen_func_ptr(b->alc, func, NULL);
+    Array* args = array_make(alc, 1);
+    array_push(args, vgen_global(alc, class->allocator));
+    Value* res = vgen_func_call(b->alc, p, fptr, args);
 
-    Class* pool_class = get_valk_class(b, "mem", "GcPool");
-    Func *func = map_get(pool_class->funcs, "get");
-    func_mark_used(p->func, func);
-
-    Value *fptr = vgen_func_ptr(alc, func, NULL);
-    Array *alloc_values = array_make(alc, func->args->values->length);
-    array_push(alloc_values, v_pool);
-    Value *res = vgen_func_call(alc, p, fptr, alloc_values);
     return res;
+
+    // Global* pools = get_valk_global(b, "mem", "pools");
+    // Value* v_pools = value_make(alc, v_global, pools, pools->type);
+    // Value* v_pool = vgen_ptrv(alc, b, v_pools, type_cache_ptr(b), vgen_int(alc, class->pool_index, type_cache_uint(b)));
+
+    // Class* pool_class = get_valk_class(b, "mem", "GcPool");
+    // Func *func = map_get(pool_class->funcs, "get");
+    // func_mark_used(p->func, func);
+
+    // Value *fptr = vgen_func_ptr(alc, func, NULL);
+    // Array *alloc_values = array_make(alc, func->args->values->length);
+    // array_push(alloc_values, v_pool);
+    // Value *res = vgen_func_call(alc, p, fptr, alloc_values);
+    // return res;
 }
 
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before) {

@@ -113,6 +113,25 @@ void stage_generate_main(Build *b) {
     stage_types_func(p, func);
 }
 
+void stage_generate_class_allocator(Build *b, Parser *p, Scope *scope) {
+    Array* classes = b->classes;
+    loop(classes, i) {
+        Class* class = array_get_index(classes, i);
+        if(!class->allocator)
+            continue;
+        Global* g = class->allocator;
+
+        Value* left = vgen_global(b->alc, g);
+
+        Func* func = map_get(g->type->class->funcs, "init");
+        Value* fptr = vgen_func_ptr(b->alc, func, NULL);
+        Value* right = vgen_func_call(b->alc, p, fptr, array_make(b->alc, 1));
+
+        Token* t = tgen_assign(b->alc, left, right);
+        array_push(scope->ast, t);
+    }
+}
+
 Func* stage_generate_set_globals(Build *b) {
     //
     Array* all_globals = b->globals;
@@ -135,6 +154,8 @@ Func* stage_generate_set_globals(Build *b) {
     Scope* scope = func->scope;
     Parser* p = func->unit->parser;
     p->func = func;
+
+    stage_generate_class_allocator(b, p, scope);
 
     loop(globals, i) {
         Global* g = array_get_index(globals, i);

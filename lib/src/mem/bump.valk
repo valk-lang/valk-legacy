@@ -24,6 +24,13 @@ cstruct Bump {
         return this.data + i
     }
 
+    fn minimum_size(size: uint) {
+        if size > this.size {
+            this.data = resized_clone_and_free(this.data, this.size, size)
+            this.size = size
+        }
+    }
+
     fn reset() {
         this.index = 0
     }

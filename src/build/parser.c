@@ -64,7 +64,7 @@ Value *read_value_from_other_chunk(Parser *p, Allocator* alc, Chunk *chunk, Scop
     p->scope = sub;
     Value *val = read_value(alc, p, true, 0);
 
-    if (check_type) {
+    if (check_type && val->type != v_undefined) {
         val = try_convert(alc, p, p->scope, val, check_type);
         type_check(p, check_type, val->rett);
     }

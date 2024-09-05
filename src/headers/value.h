@@ -30,8 +30,8 @@ Value *vgen_ptr_offset(Allocator *alc, Build* b, Value *on, Value* index, int si
 Value *vgen_op(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_comp(Allocator *alc, int op, Value *left, Value* right, Type *rett);
 Value *vgen_cast(Allocator *alc, Value *val, Type *to_type);
-Value* vgen_call_alloc(Allocator* alc, Parser* p, int size, Class* cast_as);
-Value* vgen_call_pool_alloc(Allocator* alc, Parser* p, Build* b, Class* class);
+Value* vgen_mem_alloc(Allocator* alc, Parser* p, int size, Class* cast_as);
+Value* vgen_class_alloc(Allocator* alc, Parser* p, Build* b, Class* class);
 // Value* vgen_call_gc_link(Allocator* alc, Build* b, Value* left, Value* right);
 Value* vgen_incr(Allocator* alc, Build* b, Value* on, bool increment, bool before);
 Value* vgen_ir_cached(Allocator* alc, Value* value);

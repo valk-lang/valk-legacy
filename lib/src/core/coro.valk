@@ -6,11 +6,11 @@ use io
 
 - global coro_run_first: ?Coro (null)
 - global coro_run_last: ?Coro (null)
-~ global current_coro: Coro (@undefined)
+~ global current_coro: ?Coro (null)
 
 - global coro_poll: ?CoroPoll (null)
-- global g_coros: Array[?Coro] (@undefined)
-- global g_coro_indexes: Pool[uint] (@undefined)
+-pkg global g_coros: Array[?Coro] (@undefined)
+-pkg global g_coro_indexes: Pool[uint] (@undefined)
 - global g_coro_poll_count: uint
 - global g_coro_count: uint
 
@@ -84,7 +84,7 @@ struct Coro {
 
     static fn yield_current() {
         let current = current_coro
-        if current != null {
+        if isset(current) {
             await_last
         }
     }
@@ -270,7 +270,8 @@ struct Coro {
                 while adr < top {
                     let item = @ptrv(adr, ptr, 0)
                     if item != null {
-                        @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                        // @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                        @ptrv(item, u8, mem:byte_block_index_rel) = (val > 0 ? 128 : 0) | (@ptrv(item, u8, mem:byte_block_index_rel) & 127)
                     }
                     adr += sizeof(ptr)
                 }
@@ -290,11 +291,15 @@ struct Coro {
                 while adr < top {
                     let prev = @ptrv(adr, ptr, 1)
                     if prev != null {
-                        let on_stack = @ptrv(prev, u8, mem:byte_on_stack_rel)
+                        // let on_stack = @ptrv(prev, u8, mem:byte_on_stack_rel)
+                        let on_stack = @ptrv(item, u8, mem:byte_block_index_rel) & 128
                         if on_stack == 0 {
                             let color = @ptrv(prev, u16, mem:byte_color_rel)
                             mem:colors.giveback(color)
-                            mem:gc_demark(prev, color)
+                            // mem:gc_demark(prev, color)
+                            let vti = @ptrv(item, i32, 1)
+                            let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE + mem:GC_VTABLE_DEMARK) @as fn(ptr, u16)()
+                            vt(prev, color)
                         }
                         @ptrv(adr, ?ptr, 1) = null
                     }
@@ -319,7 +324,11 @@ struct Coro {
                         // if color == mem:state_new {
                         if @ptrv(mem:colors.state, u8, color) != mem:color_state_used {
                             let c = mem:colors.get()
-                            mem:gc_mark(item, c)
+                            // mem:gc_mark(item, c)
+                            let vti = @ptrv(item, i32, 1)
+                            let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE) @as fn(ptr, u16)()
+                            vt(item, c)
+
                             // Set previous
                             let prev = pc.get(sizeof(ptr) * 2)
                             @ptrv(prev, ptr) = item

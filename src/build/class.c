@@ -22,7 +22,7 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     //
     c->size = -1;
     c->gc_fields = 0;
-    c->pool_index = 0;
+    c->allocator = NULL;
     c->vtable = NULL;
     //
     c->packed = false;
@@ -34,7 +34,6 @@ Class* class_make(Allocator* alc, Build* b, Unit* u, int type) {
     c->is_generic_base = false;
     c->in_header = false;
     c->is_used = false;
-    c->use_gc_alloc = false;
     c->has_vtable = false;
     //
     return c;
@@ -83,22 +82,18 @@ void class_create_vtable(Build* b, Class* class) {
     array_push(b->globals, g);
 }
 
-int class_pool_index(Class* class) {
-    int size = class->size;
-    int offset = map_contains(class->funcs, "_gc_free") ? 1 : 0;
-    if(size <= sizeof(void *) * 2) {
-        return 0 + offset;
-    }
-    if(size <= 128) {
-        return (size / sizeof(void *) - 2) * 2 + offset;
-    }
-    int index = 34;
-    int alc_size = 256;
-    while(alc_size < size) {
-        index += 2;
-        alc_size *= 2;
-    }
-    return index + offset;
+void class_gen_allocator_global(Build* b, Class* class) {
+
+    Class* alc_class = get_valk_class(b, "mem", "GcItemAllocator");
+    Array* generic_types = array_make(b->alc, 1);
+    array_push(generic_types, type_gen_class(b->alc, class));
+    Class* aclass = get_generic_class(class->unit->parser, alc_class, generic_types);
+
+    char *name = dups(b->alc, "_ALLOCATOR");
+    Global *g = global_make(b->alc, class->unit, class->fc, act_private_fc, name, false, true);
+    g->type = type_gen_class(b->alc, aclass);
+
+    class->allocator = g;
 }
 
 int class_determine_size(Build* b, Class* class) {
@@ -155,8 +150,12 @@ int class_determine_size(Build* b, Class* class) {
     if (size == 0) {
         size = 8;
     }
+
     class->size = size;
-    class->pool_index = class_pool_index(class);
+
+    if(class->type == ct_class) {
+        class_gen_allocator_global(b, class);
+    }
 
     return size;
 }

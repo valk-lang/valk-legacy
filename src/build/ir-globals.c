@@ -179,53 +179,49 @@ char *ir_string(IR *ir, VString *str) {
 
     bool external = false;
 
-    str_add(code, body_type);
-    str_flat(code, " = type <{ i16, i8, i8, i8, i8, i8, i8, i64, [");
+    // BODY
+    str_add(code, body_name);
+    str_flat(code, " = ");
+    str_add(code, "dso_local");
+    str_flat(code, " global [");
     str_add(code, blen_str);
-    str_flat(code, " x i8] }>\n");
+    str_flat(code, " x i8] c\"");
+    int index = 0;
+    while (index < len) {
+        if (index % 100 == 0)
+            str_preserve(code, 100);
+        //
+        unsigned char ch = body[index++];
+        if (ch > 34 && ch < 127 && ch != 92) {
+            ((char *)code->data)[code->length] = ch;
+            code->length++;
+            continue;
+        }
+        ((char *)code->data)[code->length] = '\\';
+        code->length++;
+        //
+        char hex[3];
+        char_to_hex(ch, hex);
+        ((char *)code->data)[code->length] = hex[0];
+        ((char *)code->data)[code->length + 1] = hex[1];
+        code->length += 2;
+    }
+    str_flat(code, "\\00\", align 8\n"); // 0 byte to end string
+
+    // OBJECT
+    str_add(code, body_type);
+    str_flat(code, " = type <{ i16, i8, i8, i32, ptr }>\n");
 
     // Define object global
     str_preserve(code, 512);
     str_add(code, object_name);
     str_flat(code, " = ");
-    str_add(code, external ? "external" : "dso_local");
+    str_add(code, "dso_local");
     str_flat(code, " global ");
     str_add(code, body_type);
     if (!external) {
-        str_flat(code, " <{ i16 9001, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, ");
-        // String length property
-        str_add(code, ir_type_int(ir, ir->b->ptr_size));
-        str_flat(code, " ");
-        str_add(code, len_str);
-        str_flat(code, ", ");
-        // Body bytes
-
-        str_flat(code, "[");
-        str_add(code, blen_str);
-        str_flat(code, " x i8] c\"");
-        int index = 0;
-        while (index < len) {
-            if (index % 100 == 0)
-                str_preserve(code, 100);
-            //
-            unsigned char ch = body[index++];
-            if (ch > 34 && ch < 127 && ch != 92) {
-                ((char *)code->data)[code->length] = ch;
-                code->length++;
-                continue;
-            }
-            ((char *)code->data)[code->length] = '\\';
-            code->length++;
-            //
-            char hex[3];
-            char_to_hex(ch, hex);
-            ((char *)code->data)[code->length] = hex[0];
-            ((char *)code->data)[code->length + 1] = hex[1];
-            code->length += 2;
-        }
-        str_flat(code, "\\00\""); // 0 byte to end string
-
-        // End body
+        str_flat(code, " <{ i16 9001, i8 0, i8 0, i32 0, ptr ");
+        str_flat(code, body_name);
         str_flat(code, " }>");
     }
     str_flat(code, ", align 8\n");

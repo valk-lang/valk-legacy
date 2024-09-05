@@ -1,4 +1,6 @@
 
+@ignore_access_types
+
 use core
 
 global gc_local: GcLocal (@undefined)
@@ -9,8 +11,6 @@ global mem_trigger: uint
 global mem_transfered: uint
 global mem_usage: uint
 global mem_free_able: uint
-global mem_max: uint
-global mem_min: uint
 global mem_gc_loop: bool
 
 value mem_marked_default (8192)
@@ -68,8 +68,6 @@ cstruct GcLocal {
 
     static fn init() {
 
-        gc_alloc_init()
-
         let pos = create_stack()
         stack_pos = pos
         main_stack_pos = pos
@@ -79,11 +77,9 @@ cstruct GcLocal {
             lock: GcLock.new()
         }
 
-        stack = s
+        gc_local = s
         mem_trigger = mem_marked_default
-        mem_max = 128
-
-        init_pools()
+        gc_vtable = Bump.new()
 
         s.scan_globals()
 
@@ -198,7 +194,7 @@ cstruct GcLocal {
         mem_new = mem_marked
         // mem_new = 0
 
-        pools_reset()
+        reset_allocators()
         free(rem)
 
         // Mark shared
@@ -220,7 +216,7 @@ cstruct GcLocal {
             let item = @ptrv(adr, ptr, 0)
             if item != null {
                 // Mark on/off stack
-                @ptrv(item, u8, byte_block_index_rel) = @ptrv(item, u8, byte_block_index_rel) & (val > 0 ? 255 : 127)
+                @ptrv(item, u8, byte_block_index_rel) = (val > 0 ? 128 : 0) | (@ptrv(item, u8, byte_block_index_rel) & 127)
             }
             adr += sizeof(ptr)
         }
@@ -259,7 +255,12 @@ cstruct GcLocal {
                 let color = @ptrv(item, u16, byte_color_rel)
                 if @ptrv(colors.state, u8, color) != color_state_used {
                     let c = colors.get()
-                    gc_mark(item, c)
+                    // Call item gc_mark[T]
+                    let vti = @ptrv(item, i32, 1)
+                    let vt = @ptrv(gc_vtable_data, ptr, vti * GC_VTABLE_SIZE) @as fn(ptr, u16)()
+                    vt(item, c)
+                    // gc_mark(item, c)
+
                     // Set previous
                     let prev = pc.get(sizeof(ptr) * 2)
                     @ptrv(prev, ptr) = item
@@ -290,7 +291,10 @@ cstruct GcLocal {
                 continue;
             }
 
-            gc_demark(item, color)
+            // gc_demark(item, color)
+            let vti = @ptrv(item, i32, 1)
+            let vt = @ptrv(gc_vtable_data, ptr, vti * GC_VTABLE_SIZE + GC_VTABLE_DEMARK) @as fn(ptr, u16)()
+            vt(item, color)
 
             @ptrv(colors.state, u8, color) = color_state_unused
             colors.giveback(color)
@@ -313,7 +317,10 @@ cstruct GcLocal {
             if item_color != color_unlink : continue
 
             @ptrv(item, u16, byte_color_rel) = color
-            gc_demark(item, color)
+            // gc_demark(item, color)
+            let vti = @ptrv(item, i32, 1)
+            let vt = @ptrv(gc_vtable_data, ptr, vti * GC_VTABLE_SIZE + GC_VTABLE_DEMARK) @as fn(ptr, u16)()
+            vt(item, color)
 
             if @ptrv(colors.state, u8, color) == color_state_unlinked {
                 @ptrv(colors.state, u8, color) = color_state_unused

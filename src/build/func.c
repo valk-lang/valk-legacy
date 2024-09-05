@@ -458,6 +458,11 @@ Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
     gfunc->parse_last = func->parse_last;
     gfunc->init_thread = func->init_thread;
 
+    gfunc->errors = func->errors;
+    gfunc->can_error = func->can_error;
+    gfunc->chunk_args = chunk_clone(b->alc, func->chunk_args);
+    gfunc->chunk_rett = chunk_clone(b->alc, func->chunk_rett);
+
     if (p->in_header) {
         gfunc->export_name = name;
     }
@@ -471,9 +476,11 @@ Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
         scope_set_idf(gfunc->scope, name, idf, p);
     }
 
-    parse_handle_func_args(p, gfunc);
+    parser_new_context(&p);
 
     stage_types_func(p, gfunc);
+
+    parser_pop_context(&p);
 
     return gfunc;
 }

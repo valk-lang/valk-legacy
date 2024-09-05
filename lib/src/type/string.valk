@@ -40,8 +40,7 @@ use io
 
 struct String {
     bytes: uint
-
-    @use_gc_alloc
+    data: ptr
 
     /////////////////////
     // UTF8
@@ -402,14 +401,12 @@ struct String {
 
     static fn make_empty(length: uint) String {
         if length == 0 : return ""
-        // let d = mem:alloc(length + 1)
-        let str = mem:gc_alloc(sizeof(inline String) + length + 1) @as String
-        @ptrv(@ptr_offset(str, sizeof(inline String)), u8, length) = 0 // trailing 0 byte
-        str.bytes = length
-        // let str = String {
-        //     // data: d
-        //     bytes: length
-        // }
+        let data = mem:alloc(length + 1)
+        @ptrv(data, u8, length) = 0 // trailing 0 byte
+        let str = String {
+            data: data
+            bytes: length
+        }
         return str
     }
 
@@ -441,7 +438,7 @@ struct String {
         return mem:equal(this.data_ptr(), cmp.data_ptr(), this.bytes)
     }
 
-    // fn _gc_free() {
-    //     mem:free(this.data)
-    // }
+    fn _gc_free() {
+        mem:free(this.data)
+    }
 }
