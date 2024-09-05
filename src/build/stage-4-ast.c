@@ -34,7 +34,7 @@ void stage_ast(Build *b, void *payload) {
 
     stage_ast_func(get_valk_class_func(b, "mem", "GcLocal", "init"));
     stage_ast_func(get_valk_class_func(b, "mem", "GcLocal", "link"));
-    stage_ast_func(get_valk_class_func(b, "mem", "GcManager", "init"));
+    stage_ast_func(get_valk_class_func(b, "mem", "GcShared", "init"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
 
     // Generate main and then globals

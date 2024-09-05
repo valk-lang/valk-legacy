@@ -3,18 +3,18 @@ use mem
 use os
 use io
 
-shared gc_manager_instance : @ignu(GcManager)
+shared gc_manager_instance : GcShared (@undefined)
 shared shared_age : u8
 
-fn gc_manager() GcManager {
+fn gc_manager() GcShared {
     let gc = gc_manager_instance
     while gc == null {
         gc = gc_manager_instance
     }
-    return gc @as GcManager
+    return gc @as GcShared
 }
 
-cstruct GcManager {
+cstruct GcShared {
     stacks : ptr
     stack_count : uint (0)
     free_index : uint(0)
@@ -28,10 +28,10 @@ cstruct GcManager {
         if gc_manager_instance != null {
             return
         }
-        gc_manager_instance = GcManager {
+        gc_manager_instance = GcShared {
             stacks: mem:alloc(2000 * sizeof(ptr))
         }
-        os:Thread.start_without_gc(GcManager.loop @as ptr)
+        os:Thread.start_without_gc(GcShared.loop @as ptr)
     }
 
     fn add_stack(s: GcLocal) {

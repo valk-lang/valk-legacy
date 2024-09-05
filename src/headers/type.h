@@ -13,6 +13,7 @@ TypeFuncInfo* type_clone_function_info(Allocator* alc, TypeFuncInfo* fi);
 Array *clone_array_of_types(Allocator *alc, Array *types);
 
 Type* type_gen_void(Allocator* alc);
+Type* type_gen_undefined(Allocator* alc);
 Type* type_gen_null(Allocator* alc, Build* b);
 Type* type_gen_class(Allocator* alc, Class* class);
 Type* type_gen_func(Allocator* alc, Func* func);

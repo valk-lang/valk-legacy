@@ -166,7 +166,8 @@ enum VALUES {
     v_errh, // 40
     v_phi,
     v_bit_lz,
-    v_memcpy
+    v_memcpy,
+    v_undefined
 };
 
 enum TOKENS {

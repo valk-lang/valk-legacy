@@ -4,15 +4,15 @@ header "sys" as sys
 use mem
 use io
 
-- global coro_run_first : ?Coro (null)
-- global coro_run_last : ?Coro (null)
-~ global current_coro : @ignu(Coro)
+- global coro_run_first: ?Coro (null)
+- global coro_run_last: ?Coro (null)
+~ global current_coro: Coro (@undefined)
 
-- global coro_poll : ?CoroPoll (null)
-- global g_coros : @ignu(Array[?Coro])
-- global g_coro_indexes : @ignu(Pool[uint])
-- global g_coro_poll_count : uint
-- global g_coro_count : uint
+- global coro_poll: ?CoroPoll (null)
+- global g_coros: Array[?Coro] (@undefined)
+- global g_coro_indexes: Pool[uint] (@undefined)
+- global g_coro_poll_count: uint
+- global g_coro_count: uint
 
 struct Coro {
     args: ptr

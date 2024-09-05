@@ -259,6 +259,9 @@ Array *clone_array_of_types(Allocator *alc, Array *types) {
 Type* type_gen_void(Allocator* alc) {
     return type_make(alc, type_void);
 }
+Type* type_gen_undefined(Allocator* alc) {
+    return type_make(alc, type_undefined);
+}
 Type* type_gen_null(Allocator* alc, Build* b) {
     Type* t = type_make(alc, type_null);
     t->is_pointer = true;

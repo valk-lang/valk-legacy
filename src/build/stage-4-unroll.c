@@ -61,7 +61,7 @@ void unroll_func_start(Unroll* ur, Scope* scope, Array* unroll) {
 
     if (func == ur->b->func_main_gen || func->init_thread) {
         if (func == b->func_main_gen) {
-            Func *f1 = get_valk_class_func(b, "mem", "GcManager", "init");
+            Func *f1 = get_valk_class_func(b, "mem", "GcShared", "init");
             Array* args = array_make(alc, 1);
             Value *v = vgen_func_call_unroll(alc, vgen_func_ptr(alc, f1, NULL), args);
             array_push(unroll, token_make(alc, t_statement, v));

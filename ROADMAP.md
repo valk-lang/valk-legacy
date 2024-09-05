@@ -15,7 +15,7 @@
 // Prio
 - math functions (pow, sqrt, ...)
 - json encode/decode
-- fix stack list in GcManager
+- fix stack list in GcShared
 - error messages
 // Other
 - assert in any function

@@ -71,6 +71,10 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
             tok_expect(p, ")", true, true);
             v = vgen_ptr_offset(alc, b, on, index, size);
 
+        } else if (str_is(tkn, "@undefined")) {
+
+            v = value_make(alc, v_undefined, NULL, type_gen_undefined(alc));
+
         } else if (str_is(tkn, "@stack")) {
             tok_expect(p, "(", false, false);
             Type* type = read_type(p, alc, true);
@@ -1104,6 +1108,8 @@ Value* value_handle_class(Allocator *alc, Parser* p, Class* class) {
             Type *tcv = prop->type;
             p->try_conv = tcv;
             Value* val = read_value_from_other_chunk(p, alc, prop->chunk_value, class->scope, prop->type);
+            if (val->type == v_undefined)
+                continue;
             p->try_conv = tcv_prev;
 
             map_set_force_new(values, name, val);
