@@ -89,7 +89,11 @@ void class_gen_allocator_global(Build* b, Class* class) {
     array_push(generic_types, type_gen_class(b->alc, class));
     Class* aclass = get_generic_class(class->unit->parser, alc_class, generic_types);
 
-    char *name = dups(b->alc, "_ALLOCATOR");
+    char buf[512];
+    strcpy(buf, class->ir_name);
+    strcat(buf, "_ALLOCATOR");
+    char*name = dups(b->alc, buf);
+
     Global *g = global_make(b->alc, class->unit, class->fc, act_private_fc, name, false, true);
     g->type = type_gen_class(b->alc, aclass);
 
