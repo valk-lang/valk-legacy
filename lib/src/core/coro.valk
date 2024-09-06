@@ -271,7 +271,12 @@ struct Coro {
                     let item = @ptrv(adr, ptr, 0)
                     if item != null {
                         // @ptrv(item, u8, mem:byte_on_stack_rel) = val
+                // print(".")
+                // @ptrv(item, u32, -1).print(10)
                         @ptrv(item, u8, mem:byte_block_index_rel) = (val > 0 ? 128 : 0) | (@ptrv(item, u8, mem:byte_block_index_rel) & 127)
+                // print(">")
+                // @ptrv(item, u32, -1).print(10)
+                // print(".")
                     }
                     adr += sizeof(ptr)
                 }
@@ -297,7 +302,7 @@ struct Coro {
                             let color = @ptrv(prev, u16, mem:byte_color_rel)
                             mem:colors.giveback(color)
                             // mem:gc_demark(prev, color)
-                            let vti = @ptrv(item, i32, 1)
+                            let vti = @ptrv(item, u32, -1)
                             if vti > 0 {
                                 let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE + mem:GC_VTABLE_DEMARK) @as fn(ptr, u16)()
                                 vt(prev, color)
@@ -327,7 +332,7 @@ struct Coro {
                         if @ptrv(mem:colors.state, u8, color) != mem:color_state_used {
                             let c = mem:colors.get()
                             // mem:gc_mark(item, c)
-                            let vti = @ptrv(item, i32, 1)
+                            let vti = @ptrv(item, u32, -1)
                             if vti > 0 {
                                 let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE) @as fn(ptr, u16)()
                                 vt(item, c)

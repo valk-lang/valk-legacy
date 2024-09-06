@@ -3,6 +3,7 @@
 global gc_item_allocators: ptr (@undefined)
 global gc_item_allocator_count: u32
 global gc_item_allocator_size: u32
+global gc_reset_functions: ptr (@undefined)
 
 global gc_vtable: Bump (@undefined)
 global gc_vtable_data: ptr (@undefined)
@@ -18,8 +19,8 @@ cstruct GcItemAllocator[T] {
     allocator_index: u32
     //
     blockc: uint (1)
-    first: ptr (@undefined)
-    block: ptr (@undefined)
+    first: ptr (null @as ptr)
+    block: ptr (null @as ptr)
     index: uint (0)
     isize: uint
 
@@ -40,15 +41,17 @@ cstruct GcItemAllocator[T] {
             if size == 0 {
                 size = 100
                 gc_item_allocators = alloc(sizeof(ptr) * size)
+                gc_reset_functions = alloc(sizeof(ptr) * size)
             } else {
                 let bytes = size * sizeof(ptr)
                 gc_item_allocators = resized_clone_and_free(gc_item_allocators, bytes, bytes * 2)
+                gc_reset_functions = resized_clone_and_free(gc_reset_functions, bytes, bytes * 2)
             }
             gc_item_allocator_size = size
         }
 
-        @ptrv(gc_item_allocators, SELF, index * 2) = alc
-        @ptrv(gc_item_allocators, ptr, index * 2 + 1) = alc.reset @as ptr
+        @ptrv(gc_item_allocators, SELF, index) = alc
+        @ptrv(gc_reset_functions, ptr, index) = alc.reset @as ptr
 
         let vtable = gc_vtable
         vtable.minimum_size((index + 1) * GC_VTABLE_SIZE * sizeof(ptr))
@@ -113,9 +116,6 @@ cstruct GcItemAllocator[T] {
 
             // Increase mem usage
             mem_new += isize
-
-            // @ptrv(item, u32, 1).print(10)
-            // print(".")
 
             return (item + 8)
         }

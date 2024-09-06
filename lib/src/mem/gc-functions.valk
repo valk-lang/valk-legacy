@@ -52,7 +52,7 @@ fn gc_mark[T](item: T, color: u16) {
                 let prop_ptr = p @as ptr
                 let prop_color = @ptrv(prop_ptr, u16, byte_color_rel)
                 if prop_color != color {
-                    remark.add(p @as ptr)
+                    remark.add(item_ptr)
                     added = true
                 }
             }
@@ -107,6 +107,7 @@ fn gc_demark[T](item: T, color: u16) {
 }
 
 fn gc_mark_shared(item: ptr, age: u8) {
+    return
 
     if @ptrv(item, u16, byte_color_rel) > state_const : return
     if @ptrv(item, u8, byte_shared_age_rel) == age : return
@@ -132,6 +133,7 @@ fn gc_mark_shared(item: ptr, age: u8) {
 }
 
 fn gc_share(item: ptr) {
+    return
 
     if @ptrv(item, u8, byte_state_rel) > state_solid : return
 
@@ -173,11 +175,13 @@ fn gc_share(item: ptr) {
 
 fn reset_allocators() {
     let alcs = gc_item_allocators
+    let funcs = gc_reset_functions
     let count = gc_item_allocator_count
-    let i : uint = 0
+    let i : uint = 1
     while i < count {
-        let alc = @ptrv(alcs, ptr, i++)
-        let reset = @ptrv(alcs, fn(ptr)(), i++)
+        let alc = @ptrv(alcs, ptr, i)
+        let reset = @ptrv(funcs, fn(ptr)(), i)
         reset(alc)
+        i++
     }
 }

@@ -457,8 +457,6 @@ Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
     gfunc->exits = func->exits;
     gfunc->parse_last = func->parse_last;
     gfunc->init_thread = func->init_thread;
-    // gfunc->is_generic_base = false;
-    // gfunc->parsed = false;
 
     gfunc->errors = func->errors;
     gfunc->can_error = func->can_error;
