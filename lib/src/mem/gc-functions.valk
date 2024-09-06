@@ -46,7 +46,7 @@ fn gc_mark[T](item: T, color: u16) {
         #if @type_is_nullable(type)
         if isset(p) {
         #end
-            gc_mark[type](p, color)
+            gc_mark[typeof(p)](p, color)
             // Check if linked to another color
             if !added {
                 let prop_ptr = p @as ptr
@@ -85,7 +85,7 @@ fn gc_demark[T](item: T, color: u16) {
         #if @type_is_nullable(type)
         if isset(p) {
         #end
-            gc_demark[type](p, color)
+            gc_demark[typeof(p)](p, color)
         #if @type_is_nullable(type)
         }
         #end

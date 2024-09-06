@@ -35,9 +35,6 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
     Build* b = p->b;
     Scope* scope = p->scope;
 
-    Type *type = NULL;
-    bool nullable = false;
-    bool is_inline = false;
     bool allow_multi = false;
     if(p->allow_multi_type) {
         allow_multi = true;
@@ -86,8 +83,13 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
     }
 
     if(t == tok_qmark) {
-        nullable = true;
-        t = tok(p, false, false, true);
+        Type* type = read_type(p, alc, false);
+        if (!type->is_pointer) {
+            char buf[256];
+            parse_err(p, -1, "This type cannot be null: '?%s'", type_to_str(type, buf));
+        }
+        type->nullable = true;
+        return type;
     }
 
     if(t == tok_id) {
@@ -121,14 +123,33 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             t->func_info = type_func_info_make(alc, args, false, NULL, NULL, NULL, rett);
             t->size = b->ptr_size;
             t->is_pointer = true;
-            t->nullable = nullable;
+            t->nullable = false;
             return t;
         }
 
         if (str_is(tkn, "inline")) {
-            is_inline = true;
-            t = tok(p, true, false, true);
-            tkn = p->tkn;
+            Type *type = read_type(p, alc, false);
+            type = type_get_inline(alc, type);
+            return type;
+        }
+
+        if (str_is(tkn, "typeof")) {
+            tok_expect(p, "(", false, false);
+            Id id;
+            read_id(p, NULL, &id);
+            Idf *idf = idf_by_id(p, p->scope, &id, true);
+            Type* type;
+            if(idf->type == idf_decl) {
+                Decl* decl = idf->item;
+                type = decl->type;
+            } else if(idf->type == idf_decl_overwrite) {
+                DeclOverwrite *dov = idf->item;
+                type = dov->type;
+            } else {
+                parse_err(p, -1, "typeof() expected a valid variable name");
+            }
+            tok_expect(p, ")", true, true);
+            return type_clone(alc, type);
         }
     }
 
@@ -146,14 +167,15 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
         tok_expect(p, "]", true, false);
         Type *t = type_make(alc, type_static_array);
         t->array_type = array_type;
-        t->is_pointer = !is_inline;
-        t->size = is_inline ? (array_type->size * itemc) : b->ptr_size;
+        t->is_pointer = true;
+        t->size = b->ptr_size;
         t->array_size = itemc;
         return t;
     }
 
     if (t == tok_id) {
         // Identifier
+        Type* type = NULL;
         char* tkn = p->tkn;
         Id id;
         read_id(p, tkn, &id);
@@ -191,35 +213,39 @@ Type* read_type(Parser* p, Allocator* alc, bool allow_newline) {
             p->scope = scope;
             *p->chunk = ch;
         }
-    }
 
-    if (type) {
-        if (is_inline) {
-            type->is_pointer = false;
-            if(type->type == type_struct) {
-                type->size = type->class->size;
-            }
-            if(type->type == type_static_array) {
-                type->size = type->array_type->size * type->array_size;
-            }
+        if(type) {
+            return type;
         }
-        if (nullable) {
-            if (!type->is_pointer) {
-                char buf[256];
-                parse_err(p, -1, "This type cannot be null: '?%s'", type_to_str(type, buf));
-            }
-            type->nullable = true;
-        }
-        return type;
     }
 
     parse_err(p, -1, "Invalid type: '%s'", p->tkn);
     return NULL;
 }
+
+Type* type_get_inline(Allocator* alc, Type* type) {
+    if (!type->is_pointer)
+        return type;
+    type = type_clone(alc, type);
+    type->is_pointer = false;
+    if (type->type == type_struct) {
+        type->size = type->class->size;
+    }
+    if (type->type == type_static_array) {
+        type->size = type->array_type->size * type->array_size;
+    }
+    return type;
+}
+
 Type* type_clone(Allocator* alc, Type* type) {
     Type* t = al(alc, sizeof(Type));
     *t = *type;
-    t->func_info = type_clone_function_info(alc, type->func_info);
+    if(type->func_info)
+        t->func_info = type_clone_function_info(alc, type->func_info);
+    if(type->array_type)
+        t->array_type = type_clone(alc, type->array_type);
+    if(type->multi_types)
+        t->multi_types = clone_array_of_types(alc, type->multi_types);
     return t;
 }
 

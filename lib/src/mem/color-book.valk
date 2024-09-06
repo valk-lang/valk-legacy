@@ -10,7 +10,7 @@ cstruct ColorBook {
         let size: uint = 256 
         return SELF {
             pool: alloc(size * sizeof(u16))
-            state: calloc(size + 2)
+            state: calloc(size)
             size: size
         }
     }
@@ -31,8 +31,8 @@ cstruct ColorBook {
             let size = this.size
             let new_size = size * 2
             this.pool = resized_clone_and_free(this.pool, size * sizeof(u16), new_size * sizeof(u16))
-            this.state = resized_clone_and_free(this.state, size + 2, new_size + 2)
-            clear(this.state + size + 2, size)
+            this.state = resized_clone_and_free(this.state, size, new_size)
+            clear(this.state + size, size)
             this.size = new_size
         }
         //

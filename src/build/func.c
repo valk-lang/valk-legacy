@@ -420,6 +420,11 @@ Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
     // Generate new
     h = str_to_chars(b->alc, hash);
 
+    // Clone types
+    loop(generic_types, i) {
+        array_set_index(generic_types, i, type_clone(b->alc, array_get_index(generic_types, i)));
+    }
+
     // Name
     str_clear(hash);
     str_add(hash, func->name);
