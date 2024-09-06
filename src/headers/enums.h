@@ -95,6 +95,7 @@ enum IDF {
     idf_macro,
     idf_macro_items,
     idf_macro_item,
+    idf_cc_object_prop,
 };
 
 enum TYPES {

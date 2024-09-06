@@ -232,10 +232,11 @@ struct String {
         return new_str
     }
     fn data_cstring() cstring {
-        return @ptr_offset(this, sizeof(inline String)) @as cstring
+        // return @ptr_offset(this, sizeof(inline String)) @as cstring
+        return this.data @as cstring
     }
     fn data_ptr() ptr {
-        return @ptr_offset(this, sizeof(inline String)) @as ptr
+        return this.data
     }
 
     /////////////////////

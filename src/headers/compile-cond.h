@@ -18,4 +18,9 @@ struct CCLoop {
     int index;
 };
 
+struct CCObjectProp {
+    ClassProp* prop;
+    Decl* on;
+};
+
 #endif

@@ -191,6 +191,7 @@ Value* vgen_mem_alloc(Allocator* alc, Parser* p, int size, Class* cast_as) {
 Value* vgen_class_alloc(Allocator* alc, Parser* p, Build* b, Class* class) {
 
     Func *func = map_get(class->allocator->type->class->funcs, "get");
+    func_mark_used(p->func, func);
     Value *fptr = vgen_func_ptr(b->alc, func, NULL);
     Array* args = array_make(alc, 1);
     array_push(args, vgen_global(alc, class->allocator));

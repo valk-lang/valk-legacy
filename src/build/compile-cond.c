@@ -160,6 +160,64 @@ void cc_parse(Parser* p) {
             scope_set_idf(p->scope, idf_name1, cl->idf1, p);
         }
 
+    } else if(str_is(tkn, "loop_object_properties")) {
+
+        char t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* items_name = p->tkn;
+        Idf *idf = scope_find_idf(p->scope, items_name, true);
+        if(!idf || idf->type != idf_decl)
+            parse_err(p, -1, "Invalid variable name: '%s'", items_name);
+        Decl* decl = idf->item;
+        Class* class = decl->type->class;
+        if(!class)
+            parse_err(p, -1, "Variable type must be a class/struct: '%s'", items_name);
+
+        Map *props = class->props;
+        Array *items = array_make(b->alc, props->values->length + 1);
+        loop(props->values, i) {
+            ClassProp* prop = array_get_index(props->values, i);
+            CCObjectProp* op = al(b->alc, sizeof(CCObjectProp));
+            op->prop = prop;
+            op->on = decl;
+            array_push(items, op);
+        }
+
+        CCLoop* cl = cc_init_loop(b->alc, items);
+        cl->idf_type = idf_cc_object_prop;
+        array_set_index(p->cc_loops, p->cc_loop_index++, cl);
+
+        tok_expect(p, "as", true, false);
+        // Item idf
+        t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* idf_name1 = p->tkn;
+
+        tok_expect(p, ",", true, false);
+
+        // Type idf
+        t = tok(p, true, false, true);
+        if(t != tok_id)
+            parse_err(p, -1, "Invalid identifier name syntax: '%s'", p->tkn);
+        char* idf_name2 = p->tkn;
+
+        tok_expect_newline(p);
+        //
+        cl->start = chunk_clone(b->alc_ast, p->chunk);
+        //
+        if(cl->index == cl->length) {
+            // No items, skip
+            cc_skip_loop(p);
+        } else {
+            CCObjectProp* op = array_get_index(cl->items, cl->index++);
+            cl->idf1 = idf_make(b->alc_ast, idf_value, vgen_class_pa(b->alc, vgen_decl(b->alc, op->on), op->prop));
+            cl->idf2 = idf_make(b->alc_ast, idf_type, op->prop->type);
+            scope_set_idf(p->scope, idf_name1, cl->idf1, p);
+            scope_set_idf(p->scope, idf_name2, cl->idf2, p);
+        }
+
     } else if(str_is(tkn, "endloop")) {
         if(p->cc_loop_index == 0) {
             parse_err(p, -1, "Using '#endloop' while not being inside a loop");
@@ -173,10 +231,16 @@ void cc_parse(Parser* p) {
             } else if(cl->idf_type == idf_macro_item) {
                 MacroItem* mi = array_get_index(cl->items, cl->index++);
                 cl->idf1->item = mi;
+            } else if(cl->idf_type == idf_cc_object_prop) {
+                CCObjectProp *op = array_get_index(cl->items, cl->index++);
+                cl->idf1 = idf_make(b->alc_ast, idf_value, vgen_class_pa(b->alc, vgen_decl(b->alc, op->on), op->prop));
+                cl->idf2 = idf_make(b->alc_ast, idf_type, op->prop->type);
             } else {
                 parse_err(p, -1, "Unhandled '#endloop' type (compiler bug)");
             }
             *p->chunk = *cl->start;
+        } else {
+            p->cc_loop_index--;
         }
 
     } else {
@@ -219,6 +283,11 @@ char cc_parse_cond(Parser* p, int prio) {
             Type* type = read_type(p, p->b->alc, false);
             tok_expect(p, ")", true, false);
             result = type_is_void(type) ? 1 : 0;
+        } else if (str_is(p->tkn, "@type_is_nullable")) {
+            tok_expect(p, "(", false, false);
+            Type* type = read_type(p, p->b->alc, false);
+            tok_expect(p, ")", true, false);
+            result = type->nullable ? 1 : 0;
         } else if (str_is(p->tkn, "@type_is_generic_of")) {
             tok_expect(p, "(", false, false);
             Type* type = read_type(p, p->b->alc, false);

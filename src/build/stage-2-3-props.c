@@ -183,36 +183,36 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
     if (!is_trait) {
         if (class->type == ct_class) {
             // Has vtable
-            if (map_contains(class->funcs, "_gc_free")) {
+            // if (map_contains(class->funcs, "_gc_free")) {
 
-                class_create_vtable(b, class);
+            //     class_create_vtable(b, class);
 
-                ClassProp *prop = al(b->alc, sizeof(ClassProp));
-                prop->act = act_private_fc;
-                prop->chunk_type = NULL;
-                prop->chunk_value = NULL;
-                prop->type = type_cache_ptr(b);
-                prop->skip_default_value = true;
+            //     ClassProp *prop = al(b->alc, sizeof(ClassProp));
+            //     prop->act = act_private_fc;
+            //     prop->chunk_type = NULL;
+            //     prop->chunk_value = NULL;
+            //     prop->type = type_cache_ptr(b);
+            //     prop->skip_default_value = true;
 
-                map_set(class->props, "_VTABLE", prop);
+            //     map_set(class->props, "_VTABLE", prop);
 
-                int last = props->values->length - 1;
-                array_swap(props->keys, last, 0);
-                array_swap(props->values, last, 0);
-            }
+            //     int last = props->values->length - 1;
+            //     array_swap(props->keys, last, 0);
+            //     array_swap(props->values, last, 0);
+            // }
 
             // Count & sort gc fields
-            int last = class->has_vtable ? 1 : 0;
-            loop(props->keys, i) {
-                char *name = array_get_index(props->keys, i);
-                ClassProp *prop = array_get_index(props->values, i);
-                if (type_is_gc(prop->type)) {
-                    array_swap(props->keys, i, last);
-                    array_swap(props->values, i, last);
-                    last++;
-                    class->gc_fields++;
-                }
-            }
+            // int last = class->has_vtable ? 1 : 0;
+            // loop(props->keys, i) {
+            //     char *name = array_get_index(props->keys, i);
+            //     ClassProp *prop = array_get_index(props->values, i);
+            //     if (type_is_gc(prop->type)) {
+            //         array_swap(props->keys, i, last);
+            //         array_swap(props->values, i, last);
+            //         last++;
+            //         class->gc_fields++;
+            //     }
+            // }
         }
 
         // Set property indexes for LLVM IR

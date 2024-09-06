@@ -9,8 +9,8 @@ use io
 ~ global current_coro: ?Coro (null)
 
 - global coro_poll: ?CoroPoll (null)
--pkg global g_coros: Array[?Coro] (@undefined)
--pkg global g_coro_indexes: Pool[uint] (@undefined)
+-pkg global g_coros: Array[?Coro] (Array[?Coro].new())
+-pkg global g_coro_indexes: Pool[uint] (Pool[uint].new())
 - global g_coro_poll_count: uint
 - global g_coro_count: uint
 
@@ -298,8 +298,10 @@ struct Coro {
                             mem:colors.giveback(color)
                             // mem:gc_demark(prev, color)
                             let vti = @ptrv(item, i32, 1)
-                            let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE + mem:GC_VTABLE_DEMARK) @as fn(ptr, u16)()
-                            vt(prev, color)
+                            if vti > 0 {
+                                let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE + mem:GC_VTABLE_DEMARK) @as fn(ptr, u16)()
+                                vt(prev, color)
+                            }
                         }
                         @ptrv(adr, ?ptr, 1) = null
                     }
@@ -326,8 +328,10 @@ struct Coro {
                             let c = mem:colors.get()
                             // mem:gc_mark(item, c)
                             let vti = @ptrv(item, i32, 1)
-                            let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE) @as fn(ptr, u16)()
-                            vt(item, c)
+                            if vti > 0 {
+                                let vt = @ptrv(mem:gc_vtable_data, ptr, vti * mem:GC_VTABLE_SIZE) @as fn(ptr, u16)()
+                                vt(item, c)
+                            }
 
                             // Set previous
                             let prev = pc.get(sizeof(ptr) * 2)

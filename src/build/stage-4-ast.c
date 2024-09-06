@@ -37,6 +37,13 @@ void stage_ast(Build *b, void *payload) {
     stage_ast_func(get_valk_class_func(b, "mem", "GcShared", "init"));
     stage_ast_func(get_valk_class_func(b, "core", "Coro", "new"));
 
+    loop(b->classes, i) {
+        Class* class = array_get_index(b->classes, i);
+        if(!class->allocator) continue;
+        stage_ast_func(map_get(class->allocator->type->class->funcs, "init"));
+        stage_ast_func(map_get(class->allocator->type->class->funcs, "get"));
+    }
+
     // Generate main and then globals
     stage_generate_main(b);
     stage_generate_set_globals(b);

@@ -27,6 +27,7 @@ typedef struct Thread Thread;
 typedef struct Link Link;
 // CC
 typedef struct CCLoop CCLoop;
+typedef struct CCObjectProp CCObjectProp;
 // IR
 typedef struct IR IR;
 typedef struct IRFunc IRFunc;
