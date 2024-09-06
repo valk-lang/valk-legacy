@@ -177,6 +177,7 @@ void cc_parse(Parser* p) {
         Map *props = class->props;
         Array *items = array_make(b->alc, props->values->length + 1);
         loop(props->values, i) {
+            char* name = array_get_index(props->keys, i);
             ClassProp* prop = array_get_index(props->values, i);
             CCObjectProp* op = al(b->alc, sizeof(CCObjectProp));
             op->prop = prop;
@@ -233,8 +234,8 @@ void cc_parse(Parser* p) {
                 cl->idf1->item = mi;
             } else if(cl->idf_type == idf_cc_object_prop) {
                 CCObjectProp *op = array_get_index(cl->items, cl->index++);
-                cl->idf1 = idf_make(b->alc_ast, idf_value, vgen_class_pa(b->alc, vgen_decl(b->alc, op->on), op->prop));
-                cl->idf2 = idf_make(b->alc_ast, idf_type, op->prop->type);
+                cl->idf1->item = vgen_class_pa(b->alc, vgen_decl(b->alc, op->on), op->prop);
+                cl->idf2->item = op->prop->type;
             } else {
                 parse_err(p, -1, "Unhandled '#endloop' type (compiler bug)");
             }
