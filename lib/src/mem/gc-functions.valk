@@ -29,7 +29,7 @@ fn gc_mark[T](item: T, color: u16) {
 
     @ptrv(item_ptr, u16, byte_color_rel) = color
 
-    if item_color == 0 {
+    if item_color == color_blank {
         let size : uint = sizeof(inline T) + 8
         mem_marked += size
 
@@ -52,7 +52,9 @@ fn gc_mark[T](item: T, color: u16) {
                 let prop_ptr = p @as ptr
                 let prop_color = @ptrv(prop_ptr, u16, byte_color_rel)
                 if prop_color != color {
-                    remark.add(item_ptr)
+                    // Add to remark list
+                    let adr = remark_list.get(sizeof(ptr))
+                    @ptrv(adr, ptr) = item_ptr
                     added = true
                 }
             }
@@ -62,6 +64,11 @@ fn gc_mark[T](item: T, color: u16) {
     }
     #end
     #endloop
+
+    // Call _gc_mark hook
+    #if @type_has_method(T, _gc_mark)
+    item._gc_mark(color)
+    #end
 }
 
 fn gc_demark[T](item: T, color: u16) {
@@ -93,17 +100,10 @@ fn gc_demark[T](item: T, color: u16) {
     #end
     #endloop
 
-    // let propc = @ptrv(item, u8, byte_gc_prop_count_rel)
-    // if propc > 0 {
-    //     let i = 0
-    //     let has_vtable = @ptrv(item, bool, byte_has_vtable_rel)
-    //     if has_vtable : i++
-    //     while propc-- > 0 {
-    //         let sub = @ptrv(item, ptr, i++)
-    //         if sub == null : continue
-    //         gc_demark(sub, color)
-    //     }
-    // }
+    // Call _gc_free
+    #if @type_has_method(T, _gc_free)
+    item._gc_free()
+    #end
 }
 
 fn gc_mark_shared(item: ptr, age: u8) {

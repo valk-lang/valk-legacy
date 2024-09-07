@@ -455,7 +455,7 @@ Func* get_generic_func(Parser* p, Func* func, Array* generic_types) {
     str_flat(hash, "__");
     char* export_name = str_to_chars(b->alc, hash);
 
-    gfunc = func_make(b->alc, func->unit, p->scope, name, export_name);
+    gfunc = func_make(b->alc, func->unit, func->scope->parent, name, export_name);
     gfunc->act = func->act;
     gfunc->fc = func->fc;
     gfunc->in_header = p->in_header;

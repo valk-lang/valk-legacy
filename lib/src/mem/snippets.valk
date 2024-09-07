@@ -3,7 +3,7 @@ use io
 use os
 
 snippet run_gc_check() {
-    // if mem_marked > mem_trigger / 10 * 9 {
+    // if mem_new > mem_trigger / 100 * 95 {
     //     gc()
     // }
 }

@@ -237,6 +237,7 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     Build* b = ir->b;
 
     Type* type_u8 = type_gen_valk(ir->alc, b, "u8");
+    Type* type_u16 = type_gen_valk(ir->alc, b, "u16");
     Type* type_ptr = type_gen_valk(ir->alc, b, "ptr");
 
     IRBlock *current = ir->block;
@@ -252,9 +253,9 @@ char* ir_gc_link(IR* ir, char* on, char* to, bool nullable) {
     }
 
     // On state > transfer
-    char* on_state_var = ir_ptrv(ir, on, "i8", -8);
-    char* on_state = ir_load(ir, type_u8, on_state_var);
-    char *comp_on = ir_compare(ir, op_gt, on_state, "2", "i8", false, false);
+    char* on_state_var = ir_ptrv(ir, on, "i16", -4);
+    char* on_state = ir_load(ir, type_u16, on_state_var);
+    char *comp_on = ir_compare(ir, op_gt, on_state, "1", "i16", false, false);
     ir_cond_jump(ir, comp_on, block_if, after);
 
     ir->block = block_if;

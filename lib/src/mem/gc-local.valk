@@ -17,6 +17,7 @@ value mem_marked_default (8192)
 
 value color_blank (0)
 value color_unlink (1)
+value color_shared (9002)
 
 // value state_used (1)
 // value state_transfer (2)
@@ -50,7 +51,8 @@ global prev_stack_items: Bump (Bump.new())
 global prev_stack_items_alt: Bump (Bump.new())
 global check_still_used: Bump (Bump.new())
 // TODO: move remark to Bump
-global remark: PtrList (PtrList.new())
+global remark_list: Bump (Bump.new())
+global remark_list_switch: Bump (Bump.new())
 
 
 cstruct GcLocal {
@@ -108,6 +110,9 @@ cstruct GcLocal {
         @ptrv(globals, ptr, count++) = @ptr_of(G2)
         #end
         #endloop
+
+        this.globals = globals
+        this.globalc = globalc
     }
 
     ///////////////////////
@@ -118,7 +123,16 @@ cstruct GcLocal {
         let to_color = @ptrv(to, u16, byte_color_rel)
 
         if on_color != to_color {
-            // Add on-item to remark list
+            if on_color == color_shared {
+                if to_color != color_shared {
+                    // Mark shared
+                    // TODO
+                }
+            } else {
+                // Add on-item to remark list
+                let adr = remark_list.get(sizeof(ptr))
+                @ptrv(adr, ptr) = on
+            }
         }
 
         // let to_state = @ptrv(to, u8, -8)
@@ -160,9 +174,9 @@ cstruct GcLocal {
 
         print("-")
 
-        let rem = remark.copy()
-        let rem_count = remark.index
-        remark.reset()
+        let rem = remark_list
+        remark_list = remark_list_switch
+        remark_list_switch = rem
 
         // Swap prev color lists
         let pc = prev_stack_items
@@ -195,7 +209,6 @@ cstruct GcLocal {
         // mem_new = 0
 
         reset_allocators()
-        free(rem)
 
         // Mark shared
         // if shared_age != this.shared_age {
@@ -209,19 +222,26 @@ cstruct GcLocal {
 
     #parse_last
     fn mark_on_stack(val: u8) {
+
+        // Globals
+        let globals = this.globals
+        let globalc = this.globalc
+        while globalc-- > 0 {
+            let ref = @ptrv(globals, ptr, globalc)
+            let item = @ptrv(ref, ptr)
+            if item != null {
+                @ptrv(item, u8, byte_block_index_rel) = (val > 0 ? 128 : 0) | (@ptrv(item, u8, byte_block_index_rel) & 127)
+            }
+        }
+
+        // Stack
         let pos = main_stack_pos
         let adr = pos.base
         let top = pos.adr
         while adr < top {
             let item = @ptrv(adr, ptr, 0)
             if item != null {
-                // Mark on/off stack
-                // print(".")
-                // @ptrv(item, u32, -1).print(10)
                 @ptrv(item, u8, byte_block_index_rel) = (val > 0 ? 128 : 0) | (@ptrv(item, u8, byte_block_index_rel) & 127)
-                // print(">")
-                // @ptrv(item, u32, -1).print(10)
-                // print(".")
             }
             adr += sizeof(ptr)
         }
@@ -238,9 +258,6 @@ cstruct GcLocal {
             let on_stack = @ptrv(item, u8, byte_block_index_rel) & 128
             if on_stack == 0 {
                 let color = @ptrv(adr, uint, 1) @as u16
-                // print(".")
-                // color.print(10)
-                // print("<")
                 @ptrv(colors.state, u8, color) = color_state_unlinked
             }
 
@@ -249,11 +266,50 @@ cstruct GcLocal {
     }
 
     fn handle_remark_list() {
+        let list = prev_stack_items_alt
+        let adr = list.data
+        let end_adr = adr + list.index
+        while adr < end_adr {
+            let item = @ptrv(adr, ptr)
+            let on_stack = @ptrv(item, u8, byte_block_index_rel) & 128
+            if on_stack == 0 {
+                let color = @ptrv(adr, uint, 1) @as u16
+                @ptrv(colors.state, u8, color) = color_state_unlinked
+            }
+
+            adr += sizeof(ptr) * 2
+        }
     }
 
     fn mark_stack_items() {
+        //
         let pc = prev_stack_items
-        // Loop stack items
+
+        // Globals
+        let globals = this.globals
+        let globalc = this.globalc
+        while globalc-- > 0 {
+            let ref = @ptrv(globals, ptr, globalc)
+            let item = @ptrv(ref, ptr)
+            if item != null {
+                let color = @ptrv(item, u16, byte_color_rel)
+                if @ptrv(colors.state, u8, color) != color_state_used {
+                    let c = colors.get()
+                    // Call item gc_mark[T]
+                    let vti = @ptrv(item, u32, -1)
+                    if vti > 0 {
+                        let vt = @ptrv(gc_vtable_data, ptr, vti * GC_VTABLE_SIZE) @as fn(ptr, u16)()
+                    }
+
+                    // Set previous
+                    let prev = pc.get(sizeof(ptr) * 2)
+                    @ptrv(prev, ptr) = item
+                    @ptrv(prev, uint, 1) = c
+                }
+            }
+        }
+
+        // Stack
         let pos = main_stack_pos
         let adr = pos.base
         let top = pos.adr
@@ -269,7 +325,6 @@ cstruct GcLocal {
                     if vti > 0 {
                         let vt = @ptrv(gc_vtable_data, ptr, vti * GC_VTABLE_SIZE) @as fn(ptr, u16)()
                     }
-                    // gc_mark(item, c)
 
                     // Set previous
                     let prev = pc.get(sizeof(ptr) * 2)
