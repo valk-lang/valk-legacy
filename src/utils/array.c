@@ -2,6 +2,8 @@
 #include "../all.h"
 
 Array *array_make(Allocator *alc, int max_length) {
+    if (max_length == 0)
+        max_length = 1;
     Array *arr = al(alc, sizeof(Array));
     arr->alc = alc;
     arr->length = 0;
