@@ -1,0 +1,82 @@
+
+struct Value {
+    type: int
+    object_values: ?Map[Value] (null)
+    array_values: ?Array[Value] (null)
+    int_value: int (0)
+    float_value: float (0.0)
+    string_value: String ("")
+    bool_value: bool (false)
+
+    static fn new_int(value: int) {
+        return Value {
+            type: type_number
+            int_value: value
+        }
+    }
+    static fn new_float(value: float) {
+        return Value {
+            type: type_number
+            float_value: value
+        }
+    }
+
+    fn get(key: String) Value !not_found !not_an_object {
+        let vv = this.object_values
+        if isset(vv) {
+            return vv.get(key) ! throw not_found
+        }
+        throw not_an_object
+    }
+
+    fn string() String !not_a_string {
+        if this.is_string() : return this.string_value
+        throw not_a_string
+    }
+    fn int() int !not_a_number {
+        if this.is_number() : return this.int_value
+        throw not_a_number
+    }
+    fn float() float !not_a_number {
+        if this.is_number() : return this.float_value
+        throw not_a_number
+    }
+    fn bool() bool !not_a_bool {
+        if this.is_bool() : return this.bool_value
+        throw not_a_bool
+    }
+    fn array() Array[Value] !not_an_array {
+        if this.is_array() {
+            let a = this.array_values
+            if isset(a) : return a
+        }
+        throw not_an_array
+    }
+    fn object() Array[Value] !not_an_object {
+        if this.is_object() {
+            let a = this.object_values
+            if isset(a) : return a
+        }
+        throw not_an_object
+    }
+
+    fn is_null() bool {
+        return this.type == type_null
+    }
+    fn is_string() bool {
+        return this.type == type_string
+    }
+    fn is_bool() bool {
+        return this.type == type_bool
+    }
+    fn is_number() bool {
+        return this.type == type_number
+    }
+    fn is_array() bool {
+        return this.type == type_array
+    }
+    fn is_object() bool {
+        return this.type == type_object
+    }
+}
+

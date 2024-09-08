@@ -217,7 +217,7 @@ char* ir_value(IR* ir, Value* v) {
         Class* class = v->rett->class;
 
         // Write prop values
-        Array* ir_props = array_make(ir->alc, values->keys->length + 1);
+        Array* ir_props = array_make(ir->alc, values->keys->length);
         loop(values->keys, i) {
             Value *val = array_get_index(values->values, i);
             char *lval = ir_value(ir, val);

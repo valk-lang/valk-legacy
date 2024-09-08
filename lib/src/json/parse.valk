@@ -169,34 +169,3 @@ struct Parser {
         return buf.to_string()
     }
 }
-
-struct Value {
-    type: int
-    object_values: ?Map[Value] (null)
-    int_value: int (0)
-    float_value: float (0.0)
-    string_value: ?String (null)
-    bool_value: bool (false)
-
-    static fn int(value: int) {
-        return Value {
-            type: type_number
-            int_value: value
-        }
-    }
-    static fn float(value: float) {
-        return Value {
-            type: type_number
-            float_value: value
-        }
-    }
-
-    fn get(key: String) Value !not_found !not_an_object {
-        let vv = this.object_values
-        if isset(vv) {
-            return vv.get(key) ! throw not_found
-        }
-        throw not_an_object
-    }
-}
-
