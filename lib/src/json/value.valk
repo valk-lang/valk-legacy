@@ -52,7 +52,7 @@ struct Value {
         }
         throw not_an_array
     }
-    fn object() Array[Value] !not_an_object {
+    fn object() Map[Value] !not_an_object {
         if this.is_object() {
             let a = this.object_values
             if isset(a) : return a
