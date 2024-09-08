@@ -30,6 +30,8 @@ alias poll as WSAPoll;
 fn malloc(size: uint) ptr;
 fn free(adr: ptr) void;
 
+fn getenv(key: cstring) ?cstring;
+
 fn _read(fd: i32, buf: cstring, size: uint) int;
 fn _write(fd: i32, buf: cstring, size: u32) int;
 fn _open(path: cstring, flags: i32, mode: u32) i32;

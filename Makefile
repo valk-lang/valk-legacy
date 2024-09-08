@@ -40,6 +40,11 @@ TARGET=valk
 valk: $(OBJECTS)
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
 
+valkmain: valk
+	sudo mkdir -p /opt/valk/valkmain
+	sudo cp ./valk /opt/valk/valkmain/valkmain
+	sudo cp -r ./lib /opt/valk/valkmain/
+
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $@ -c $< -DVALK_VERSION=\"$(VERSION)\"

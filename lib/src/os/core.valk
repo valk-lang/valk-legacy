@@ -9,6 +9,13 @@ exit_fn panic(msg: String) {
     sys:exit(1)
 }
 
+fn getenv(var: String) String !not_found {
+    let res = sys:getenv(var.data_cstring())
+    if isset(res) {
+        return res.to_string()
+    }
+    throw not_found
+}
 fn signal(sig: int, handler: fn(i32)()) void {
     sys:signal(sig @as i32, handler)
 }
