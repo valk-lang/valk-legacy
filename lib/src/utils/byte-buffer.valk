@@ -37,6 +37,12 @@ struct ByteBuffer {
         this.length = bytes
     }
 
+    // Read
+    fn get(index: uint) u8 !range {
+        if index >= this.length : throw range
+        return @ptrv(this.data, u8, index)
+    }
+
     // Appending
     fn append(buffer: SELF, start_index: uint (0)) {
         if start_index >= buffer.length : return

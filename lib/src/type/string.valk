@@ -185,6 +185,9 @@ struct String {
     // Convert
     /////////////////////
 
+    // fn to_int() uint !invalid {
+    // }
+
     fn to_uint() uint !invalid {
         let i = this.bytes
         let result : uint = 0

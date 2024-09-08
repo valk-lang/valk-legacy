@@ -4,6 +4,7 @@
     "fs": "src/fs",
     "http": "src/http",
     "io": "src/io",
+    "json": "src/json",
     "mem": "src/mem",
     "net": "src/net",
     "os": "src/os",

@@ -25,6 +25,10 @@ struct Map[T] {
         return this._values.get(index) ! { throw not_found }
     }
 
+    fn has(key: String) bool {
+        return this._keys.contains(key)
+    }
+
     fn remove(key: String) {
         let index = this._keys.index_of(key) ! { return }
         this._keys.remove_index(index)
