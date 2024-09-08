@@ -153,9 +153,10 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
             tkn = p->tkn;
             next = tok(p, true, false, true);
         }
-        if(!str_is(tkn, "fn")) {
+        if(!str_is(tkn, "fn") && !str_is(tkn, "exit_fn")) {
             parse_err(p, -1, "Expected 'fn' here, found '%s' instead", tkn);
         }
+        bool exitfn = str_is(tkn, "exit_fn");
         name = p->tkn;
         if (next != tok_id) {
             parse_err(p, -1, "Invalid property name: '%s'", name);
@@ -175,6 +176,7 @@ void stage_props_class(Parser* p, Class *class, bool is_trait) {
         func->in_header = class->in_header;
         func->init_thread = p->init_thread;
         func->parse_last = p->parse_last;
+        func->exits = exitfn;
         map_set_force_new(class->funcs, name, func);
 
         parse_handle_func_args(p, func);
