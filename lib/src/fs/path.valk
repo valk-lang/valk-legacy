@@ -2,6 +2,7 @@
 header "sys" as sys
 
 use mem
+use os
 
 #if OS == macos
 - global FIRST_ARG : ?String (null)
@@ -152,4 +153,11 @@ fn basename(path: String) String {
         }
     }
     return path.byte_sub_str(start, len - start - rtrim)
+}
+
+fn home_dir() String !not_found {
+    #if OS == win
+    return os:getenv("USERPROFILE") ! throw not_found
+    #end
+    return os:getenv("HOME") ! throw not_found
 }
