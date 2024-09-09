@@ -132,7 +132,7 @@ struct Array[T] {
 
     fn pop() T !empty {
         if this.length > 0 {
-            return @ptrv(this.data, T, this.length--)
+            return @ptrv(this.data, T, --this.length)
         }
         throw empty
     }
