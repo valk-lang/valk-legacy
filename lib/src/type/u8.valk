@@ -51,6 +51,13 @@ integer u8 1 unsigned {
         return this - 'A' + 10
     }
 
+    fn to_ascii_string() String {
+        let str = String.make_empty(1)
+        let data = str.data_ptr()
+        @ptrv(data, u8) = this
+        return str
+    }
+
     fn unescape() u8 {
         let ch = this
         if (ch == 'n') {
