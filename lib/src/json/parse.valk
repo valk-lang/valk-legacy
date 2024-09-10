@@ -41,6 +41,9 @@ struct Parser {
         if ch == '{' {
             return this.parse_object() ! throw invalid
         }
+        if ch == '[' {
+            return this.parse_array() ! throw invalid
+        }
         if ch == '"' {
             let str = this.read_string() ! throw invalid
             return Value {
@@ -89,6 +92,31 @@ struct Parser {
         return Value {
             type: type_object
             object_values: values
+        }
+    }
+
+    - fn parse_array() Value !invalid {
+        let values = array[Value]{}
+        let count = 0
+        while true {
+            this.skip_whitespace()
+            let ch = this.data.get(this.index++) ? 0
+            if ch == ']' {
+                break
+            }
+            if count > 0 {
+                if ch != ',' : throw invalid
+                this.skip_whitespace()
+                ch = this.data.get(this.index++) ? 0
+            }
+            count++
+            this.index--
+            let v = this.parse_value() ! throw invalid
+            values.push(v)
+        }
+        return Value {
+            type: type_array
+            array_values: values
         }
     }
 
