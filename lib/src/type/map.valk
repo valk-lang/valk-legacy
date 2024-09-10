@@ -9,6 +9,10 @@ struct Map[T] {
         return SELF{}
     }
 
+    fn length() uint {
+        return this._keys.length
+    }
+
     fn set(key: String, value: T) void {
         let index = this._keys.index_of(key) ! {
             // Set new key / value
@@ -18,6 +22,15 @@ struct Map[T] {
         }
         // Update existing key / value
         this._values.set(index, value) ! { return }
+    }
+
+    fn set_unique(key: String, value: T) !not_unique {
+        this._keys.index_of(key) ! {
+            this._keys.push(key)
+            this._values.push(value)
+            return
+        }
+        throw not_unique
     }
 
     fn get(key: String) T !not_found {

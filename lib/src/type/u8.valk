@@ -8,6 +8,9 @@ integer u8 1 unsigned {
     fn is_hex() bool {
         return (this >= '0' && this <= '9') || (this >= 'a' && this <= 'f') || (this >= 'A' && this <= 'F')
     }
+    fn is_octal() bool {
+        return (this >= '0' && this <= '7')
+    }
     fn is_number() bool {
         return this >= '0' && this <= '9'
     }
