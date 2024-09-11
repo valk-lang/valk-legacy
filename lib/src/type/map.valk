@@ -41,6 +41,9 @@ struct Map[T] {
     fn has(key: String) bool {
         return this._keys.contains(key)
     }
+    fn has_value(value: T) bool {
+        return this._values.contains(value)
+    }
 
     fn remove(key: String) {
         let index = this._keys.index_of(key) ! { return }
