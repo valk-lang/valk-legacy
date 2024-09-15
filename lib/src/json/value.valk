@@ -80,3 +80,9 @@ struct Value {
     }
 }
 
+fn string(text: String) Value {
+    return Value {
+        type: type_string
+        string_value: text
+    }
+}

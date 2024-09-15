@@ -223,6 +223,22 @@ struct String {
         }
         return result
     }
+    fn octal_to_uint() uint !invalid {
+        let i = this.bytes
+        let result : uint = 0
+        let mult : uint = 1
+        while i > 0 {
+            i--
+            let ch = this.byte(i)
+            if(ch >= '0' && ch <= '7'){
+                result += ((ch @as uint) - '0') * mult
+            } else {
+                throw invalid
+            }
+            mult *= 8
+        }
+        return result
+    }
     fn to_lower() String {
         let len = this.bytes
         let data = this.data_ptr()

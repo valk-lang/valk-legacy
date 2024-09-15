@@ -32,6 +32,13 @@ struct Array[T] {
         return length
     }
 
+    fn push_many(items: Array[T]) {
+        each items as item {
+            this.push(item)
+        }
+        return item
+    }
+
     fn prepend(item: T) {
 
         let size = this.size
@@ -50,6 +57,14 @@ struct Array[T] {
 
         @ptrv(data, T, 0) = @gc_link(this, item)
         this.length = length + 1
+    }
+
+    fn prepend_many(items: Array[T]) {
+        let result = items.copy()
+        each this as item {
+            result.push(item)
+        }
+        return result
     }
 
     fn increase_size(new_size: uint) ptr {
@@ -130,9 +145,17 @@ struct Array[T] {
         this.remove_index(index)
     }
 
-    fn pop() T !empty {
+    fn pop_last() T !empty {
         if this.length > 0 {
             return @ptrv(this.data, T, --this.length)
+        }
+        throw empty
+    }
+    fn pop_first() T !empty {
+        if this.length > 0 {
+            let v =  @ptrv(this.data, T, 0)
+            this.length--
+            mem:copy(this.data + sizeof(T), this.data, this.length * sizeof(T))
         }
         throw empty
     }
@@ -210,6 +233,14 @@ struct Array[T] {
     ////////////////
     // Internals
     ////////////////
+
+    fn copy() Array[T] {
+        let arr = Array[T].new(this.length)
+        each this as item {
+            arr.push(item)
+        }
+        return arr
+    }
 
     fn _each(index: uint) (T, uint) !end {
         let v = this.get(index) ! throw end
