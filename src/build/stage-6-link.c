@@ -86,9 +86,6 @@ void stage_6_link(Build* b, Array* o_files) {
         char *path = array_get_index(link_dirs, i);
         str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
         str_append_chars(cmd, path);
-        str_append_chars(cmd, os_str(b->target_os));
-        str_append_chars(cmd, "-");
-        str_append_chars(cmd, arch_str(b->target_arch));
         str_append_chars(cmd, "\" ");
     }
 
@@ -212,15 +209,29 @@ Array* get_link_dirs(Build* b) {
 
         cJSON *link = cJSON_GetObjectItemCaseSensitive(cfg->json, "link");
         if (link) {
+            char fullpath[VALK_PATH_MAX];
+            char target[256];
+            char* os_name = os_str(b->target_os);
+            char* arch_name = arch_str(b->target_arch);
+            strcpy(target, os_name);
+            strcat(target, "-");
+            strcat(target, arch_name);
+
             cJSON *dirs = cJSON_GetObjectItemCaseSensitive(link, "dirs");
             if (dirs) {
-                char fullpath[VALK_PATH_MAX];
                 cJSON *cdir = dirs->child;
                 while (cdir) {
 
-                    strcpy(fullpath, pkc->dir);
-                    strcat(fullpath, cdir->valuestring);
+                    char* dir = cdir->valuestring;
+                    if (dir[0] == '/' || (dir[0] != 0 && dir[1] == ':')) {
+                        strcpy(fullpath, "");
+                    } else {
+                        strcpy(fullpath, pkc->dir);
+                    }
+                    strcat(fullpath, dir);
                     fix_slashes(fullpath, true);
+                    strcat(fullpath, target);
+                    strcat(fullpath, "/");
 
                     if (!file_exists(fullpath)) {
                         printf("Link directory not found: %s => (%s)\n", cdir->valuestring, fullpath);
@@ -232,6 +243,39 @@ Array* get_link_dirs(Build* b) {
                     }
 
                     cdir = cdir->next;
+                }
+            }
+
+            cJSON *trg = cJSON_GetObjectItemCaseSensitive(link, "target");
+            if (trg) {
+                cJSON *os = cJSON_GetObjectItemCaseSensitive(trg, target);
+                if (os) {
+                    cJSON *dirs = cJSON_GetObjectItemCaseSensitive(os, "dirs");
+                    if (dirs) {
+                        char fullpath[VALK_PATH_MAX];
+                        cJSON *cdir = dirs->child;
+                        while (cdir) {
+
+                            char* dir = cdir->valuestring;
+                            if (dir[0] == '/' || (dir[0] != 0 && dir[1] == ':')) {
+                                strcpy(fullpath, "");
+                            } else {
+                                strcpy(fullpath, pkc->dir);
+                            }
+                            strcat(fullpath, dir);
+                            fix_slashes(fullpath, true);
+
+                            if (!file_exists(fullpath)) {
+                                continue;
+                            }
+
+                            if (!array_contains(list, fullpath, arr_find_str)) {
+                                array_push(list, dups(b->alc, fullpath));
+                            }
+
+                            cdir = cdir->next;
+                        }
+                    }
                 }
             }
         }

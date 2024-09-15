@@ -88,6 +88,7 @@ struct Build {
     Array *strings;
     Array *links;
     Map *link_settings;
+    Array *link_dirs;
     Array *parse_later;
     //
     Map* cc_defs;

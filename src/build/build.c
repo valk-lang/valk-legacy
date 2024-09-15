@@ -174,6 +174,7 @@ int cmd_build(int argc, char *argv[]) {
     b->strings = array_make(alc, 100);
     b->links = array_make(alc, 20);
     b->link_settings = map_make(alc);
+    b->link_dirs = array_make(alc, 10);
     b->parse_later = array_make(alc, 20);
 
     b->func_main = NULL;
