@@ -20,7 +20,9 @@ fn open_extend(path: String, writable: bool, append_on_write: bool, create_file_
 
     if writable : flags = sys:O_RDWR
     if create_file_if_doesnt_exist : flags = flags | sys:O_CREAT
-    if append_on_write : flags = flags | sys:O_APPEND
+    if writable {
+        flags = flags | (append_on_write ? sys:O_APPEND : sys:O_TRUNC)
+    }
 
     let fd = sys:open(path.data_cstring(), flags, create_file_permissions)
     if fd < 0 {
@@ -74,9 +76,6 @@ fn read(path: String) String !open_err !read !close {
 // TODO: !open instead of !open_err (err identifiers need to be split)
 fn write(path: String, content: String, append: bool (false)) !open_err {
 
-    let flags = sys:O_TRUNC
-    if append : flags = sys:O_APPEND
-
     let fd = open_extend(path, true, append, true) ! throw open_err
 
     io:write(fd, content) _
@@ -84,9 +83,6 @@ fn write(path: String, content: String, append: bool (false)) !open_err {
 }
 
 fn write_from_ptr(path: String, data: ptr, size: uint, append: bool (false)) !open_err {
-
-    let flags = sys:O_TRUNC
-    if append : flags = sys:O_APPEND
 
     let fd = open_extend(path, true, append, true) ! throw open_err
 
