@@ -91,9 +91,9 @@ void stage_6_link(Build* b, Array* o_files) {
 
     // Details
     if (is_linux) {
-        str_append_chars(cmd, "--sysroot=");
-        str_append_chars(cmd, valk_lib_dir);
-        str_append_chars(cmd, "root ");
+        str_append_chars(cmd, "--sysroot=/ ");
+        // str_append_chars(cmd, valk_lib_dir);
+        // str_append_chars(cmd, "root ");
 
         if (is_x64) {
             str_append_chars(cmd, "-m elf_x86_64 ");
@@ -112,9 +112,9 @@ void stage_6_link(Build* b, Array* o_files) {
         // }
 
     } else if (is_macos) {
-        str_append_chars(cmd, "-syslibroot ");
-        str_append_chars(cmd, valk_lib_dir);
-        str_append_chars(cmd, "root ");
+        str_append_chars(cmd, "-syslibroot / ");
+        // str_append_chars(cmd, valk_lib_dir);
+        // str_append_chars(cmd, "root ");
 
         // ppc, ppc64, i386, x86_64
         if (is_x64) {
@@ -122,7 +122,8 @@ void stage_6_link(Build* b, Array* o_files) {
         } else if (is_arm64) {
             str_append_chars(cmd, "-arch arm64 ");
         }
-        str_append_chars(cmd, "-platform_version macos 11.0 11.1 ");
+        // Set macos-version-min to 255.0 so we dont get warnings when linking
+        str_append_chars(cmd, "-platform_version macos 255.0 11.1 ");
         // str_append_chars(cmd, "-sdk_version 11.1 ");
         // -macosx_version_min 11.1.0 -sdk_version 11.1.0
 
