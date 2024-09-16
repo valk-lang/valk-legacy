@@ -141,6 +141,7 @@ int cmd_build(int argc, char *argv[]) {
     char* arch_name = arch_str(target_arch);
     map_set(cc_defs, "OS", os_name);
     map_set(cc_defs, "ARCH", arch_name);
+    map_set(cc_defs, "STATIC", array_contains(args, "--static", arr_find_str) ? "1" : "0");
 
     if(verbose > 0) {
         #ifdef WIN32
