@@ -34,11 +34,26 @@ header "pthread"
 
 #elif OS == win
 
-link_dynamic "kernel32"
-link_dynamic "libucrt"
-link_dynamic "WS2_32"
-link_dynamic "msvcrt"
-link_dynamic "libvcruntime"
+link_static "kernel32"
+link_static "ws2_32"
+
+#if STATIC
+link_dynamic "ucrt" // dynamic c-runtime
+link_dynamic "vcruntime" // dynamic c-runtime
+link_dynamic "msvcrt" // dynamic c-runtime startup
+link_dynamic "msvcprt" // dynamic c++
+link_dynamic "oldnames"
+// link_static "libucrt" // static c-runtime
+// link_static "libvcruntime" // static c-runtime
+// link_static "libcmt" // static c-runtime startup
+// link_static "libcpmt" // static c++
+#else
+link_dynamic "ucrt" // dynamic c-runtime
+link_dynamic "vcruntime" // dynamic c-runtime
+link_dynamic "msvcrt" // dynamic c-runtime startup
+link_dynamic "msvcprt" // dynamic c++
+link_dynamic "oldnames"
+#end
 
 header "win/structs"
 header "win/abi"
