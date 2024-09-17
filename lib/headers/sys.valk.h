@@ -38,21 +38,18 @@ link_static "kernel32"
 link_static "ws2_32"
 
 #if STATIC
-link_dynamic "ucrt" // dynamic c-runtime
-link_dynamic "vcruntime" // dynamic c-runtime
-link_dynamic "msvcrt" // dynamic c-runtime startup
-link_dynamic "msvcprt" // dynamic c++
-link_dynamic "oldnames"
-// link_static "libucrt" // static c-runtime
-// link_static "libvcruntime" // static c-runtime
-// link_static "libcmt" // static c-runtime startup
-// link_static "libcpmt" // static c++
+link_dynamic "ucrt" // c99 functions (dynamic)
+link_dynamic "msvcrt" // Microsoft visual c++ runtime (dynamic)
+link_dynamic "libvcruntime" // Microsoft visual c++ runtime (static)
+
+// link_static "libucrt" // c99 functions (static)
+// link_static "libcmt" // lib-c (static)
+// link_static "libcpmt" // lib-c++ (static)
+// link_static "libvcruntime" // Microsoft visual c++ runtime (static)
 #else
-link_dynamic "ucrt" // dynamic c-runtime
-link_dynamic "vcruntime" // dynamic c-runtime
-link_dynamic "msvcrt" // dynamic c-runtime startup
-link_dynamic "msvcprt" // dynamic c++
-link_dynamic "oldnames"
+link_dynamic "ucrt" // c99 functions (dynamic)
+link_dynamic "msvcrt" // Microsoft visual c++ runtime (dynamic)
+link_dynamic "libvcruntime" // Microsoft visual c++ runtime (static)
 #end
 
 header "win/structs"
