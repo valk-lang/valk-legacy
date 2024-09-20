@@ -472,7 +472,7 @@ void type_check(Parser* p, Type* t1, Type* t2) {
 }
 
 bool type_is_void(Type* type) { return type ? (type->type == type_void) : true; }
-bool type_is_bool(Type* type) { return type->type == type_bool; }
+bool type_is_bool(Type* type) { return type && type->type == type_bool; }
 bool type_is_gc(Type* type) { return type && type->is_pointer && type->type == type_struct && type->class->type == ct_class; }
 bool type_fits_pointer(Type* type, Build* b){ return type->size <= b->ptr_size; }
 
