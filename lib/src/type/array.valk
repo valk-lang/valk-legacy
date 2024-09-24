@@ -17,7 +17,13 @@ struct Array[T] {
         }
     }
 
-    fn push(item: T) uint {
+    fn push(item: T, unique: bool (false)) uint {
+        if unique {
+            return this.index_of(item) ! {
+                return this.push(item, false)
+            }
+        }
+
         let size = this.size
         let length = this.length
         let data = this.data
@@ -32,14 +38,21 @@ struct Array[T] {
         return length
     }
 
-    fn push_many(items: Array[T]) {
+    fn push_many(items: Array[T], unique: bool (false)) {
         each items as item {
-            this.push(item)
+            this.push(item, unique)
         }
         return item
     }
 
-    fn prepend(item: T) {
+    fn prepend(item: T, unique: bool (false)) {
+        if unique {
+            this.index_of(item) ! {
+                this.prepend(item, false)
+                return
+            }
+            return
+        }
 
         let size = this.size
         let length = this.length
@@ -59,10 +72,10 @@ struct Array[T] {
         this.length = length + 1
     }
 
-    fn prepend_many(items: Array[T]) {
+    fn prepend_many(items: Array[T], unique: bool (false)) {
         let result = items.copy()
         each this as item {
-            result.push(item)
+            result.push(item, unique)
         }
         return result
     }
