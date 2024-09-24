@@ -1317,6 +1317,30 @@ Value* value_handle_compare(Allocator *alc, Parser* p, Value *left, Value* right
                 }
                 return result;
             }
+        } else if (op == op_lt) {
+            Func *func = lt->class ? map_get(lt->class->funcs, "_lt") : NULL;
+            if (func && func->is_static == false && func->arg_types->length == 2) {
+                func_mark_used(p->func, func);
+                Type *arg_type = array_get_index(func->arg_types, 1);
+                Array *args = array_make(alc, 2);
+                array_push(args, left);
+                array_push(args, right);
+                type_check(p, arg_type, right->rett);
+                Value *on = vgen_func_ptr(alc, func, NULL);
+                return vgen_func_call(alc, p, on, args);
+            }
+        } else if (op == op_gt) {
+            Func *func = lt->class ? map_get(lt->class->funcs, "_gt") : NULL;
+            if (func && func->is_static == false && func->arg_types->length == 2) {
+                func_mark_used(p->func, func);
+                Type *arg_type = array_get_index(func->arg_types, 1);
+                Array *args = array_make(alc, 2);
+                array_push(args, left);
+                array_push(args, right);
+                type_check(p, arg_type, right->rett);
+                Value *on = vgen_func_ptr(alc, func, NULL);
+                return vgen_func_call(alc, p, on, args);
+            }
         }
     }
 

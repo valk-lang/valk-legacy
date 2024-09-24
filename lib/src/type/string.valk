@@ -459,6 +459,32 @@ struct String {
         if this.bytes != cmp.bytes : return false 
         return mem:equal(this.data_ptr(), cmp.data_ptr(), this.bytes)
     }
+    fn _lt(cmp: String) bool {
+        let len1 = this.bytes
+        let len2 = cmp.bytes
+        let len = len1 <= len2 ? len1 : len2
+        let data1 = this.data
+        let data2 = cmp.data
+        let i : uint = 0
+        while i < len {
+            if @ptrv(data1, u8, i) < @ptrv(data2, u8, i) : return true
+            i++
+        }
+        return len1 <= len2
+    }
+    fn _gt(cmp: String) bool {
+        let len1 = this.bytes
+        let len2 = cmp.bytes
+        let len = len1 <= len2 ? len1 : len2
+        let data1 = this.data
+        let data2 = cmp.data
+        let i : uint = 0
+        while i < len {
+            if @ptrv(data1, u8, i) > @ptrv(data2, u8, i) : return true
+            i++
+        }
+        return len1 > len2
+    }
 
     // fn _gc_free() {
     //     mem:free(this.data)
