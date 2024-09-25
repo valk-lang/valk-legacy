@@ -467,8 +467,9 @@ struct String {
         let data2 = cmp.data
         let i : uint = 0
         while i < len {
-            if @ptrv(data1, u8, i) < @ptrv(data2, u8, i) : return true
-            i++
+            let ch1 = @ptrv(data1, u8, i)
+            let ch2 = @ptrv(data2, u8, i++)
+            if ch1 != ch2 : return ch1 < ch2
         }
         return len1 <= len2
     }
@@ -480,8 +481,9 @@ struct String {
         let data2 = cmp.data
         let i : uint = 0
         while i < len {
-            if @ptrv(data1, u8, i) > @ptrv(data2, u8, i) : return true
-            i++
+            let ch1 = @ptrv(data1, u8, i)
+            let ch2 = @ptrv(data2, u8, i++)
+            if ch1 != ch2 : return ch1 > ch2
         }
         return len1 > len2
     }
