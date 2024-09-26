@@ -80,6 +80,14 @@ struct Array[T] {
         return result
     }
 
+    fn intersect(with: Array[T]) Array[T] {
+        let result = array[T]{}
+        each this as item {
+            if with.contains(item) : result.push(item, true)
+        }
+        return result
+    }
+
     fn increase_size(new_size: uint) ptr {
         let data = this.data
         let size = this.size
