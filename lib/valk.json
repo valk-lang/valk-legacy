@@ -9,6 +9,7 @@
     "net": "src/net",
     "os": "src/os",
     "type": "src/type",
+    "time": "src/time",
     "url": "src/url",
     "utils": "src/utils"
   },

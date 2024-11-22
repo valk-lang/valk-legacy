@@ -1,0 +1,15 @@
+
+header "sys" as sys
+
+use mem
+
+fn microtime() uint {
+    let tv = sys:libc_gen_timeval {
+        tv_sec: 0
+        tv_usec: 0
+    }
+    sys:gettimeofday(tv, null)
+    let time_in_micros : uint = 1000000 * tv.tv_sec @as uint + tv.tv_usec @as uint
+    mem:free(tv)
+    return time_in_micros
+}
