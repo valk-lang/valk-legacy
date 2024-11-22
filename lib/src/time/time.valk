@@ -1,15 +1,43 @@
 
 header "sys" as sys
 
-use mem
-
 fn microtime() uint {
-    let tv = sys:libc_gen_timeval {
-        tv_sec: 0
-        tv_usec: 0
-    }
+    // let tv = sys:libc_gen_timeval {
+    //     tv_sec: 0
+    //     tv_usec: 0
+    // }
+    #if OS == win
+    let tv = @stack(sys:libc_timeval_fix)
+    gettimeofday(tv, null)
+    #else
+    let tv = @stack(sys:libc_timeval)
     sys:gettimeofday(tv, null)
+    #end
+
     let time_in_micros : uint = 1000000 * tv.tv_sec @as uint + tv.tv_usec @as uint
-    mem:free(tv)
     return time_in_micros
 }
+
+#if OS == win
+fn gettimeofday(tv: sys:libc_timeval_fix, tz: ?sys:libc_timezone) i32
+{
+  let delta_epoch_microsec : i64 = 11644473600000000
+  let ft = @stack(sys:libc_FILETIME)
+  let tmpres : i64 = 0;
+
+  sys:GetSystemTimeAsFileTime(ft);
+
+  tmpres = tmpres | ft.dwHighDateTime;
+  tmpres = tmpres << 32;
+  tmpres = tmpres | ft.dwLowDateTime;
+
+  // convert into microseconds
+  tmpres /= 10
+  // converting file time to unix epoch
+  tmpres -= delta_epoch_microsec;
+  tv.tv_sec = (tmpres / 1000000)
+  tv.tv_usec = (tmpres % 1000000)
+
+  return 0;
+}
+#end

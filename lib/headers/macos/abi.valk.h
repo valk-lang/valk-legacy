@@ -102,10 +102,6 @@ fn lchown(pathname: cstring, owner: u32, group: u32) i32;
 
 fn umask(mask: u32) u32;
 
-fn gettimeofday(tv: libc_timeval, tz: libc_timezone) i32;
-fn settimeofday(tv: libc_timeval, tz: libc_timezone) i32;
-//time_t time(time_t tloc);
-
 //int sysinfo(cstruct sysinfo info);
 
 fn gettid() i32;
@@ -115,3 +111,7 @@ fn signal(signum: i32, handler: ?fn(i32)()) void;
 fn raise(sig: i32) i32;
 
 fn _NSGetExecutablePath(buf: ptr, len_u32_ptr: ptr) i32;
+
+// Time
+fn gettimeofday(tv: libc_timeval, tz: ?libc_timezone) i32;
+fn settimeofday(tv: libc_timeval, tz: ?libc_timezone) i32;
