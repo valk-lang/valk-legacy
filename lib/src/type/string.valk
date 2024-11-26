@@ -216,6 +216,8 @@ struct String {
                 result += ((ch @as uint) - 'A' + 10) * mult
             } else if(ch >= 'a' && ch <= 'z'){
                 result += ((ch @as uint) - 'a' + 10) * mult
+            } else if ch == 'x' && i == 1 && this.byte(0) == '0' {
+                break
             } else {
                 throw invalid
             }
@@ -232,6 +234,8 @@ struct String {
             let ch = this.byte(i)
             if(ch >= '0' && ch <= '7'){
                 result += ((ch @as uint) - '0') * mult
+            } else if ch == 'c' && i == 1 && this.byte(0) == '0' {
+                break
             } else {
                 throw invalid
             }
