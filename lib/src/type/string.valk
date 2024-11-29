@@ -198,7 +198,7 @@ struct String {
             if(ch < 48 || ch > 57){
                 throw invalid
             }
-            result += ((ch @as uint) - 48) * mult
+            result += (ch - 48) @as uint * mult
             mult *= 10
         }
         return result
@@ -211,11 +211,11 @@ struct String {
             i--
             let ch = this.byte(i)
             if(ch >= '0' && ch <= '9'){
-                result += ((ch @as uint) - '0') * mult
-            } else if(ch >= 'A' && ch <= 'Z'){
-                result += ((ch @as uint) - 'A' + 10) * mult
-            } else if(ch >= 'a' && ch <= 'z'){
-                result += ((ch @as uint) - 'a' + 10) * mult
+                result += (ch - '0') @as uint * mult
+            } else if(ch >= 'A' && ch <= 'F'){
+                result += (ch - 'A' + 10) @as uint * mult
+            } else if(ch >= 'a' && ch <= 'f'){
+                result += (ch - 'a' + 10) @as uint * mult
             } else if ch == 'x' && i == 1 && this.byte(0) == '0' {
                 break
             } else {
@@ -233,7 +233,7 @@ struct String {
             i--
             let ch = this.byte(i)
             if(ch >= '0' && ch <= '7'){
-                result += ((ch @as uint) - '0') * mult
+                result += (ch - '0') @as uint * mult
             } else if ch == 'c' && i == 1 && this.byte(0) == '0' {
                 break
             } else {
