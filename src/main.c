@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 void help() {
     //
     printf("-------------------------\n");
-    printf(" 🦅 Valk v%s\n", VALK_VERSION);
+    // printf(" 🦅 Valk v%s\n", VALK_VERSION);
+    printf(" 🦅 Valk legacy compiler");
     printf("-------------------------\n\n");
 
     printf(" valk build -h       Build valk code to an executable\n");
