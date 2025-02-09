@@ -77,7 +77,7 @@ win: $(OBJECTS_WIN_X64)
 dist_setup:
 	dist/toolchains.sh
 
-dist_all: dist_win_x64 dist_linux_x64 dist_linux_arm64 dist_macos_x64 dist_macos_arm64
+dist_all: dist_win_x64 dist_linux_x64 dist_macos_x64 dist_macos_arm64
 
 ##############
 # WINDOWS
