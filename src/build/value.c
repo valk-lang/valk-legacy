@@ -203,6 +203,33 @@ Value* read_value(Allocator* alc, Parser* p, bool allow_newline, int prio) {
 
         v = vgen_int(alc, tkn[0], type_gen_valk(alc, b, "u8"));
 
+    } else if (t == tok_hashtag) {
+        t = tok(p, false, false, true);
+        if (t != tok_id) {
+            parse_err(p, -1, "Expected a valid token after '#'");
+        }
+
+        tkn = p->tkn;
+        if (str_is(tkn, "STR")) {
+            tok_expect(p, "(", false, false);
+
+            t = tok(p, true, true, true);
+            if (t != tok_id) {
+                parse_err(p, -1, "Invalid argument for #STR()");
+            }
+
+            Map* defs = b->cc_defs;
+            char* value = map_get(defs, p->tkn);
+            if(!value)
+                parse_err(p, -1, "Unknown compile definition: '%s'", p->tkn);
+
+            v = vgen_string(alc, p->unit, value);
+
+            tok_expect(p, ")", true, true);
+        } else {
+            parse_err(p, -1, "Invalid token after '#', token '%d'", p->tkn);
+        }
+
     } else if (t == tok_not) {
 
         Value* on = read_value(alc, p, true, 1);

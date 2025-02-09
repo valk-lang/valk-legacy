@@ -185,8 +185,6 @@ char backslash_char(char ch) {
         ch = '\b';
     } else if (ch == 'v') {
         ch = '\v';
-    } else if (ch == 'f') {
-        ch = '\f';
     } else if (ch == 'a') {
         ch = '\a';
     }

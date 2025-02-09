@@ -40,10 +40,10 @@ TARGET=valk
 valk: $(OBJECTS)
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
 
-valkmain: valk
-	sudo mkdir -p /opt/valk/valkmain
-	sudo cp ./valk /opt/valk/valkmain/valkmain
-	sudo cp -r ./lib /opt/valk/valkmain/
+valk-legacy: valk
+	sudo mkdir -p /opt/valk/legacy
+	sudo cp ./valk /opt/valk/legacy/valk-legacy
+	sudo cp -r ./lib /opt/valk/legacy/
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
