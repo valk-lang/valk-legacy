@@ -31,7 +31,7 @@ void help() {
     //
     printf("-------------------------\n");
     // printf(" 🦅 Valk v%s\n", VALK_VERSION);
-    printf(" 🦅 Valk legacy compiler");
+    printf(" 🦅 Valk legacy compiler\n");
     printf("-------------------------\n\n");
 
     printf(" valk build -h       Build valk code to an executable\n");
