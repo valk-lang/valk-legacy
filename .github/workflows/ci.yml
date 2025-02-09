@@ -112,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
     runs-on: windows-latest
-    timeout-minutes: 4
+    timeout-minutes: 10
     defaults:
       run:
         shell: msys2 {0}
