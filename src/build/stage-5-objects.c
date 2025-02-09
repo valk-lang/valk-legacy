@@ -47,7 +47,13 @@ void stage_5_objects(Build* b) {
         }
     }
 
+    if(b->verbose > 2)
+        printf("# Wait for threads to finish");
+
     thread_wait_all(threads);
+
+    if(b->verbose > 2)
+        printf("# All threads are done");
 
     b->time_llvm += microtime() - start;
 
@@ -169,6 +175,9 @@ void* llvm_build_o_file(void* data_) {
     LLVMDisposeMessage(error);
     LLVMDisposeModule(nsc_mod);
     LLVMContextDispose(ctx);
+
+    if(b->verbose > 2)
+        printf("Done: %s\n", path_o);
 
 #ifndef WIN32
     pthread_exit(NULL);
