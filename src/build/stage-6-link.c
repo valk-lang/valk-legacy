@@ -91,7 +91,10 @@ void stage_6_link(Build* b, Array* o_files) {
 
     // Link dirs
     Array *link_dirs = get_link_dirs(b);
-    loop(link_dirs, i) {
+    for (int i = 0; i < link_dirs->length; i++) {
+        if (b->verbose > 2)
+            printf("Stage 6.3 | Get dir\n");
+
         char *path = array_get_index(link_dirs, i);
 
         if (b->verbose > 2)
