@@ -93,6 +93,10 @@ void stage_6_link(Build* b, Array* o_files) {
     Array *link_dirs = get_link_dirs(b);
     loop(link_dirs, i) {
         char *path = array_get_index(link_dirs, i);
+
+        if (b->verbose > 2)
+            printf("Stage 6.3 | Add dir: %s\n", path);
+
         str_append_chars(cmd, is_win ? "/libpath:\"" : "-L\"");
         str_append_chars(cmd, path);
         str_append_chars(cmd, "\" ");
