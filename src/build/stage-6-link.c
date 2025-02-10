@@ -11,6 +11,9 @@ void stage_6_link(Build* b, Array* o_files) {
 
     usize start = microtime();
 
+    if (b->verbose > 2)
+        printf("Stage 6.1\n");
+
     Str *cmd = str_make(b->alc, 1000);
 
     bool is_linux = b->target_os == os_linux;
@@ -53,6 +56,9 @@ void stage_6_link(Build* b, Array* o_files) {
         build_err(b, "❌ Could not figure out which linker to use for your host os / target os.");
     }
 
+    if (b->verbose > 2)
+        printf("Stage 6.2 | Linker: %s\n", linker);
+
     //
     char *valk_lib_dir = b->pkc_valk->dir;
 
@@ -80,6 +86,9 @@ void stage_6_link(Build* b, Array* o_files) {
     // }
     str_append_chars(cmd, "\" ");
 
+    if (b->verbose > 2)
+        printf("Stage 6.3 | Set link dirs\n");
+
     // Link dirs
     Array *link_dirs = get_link_dirs(b);
     loop(link_dirs, i) {
@@ -88,6 +97,9 @@ void stage_6_link(Build* b, Array* o_files) {
         str_append_chars(cmd, path);
         str_append_chars(cmd, "\" ");
     }
+
+    if (b->verbose > 2)
+        printf("Stage 6.4 | OS based link arguments\n");
 
     // Details
     if (is_linux) {
@@ -142,6 +154,9 @@ void stage_6_link(Build* b, Array* o_files) {
         // }
     }
 
+    if (b->verbose > 2)
+        printf("Stage 6.5 | Set object files\n");
+
     // Object files
     loop(o_files, i) {
         char *path = array_get_index(o_files, i);
@@ -149,8 +164,14 @@ void stage_6_link(Build* b, Array* o_files) {
         str_append_chars(cmd, " ");
     }
 
+    if (b->verbose > 2)
+        printf("Stage 6.6 | Link libraries\n");
+
     // Link libs
     stage_link_libs_all(cmd, b);
+
+    if (b->verbose > 2)
+        printf("Stage 6.7 | Finalize command\n");
 
     // End
     if (is_linux) {

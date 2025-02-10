@@ -48,12 +48,12 @@ void stage_5_objects(Build* b) {
     }
 
     if(b->verbose > 2)
-        printf("# Wait for threads to finish");
+        printf("# Wait for threads to finish\n");
 
     thread_wait_all(threads);
 
     if(b->verbose > 2)
-        printf("# All threads are done");
+        printf("# All threads are done\n");
 
     b->time_llvm += microtime() - start;
 
