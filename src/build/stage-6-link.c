@@ -230,8 +230,12 @@ void stage_link_libs_all(Str *cmd, Build *b) {
 Array* get_link_dirs(Build* b) {
     Array* list = array_make(b->alc, 20);
     Array* pkcs = b->pkcs;
-    loop(pkcs, i) {
+    for (int i = 0; i < pkcs->length; i++) {
         Pkc* pkc = array_get_index(pkcs, i);
+
+        if (b->verbose > 2)
+            printf("Stage 6 | Pkg: %s\n", pkc->name);
+
         PkgConfig* cfg = pkc->config;
         if(!cfg)
             continue;
@@ -252,6 +256,9 @@ Array* get_link_dirs(Build* b) {
                 while (cdir) {
 
                     char* dir = cdir->valuestring;
+                    if (b->verbose > 2)
+                        printf("Stage 6 | Config link dir: %s\n", dir);
+
                     if (dir[0] == '/' || (dir[0] != 0 && dir[1] == ':')) {
                         strcpy(fullpath, "");
                     } else {
@@ -286,6 +293,9 @@ Array* get_link_dirs(Build* b) {
                         while (cdir) {
 
                             char* dir = cdir->valuestring;
+                            if (b->verbose > 2)
+                                printf("Stage 6 | Config target dir: %s\n", dir);
+
                             if (dir[0] == '/' || (dir[0] != 0 && dir[1] == ':')) {
                                 strcpy(fullpath, "");
                             } else {
