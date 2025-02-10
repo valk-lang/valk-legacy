@@ -22,7 +22,8 @@ int cmd_build(int argc, char *argv[]) {
     array_push(has_value, "-o");
     array_push(has_value, "--target");
     array_push(has_value, "--def");
-    parse_argv(argv, argc, has_value, args, options);
+    array_push(has_value, "-L");
+    parse_argv(argv, argc, alc, has_value, args, options);
 
     // Validate args
     char *main_dir = NULL;
@@ -249,6 +250,15 @@ int cmd_build(int argc, char *argv[]) {
     if(target_os == os_win && !ends_with(b->path_out, ".exe")) {
         sprintf(char_buf, "%s.exe", b->path_out);
         b->path_out = dups(alc, char_buf);
+    }
+
+    // Link dirs
+    Array *link_dirs = map_get(options, "-L");
+    if (link_dirs) {
+        loop(link_dirs, i) {
+            char *dir = array_get_index(link_dirs, i);
+            array_push(b->link_dirs, dir);
+        }
     }
 
     // Watch files

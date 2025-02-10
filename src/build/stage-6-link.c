@@ -232,6 +232,11 @@ Array* get_link_dirs(Build* b) {
         printf("Stage 6 | Get link dirs\n");
 
     Array* list = array_make(b->alc, 20);
+    loop(b->link_dirs, i) {
+        char* dir = array_get_index(b->link_dirs, i);
+        array_push(list, dir);
+    }
+
     Array* pkcs = b->pkcs;
     for (int i = 0; i < pkcs->length; i++) {
         Pkc* pkc = array_get_index(pkcs, i);
@@ -259,6 +264,11 @@ Array* get_link_dirs(Build* b) {
                 while (cdir) {
 
                     char* dir = cdir->valuestring;
+                    if (!dir) {
+                        cdir = cdir->next;
+                        continue;
+                    }
+
                     if (b->verbose > 2)
                         printf("Stage 6 | Config link dir: %s\n", dir);
 

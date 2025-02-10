@@ -1,7 +1,7 @@
 
 // Functions
 void die(char *msg);
-void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options);
+void parse_argv(char **argv, int argc, Allocator* alc, Array *has_value, Array *args, Map *options);
 unsigned long microtime();
 void sleep_ms(unsigned int ms);
 unsigned int ctxhash_u32(char *content);

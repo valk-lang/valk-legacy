@@ -6,7 +6,7 @@ void die(char *msg) {
     exit(1);
 }
 
-void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *options) {
+void parse_argv(char **argv, int argc, Allocator* alc, Array *has_value, Array *args, Map *options) {
     //
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];
@@ -20,7 +20,17 @@ void parse_argv(char **argv, int argc, Array *has_value, Array *args, Map *optio
             break;
         }
         char *value = argv[i];
-        map_set(options, arg, value);
+
+        if(str_is(arg, "-L")) {
+            Array* arr = map_get(options, arg);
+            if (arr == NULL) {
+                arr = array_make(alc, 10);
+                map_set(options, arg, arr);
+            }
+            array_push(arr, value);
+        } else {
+            map_set(options, arg, value);
+        }
     }
 }
 
