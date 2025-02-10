@@ -87,7 +87,7 @@ void stage_6_link(Build* b, Array* o_files) {
     str_append_chars(cmd, "\" ");
 
     if (b->verbose > 2)
-        printf("Stage 6.3 | Set link dirs\n");
+        printf("Stage 6.3 | Set link directories\n");
 
     // Link dirs
     Array *link_dirs = get_link_dirs(b);
@@ -228,6 +228,9 @@ void stage_link_libs_all(Str *cmd, Build *b) {
 }
 
 Array* get_link_dirs(Build* b) {
+    if (b->verbose > 2)
+        printf("Stage 6 | Get link dirs\n");
+
     Array* list = array_make(b->alc, 20);
     Array* pkcs = b->pkcs;
     for (int i = 0; i < pkcs->length; i++) {
