@@ -307,12 +307,10 @@ Array* get_link_dirs(Build* b) {
                             strcat(fullpath, dir);
                             fix_slashes(fullpath, true);
 
-                            if (!file_exists(fullpath)) {
-                                continue;
-                            }
-
-                            if (!array_contains(list, fullpath, arr_find_str)) {
-                                array_push(list, dups(b->alc, fullpath));
+                            if (file_exists(fullpath)) {
+                                if (!array_contains(list, fullpath, arr_find_str)) {
+                                    array_push(list, dups(b->alc, fullpath));
+                                }
                             }
 
                             cdir = cdir->next;
