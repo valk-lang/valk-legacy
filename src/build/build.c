@@ -70,6 +70,7 @@ int cmd_build(int argc, char *argv[]) {
     bool autorun = array_contains(args, "--run", arr_find_str) || array_contains(args, "-r", arr_find_str);
     bool is_clean = array_contains(args, "--clean", arr_find_str) || array_contains(args, "-c", arr_find_str);
     bool optimize = !array_contains(args, "--no-opt", arr_find_str);
+    bool mingw = array_contains(args, "--mingw", arr_find_str);
 
     char* path_out = map_get(options, "-o");
     if (!path_out && !autorun) {
@@ -95,6 +96,10 @@ int cmd_build(int argc, char *argv[]) {
     int target_os = os;
     int target_arch = arch;
     char *target = map_get(options, "--target");
+
+    if (mingw) {
+        os = os_linux;
+    }
 
     if (target) {
         if (strcmp(target, "linux-x64") == 0) {
