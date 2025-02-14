@@ -151,7 +151,8 @@ void stage_6_link(Build* b, Array* o_files) {
         // }
     } else if (is_win) {
         // /winsysroot:<value>
-        str_append_chars(cmd, "/nodefaultlib /guard:ehcont ");
+        str_append_chars(cmd, "/nodefaultlib ");
+        // str_append_chars(cmd, "/guard:ehcont ");
         // str_append_chars(cmd, "/force:unresolved ");
         if (is_x64) {
             str_append_chars(cmd, "/machine:x64 ");
