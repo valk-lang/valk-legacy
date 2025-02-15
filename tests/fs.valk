@@ -27,6 +27,7 @@ test "fs: create / delete directories & files" {
     let dir = fs:exe_dir() + "/valk-mkdir-test/"
     fs:mkdir(dir, 509) _
     assert(fs:exists(dir))
+    assert(fs:is_dir(dir))
 
     // Open & create file
     let file = dir + "test.txt"
