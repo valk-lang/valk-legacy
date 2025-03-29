@@ -11,9 +11,9 @@ LCC=clang-15
 LLVM_CFG=llvm-config-15
 else ifeq ($(SUB_UNAME), MINGW64)
 # Mingw
-CC=/mingw64/opt/llvm-16/bin/clang
-LCC=/mingw64/opt/llvm-16/bin/clang
-LLVM_CFG=/mingw64/opt/llvm-16/bin/llvm-config
+CC=/mingw64/bin/clang
+LCC=/mingw64/bin/clang
+LLVM_CFG=/mingw64/bin/llvm-config
 else
 # MacOS, ...
 CC=clang
