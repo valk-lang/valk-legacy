@@ -245,6 +245,7 @@ Array* get_link_dirs(Build* b) {
         array_push(list, "/System/Library/Frameworks");
         array_push(list, "/Library/Frameworks");
         array_push(list, "~/Library/Frameworks");
+        array_push(list, "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/");
     } else if(b->target_os == os_linux && b->host_os == os_linux) {
         array_push(list, "/lib64");
         array_push(list, "/usr/lib64");
