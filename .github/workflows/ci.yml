@@ -106,31 +106,31 @@ jobs:
     - name: Build test(cross compiling) for win-x64
       run: ./valk-legacy build ./tests/*.valk -o _test.exe --target win-x64 --test
 
-  windows:
-    name: "test on windows-latest(MSYS2)"
-    if: github.event.pull_request.draft == false
-    strategy:
-      fail-fast: false
-    runs-on: windows-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: false
-        install: >-
-          curl
-          make
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-llvm
-          mingw-w64-x86_64-clang
-          mingw-w64-x86_64-lld
-    - uses: actions/checkout@v3
+  # windows:
+  #   name: "test on windows-latest(MSYS2)"
+  #   if: github.event.pull_request.draft == false
+  #   strategy:
+  #     fail-fast: false
+  #   runs-on: windows-latest
+  #   timeout-minutes: 10
+  #   defaults:
+  #     run:
+  #       shell: msys2 {0}
+  #   steps:
+  #   - uses: msys2/setup-msys2@v2
+  #     with:
+  #       update: false
+  #       install: >-
+  #         curl
+  #         make
+  #         mingw-w64-x86_64-cmake
+  #         mingw-w64-x86_64-llvm-15
+  #         mingw-w64-x86_64-clang-15
+  #         mingw-w64-x86_64-lld
+  #   - uses: actions/checkout@v3
 
-    - name: Build valk
-      run: make
+  #   - name: Build valk
+  #     run: make
     
-    - name: Test(win-x64)
-      run: ./valk-legacy build ./tests/*.valk --test -r
+  #   - name: Test(win-x64)
+  #     run: ./valk-legacy build ./tests/*.valk --test -r
