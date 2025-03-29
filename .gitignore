@@ -1,6 +1,8 @@
 
 /valk
+/valk-legacy
 /valk.exe
+/valk-legacy.exe
 /valk.lib
 /lld-link.exe
 /valk.json

@@ -44,6 +44,8 @@ install: valk-legacy
 	sudo mkdir -p /opt/valk/legacy
 	sudo cp ./valk-legacy /opt/valk/legacy/valk-legacy
 	sudo cp -r ./lib /opt/valk/legacy/
+	sudo rm -f /usr/local/bin/valk-legacy
+	sudo ln -s /opt/valk/legacy/valk-legacy /usr/local/bin/valk-legacy || true
 
 $(OBJECTS): debug/build/%.o: %.c
 	@mkdir -p $(@D)
