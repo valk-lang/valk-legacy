@@ -238,19 +238,24 @@ Array* get_link_dirs(Build* b) {
         array_push(list, dir);
     }
 
-    if(b->target_os == os_macos) {
+    if(b->target_os == os_macos && b->host_os == os_macos) {
         array_push(list, "/usr/lib");
         array_push(list, "/usr/local/lib");
         array_push(list, "/opt/homebrew/lib/");
         array_push(list, "/System/Library/Frameworks");
         array_push(list, "/Library/Frameworks");
         array_push(list, "~/Library/Frameworks");
-    } else if(b->target_os == os_linux) {
+    } else if(b->target_os == os_linux && b->host_os == os_linux) {
         array_push(list, "/lib64");
         array_push(list, "/usr/lib64");
         array_push(list, "/usr/local/lib64");
         array_push(list, "/usr/lib");
         array_push(list, "/usr/local/lib");
+        if (b->target_arch == arch_x64) {
+            array_push(list, "/lib/x86_64-linux-gnu/");
+        } else if (b->target_arch == arch_arm64) {
+            array_push(list, "/lib/aarch64-linux-gnu/");
+        }
     }
 
     Array* pkcs = b->pkcs;

@@ -38,7 +38,7 @@ OBJECTS_MACOS_ARM64=$(patsubst %.c, debug/build-macos-arm64/%.o, $(SRC))
 TARGET=valk-legacy
 
 valk-legacy: $(OBJECTS)
-	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
+	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC) -pthread
 
 install: valk-legacy
 	sudo mkdir -p /opt/valk/legacy
@@ -55,7 +55,7 @@ clean:
 	rm -f valk-legacy $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
 test: valk-legacy
-	@./valk-legacy build tests/*.valk --test --run -v -c || exit 1
+	@./valk-legacy build tests/*.valk --test --run -vv -c || exit 1
 
 test_win: valk-legacy
 	@./valk-legacy build tests/*.valk --test --run --target win-x64 -vv -c || exit 1
