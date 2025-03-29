@@ -35,14 +35,14 @@ OBJECTS_LINUX_X64=$(patsubst %.c, debug/build-linux-x64/%.o, $(SRC))
 OBJECTS_LINUX_ARM64=$(patsubst %.c, debug/build-linux-arm64/%.o, $(SRC))
 OBJECTS_MACOS_X64=$(patsubst %.c, debug/build-macos-x64/%.o, $(SRC))
 OBJECTS_MACOS_ARM64=$(patsubst %.c, debug/build-macos-arm64/%.o, $(SRC))
-TARGET=valk
+TARGET=valk-legacy
 
-valk: $(OBJECTS)
+valk-legacy: $(OBJECTS)
 	$(LCC) $(CFLAGS) -o $@ $(OBJECTS) $(LINK_DYNAMIC)
 
-valk-legacy: valk
+install: valk-legacy
 	sudo mkdir -p /opt/valk/legacy
-	sudo cp ./valk /opt/valk/legacy/valk-legacy
+	sudo cp ./valk-legacy /opt/valk/legacy/valk-legacy
 	sudo cp -r ./lib /opt/valk/legacy/
 
 $(OBJECTS): debug/build/%.o: %.c
@@ -50,13 +50,13 @@ $(OBJECTS): debug/build/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $< -DVALK_VERSION=\"$(VERSION)\"
 
 clean:
-	rm -f valk $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
+	rm -f valk-legacy $(OBJECTS) $(OBJECTS_WIN_X64) $(OBJECTS_LINUX_X64) $(OBJECTS_LINUX_ARM64) $(OBJECTS_MACOS_X64) $(OBJECTS_MACOS_ARM64)
 
-test: valk
-	@./valk build tests/*.valk --test --run -v -c || exit 1
+test: valk-legacy
+	@./valk-legacy build tests/*.valk --test --run -v -c || exit 1
 
-test_win: valk
-	@./valk build tests/*.valk --test --run --target win-x64 -vv -c || exit 1
+test_win: valk-legacy
+	@./valk-legacy build tests/*.valk --test --run --target win-x64 -vv -c || exit 1
 
 win: $(OBJECTS_WIN_X64)
 	$(LCC) --target=x86_64-pc-windows-msvc -fuse-ld=lld \
@@ -66,7 +66,7 @@ win: $(OBJECTS_WIN_X64)
 	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
 	-L$(CURDIR)/dist/libraries/win-curl-x64/lib \
 	-Wl,-machine:x64 \
-	-o valk.exe \
+	-o valk-legacy.exe \
 	$(OBJECTS_WIN_X64) \
 	$(LLVM_LIBS) -nostdlib -llibcurl -lcrypt32 -lws2_32 -lzlib
 
@@ -116,11 +116,11 @@ dist_win_x64: $(OBJECTS_WIN_X64)
 	-L$(CURDIR)/dist/libraries/win-llvm-15-x64/lib \
 	-L$(CURDIR)/dist/libraries/win-curl-x64/lib \
 	-Wl,-machine:x64 \
-	-o dist/dists/win-x64/valk.exe \
+	-o dist/dists/win-x64/valk-legacy.exe \
 	$(OBJECTS_WIN_X64) \
 	$(LLVM_LIBS) -nostdlib -llibcurl -lcrypt32 -lws2_32 -lzlib
 
-	cd dist/dists/win-x64 && rm -f ../valk-$(VERSION)-win-x64.zip && zip -r ../valk-$(VERSION)-win-x64.zip valk.exe lib install.bat lld-link.exe
+	cd dist/dists/win-x64 && rm -f ../valk-$(VERSION)-win-x64.zip && zip -r ../valk-$(VERSION)-win-x64.zip valk-legacy.exe lib install.bat lld-link.exe
 
 ##############
 # LINUX
@@ -145,11 +145,11 @@ dist_linux_x64: $(OBJECTS_LINUX_X64)
 	$(LCC) --target=x86_64-unknown-linux-gnu -fuse-ld=lld -static \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-amd64 \
 	-L$(CURDIR)/dist/toolchains/linux-amd64/usr/lib/llvm-15/lib \
-	-o dist/dists/linux-x64/valk \
+	-o dist/dists/linux-x64/valk-legacy \
 	$(OBJECTS_LINUX_X64) \
 	$(LLVM_LIBS_LINUX) -lcurl -lcrypto -lssl -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
 
-	cd dist/dists/linux-x64 && rm -f ../valk-$(VERSION)-linux-x64.tar.gz && tar -czf ../valk-$(VERSION)-linux-x64.tar.gz valk lib install.sh
+	cd dist/dists/linux-x64 && rm -f ../valk-$(VERSION)-linux-x64.tar.gz && tar -czf ../valk-$(VERSION)-linux-x64.tar.gz valk-legacy lib install.sh
 
 
 $(OBJECTS_LINUX_ARM64): debug/build-linux-arm64/%.o: %.c
@@ -171,11 +171,11 @@ dist_linux_arm64: $(OBJECTS_LINUX_ARM64)
 	$(LCC) --target=aarch64-unknown-linux-gnu -fuse-ld=lld -static \
 	--sysroot=$(CURDIR)/dist/toolchains/linux-arm64 \
 	-L$(CURDIR)/dist/toolchains/linux-arm64/usr/lib/llvm-15/lib \
-	-o dist/dists/linux-arm64/valk \
+	-o dist/dists/linux-arm64/valk-legacy \
 	$(OBJECTS_LINUX_ARM64) \
 	$(LLVM_LIBS_LINUX) -lc -lstdc++ -lrt -ldl -lpthread -lm -lz -ltinfo -lxml2
 
-	cd dist/dists/linux-arm64 && rm -f ../valk-$(VERSION)-linux-arm64.tar.gz && tar -czf ../valk-$(VERSION)-linux-arm64.tar.gz valk lib install.sh
+	cd dist/dists/linux-arm64 && rm -f ../valk-$(VERSION)-linux-arm64.tar.gz && tar -czf ../valk-$(VERSION)-linux-arm64.tar.gz valk-legacy lib install.sh
 
 ##############
 # MACOS
@@ -201,12 +201,12 @@ dist_macos_x64: $(OBJECTS_MACOS_X64)
 	$(LCC) -arch=x86_64 --target=x86_64-apple-darwin-macho -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-L$(CURDIR)/dist/libraries/macos-llvm-15-x64/lib \
-	-o dist/dists/macos-x64/valk \
+	-o dist/dists/macos-x64/valk-legacy \
 	-Wl,-platform_version,macos,11.6.0,11.3 \
 	$(OBJECTS_MACOS_X64) \
 	$(LLVM_LIBS) -lcurl -lcurses -lc++ -lz
 
-	cd dist/dists/macos-x64 && rm -f ../valk-$(VERSION)-macos-x64.tar.gz && tar -czf ../valk-$(VERSION)-macos-x64.tar.gz valk lib install.sh
+	cd dist/dists/macos-x64 && rm -f ../valk-$(VERSION)-macos-x64.tar.gz && tar -czf ../valk-$(VERSION)-macos-x64.tar.gz valk-legacy lib install.sh
 
 
 $(OBJECTS_MACOS_ARM64): debug/build-macos-arm64/%.o: %.c
@@ -229,12 +229,12 @@ dist_macos_arm64: $(OBJECTS_MACOS_ARM64)
 	$(LCC) -arch=arm64 --target=arm64-apple-darwin-macho -fuse-ld=lld \
 	--sysroot=$(CURDIR)/dist/toolchains/macos-11-3 \
 	-L$(CURDIR)/dist/libraries/macos-llvm-15-arm64/lib \
-	-o dist/dists/macos-arm64/valk \
+	-o dist/dists/macos-arm64/valk-legacy \
 	-Wl,-platform_version,macos,11.6.0,11.3 \
 	$(OBJECTS_MACOS_ARM64) \
 	$(LLVM_LIBS)  -lcurl -lcurses -lc++ -lz
 
-	cd dist/dists/macos-arm64 && rm -f ../valk-$(VERSION)-macos-arm64.tar.gz && tar -czf ../valk-$(VERSION)-macos-arm64.tar.gz valk lib install.sh
+	cd dist/dists/macos-arm64 && rm -f ../valk-$(VERSION)-macos-arm64.tar.gz && tar -czf ../valk-$(VERSION)-macos-arm64.tar.gz valk-legacy lib install.sh
 
 ##############
 
