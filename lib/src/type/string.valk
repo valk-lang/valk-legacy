@@ -243,6 +243,43 @@ struct String {
         }
         return result
     }
+
+    fn to_float() f64 !invalid {
+
+        let result : f64 = 0
+        let sign : f64 = 1
+        let i : uint = 0
+        let len = this.bytes
+        let has_dot = false
+        let decimals = 0
+
+        if i == len : throw invalid
+        if this.byte(0) == '-' {
+            sign = -1
+            i++
+            if i == len : throw invalid
+        }
+
+        while i < len {
+            let ch = this.byte(i++)
+            if ch.is_number() {
+                result = result * 10 + (ch - '0');
+                if has_dot : decimals++
+            } else if ch == '.' {
+                if has_dot : throw invalid
+                has_dot = true
+            } else {
+                throw invalid
+            }
+        }
+
+        while decimals-- > 0 {
+            result = result / 10
+        }
+
+        return result * sign
+    }
+
     fn to_lower() String {
         let len = this.bytes
         let data = this.data_ptr()

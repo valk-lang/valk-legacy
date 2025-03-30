@@ -215,7 +215,11 @@ void ir_func_return_nothing(IR* ir, Scope* scope) {
             ir_func_return(ir, scope, "ptr", "null");
         } else {
             char* type = ir_type(ir, rett);
-            ir_func_return(ir, scope, type, "0");
+            if(rett->type == type_float) {
+                ir_func_return(ir, scope, type, "0.0");
+            } else {
+                ir_func_return(ir, scope, type, "0");
+            }
         }
     }
 }
