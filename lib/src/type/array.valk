@@ -177,6 +177,7 @@ struct Array[T] {
             let v =  @ptrv(this.data, T, 0)
             this.length--
             mem:copy(this.data + sizeof(T), this.data, this.length * sizeof(T))
+            return v
         }
         throw empty
     }
