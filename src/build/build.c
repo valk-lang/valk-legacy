@@ -23,6 +23,7 @@ int cmd_build(int argc, char *argv[]) {
     array_push(has_value, "--target");
     array_push(has_value, "--def");
     array_push(has_value, "-L");
+    array_push(has_value, "-l");
     parse_argv(argv, argc, alc, has_value, args, options);
 
     // Validate args
@@ -263,6 +264,20 @@ int cmd_build(int argc, char *argv[]) {
         loop(link_dirs, i) {
             char *dir = array_get_index(link_dirs, i);
             array_push(b->link_dirs, dir);
+        }
+    }
+
+    Array *link_libs = map_get(options, "-l");
+    bool is_static = array_contains(args, "--static", arr_find_str);
+    if (link_libs) {
+        loop(link_libs, i) {
+            char *lib = array_get_index(link_libs, i);
+
+            Link *link = al(alc, sizeof(Link));
+            link->type = is_static ? link_static : link_dynamic;
+            link->name = lib;
+            map_set(b->link_settings, lib, link);
+            array_push(b->links, lib);
         }
     }
 
