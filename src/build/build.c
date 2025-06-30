@@ -277,7 +277,7 @@ int cmd_build(int argc, char *argv[]) {
             link->type = is_static ? link_static : link_dynamic;
             link->name = lib;
             map_set(b->link_settings, lib, link);
-            array_push(b->links, lib);
+            array_push(b->links, link);
         }
     }
 

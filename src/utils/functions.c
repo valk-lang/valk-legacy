@@ -28,6 +28,13 @@ void parse_argv(char **argv, int argc, Allocator* alc, Array *has_value, Array *
                 map_set(options, arg, arr);
             }
             array_push(arr, value);
+        } else if(str_is(arg, "-l")) {
+            Array* arr = map_get(options, arg);
+            if (arr == NULL) {
+                arr = array_make(alc, 10);
+                map_set(options, arg, arr);
+            }
+            array_push(arr, value);
         } else {
             map_set(options, arg, value);
         }
