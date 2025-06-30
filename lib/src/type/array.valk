@@ -239,18 +239,17 @@ struct Array[T] {
     //     }
     // }
 
-    // fn reverse() {
-    //     let len_ = this.length
-    //     if len_ < 2 : return
-    //     let last = len_ - 1
-    //     let first = 0
-    //     while len_ > 1 {
-    //         this.swap(first, last)
-    //         first++
-    //         last--
-    //         len_ -= 2
-    //     }
-    // }
+    fn reverse() {
+        let len = this.length
+        if len < 2 : return
+        let last : uint = len - 1
+        let first : uint = 0
+        while first < last {
+            this.swap(first, last)
+            first++
+            last--
+        }
+    }
 
     ////////////////
     // Internals
