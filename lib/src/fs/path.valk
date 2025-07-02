@@ -73,13 +73,19 @@ fn exe_path() String {
     str.bytes = len
        
     #elif OS == macos
-    EXE_PATH = FIRST_ARG
-    return FIRST_ARG @as String
-    //let len : u32 = 0
-    //if sys:_NSGetExecutablePath(data, @ptr_of(len)) < 0 {
-    //    return "fail"
-    //}
-    //str.bytes = len
+    // EXE_PATH = FIRST_ARG
+    // return FIRST_ARG @as String
+
+    let len : u32 = 0
+    if sys:_NSGetExecutablePath(data, @ptr_of(len)) < 0 {
+        panic("Failed to find valk executable path on macos")
+    }
+    str.bytes = len
+
+    let str2 = String.make_empty(PATH_MAX)
+    let result = sys:realpath(data, str2.data_cstring())
+    str2.bytes = result.length()
+    str = str2
 
     #else
     let link = "/proc/self/exe".data_cstring()
