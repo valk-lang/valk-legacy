@@ -76,11 +76,11 @@ fn exe_path() String {
     // EXE_PATH = FIRST_ARG
     // return FIRST_ARG @as String
 
-    let len : u32 = 0
+    let len : u32 = PATH_MAX
     if sys:_NSGetExecutablePath(data, @ptr_of(len)) < 0 {
         panic("Failed to find valk executable path on macos")
     }
-    str.bytes = len
+    str.bytes = data.length()
 
     let str2 = String.make_empty(PATH_MAX)
     let result = sys:realpath(data, str2.data_cstring())
